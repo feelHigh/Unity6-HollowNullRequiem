@@ -12,7 +12,7 @@ namespace HNR.Core.Interfaces
     /// <remarks>
     /// Register with ServiceLocator at startup.
     /// Implementation: AudioManager (MonoBehaviour)
-    /// Uses Feel/MMSoundManager for underlying audio.
+    /// Full implementation in Week 9.
     /// </remarks>
     public interface IAudioManager
     {
@@ -43,5 +43,17 @@ namespace HNR.Core.Interfaces
         /// Stop the currently playing music track.
         /// </summary>
         void StopMusic();
+
+        /// <summary>
+        /// Set music volume with clamping.
+        /// </summary>
+        /// <param name="volume">Volume level (0.0 - 1.0)</param>
+        void SetMusicVolume(float volume);
+
+        /// <summary>
+        /// Set SFX volume with clamping.
+        /// </summary>
+        /// <param name="volume">Volume level (0.0 - 1.0)</param>
+        void SetSFXVolume(float volume);
     }
 }
