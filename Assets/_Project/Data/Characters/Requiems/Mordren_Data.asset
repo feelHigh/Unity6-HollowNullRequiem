@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd3bcd9369213404aaaf1b59b5549209, type: 3}
+  m_Name: Mordren_Data
+  m_EditorClassIdentifier: 
+  _requiemId: mordren
+  _requiemName: Mordren
+  _title: Shadow Reaper
+  _backstory: A fallen hero of the Shadow aspect.
+  _class: 1
+  _soulAspect: 2
+  _baseHP: 60
+  _baseATK: 8
+  _baseDEF: 6
+  _seRate: 2
+  _startingCards: []
+  _unlockableCards: []
+  _requiemArt: {fileID: 0}
+  _nullStateEffect: 1
+  _nullStateDescription: HP drain effects heal for double.
+  _portrait: {fileID: 0}
+  _fullBodySprite: {fileID: 0}
+  _animator: {fileID: 0}
+  _aspectColor: {r: 1, g: 1, b: 1, a: 1}

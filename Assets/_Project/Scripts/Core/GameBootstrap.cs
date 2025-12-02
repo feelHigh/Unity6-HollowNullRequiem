@@ -5,6 +5,8 @@
 
 using UnityEngine;
 using HNR.Core.Interfaces;
+using HNR.UI;
+using HNR.Audio;
 
 namespace HNR.Core
 {
@@ -16,13 +18,14 @@ namespace HNR.Core
     /// This component:
     /// 1. Checks if GameManager already exists (scene reload case)
     /// 2. Instantiates core system prefabs if needed
-    /// 3. Destroys itself if systems already exist
+    /// 3. Initializes non-MonoBehaviour services (SaveManager)
+    /// 4. Destroys itself if systems already exist
     ///
     /// Boot scene setup:
     /// 1. Create empty GameObject named "Bootstrap"
     /// 2. Attach this component
     /// 3. Assign GameManager prefab reference
-    /// 4. Assign UIManager prefab reference (when implemented)
+    /// 4. Optionally place UIManager, PoolManager, AudioManager in scene
     /// </remarks>
     public class GameBootstrap : MonoBehaviour
     {
@@ -33,10 +36,6 @@ namespace HNR.Core
         [Header("Core System Prefabs")]
         [Tooltip("Prefab containing the GameManager component")]
         [SerializeField] private GameManager _gameManagerPrefab;
-
-        // TODO: Uncomment when UIManager is implemented
-        // [Tooltip("Prefab containing the UIManager component")]
-        // [SerializeField] private UIManager _uiManagerPrefab;
 
         // ============================================
         // Unity Lifecycle
@@ -54,11 +53,20 @@ namespace HNR.Core
 
             Debug.Log("[GameBootstrap] Initializing core systems...");
 
-            // Instantiate GameManager
-            InstantiateGameManager();
+            // Initialize ServiceLocator first
+            if (!ServiceLocator.IsInitialized)
+            {
+                ServiceLocator.Initialize();
+            }
 
-            // Instantiate UIManager
-            InstantiateUIManager();
+            // Initialize non-MonoBehaviour services
+            InitializeSaveManager();
+
+            // Instantiate MonoBehaviour managers
+            InstantiateGameManager();
+            InitializeUIManager();
+            InitializePoolManager();
+            InitializeAudioManager();
 
             Debug.Log("[GameBootstrap] Core systems initialized.");
         }
@@ -66,6 +74,24 @@ namespace HNR.Core
         // ============================================
         // Initialization Methods
         // ============================================
+
+        /// <summary>
+        /// Initialize the SaveManager (non-MonoBehaviour).
+        /// </summary>
+        private void InitializeSaveManager()
+        {
+            if (ServiceLocator.Has<ISaveManager>())
+            {
+                Debug.Log("[GameBootstrap] SaveManager already registered.");
+                return;
+            }
+
+            var saveManager = new SaveManager();
+            saveManager.Initialize();
+            ServiceLocator.Register<ISaveManager>(saveManager);
+
+            Debug.Log("[GameBootstrap] SaveManager initialized.");
+        }
 
         /// <summary>
         /// Instantiate the GameManager prefab.
@@ -90,24 +116,58 @@ namespace HNR.Core
         }
 
         /// <summary>
-        /// Instantiate the UIManager prefab.
+        /// Find or create UIManager.
+        /// UIManager self-registers in Awake, so we just ensure it exists.
         /// </summary>
-        private void InstantiateUIManager()
+        private void InitializeUIManager()
         {
-            // TODO: Implement when UIManager is created
-            // if (_uiManagerPrefab == null)
-            // {
-            //     Debug.LogWarning("[GameBootstrap] UIManager prefab not assigned!");
-            //     return;
-            // }
-            //
-            // var uiManager = Instantiate(_uiManagerPrefab);
-            // uiManager.name = "[UIManager]";
-            // DontDestroyOnLoad(uiManager.gameObject);
-            //
-            // Debug.Log("[GameBootstrap] UIManager instantiated.");
+            var uiManager = FindAnyObjectByType<UIManager>();
+            if (uiManager == null)
+            {
+                Debug.LogWarning("[GameBootstrap] UIManager not found in scene. UI features will be unavailable.");
+            }
+            else
+            {
+                Debug.Log("[GameBootstrap] UIManager found in scene.");
+            }
+        }
 
-            Debug.Log("[GameBootstrap] UIManager initialization skipped (not yet implemented).");
+        /// <summary>
+        /// Find or create PoolManager.
+        /// PoolManager self-registers in Awake.
+        /// </summary>
+        private void InitializePoolManager()
+        {
+            var poolManager = FindAnyObjectByType<PoolManager>();
+            if (poolManager == null)
+            {
+                var go = new GameObject("[PoolManager]");
+                go.AddComponent<PoolManager>();
+                Debug.Log("[GameBootstrap] PoolManager created dynamically.");
+            }
+            else
+            {
+                Debug.Log("[GameBootstrap] PoolManager found in scene.");
+            }
+        }
+
+        /// <summary>
+        /// Find or create AudioManager.
+        /// AudioManager self-registers in Awake.
+        /// </summary>
+        private void InitializeAudioManager()
+        {
+            var audioManager = FindAnyObjectByType<AudioManager>();
+            if (audioManager == null)
+            {
+                var go = new GameObject("[AudioManager]");
+                go.AddComponent<AudioManager>();
+                Debug.Log("[GameBootstrap] AudioManager created dynamically.");
+            }
+            else
+            {
+                Debug.Log("[GameBootstrap] AudioManager found in scene.");
+            }
         }
     }
 }
