@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51ddc4d0e4300974ead16198ab3de904, type: 3}
+  m_Name: Echo_ShadowMerchant
+  m_EditorClassIdentifier: 
+  _eventId: Echo_ShadowMerchant
+  _eventTitle: Shadow Merchant
+  _narrative: A cloaked figure materializes from the shadows. 'I deal in trades most
+    peculiar,' they whisper. 'What would you give... to gain?'
+  _backgroundImage: {fileID: 0}
+  _choices:
+  - _choiceText: Trade HP for gold (Lose 20 HP)
+    _outcomeText: Blood is the currency of the desperate. The merchant seems pleased.
+    _outcomes:
+    - _type: 4
+      _value: 20
+      _cardId: 
+      _relicId: 
+    - _type: 1
+      _value: 75
+      _cardId: 
+      _relicId: 
+  - _choiceText: Trade gold for power (Lose 50 gold)
+    _outcomeText: The merchant produces a card unlike any you've seen.
+    _outcomes:
+    - _type: 2
+      _value: 50
+      _cardId: 
+      _relicId: 
+    - _type: 14
+      _value: 0
+      _cardId: 
+      _relicId: 
+  - _choiceText: Decline
+    _outcomeText: The merchant shrugs and fades into shadow. 'Perhaps next time...'
+    _outcomes:
+    - _type: 0
+      _value: 0
+      _cardId: 
+      _relicId: 
+  _validZones: 
+  _uniquePerRun: 1
