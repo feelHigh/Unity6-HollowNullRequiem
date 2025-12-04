@@ -15,82 +15,11 @@ using RequiemDataSO = HNR.Characters.RequiemDataSO;
 namespace HNR.Cards
 {
     // ============================================
-    // DAMAGE EFFECTS
+    // NOTE: DamageEffect, DamageMultipleEffect, and BlockEffect
+    // are now in separate files with enhanced implementations:
+    // - DamageEffect.cs (includes Soul Aspect multipliers)
+    // - BlockEffect.cs
     // ============================================
-
-    /// <summary>
-    /// Deal damage to a single target.
-    /// </summary>
-    public class DamageEffect : ICardEffect
-    {
-        public void Execute(CardEffectData data, EffectContext context)
-        {
-            if (context.Target == null)
-            {
-                Debug.LogWarning("[DamageEffect] No target specified");
-                return;
-            }
-
-            int damage = context.CalculateDamage(data.Value);
-            context.Target.TakeDamage(damage);
-
-            Debug.Log($"[DamageEffect] Dealt {damage} damage to {context.Target.Name}");
-        }
-    }
-
-    /// <summary>
-    /// Deal damage multiple times to a target.
-    /// Value = damage per hit, Duration = number of hits.
-    /// </summary>
-    public class DamageMultipleEffect : ICardEffect
-    {
-        public void Execute(CardEffectData data, EffectContext context)
-        {
-            if (context.Target == null)
-            {
-                Debug.LogWarning("[DamageMultipleEffect] No target specified");
-                return;
-            }
-
-            int damagePerHit = context.CalculateDamage(data.Value);
-            int hits = data.Duration > 0 ? data.Duration : 1;
-
-            for (int i = 0; i < hits; i++)
-            {
-                context.Target.TakeDamage(damagePerHit);
-            }
-
-            Debug.Log($"[DamageMultipleEffect] Dealt {damagePerHit}x{hits} damage to {context.Target.Name}");
-        }
-    }
-
-    // ============================================
-    // DEFENSE EFFECTS
-    // ============================================
-
-    /// <summary>
-    /// Gain Block for the team.
-    /// </summary>
-    public class BlockEffect : ICardEffect
-    {
-        public void Execute(CardEffectData data, EffectContext context)
-        {
-            int block = context.CalculateBlock(data.Value);
-
-            if (context.TurnManager != null)
-            {
-                context.TurnManager.AddTeamBlock(block);
-            }
-            else if (context.CombatContext != null)
-            {
-                int previousBlock = context.CombatContext.TeamBlock;
-                context.CombatContext.TeamBlock += block;
-                EventBus.Publish(new BlockChangedEvent(context.CombatContext.TeamBlock, previousBlock));
-            }
-
-            Debug.Log($"[BlockEffect] Gained {block} block");
-        }
-    }
 
     // ============================================
     // HEALING EFFECTS
