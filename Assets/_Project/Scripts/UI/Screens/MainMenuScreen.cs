@@ -47,9 +47,6 @@ namespace HNR.UI
         [SerializeField, Tooltip("Duration for button fade animations")]
         private float _fadeAnimDuration = 0.3f;
 
-        [SerializeField, Tooltip("Duration for button slide animations")]
-        private float _slideAnimDuration = 0.4f;
-
         [Header("Version Display")]
         [SerializeField, Tooltip("Text showing game version")]
         private TMP_Text _versionText;
