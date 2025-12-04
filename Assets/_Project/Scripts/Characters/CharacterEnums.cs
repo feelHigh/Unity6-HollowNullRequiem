@@ -118,7 +118,34 @@ namespace HNR.Characters
         Thorns,
 
         /// <summary>Draw extra cards at turn start.</summary>
-        DrawBonus
+        DrawBonus,
+
+        // ============================================
+        // Defense Modifiers
+        // ============================================
+
+        /// <summary>Take 25% less damage (opposite of Vulnerability).</summary>
+        Protected,
+
+        // ============================================
+        // Card Cost Modifiers
+        // ============================================
+
+        /// <summary>Next card costs +1 AP.</summary>
+        Dazed,
+
+        /// <summary>Next card costs -1 AP.</summary>
+        Energized,
+
+        // ============================================
+        // Combo/Special Effects
+        // ============================================
+
+        /// <summary>Takes bonus damage from next attack.</summary>
+        Marked,
+
+        /// <summary>Stacks build to trigger effects at threshold.</summary>
+        Ritual
     }
 
     /// <summary>

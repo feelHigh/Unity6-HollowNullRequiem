@@ -84,6 +84,30 @@ namespace HNR.Combat
         // ============================================
 
         /// <summary>
+        /// Draw a single card from the deck.
+        /// Reshuffles discard pile if draw pile is empty.
+        /// </summary>
+        /// <returns>The drawn card, or null if deck is empty</returns>
+        public CardInstance Draw()
+        {
+            if (_drawPile.Count == 0)
+            {
+                if (_discardPile.Count == 0) return null;
+                ReshuffleDiscardIntoDraw();
+            }
+
+            if (_drawPile.Count > 0)
+            {
+                var card = _drawPile[0];
+                _drawPile.RemoveAt(0);
+                EventBus.Publish(new CardDrawnEvent(card));
+                return card;
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Draw cards from the deck.
         /// Reshuffles discard pile if draw pile is empty.
         /// </summary>

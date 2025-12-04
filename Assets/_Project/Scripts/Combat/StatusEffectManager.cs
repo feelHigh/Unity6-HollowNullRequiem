@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using HNR.Core;
 using HNR.Core.Events;
+using HNR.Characters;
 
 namespace HNR.Combat
 {
@@ -73,10 +74,10 @@ namespace HNR.Combat
         /// Apply a status effect to a target.
         /// </summary>
         /// <param name="target">Target to apply effect to</param>
-        /// <param name="effectType">Type of status effect</param>
+        /// <param name="statusType">Type of status effect</param>
         /// <param name="stacks">Number of stacks to apply</param>
         /// <param name="duration">Duration in turns (0 = permanent until cleared)</param>
-        public void ApplyStatus(ICombatTarget target, StatusEffectType effectType, int stacks = 1, int duration = 0)
+        public void ApplyStatus(ICombatTarget target, StatusType statusType, int stacks = 1, int duration = 0)
         {
             if (target == null || stacks <= 0) return;
 
@@ -86,7 +87,7 @@ namespace HNR.Combat
             }
 
             // Check if effect already exists
-            var existing = _statusEffects[target].Find(e => e.Type == effectType);
+            var existing = _statusEffects[target].Find(e => e.Type == statusType);
             if (existing != null)
             {
                 // Stack the effect
@@ -95,52 +96,52 @@ namespace HNR.Combat
                 {
                     existing.Duration = duration;
                 }
-                Debug.Log($"[StatusEffectManager] Stacked {effectType} on {target.Name}: {existing.Stacks} stacks");
+                Debug.Log($"[StatusEffectManager] Stacked {statusType} on {target.Name}: {existing.Stacks} stacks");
             }
             else
             {
                 // Add new effect
                 var effect = new StatusEffect
                 {
-                    Type = effectType,
+                    Type = statusType,
                     Stacks = stacks,
                     Duration = duration
                 };
                 _statusEffects[target].Add(effect);
-                Debug.Log($"[StatusEffectManager] Applied {effectType} to {target.Name}: {stacks} stacks");
+                Debug.Log($"[StatusEffectManager] Applied {statusType} to {target.Name}: {stacks} stacks");
             }
 
-            EventBus.Publish(new StatusAppliedEvent(target, effectType, stacks));
+            EventBus.Publish(new StatusAppliedEvent(target, statusType, stacks, duration));
         }
 
         /// <summary>
         /// Remove stacks of a status effect from a target.
         /// </summary>
         /// <param name="target">Target to remove effect from</param>
-        /// <param name="effectType">Type of status effect</param>
+        /// <param name="statusType">Type of status effect</param>
         /// <param name="stacks">Number of stacks to remove (0 = all)</param>
-        public void RemoveStatus(ICombatTarget target, StatusEffectType effectType, int stacks = 0)
+        public void RemoveStatus(ICombatTarget target, StatusType statusType, int stacks = 0)
         {
             if (target == null) return;
             if (!_statusEffects.ContainsKey(target)) return;
 
-            var effect = _statusEffects[target].Find(e => e.Type == effectType);
+            var effect = _statusEffects[target].Find(e => e.Type == statusType);
             if (effect == null) return;
 
             if (stacks <= 0 || stacks >= effect.Stacks)
             {
                 // Remove entirely
                 _statusEffects[target].Remove(effect);
-                Debug.Log($"[StatusEffectManager] Removed {effectType} from {target.Name}");
+                Debug.Log($"[StatusEffectManager] Removed {statusType} from {target.Name}");
             }
             else
             {
                 // Reduce stacks
                 effect.Stacks -= stacks;
-                Debug.Log($"[StatusEffectManager] Reduced {effectType} on {target.Name}: {effect.Stacks} stacks remaining");
+                Debug.Log($"[StatusEffectManager] Reduced {statusType} on {target.Name}: {effect.Stacks} stacks remaining");
             }
 
-            EventBus.Publish(new StatusRemovedEvent(target, effectType));
+            EventBus.Publish(new StatusRemovedEvent(target, statusType));
         }
 
         // ============================================
@@ -150,23 +151,23 @@ namespace HNR.Combat
         /// <summary>
         /// Check if a target has a specific status effect.
         /// </summary>
-        public bool HasStatus(ICombatTarget target, StatusEffectType effectType)
+        public bool HasStatus(ICombatTarget target, StatusType statusType)
         {
             if (target == null) return false;
             if (!_statusEffects.ContainsKey(target)) return false;
 
-            return _statusEffects[target].Exists(e => e.Type == effectType);
+            return _statusEffects[target].Exists(e => e.Type == statusType);
         }
 
         /// <summary>
         /// Get the number of stacks of a status effect on a target.
         /// </summary>
-        public int GetStatusStacks(ICombatTarget target, StatusEffectType effectType)
+        public int GetStatusStacks(ICombatTarget target, StatusType statusType)
         {
             if (target == null) return 0;
             if (!_statusEffects.ContainsKey(target)) return 0;
 
-            var effect = _statusEffects[target].Find(e => e.Type == effectType);
+            var effect = _statusEffects[target].Find(e => e.Type == statusType);
             return effect?.Stacks ?? 0;
         }
 
@@ -199,7 +200,7 @@ namespace HNR.Combat
                 foreach (var effect in kvp.Value)
                 {
                     // Apply per-turn effects
-                    ApplyPerTurnEffect(target, effect);
+                    int tickValue = ApplyPerTurnEffect(target, effect);
 
                     // Reduce duration
                     if (effect.Duration > 0)
@@ -211,7 +212,7 @@ namespace HNR.Combat
                         }
                     }
 
-                    EventBus.Publish(new StatusTickedEvent(target, effect.Type, effect.Stacks));
+                    EventBus.Publish(new StatusTickedEvent(target, effect.Type, tickValue));
                 }
             }
 
@@ -224,28 +225,35 @@ namespace HNR.Combat
             }
         }
 
-        private void ApplyPerTurnEffect(ICombatTarget target, StatusEffect effect)
+        private int ApplyPerTurnEffect(ICombatTarget target, StatusEffect effect)
         {
+            int tickValue = 0;
+
             switch (effect.Type)
             {
-                case StatusEffectType.Poison:
+                case StatusType.Poison:
                     target.TakeDamage(effect.Stacks);
+                    tickValue = effect.Stacks;
                     Debug.Log($"[StatusEffectManager] Poison dealt {effect.Stacks} damage to {target.Name}");
                     break;
 
-                case StatusEffectType.Regeneration:
+                case StatusType.Regeneration:
                     target.Heal(effect.Stacks);
+                    tickValue = effect.Stacks;
                     Debug.Log($"[StatusEffectManager] Regeneration healed {effect.Stacks} on {target.Name}");
                     break;
 
-                case StatusEffectType.Burn:
+                case StatusType.Burn:
                     target.TakeDamage(effect.Stacks);
+                    tickValue = effect.Stacks;
                     effect.Stacks = Mathf.Max(0, effect.Stacks - 1); // Burn reduces by 1 each turn
                     Debug.Log($"[StatusEffectManager] Burn dealt damage, reduced to {effect.Stacks} stacks");
                     break;
 
                 // Other per-turn effects can be added here
             }
+
+            return tickValue;
         }
 
         /// <summary>
@@ -281,12 +289,12 @@ namespace HNR.Combat
         {
             float multiplier = 1f;
 
-            if (HasStatus(target, StatusEffectType.Strength))
+            if (HasStatus(target, StatusType.Strength))
             {
                 multiplier += 0.5f; // +50% damage
             }
 
-            if (HasStatus(target, StatusEffectType.Weak))
+            if (HasStatus(target, StatusType.Weakness))
             {
                 multiplier -= 0.25f; // -25% damage
             }
@@ -301,12 +309,12 @@ namespace HNR.Combat
         {
             float multiplier = 1f;
 
-            if (HasStatus(target, StatusEffectType.Vulnerable))
+            if (HasStatus(target, StatusType.Vulnerability))
             {
                 multiplier += 0.5f; // +50% damage taken
             }
 
-            if (HasStatus(target, StatusEffectType.Protected))
+            if (HasStatus(target, StatusType.Protected))
             {
                 multiplier -= 0.25f; // -25% damage taken
             }
@@ -324,82 +332,8 @@ namespace HNR.Combat
     /// </summary>
     public class StatusEffect
     {
-        public StatusEffectType Type;
+        public StatusType Type;
         public int Stacks;
         public int Duration; // 0 = permanent until cleared
-    }
-
-    /// <summary>
-    /// Types of status effects.
-    /// </summary>
-    public enum StatusEffectType
-    {
-        // Damage over time
-        Poison,
-        Burn,
-
-        // Healing
-        Regeneration,
-
-        // Damage modifiers
-        Strength,
-        Weak,
-
-        // Defense modifiers
-        Vulnerable,
-        Protected,
-
-        // Card effects
-        Dazed,      // Next card costs +1 AP
-        Energized,  // Next card costs -1 AP
-
-        // Special
-        Marked,     // Takes bonus damage from next attack
-        Thorns,     // Reflects damage to attacker
-        Ritual,     // Gains stacks, triggers at threshold
-    }
-
-    // ============================================
-    // Status Effect Events
-    // ============================================
-
-    public class StatusAppliedEvent : GameEvent
-    {
-        public ICombatTarget Target { get; }
-        public StatusEffectType EffectType { get; }
-        public int Stacks { get; }
-
-        public StatusAppliedEvent(ICombatTarget target, StatusEffectType type, int stacks)
-        {
-            Target = target;
-            EffectType = type;
-            Stacks = stacks;
-        }
-    }
-
-    public class StatusRemovedEvent : GameEvent
-    {
-        public ICombatTarget Target { get; }
-        public StatusEffectType EffectType { get; }
-
-        public StatusRemovedEvent(ICombatTarget target, StatusEffectType type)
-        {
-            Target = target;
-            EffectType = type;
-        }
-    }
-
-    public class StatusTickedEvent : GameEvent
-    {
-        public ICombatTarget Target { get; }
-        public StatusEffectType EffectType { get; }
-        public int Stacks { get; }
-
-        public StatusTickedEvent(ICombatTarget target, StatusEffectType type, int stacks)
-        {
-            Target = target;
-            EffectType = type;
-            Stacks = stacks;
-        }
     }
 }

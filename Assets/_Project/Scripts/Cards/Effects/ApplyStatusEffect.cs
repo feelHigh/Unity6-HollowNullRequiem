@@ -49,7 +49,7 @@ namespace HNR.Cards
             if (statusManager != null)
             {
                 // Apply through StatusEffectManager
-                statusManager.ApplyEffect(context.Target, _statusType.ToString(), stacks);
+                statusManager.ApplyStatus(context.Target, _statusType, stacks, duration);
                 Debug.Log($"[ApplyStatusEffect] Applied {stacks} {_statusType} to {context.Target.Name} via StatusEffectManager");
             }
             else
@@ -135,7 +135,7 @@ namespace HNR.Cards
 
                 if (statusManager != null)
                 {
-                    statusManager.ApplyEffect(enemy, _statusType.ToString(), stacks);
+                    statusManager.ApplyStatus(enemy, _statusType, stacks, duration);
                 }
 
                 // Publish event for each enemy

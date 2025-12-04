@@ -44,7 +44,7 @@ namespace HNR.Combat
             }
 
             // Tick status effects
-            context.StatusManager?.TickEffects();
+            context.StatusManager?.TickAllEffects();
 
             EventBus.Publish(new TurnEndedEvent(true));
             _processComplete = true;

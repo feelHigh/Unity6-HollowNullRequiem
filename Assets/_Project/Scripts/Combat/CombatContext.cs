@@ -8,26 +8,6 @@ using HNR.Characters;
 
 namespace HNR.Combat
 {
-    // ============================================
-    // FORWARD DECLARATIONS - Placeholder Types
-    // TODO: Move to proper locations when implemented
-    // ============================================
-
-    /// <summary>
-    /// Placeholder: Manages status effects on combatants.
-    /// TODO: Implement in Scripts/Combat/StatusEffects/StatusEffectManager.cs
-    /// </summary>
-    public class StatusEffectManager
-    {
-        public void TickEffects() { }
-        public void ApplyEffect(object target, string effectId, int stacks) { }
-        public void ClearEffects(object target) { }
-    }
-
-    // ============================================
-    // COMBAT CONTEXT
-    // ============================================
-
     /// <summary>
     /// Shared context passed to all combat phases.
     /// Contains complete state of the current combat encounter.
