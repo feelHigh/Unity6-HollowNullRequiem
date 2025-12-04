@@ -17,7 +17,12 @@ namespace HNR.Combat
     /// Placeholder: Manages status effects on combatants.
     /// TODO: Implement in Scripts/Combat/StatusEffects/StatusEffectManager.cs
     /// </summary>
-    public class StatusEffectManager { }
+    public class StatusEffectManager
+    {
+        public void TickEffects() { }
+        public void ApplyEffect(object target, string effectId, int stacks) { }
+        public void ClearEffects(object target) { }
+    }
 
     // ============================================
     // COMBAT CONTEXT

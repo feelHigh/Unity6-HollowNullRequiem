@@ -11,50 +11,142 @@ namespace HNR.Combat
 {
     /// <summary>
     /// Enemies execute their telegraphed intents.
-    /// Processes all enemy actions then checks for victory/defeat.
+    /// Processes all enemy actions then checks for defeat.
     /// </summary>
     public class EnemyPhase : ICombatPhase
     {
-        private bool _actionsComplete;
+        private int _currentEnemyIndex;
+        private bool _phaseComplete;
 
         public CombatPhase PhaseType => CombatPhase.EnemyPhase;
 
         public void Enter(CombatContext context)
         {
-            _actionsComplete = false;
+            Debug.Log("[EnemyPhase] Enemy turn started");
             context.IsPlayerTurn = false;
 
             EventBus.Publish(new TurnStartedEvent(false, context.TurnNumber));
 
-            Debug.Log($"[EnemyPhase] {context.Enemies.Count} enemies acting");
-
-            // Execute each enemy's intent
-            foreach (var enemy in context.Enemies)
-            {
-                if (enemy.IsDead) continue;
-
-                ExecuteEnemyIntent(enemy, context);
-            }
-
-            _actionsComplete = true;
-            Debug.Log("[EnemyPhase] All enemies have acted");
+            _currentEnemyIndex = 0;
+            _phaseComplete = false;
         }
 
         public void Update(CombatContext context)
         {
-            // Check for defeat after enemy actions
+            if (_phaseComplete) return;
+
+            // Process each enemy's action
+            while (_currentEnemyIndex < context.Enemies.Count)
+            {
+                var enemy = context.Enemies[_currentEnemyIndex];
+                if (!enemy.IsDead)
+                {
+                    ExecuteEnemyAction(enemy, context);
+                }
+                _currentEnemyIndex++;
+            }
+
+            _phaseComplete = true;
+
+            // Check for defeat before transitioning
             if (context.TeamHP <= 0)
             {
-                context.CombatEnded = true;
-                context.PlayerVictory = false;
                 ServiceLocator.Get<TurnManager>()?.TransitionToPhase(CombatPhase.Defeat);
+            }
+            else
+            {
+                ServiceLocator.Get<TurnManager>()?.TransitionToPhase(GetNextPhase(context));
+            }
+        }
+
+        /// <summary>
+        /// Execute a single enemy's current intent.
+        /// </summary>
+        private void ExecuteEnemyAction(EnemyInstance enemy, CombatContext context)
+        {
+            var intent = enemy.GetCurrentIntent();
+            if (intent == null)
+            {
+                Debug.LogWarning($"[EnemyPhase] {enemy.Name} has no intent");
                 return;
             }
 
-            if (_actionsComplete)
+            Debug.Log($"[EnemyPhase] {enemy.Name} executes: {intent.IntentType}");
+
+            switch (intent.IntentType)
             {
-                _actionsComplete = false;
-                ServiceLocator.Get<TurnManager>()?.TransitionToPhase(GetNextPhase(context));
+                case IntentType.Attack:
+                    int damage = intent.Value > 0 ? intent.Value : (enemy.Data?.GetScaledDamage(1) ?? 5);
+                    DealDamageToTeam(damage, context);
+                    EventBus.Publish(new EnemyIntentExecutedEvent(enemy, intent));
+                    break;
+
+                case IntentType.AttackMultiple:
+                    int hitDamage = intent.Value > 0 ? intent.Value : (enemy.Data?.GetScaledDamage(1) ?? 5);
+                    int hits = intent.SecondaryValue > 0 ? intent.SecondaryValue : 1;
+                    for (int i = 0; i < hits; i++)
+                    {
+                        DealDamageToTeam(hitDamage, context);
+                    }
+                    EventBus.Publish(new EnemyIntentExecutedEvent(enemy, intent));
+                    break;
+
+                case IntentType.Defend:
+                    int block = intent.Value > 0 ? intent.Value : (enemy.Data?.BaseBlock ?? 5);
+                    enemy.GainBlock(block);
+                    Debug.Log($"[EnemyPhase] {enemy.Name} gains {block} block");
+                    EventBus.Publish(new EnemyIntentExecutedEvent(enemy, intent));
+                    break;
+
+                case IntentType.Buff:
+                    // TODO: Apply buff status effect
+                    Debug.Log($"[EnemyPhase] {enemy.Name} buffs self");
+                    EventBus.Publish(new EnemyIntentExecutedEvent(enemy, intent));
+                    break;
+
+                case IntentType.Debuff:
+                    // TODO: Apply debuff to team
+                    Debug.Log($"[EnemyPhase] {enemy.Name} debuffs team");
+                    EventBus.Publish(new EnemyIntentExecutedEvent(enemy, intent));
+                    break;
+
+                case IntentType.Corrupt:
+                    // TODO: Apply corruption
+                    Debug.Log($"[EnemyPhase] {enemy.Name} corrupts team by {intent.Value}");
+                    EventBus.Publish(new EnemyIntentExecutedEvent(enemy, intent));
+                    break;
+
+                default:
+                    Debug.Log($"[EnemyPhase] {enemy.Name} does something unknown");
+                    break;
+            }
+
+            enemy.AdvanceIntent();
+        }
+
+        /// <summary>
+        /// Deal damage to the player's team, accounting for block.
+        /// </summary>
+        private void DealDamageToTeam(int damage, CombatContext context)
+        {
+            int blocked = Mathf.Min(damage, context.TeamBlock);
+            context.TeamBlock -= blocked;
+            int remaining = damage - blocked;
+
+            if (blocked > 0)
+            {
+                EventBus.Publish(new BlockChangedEvent(context.TeamBlock, context.TeamBlock + blocked));
+            }
+
+            if (remaining > 0)
+            {
+                context.TeamHP -= remaining;
+                EventBus.Publish(new TeamHPChangedEvent(context.TeamHP, context.TeamMaxHP, -remaining));
+                Debug.Log($"[EnemyPhase] Team takes {remaining} damage ({blocked} blocked). HP: {context.TeamHP}/{context.TeamMaxHP}");
+            }
+            else
+            {
+                Debug.Log($"[EnemyPhase] Attack fully blocked ({blocked} damage blocked)");
             }
         }
 
@@ -65,6 +157,11 @@ namespace HNR.Combat
 
         public CombatPhase GetNextPhase(CombatContext context)
         {
+            if (context.TeamHP <= 0)
+            {
+                return CombatPhase.Defeat;
+            }
+
             // Check if all enemies defeated
             bool allDefeated = true;
             foreach (var enemy in context.Enemies)
@@ -81,24 +178,7 @@ namespace HNR.Combat
                 return CombatPhase.Victory;
             }
 
-            // Continue to next player turn
             return CombatPhase.DrawPhase;
-        }
-
-        /// <summary>
-        /// Execute a single enemy's current intent.
-        /// </summary>
-        private void ExecuteEnemyIntent(EnemyInstance enemy, CombatContext context)
-        {
-            // TODO: Get intent from enemy's pattern
-            // TODO: Execute intent based on type (Attack, Defend, Buff, etc.)
-            // TODO: Advance enemy's intent pattern
-
-            Debug.Log($"[EnemyPhase] Enemy executes intent");
-
-            // Placeholder: Basic attack for now
-            // var turnManager = ServiceLocator.Get<TurnManager>();
-            // turnManager?.DamageTeam(enemy.Data?.BaseAttack ?? 5);
         }
     }
 }

@@ -5,49 +5,56 @@
 
 using UnityEngine;
 using HNR.Core;
+using HNR.Core.Events;
 
 namespace HNR.Combat
 {
     /// <summary>
     /// Discard hand, process end-of-turn effects.
-    /// Transitions to enemy phase after completion.
+    /// Ticks card modifiers and status effects.
     /// </summary>
     public class EndPhase : ICombatPhase
     {
-        private bool _complete;
+        private bool _processComplete;
 
         public CombatPhase PhaseType => CombatPhase.EndPhase;
 
         public void Enter(CombatContext context)
         {
-            _complete = false;
+            _processComplete = false;
+            Debug.Log("[EndPhase] Processing end of player turn");
 
             // Discard remaining hand
-            var handManager = context.HandManager;
-            var deckManager = context.DeckManager;
-
-            if (handManager != null && deckManager != null)
+            var handCards = context.HandManager?.GetHandInstances();
+            if (handCards != null && handCards.Count > 0)
             {
-                var handCards = handManager.GetHandInstances();
-                deckManager.DiscardAll(handCards);
-                handManager.ClearHand();
+                context.DeckManager?.DiscardAll(handCards);
+                context.HandManager?.ClearHand();
                 Debug.Log($"[EndPhase] Discarded {handCards.Count} cards");
             }
 
-            // TODO: Process end-of-turn status effects
-            // - Tick down durations
-            // - Apply damage-over-time
-            // - Remove expired effects
+            // Tick card modifiers (reduce durations, remove expired)
+            var allCards = context.DeckManager?.AllCards;
+            if (allCards != null)
+            {
+                foreach (var card in allCards)
+                {
+                    card.TickModifiers();
+                }
+            }
 
-            _complete = true;
-            Debug.Log("[EndPhase] End of turn effects processed");
+            // Tick status effects
+            context.StatusManager?.TickEffects();
+
+            EventBus.Publish(new TurnEndedEvent(true));
+            _processComplete = true;
         }
 
         public void Update(CombatContext context)
         {
-            if (_complete)
+            if (_processComplete)
             {
-                _complete = false;
+                _processComplete = false;
                 ServiceLocator.Get<TurnManager>()?.TransitionToPhase(GetNextPhase(context));
             }
         }

@@ -39,9 +39,44 @@ namespace HNR.Core.Events
     public class EnemyInstance
     {
         public HNR.Combat.EnemyDataSO Data { get; set; }
+        public string Name => Data?.EnemyName ?? "Enemy";
         public int CurrentHP { get; set; }
         public int Block { get; set; }
         public bool IsDead => CurrentHP <= 0;
+
+        private HNR.Combat.IntentPattern _intentPattern;
+        private int _intentIndex;
+
+        public void Initialize()
+        {
+            if (Data != null)
+            {
+                CurrentHP = Data.BaseHP;
+                _intentPattern = Data.IntentPattern?.Clone();
+            }
+        }
+
+        public HNR.Combat.IntentStep GetCurrentIntent()
+        {
+            return _intentPattern?.GetCurrentIntent();
+        }
+
+        public void AdvanceIntent()
+        {
+            _intentPattern?.AdvanceIntent();
+        }
+
+        public void GainBlock(int amount)
+        {
+            Block += amount;
+        }
+
+        public void TakeDamage(int amount)
+        {
+            int blocked = UnityEngine.Mathf.Min(amount, Block);
+            Block -= blocked;
+            CurrentHP -= (amount - blocked);
+        }
     }
 
     // CardInstance is now implemented in HNR.Cards.CardInstance
