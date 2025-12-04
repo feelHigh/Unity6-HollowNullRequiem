@@ -42,6 +42,13 @@ namespace HNR.Characters
         private int _soulEssence;
         private bool _inNullState;
 
+        // Null State Modifiers
+        private float _burnDamageMultiplier = 1.0f;
+        private float _lifestealMultiplier = 1.0f;
+        private bool _healingDamagesEnemies = false;
+        private int _nullStateBlockRegen = 0;
+        private int _nullStateHealRegen = 0;
+
         // ============================================
         // Properties
         // ============================================
@@ -81,6 +88,25 @@ namespace HNR.Characters
 
         /// <summary>Combat class/role.</summary>
         public RequiemClass Class => _data?.Class ?? RequiemClass.Striker;
+
+        // ============================================
+        // Null State Modifier Properties
+        // ============================================
+
+        /// <summary>Multiplier for Burn damage (Kira Null State).</summary>
+        public float BurnDamageMultiplier => _burnDamageMultiplier;
+
+        /// <summary>Multiplier for lifesteal/drain effects (Mordren Null State).</summary>
+        public float LifestealMultiplier => _lifestealMultiplier;
+
+        /// <summary>Whether healing effects also damage enemies (Elara Null State).</summary>
+        public bool HealingDamagesEnemies => _healingDamagesEnemies;
+
+        /// <summary>Block gained at turn start in Null State (Thornwick).</summary>
+        public int NullStateBlockRegen => _nullStateBlockRegen;
+
+        /// <summary>HP healed at turn start in Null State (Thornwick).</summary>
+        public int NullStateHealRegen => _nullStateHealRegen;
 
         // ============================================
         // Initialization
@@ -308,6 +334,75 @@ namespace HNR.Characters
             Debug.Log($"[RequiemInstance] {Name} has fallen!");
             // Note: In team-based HP system, individual Requiem death
             // may not end combat - handled by TurnManager
+        }
+
+        // ============================================
+        // Null State Modifier Setters
+        // ============================================
+
+        /// <summary>
+        /// Set Burn damage multiplier (Kira Null State).
+        /// </summary>
+        public void SetBurnDamageMultiplier(float multiplier)
+        {
+            _burnDamageMultiplier = multiplier;
+        }
+
+        /// <summary>
+        /// Set lifesteal/drain multiplier (Mordren Null State).
+        /// </summary>
+        public void SetLifestealMultiplier(float multiplier)
+        {
+            _lifestealMultiplier = multiplier;
+        }
+
+        /// <summary>
+        /// Set whether healing damages enemies (Elara Null State).
+        /// </summary>
+        public void SetHealingDamagesEnemies(bool active)
+        {
+            _healingDamagesEnemies = active;
+        }
+
+        /// <summary>
+        /// Set Null State regeneration values (Thornwick Null State).
+        /// </summary>
+        public void SetNullStateRegen(int blockRegen, int healRegen)
+        {
+            _nullStateBlockRegen = blockRegen;
+            _nullStateHealRegen = healRegen;
+        }
+
+        /// <summary>
+        /// Reset all Null State modifiers to default values.
+        /// </summary>
+        public void ResetNullStateModifiers()
+        {
+            _burnDamageMultiplier = 1.0f;
+            _lifestealMultiplier = 1.0f;
+            _healingDamagesEnemies = false;
+            _nullStateBlockRegen = 0;
+            _nullStateHealRegen = 0;
+        }
+
+        /// <summary>
+        /// Apply turn-start Null State regeneration effects.
+        /// </summary>
+        public void ApplyNullStateRegen()
+        {
+            if (!_inNullState) return;
+
+            if (_nullStateBlockRegen > 0)
+            {
+                GainBlock(_nullStateBlockRegen);
+                Debug.Log($"[RequiemInstance] {Name} Null State regen: +{_nullStateBlockRegen} Block");
+            }
+
+            if (_nullStateHealRegen > 0)
+            {
+                Heal(_nullStateHealRegen);
+                Debug.Log($"[RequiemInstance] {Name} Null State regen: +{_nullStateHealRegen} HP");
+            }
         }
 
         // ============================================
