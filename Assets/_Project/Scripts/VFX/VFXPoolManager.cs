@@ -201,7 +201,7 @@ namespace HNR.VFX
             var instance = Spawn(effectId, parent.position, parent.rotation);
             if (instance != null)
             {
-                instance.SetFollowTarget(parent);
+                instance.SetTarget(parent);
             }
             return instance;
         }
@@ -371,7 +371,7 @@ namespace HNR.VFX
                 instance = go.AddComponent<VFXInstance>();
             }
 
-            instance.Initialize(config.EffectId, this);
+            instance.EffectId = config.EffectId;
             return instance;
         }
 

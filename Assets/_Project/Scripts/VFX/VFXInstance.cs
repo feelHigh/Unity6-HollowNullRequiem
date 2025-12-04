@@ -3,7 +3,9 @@
 // Component for pooled VFX particle effects
 // ============================================
 
+using System.Collections;
 using UnityEngine;
+using HNR.Core;
 using HNR.Core.Interfaces;
 
 namespace HNR.VFX
@@ -20,21 +22,21 @@ namespace HNR.VFX
         // ============================================
 
         [Header("Configuration")]
+        [SerializeField, Tooltip("Default lifetime in seconds")]
+        private float _lifetime = 2f;
+
         [SerializeField, Tooltip("Auto-return to pool when particles finish")]
         private bool _autoReturn = true;
 
-        [SerializeField, Tooltip("Override duration (0 = use particle system duration)")]
-        private float _overrideDuration = 0f;
-
-        [SerializeField, Tooltip("Scale effect with target")]
-        private bool _scaleWithTarget = false;
+        [SerializeField, Tooltip("Use particle system duration instead of _lifetime")]
+        private bool _useParticleLifetime = true;
 
         // ============================================
         // Properties
         // ============================================
 
         /// <summary>Effect identifier for pool management.</summary>
-        public string EffectId { get; private set; }
+        public string EffectId { get; set; }
 
         /// <summary>Whether this instance is currently active/playing.</summary>
         public bool IsPlaying => _particleSystem != null && _particleSystem.isPlaying;
@@ -44,11 +46,9 @@ namespace HNR.VFX
         // ============================================
 
         private ParticleSystem _particleSystem;
-        private VFXPoolManager _poolManager;
         private Transform _followTarget;
         private Vector3 _followOffset;
-        private float _returnTimer;
-        private bool _isActive;
+        private Coroutine _lifetimeCoroutine;
 
         // ============================================
         // Unity Lifecycle
@@ -58,47 +58,21 @@ namespace HNR.VFX
         {
             _particleSystem = GetComponent<ParticleSystem>();
 
-            // Ensure particle system doesn't play on awake (pool handles activation)
-            var main = _particleSystem.main;
-            main.playOnAwake = false;
+            // Calculate lifetime from particle system if enabled
+            if (_useParticleLifetime && _particleSystem != null)
+            {
+                var main = _particleSystem.main;
+                _lifetime = main.duration + main.startLifetime.constantMax;
+            }
         }
 
-        private void Update()
+        private void LateUpdate()
         {
-            // Handle target following
-            if (_followTarget != null && _isActive)
+            // Handle target following in LateUpdate for smoother results
+            if (_followTarget != null)
             {
                 transform.position = _followTarget.position + _followOffset;
-
-                if (_scaleWithTarget)
-                {
-                    transform.localScale = _followTarget.lossyScale;
-                }
             }
-
-            // Handle auto-return timer
-            if (_autoReturn && _isActive && _returnTimer > 0)
-            {
-                _returnTimer -= Time.deltaTime;
-                if (_returnTimer <= 0)
-                {
-                    ReturnToPool();
-                }
-            }
-        }
-
-        // ============================================
-        // Initialization
-        // ============================================
-
-        /// <summary>
-        /// Initialize the instance with pool reference.
-        /// Called by VFXPoolManager when creating instances.
-        /// </summary>
-        public void Initialize(string effectId, VFXPoolManager poolManager)
-        {
-            EffectId = effectId;
-            _poolManager = poolManager;
         }
 
         // ============================================
@@ -111,30 +85,20 @@ namespace HNR.VFX
         public void OnSpawnFromPool()
         {
             gameObject.SetActive(true);
-            _isActive = true;
             _followTarget = null;
             _followOffset = Vector3.zero;
-
-            // Calculate return timer
-            if (_overrideDuration > 0)
-            {
-                _returnTimer = _overrideDuration;
-            }
-            else if (_particleSystem != null)
-            {
-                var main = _particleSystem.main;
-                _returnTimer = main.duration + main.startLifetime.constantMax;
-            }
-            else
-            {
-                _returnTimer = 2f; // Fallback
-            }
 
             // Play particle system
             if (_particleSystem != null)
             {
                 _particleSystem.Clear();
                 _particleSystem.Play();
+            }
+
+            // Start auto-return coroutine
+            if (_autoReturn)
+            {
+                _lifetimeCoroutine = StartCoroutine(AutoReturnRoutine());
             }
         }
 
@@ -143,7 +107,13 @@ namespace HNR.VFX
         /// </summary>
         public void OnReturnToPool()
         {
-            _isActive = false;
+            // Stop coroutine if running
+            if (_lifetimeCoroutine != null)
+            {
+                StopCoroutine(_lifetimeCoroutine);
+                _lifetimeCoroutine = null;
+            }
+
             _followTarget = null;
             _followOffset = Vector3.zero;
 
@@ -161,92 +131,81 @@ namespace HNR.VFX
         // ============================================
 
         /// <summary>
-        /// Set a target transform to follow.
+        /// Set target transform to follow.
         /// </summary>
         /// <param name="target">Transform to follow</param>
         /// <param name="offset">Offset from target position</param>
-        public void SetFollowTarget(Transform target, Vector3 offset = default)
+        public void SetTarget(Transform target, Vector3 offset = default)
         {
             _followTarget = target;
             _followOffset = offset;
         }
 
         /// <summary>
-        /// Stop the particle effect immediately.
-        /// Does not return to pool automatically.
+        /// Stop particle emission immediately.
         /// </summary>
         public void Stop()
         {
             if (_particleSystem != null)
             {
-                _particleSystem.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+                _particleSystem.Stop();
             }
         }
 
         /// <summary>
-        /// Stop and immediately return to pool.
+        /// Play the effect.
         /// </summary>
-        public void StopAndReturn()
+        public void Play()
         {
-            Stop();
-            ReturnToPool();
-        }
-
-        /// <summary>
-        /// Return this instance to the pool.
-        /// </summary>
-        public void ReturnToPool()
-        {
-            if (!_isActive) return;
-
-            if (_poolManager != null)
+            if (_particleSystem != null)
             {
-                _poolManager.Return(this);
-            }
-            else
-            {
-                // Fallback: just disable if no pool reference
-                OnReturnToPool();
+                _particleSystem.Play();
             }
         }
 
         /// <summary>
-        /// Extend the active duration.
-        /// </summary>
-        /// <param name="additionalTime">Time to add in seconds</param>
-        public void ExtendDuration(float additionalTime)
-        {
-            _returnTimer += additionalTime;
-        }
-
-        /// <summary>
-        /// Set the emission rate multiplier.
-        /// </summary>
-        public void SetEmissionMultiplier(float multiplier)
-        {
-            if (_particleSystem == null) return;
-
-            var emission = _particleSystem.emission;
-            emission.rateOverTimeMultiplier = multiplier;
-        }
-
-        /// <summary>
-        /// Set the particle start color.
+        /// Set particle color.
         /// </summary>
         public void SetColor(Color color)
         {
-            if (_particleSystem == null) return;
-
-            var main = _particleSystem.main;
-            main.startColor = color;
+            if (_particleSystem != null)
+            {
+                var main = _particleSystem.main;
+                main.startColor = color;
+            }
         }
 
         /// <summary>
-        /// Set the particle system scale.
+        /// Set particle scale.
         /// </summary>
         public void SetScale(float scale)
         {
             transform.localScale = Vector3.one * scale;
+        }
+
+        // ============================================
+        // Private Methods
+        // ============================================
+
+        private IEnumerator AutoReturnRoutine()
+        {
+            float elapsed = 0f;
+
+            while (elapsed < _lifetime)
+            {
+                // Check if particle system finished early
+                if (_particleSystem != null && !_particleSystem.IsAlive(true))
+                    break;
+
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            // Return to pool via ServiceLocator
+            if (ServiceLocator.TryGet<VFXPoolManager>(out var pool))
+            {
+                pool.Return(this);
+            }
         }
     }
 }
