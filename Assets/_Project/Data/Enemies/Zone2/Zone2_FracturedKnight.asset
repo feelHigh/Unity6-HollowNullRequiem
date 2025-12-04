@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd6b10894daa9f649ae087c143d4b76c, type: 3}
+  m_Name: Zone2_FracturedKnight
+  m_EditorClassIdentifier:
+  _enemyId: z2_fractured_knight
+  _enemyName: Fractured Knight
+  _description: A fallen Warden whose armor has fused with corrupted crystal. Methodical and dangerous, it builds strength before unleashing devastating combos.
+  _soulAspect: 0
+  _isElite: 0
+  _isBoss: 0
+  _baseHP: 50
+  _baseDamage: 12
+  _baseBlock: 12
+  _corruptionOnHit: 4
+  _intentPattern:
+    _steps:
+    - _intentType: 3
+      _value: 12
+      _secondaryValue: 0
+      _statusType: 0
+      _customDescription:
+    - _intentType: 1
+      _value: 6
+      _secondaryValue: 2
+      _statusType: 0
+      _customDescription:
+    - _intentType: 0
+      _value: 12
+      _secondaryValue: 0
+      _statusType: 0
+      _customDescription:
+    - _intentType: 4
+      _value: 2
+      _secondaryValue: 0
+      _statusType: 5
+      _customDescription:
+    _looping: 1
+  _voidShardReward: 20
+  _cardDropChance: 0.35
+  _cardDropPool: []
+  _sprite: {fileID: 0}
+  _animator: {fileID: 0}
+  _spriteScale: 1.1
+  _attackSound: {fileID: 0}
+  _hitSound: {fileID: 0}
+  _deathSound: {fileID: 0}
