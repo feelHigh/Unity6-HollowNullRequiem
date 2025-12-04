@@ -6,94 +6,11 @@
 using System.Collections.Generic;
 using HNR.Core.Interfaces;
 using HNR.Cards;
+using HNR.Combat;
+using HNR.Characters;
 
 namespace HNR.Core.Events
 {
-    // ============================================
-    // FORWARD DECLARATIONS - Placeholder Types
-    // TODO: Move to proper locations when implemented
-    // ============================================
-
-    // RequiemDataSO is implemented in HNR.Characters.RequiemDataSO
-
-    /// <summary>
-    /// Placeholder: Runtime instance of a Requiem character.
-    /// TODO: Implement in Scripts/Characters/RequiemInstance.cs
-    /// </summary>
-    public class RequiemInstance
-    {
-        public HNR.Characters.RequiemDataSO Data { get; set; }
-        public int MaxHP { get; set; } = 100;
-        public int CurrentHP { get; set; } = 100;
-        public bool IsDead => CurrentHP <= 0;
-    }
-
-    /// <summary>
-    /// Placeholder: Runtime instance of an enemy.
-    /// TODO: Implement in Scripts/Enemies/EnemyInstance.cs
-    /// </summary>
-    public class EnemyInstance
-    {
-        public HNR.Combat.EnemyDataSO Data { get; set; }
-        public string Name => Data?.EnemyName ?? "Enemy";
-        public int CurrentHP { get; set; }
-        public int Block { get; set; }
-        public bool IsDead => CurrentHP <= 0;
-
-        private HNR.Combat.IntentPattern _intentPattern;
-        private int _intentIndex;
-
-        public void Initialize()
-        {
-            if (Data != null)
-            {
-                CurrentHP = Data.BaseHP;
-                _intentPattern = Data.IntentPattern?.Clone();
-            }
-        }
-
-        public HNR.Combat.IntentStep GetCurrentIntent()
-        {
-            return _intentPattern?.GetCurrentIntent();
-        }
-
-        public void AdvanceIntent()
-        {
-            _intentPattern?.AdvanceIntent();
-        }
-
-        public void GainBlock(int amount)
-        {
-            Block += amount;
-        }
-
-        public void TakeDamage(int amount)
-        {
-            int blocked = UnityEngine.Mathf.Min(amount, Block);
-            Block -= blocked;
-            CurrentHP -= (amount - blocked);
-        }
-    }
-
-    // CardInstance is now implemented in HNR.Cards.CardInstance
-
-    /// <summary>
-    /// Placeholder: Interface for anything that can be targeted.
-    /// TODO: Implement in Scripts/Combat/ITargetable.cs
-    /// </summary>
-    public interface ITargetable { }
-
-    /// <summary>
-    /// Placeholder: Interface for combat participants (Requiems and Enemies).
-    /// TODO: Implement in Scripts/Combat/ICombatant.cs
-    /// </summary>
-    public interface ICombatant : ITargetable
-    {
-        int CurrentHP { get; }
-        int MaxHP { get; }
-        int Block { get; }
-    }
-
     // ============================================
     // GAME STATE EVENTS
     // ============================================
@@ -122,9 +39,9 @@ namespace HNR.Core.Events
     public class RunStartedEvent : GameEvent
     {
         /// <summary>The team of Requiems selected for this run.</summary>
-        public IReadOnlyList<HNR.Characters.RequiemDataSO> SelectedTeam { get; }
+        public IReadOnlyList<RequiemDataSO> SelectedTeam { get; }
 
-        public RunStartedEvent(List<HNR.Characters.RequiemDataSO> selectedTeam)
+        public RunStartedEvent(List<RequiemDataSO> selectedTeam)
         {
             SelectedTeam = selectedTeam?.AsReadOnly();
         }
@@ -136,11 +53,11 @@ namespace HNR.Core.Events
     public class TeamSelectedEvent : GameEvent
     {
         /// <summary>The selected team of Requiems.</summary>
-        public IReadOnlyList<HNR.Characters.RequiemDataSO> SelectedTeam { get; }
+        public IReadOnlyList<RequiemDataSO> SelectedTeam { get; }
 
-        public TeamSelectedEvent(HNR.Characters.RequiemDataSO[] team)
+        public TeamSelectedEvent(RequiemDataSO[] team)
         {
-            SelectedTeam = new List<HNR.Characters.RequiemDataSO>(team).AsReadOnly();
+            SelectedTeam = new List<RequiemDataSO>(team).AsReadOnly();
         }
     }
 
@@ -176,9 +93,9 @@ namespace HNR.Core.Events
     public class CombatStartedEvent : GameEvent
     {
         /// <summary>The enemies in this encounter.</summary>
-        public IReadOnlyList<HNR.Combat.EnemyInstance> Enemies { get; }
+        public IReadOnlyList<EnemyInstance> Enemies { get; }
 
-        public CombatStartedEvent(List<HNR.Combat.EnemyInstance> enemies)
+        public CombatStartedEvent(List<EnemyInstance> enemies)
         {
             Enemies = enemies?.AsReadOnly();
         }
@@ -257,9 +174,9 @@ namespace HNR.Core.Events
         public CardInstance Card { get; }
 
         /// <summary>The target of the card (may be null for untargeted cards).</summary>
-        public ITargetable Target { get; }
+        public ICombatTarget Target { get; }
 
-        public CardPlayedEvent(CardInstance card, ITargetable target)
+        public CardPlayedEvent(CardInstance card, ICombatTarget target)
         {
             Card = card;
             Target = target;
@@ -293,11 +210,11 @@ namespace HNR.Core.Events
     /// </summary>
     public class DamageDealtEvent : GameEvent
     {
-        /// <summary>The source of the damage.</summary>
-        public ICombatant Source { get; }
+        /// <summary>The source of the damage (may be null for environmental damage).</summary>
+        public ICombatTarget Source { get; }
 
         /// <summary>The target receiving damage.</summary>
-        public ICombatant Target { get; }
+        public ICombatTarget Target { get; }
 
         /// <summary>The amount of damage dealt (after block reduction).</summary>
         public int Amount { get; }
@@ -308,7 +225,7 @@ namespace HNR.Core.Events
         /// <summary>True if this was a critical hit.</summary>
         public bool IsCritical { get; }
 
-        public DamageDealtEvent(ICombatant source, ICombatant target, int amount, int blockedAmount, bool isCritical)
+        public DamageDealtEvent(ICombatTarget source, ICombatTarget target, int amount, int blockedAmount, bool isCritical)
         {
             Source = source;
             Target = target;
@@ -324,12 +241,12 @@ namespace HNR.Core.Events
     public class HealingReceivedEvent : GameEvent
     {
         /// <summary>The combatant receiving healing.</summary>
-        public ICombatant Target { get; }
+        public ICombatTarget Target { get; }
 
         /// <summary>The amount healed.</summary>
         public int Amount { get; }
 
-        public HealingReceivedEvent(ICombatant target, int amount)
+        public HealingReceivedEvent(ICombatTarget target, int amount)
         {
             Target = target;
             Amount = amount;
@@ -342,12 +259,12 @@ namespace HNR.Core.Events
     public class BlockGainedEvent : GameEvent
     {
         /// <summary>The combatant gaining block.</summary>
-        public ICombatant Target { get; }
+        public ICombatTarget Target { get; }
 
         /// <summary>The amount of block gained.</summary>
         public int Amount { get; }
 
-        public BlockGainedEvent(ICombatant target, int amount)
+        public BlockGainedEvent(ICombatTarget target, int amount)
         {
             Target = target;
             Amount = amount;

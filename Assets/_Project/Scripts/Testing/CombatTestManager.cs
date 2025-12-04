@@ -12,6 +12,7 @@ using HNR.Cards;
 
 // Resolve ambiguity: use real types from proper namespaces
 using RequiemDataSO = HNR.Characters.RequiemDataSO;
+using RequiemInstance = HNR.Characters.RequiemInstance;
 using EnemyInstance = HNR.Combat.EnemyInstance;
 
 namespace HNR.Testing
@@ -93,16 +94,13 @@ namespace HNR.Testing
         {
             Debug.Log("[CombatTestManager] Starting test combat...");
 
-            // Create test team
+            // Create test team (RequiemInstance is a MonoBehaviour)
             var team = new List<RequiemInstance>();
             for (int i = 0; i < _teamSize; i++)
             {
-                var requiem = new RequiemInstance
-                {
-                    Data = _testRequiem,
-                    MaxHP = _testRequiem != null ? _testRequiem.BaseHP : 100,
-                    CurrentHP = _testRequiem != null ? _testRequiem.BaseHP : 100
-                };
+                var requiemGO = new GameObject($"TestRequiem_{i}");
+                var requiem = requiemGO.AddComponent<RequiemInstance>();
+                requiem.Initialize(_testRequiem, 100); // Use data if available, default HP otherwise
                 team.Add(requiem);
             }
 

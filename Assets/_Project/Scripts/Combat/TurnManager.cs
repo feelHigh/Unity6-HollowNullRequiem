@@ -8,6 +8,7 @@ using UnityEngine;
 using HNR.Core;
 using HNR.Core.Events;
 using HNR.Cards;
+using HNR.Characters;
 
 namespace HNR.Combat
 {

@@ -4,7 +4,7 @@
 // ============================================
 
 using System.Collections.Generic;
-using HNR.Core.Events;
+using HNR.Characters;
 
 namespace HNR.Combat
 {

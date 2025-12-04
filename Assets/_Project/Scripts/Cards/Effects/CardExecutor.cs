@@ -112,7 +112,7 @@ namespace HNR.Cards
             }
 
             // Publish card played event
-            EventBus.Publish(new CardPlayedEvent(card, target as ITargetable));
+            EventBus.Publish(new CardPlayedEvent(card, target as ICombatTarget));
         }
 
         /// <summary>
@@ -139,7 +139,7 @@ namespace HNR.Cards
                 ExecuteEffect(effectData, context);
             }
 
-            EventBus.Publish(new CardPlayedEvent(card, primaryTarget as ITargetable));
+            EventBus.Publish(new CardPlayedEvent(card, primaryTarget as ICombatTarget));
         }
 
         /// <summary>

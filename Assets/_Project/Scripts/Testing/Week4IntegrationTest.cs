@@ -11,7 +11,8 @@ using HNR.Combat;
 using HNR.Characters;
 using System.Collections.Generic;
 
-// Resolve ambiguity: use real EnemyInstance from Combat
+// Resolve ambiguity: use real types from proper namespaces
+using RequiemInstance = HNR.Characters.RequiemInstance;
 using EnemyInstance = HNR.Combat.EnemyInstance;
 
 namespace HNR.Testing
@@ -480,11 +481,12 @@ namespace HNR.Testing
 
         private void StartTestCombat(TurnManager turnManager, DeckManager deckManager, HandManager handManager)
         {
-            // Create minimal test team
-            var team = new List<RequiemInstance>
-            {
-                new RequiemInstance { MaxHP = 100, CurrentHP = 100 }
-            };
+            // Create minimal test team (RequiemInstance is a MonoBehaviour)
+            var team = new List<RequiemInstance>();
+            var requiemGO = new GameObject("TestRequiem");
+            var requiem = requiemGO.AddComponent<RequiemInstance>();
+            requiem.Initialize(null, 100); // Initialize with defaults for minimal test
+            team.Add(requiem);
 
             // Create test enemy
             var enemies = new List<EnemyInstance>();

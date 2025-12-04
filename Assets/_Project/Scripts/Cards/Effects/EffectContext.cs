@@ -9,6 +9,7 @@ using HNR.Core.Events;
 
 // Resolve ambiguity: use real implementations from proper namespaces
 using RequiemDataSO = HNR.Characters.RequiemDataSO;
+using RequiemInstance = HNR.Characters.RequiemInstance;
 using EnemyInstance = HNR.Combat.EnemyInstance;
 
 namespace HNR.Cards
