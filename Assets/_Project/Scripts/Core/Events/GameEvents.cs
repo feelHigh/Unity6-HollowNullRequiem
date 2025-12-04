@@ -8,6 +8,7 @@ using HNR.Core.Interfaces;
 using HNR.Cards;
 using HNR.Combat;
 using HNR.Characters;
+using HNR.Progression;
 
 namespace HNR.Core.Events
 {
@@ -393,5 +394,55 @@ namespace HNR.Core.Events
         {
             CardId = cardId;
         }
+    }
+
+    // ============================================
+    // SHOP EVENTS
+    // ============================================
+
+    /// <summary>
+    /// Published when an item is purchased from the shop.
+    /// </summary>
+    public class ShopItemPurchasedEvent : GameEvent
+    {
+        /// <summary>The purchased item.</summary>
+        public ShopItem Item { get; }
+
+        /// <summary>Type of item purchased.</summary>
+        public ShopItemType ItemType => Item?.Type ?? ShopItemType.Card;
+
+        /// <summary>Price paid for the item.</summary>
+        public int Price => Item?.Price ?? 0;
+
+        public ShopItemPurchasedEvent(ShopItem item)
+        {
+            Item = item;
+        }
+    }
+
+    /// <summary>
+    /// Published when a shop is opened.
+    /// </summary>
+    public class ShopOpenedEvent : GameEvent
+    {
+        /// <summary>Zone number where shop was opened.</summary>
+        public int ZoneNumber { get; }
+
+        /// <summary>Number of items in the shop.</summary>
+        public int ItemCount { get; }
+
+        public ShopOpenedEvent(int zoneNumber, int itemCount)
+        {
+            ZoneNumber = zoneNumber;
+            ItemCount = itemCount;
+        }
+    }
+
+    /// <summary>
+    /// Published when a shop is closed.
+    /// </summary>
+    public class ShopClosedEvent : GameEvent
+    {
+        public ShopClosedEvent() { }
     }
 }
