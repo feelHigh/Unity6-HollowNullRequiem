@@ -1,0 +1,299 @@
+// ============================================
+// MapManager.cs
+// Manages map state, navigation, and node encounters
+// ============================================
+
+using UnityEngine;
+using HNR.Core;
+using HNR.Core.Events;
+
+namespace HNR.Map
+{
+    /// <summary>
+    /// Manages the current map state and player navigation.
+    /// Registers with ServiceLocator for global access.
+    /// </summary>
+    public class MapManager : MonoBehaviour
+    {
+        // ============================================
+        // Configuration
+        // ============================================
+
+        [Header("Zone Configurations")]
+        [SerializeField, Tooltip("Zone configs in order (Zone 1, Zone 2, Zone 3)")]
+        private ZoneConfigSO[] _zoneConfigs;
+
+        // ============================================
+        // Runtime State
+        // ============================================
+
+        private MapGenerator _generator;
+        private MapData _currentMap;
+
+        // ============================================
+        // Public Properties
+        // ============================================
+
+        /// <summary>Current map data.</summary>
+        public MapData CurrentMap => _currentMap;
+
+        /// <summary>Current zone number.</summary>
+        public int CurrentZone => _currentMap?.Zone ?? 0;
+
+        /// <summary>Current node the player is at.</summary>
+        public MapNodeData CurrentNode => _currentMap?.GetNode(_currentMap.CurrentNodeId);
+
+        /// <summary>Whether a map is currently active.</summary>
+        public bool HasActiveMap => _currentMap != null;
+
+        /// <summary>Whether current zone is complete (boss defeated).</summary>
+        public bool IsZoneComplete => _currentMap?.IsZoneComplete() ?? false;
+
+        // ============================================
+        // Unity Lifecycle
+        // ============================================
+
+        private void Awake()
+        {
+            _generator = new MapGenerator();
+            ServiceLocator.Register(this);
+        }
+
+        private void OnDestroy()
+        {
+            ServiceLocator.Unregister<MapManager>();
+        }
+
+        // ============================================
+        // Map Generation
+        // ============================================
+
+        /// <summary>
+        /// Generates a new map for the specified zone.
+        /// </summary>
+        /// <param name="zone">Zone number (1-3).</param>
+        /// <param name="seed">Random seed (-1 for random).</param>
+        public void GenerateMap(int zone, int seed = -1)
+        {
+            if (zone < 1 || zone > _zoneConfigs.Length)
+            {
+                Debug.LogError($"[MapManager] Invalid zone: {zone}. Available: 1-{_zoneConfigs.Length}");
+                return;
+            }
+
+            var config = _zoneConfigs[zone - 1];
+            if (config == null)
+            {
+                Debug.LogError($"[MapManager] Zone config {zone} is null");
+                return;
+            }
+
+            // Generate seed if not provided
+            if (seed < 0)
+                seed = Random.Range(0, int.MaxValue);
+
+            // Generate map
+            _currentMap = _generator.Generate(config, seed);
+
+            // Publish event for UI updates
+            EventBus.Publish(new MapGeneratedEvent(_currentMap));
+
+            Debug.Log($"[MapManager] Generated Zone {zone} map: {_currentMap.Nodes.Count} nodes, seed {seed}");
+        }
+
+        // ============================================
+        // Navigation
+        // ============================================
+
+        /// <summary>
+        /// Attempts to move the player to a node.
+        /// </summary>
+        /// <param name="nodeId">Target node ID.</param>
+        /// <returns>True if movement succeeded.</returns>
+        public bool TryMoveToNode(string nodeId)
+        {
+            if (_currentMap == null)
+            {
+                Debug.LogWarning("[MapManager] No active map");
+                return false;
+            }
+
+            var targetNode = _currentMap.GetNode(nodeId);
+            if (targetNode == null)
+            {
+                Debug.LogWarning($"[MapManager] Node not found: {nodeId}");
+                return false;
+            }
+
+            if (targetNode.State != NodeState.Available)
+            {
+                Debug.Log($"[MapManager] Node {nodeId} not available (state: {targetNode.State})");
+                return false;
+            }
+
+            // Mark current node as visited
+            var currentNode = CurrentNode;
+            if (currentNode != null)
+                currentNode.State = NodeState.Visited;
+
+            // Move to target node
+            targetNode.State = NodeState.Current;
+            _currentMap.CurrentNodeId = nodeId;
+
+            // Unlock connected nodes
+            UnlockConnectedNodes(targetNode);
+
+            // Publish movement event
+            EventBus.Publish(new PlayerMovedToNodeEvent(targetNode));
+
+            Debug.Log($"[MapManager] Moved to node {nodeId} ({targetNode.Type})");
+            return true;
+        }
+
+        /// <summary>
+        /// Gets nodes available for travel from current position.
+        /// </summary>
+        public System.Collections.Generic.List<MapNodeData> GetAvailableNodes()
+        {
+            return _currentMap?.GetAvailableNodes() ?? new System.Collections.Generic.List<MapNodeData>();
+        }
+
+        private void UnlockConnectedNodes(MapNodeData node)
+        {
+            foreach (var connectedId in node.ConnectedNodeIds)
+            {
+                var connected = _currentMap.GetNode(connectedId);
+                if (connected != null && connected.State == NodeState.Locked)
+                    connected.State = NodeState.Available;
+            }
+        }
+
+        // ============================================
+        // Node Completion
+        // ============================================
+
+        /// <summary>
+        /// Marks the current node as completed.
+        /// Called after combat victory, event resolution, etc.
+        /// </summary>
+        public void CompleteCurrentNode()
+        {
+            var current = CurrentNode;
+            if (current == null)
+            {
+                Debug.LogWarning("[MapManager] No current node to complete");
+                return;
+            }
+
+            current.State = NodeState.Visited;
+            EventBus.Publish(new NodeCompletedEvent(current));
+
+            Debug.Log($"[MapManager] Completed node {current.NodeId} ({current.Type})");
+
+            // Check for zone completion
+            if (current.Type == NodeType.Boss)
+            {
+                EventBus.Publish(new ZoneCompletedEvent(_currentMap.Zone));
+                Debug.Log($"[MapManager] Zone {_currentMap.Zone} completed!");
+            }
+        }
+
+        // ============================================
+        // Save/Load
+        // ============================================
+
+        /// <summary>
+        /// Loads map state from saved data.
+        /// </summary>
+        public void LoadMapState(MapData savedMap)
+        {
+            if (savedMap == null)
+            {
+                Debug.LogWarning("[MapManager] Cannot load null map data");
+                return;
+            }
+
+            _currentMap = savedMap;
+            EventBus.Publish(new MapGeneratedEvent(_currentMap));
+
+            Debug.Log($"[MapManager] Loaded Zone {savedMap.Zone} map state");
+        }
+
+        /// <summary>
+        /// Gets current map data for saving.
+        /// </summary>
+        public MapData GetMapStateForSave()
+        {
+            return _currentMap;
+        }
+
+        // ============================================
+        // Zone Progression
+        // ============================================
+
+        /// <summary>
+        /// Advances to the next zone.
+        /// </summary>
+        /// <param name="seed">Optional seed for next zone.</param>
+        public void AdvanceToNextZone(int seed = -1)
+        {
+            int nextZone = CurrentZone + 1;
+            if (nextZone > _zoneConfigs.Length)
+            {
+                Debug.Log("[MapManager] No more zones available");
+                return;
+            }
+
+            GenerateMap(nextZone, seed);
+        }
+
+        /// <summary>
+        /// Clears the current map.
+        /// </summary>
+        public void ClearMap()
+        {
+            _currentMap = null;
+            Debug.Log("[MapManager] Map cleared");
+        }
+    }
+
+    // ============================================
+    // Map Events
+    // ============================================
+
+    /// <summary>
+    /// Published when a new map is generated or loaded.
+    /// </summary>
+    public class MapGeneratedEvent : GameEvent
+    {
+        public MapData Map { get; }
+        public MapGeneratedEvent(MapData map) => Map = map;
+    }
+
+    /// <summary>
+    /// Published when player moves to a new node.
+    /// </summary>
+    public class PlayerMovedToNodeEvent : GameEvent
+    {
+        public MapNodeData Node { get; }
+        public PlayerMovedToNodeEvent(MapNodeData node) => Node = node;
+    }
+
+    /// <summary>
+    /// Published when a node encounter is completed.
+    /// </summary>
+    public class NodeCompletedEvent : GameEvent
+    {
+        public MapNodeData Node { get; }
+        public NodeCompletedEvent(MapNodeData node) => Node = node;
+    }
+
+    /// <summary>
+    /// Published when the zone boss is defeated.
+    /// </summary>
+    public class ZoneCompletedEvent : GameEvent
+    {
+        public int Zone { get; }
+        public ZoneCompletedEvent(int zone) => Zone = zone;
+    }
+}
