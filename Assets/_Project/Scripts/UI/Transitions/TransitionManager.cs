@@ -233,8 +233,8 @@ namespace HNR.UI
 
                 case TransitionType.None:
                 default:
-                    from?.Hide();
-                    to?.Show();
+                    HideScreen(from);
+                    ShowScreen(to);
                     break;
             }
 
@@ -252,8 +252,8 @@ namespace HNR.UI
                 .WaitForCompletion();
 
             // Switch screens
-            from?.Hide();
-            to?.Show();
+            HideScreen(from);
+            ShowScreen(to);
 
             // Brief pause at black
             yield return new WaitForSeconds(0.05f);
@@ -276,7 +276,7 @@ namespace HNR.UI
             if (toRect != null)
             {
                 toRect.anchoredPosition = new Vector2(screenWidth * -direction, 0);
-                to.Show();
+                ShowScreen(to);
             }
 
             // Animate both screens
@@ -297,7 +297,7 @@ namespace HNR.UI
             yield return seq.WaitForCompletion();
 
             // Hide outgoing screen and reset position
-            from?.Hide();
+            HideScreen(from);
             if (fromRect != null)
             {
                 fromRect.anchoredPosition = Vector2.zero;
@@ -319,7 +319,7 @@ namespace HNR.UI
             if (toGroup != null)
             {
                 toGroup.alpha = 0f;
-                to.Show();
+                ShowScreen(to);
             }
 
             // Cross-dissolve
@@ -334,7 +334,7 @@ namespace HNR.UI
             yield return seq.WaitForCompletion();
 
             // Cleanup
-            from?.Hide();
+            HideScreen(from);
             if (fromGroup != null)
                 fromGroup.alpha = 1f;
         }
@@ -351,7 +351,7 @@ namespace HNR.UI
             if (toGroup != null)
             {
                 toGroup.alpha = 1f;
-                to.Show();
+                ShowScreen(to);
                 to.transform.SetAsFirstSibling();
             }
 
@@ -365,8 +365,32 @@ namespace HNR.UI
                 fromGroup.alpha = 1f;
             }
 
-            from?.Hide();
+            HideScreen(from);
             to?.transform.SetAsLastSibling();
+        }
+
+        // ============================================
+        // Helper Methods
+        // ============================================
+
+        /// <summary>
+        /// Show a screen (activate and call OnShow).
+        /// </summary>
+        private void ShowScreen(ScreenBase screen)
+        {
+            if (screen == null) return;
+            screen.gameObject.SetActive(true);
+            screen.OnShow();
+        }
+
+        /// <summary>
+        /// Hide a screen (call OnHide and deactivate).
+        /// </summary>
+        private void HideScreen(ScreenBase screen)
+        {
+            if (screen == null) return;
+            screen.OnHide();
+            screen.gameObject.SetActive(false);
         }
     }
 }
