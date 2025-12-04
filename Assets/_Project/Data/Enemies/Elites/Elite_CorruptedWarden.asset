@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd6b10894daa9f649ae087c143d4b76c, type: 3}
+  m_Name: Elite_CorruptedWarden
+  m_EditorClassIdentifier:
+  _enemyId: elite_corrupted_warden
+  _enemyName: Corrupted Warden
+  _description: A fallen champion of the Bastion, now serving the Hollow. Summons Hollow Shades to aid in battle. At 50% HP, enters a frenzied state with multi-hit attacks.
+  _soulAspect: 2
+  _isElite: 1
+  _isBoss: 0
+  _baseHP: 100
+  _baseDamage: 15
+  _baseBlock: 15
+  _corruptionOnHit: 6
+  _intentPattern:
+    _steps:
+    - _intentType: 0
+      _value: 15
+      _secondaryValue: 0
+      _statusType: 0
+      _customDescription:
+    - _intentType: 3
+      _value: 15
+      _secondaryValue: 0
+      _statusType: 0
+      _customDescription:
+    - _intentType: 8
+      _value: 1
+      _secondaryValue: 0
+      _statusType: 0
+      _customDescription: Hollow Shade
+    _looping: 1
+  _voidShardReward: 50
+  _cardDropChance: 0.6
+  _cardDropPool: []
+  _sprite: {fileID: 0}
+  _animator: {fileID: 0}
+  _spriteScale: 1.3
+  _attackSound: {fileID: 0}
+  _hitSound: {fileID: 0}
+  _deathSound: {fileID: 0}
