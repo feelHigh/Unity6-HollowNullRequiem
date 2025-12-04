@@ -274,6 +274,9 @@ namespace HNR.Combat
                 _context.DeckManager?.Discard(instance);
             }
 
+            // Publish CardPlayedEvent for SE generation and other subscribers
+            EventBus.Publish(new CardPlayedEvent(instance, target));
+
             Debug.Log($"[TurnManager] Played card: {instance.Data.CardName} (Cost: {instance.CurrentCost}, AP remaining: {_context.CurrentAP})");
             return true;
         }

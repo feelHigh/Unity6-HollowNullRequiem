@@ -41,6 +41,7 @@ namespace HNR.Characters
         private int _corruption;
         private int _soulEssence;
         private bool _inNullState;
+        private bool _hasUsedArtThisCombat;
 
         // Null State Modifiers
         private float _burnDamageMultiplier = 1.0f;
@@ -89,6 +90,13 @@ namespace HNR.Characters
         /// <summary>Combat class/role.</summary>
         public RequiemClass Class => _data?.Class ?? RequiemClass.Striker;
 
+        /// <summary>Whether this Requiem has used their Art this combat.</summary>
+        public bool HasUsedArtThisCombat
+        {
+            get => _hasUsedArtThisCombat;
+            set => _hasUsedArtThisCombat = value;
+        }
+
         // ============================================
         // Null State Modifier Properties
         // ============================================
@@ -126,6 +134,7 @@ namespace HNR.Characters
             _corruption = 0;
             _soulEssence = 0;
             _inNullState = false;
+            _hasUsedArtThisCombat = false;
 
             // Set up visuals
             if (_sprite != null && data?.Portrait != null)

@@ -201,6 +201,20 @@ namespace HNR.Core.Events
         }
     }
 
+    /// <summary>
+    /// Published when a card is upgraded.
+    /// </summary>
+    public class CardUpgradedEvent : GameEvent
+    {
+        /// <summary>The card that was upgraded.</summary>
+        public CardInstance Card { get; }
+
+        public CardUpgradedEvent(CardInstance card)
+        {
+            Card = card;
+        }
+    }
+
     // ============================================
     // DAMAGE/HEALING EVENTS
     // ============================================

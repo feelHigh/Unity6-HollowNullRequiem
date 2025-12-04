@@ -17,11 +17,21 @@ namespace HNR.Cards
     public class CardInstance
     {
         // ============================================
+        // Backing Fields
+        // ============================================
+
+        private CardDataSO _currentData;
+        private CardDataSO _originalData;
+
+        // ============================================
         // Properties
         // ============================================
 
-        /// <summary>Static card data reference.</summary>
-        public CardDataSO Data { get; }
+        /// <summary>Current card data (may be upgraded version).</summary>
+        public CardDataSO Data => _currentData;
+
+        /// <summary>Original card data before any upgrades.</summary>
+        public CardDataSO OriginalData => _originalData;
 
         /// <summary>Whether this instance uses upgraded card data.</summary>
         public bool IsUpgraded { get; private set; }
@@ -47,11 +57,49 @@ namespace HNR.Cards
         /// <exception cref="ArgumentNullException">If data is null</exception>
         public CardInstance(CardDataSO data, bool upgraded = false)
         {
-            Data = data ?? throw new ArgumentNullException(nameof(data));
+            _originalData = data ?? throw new ArgumentNullException(nameof(data));
+            _currentData = data;
             IsUpgraded = upgraded;
             CurrentCost = data.APCost;
             Modifiers = new List<CardModifier>();
             InstanceId = Guid.NewGuid();
+        }
+
+        // ============================================
+        // Upgrade Support
+        // ============================================
+
+        /// <summary>
+        /// Check if this card can be upgraded.
+        /// </summary>
+        public bool CanUpgrade => !IsUpgraded && _currentData.UpgradedVersion != null;
+
+        /// <summary>
+        /// Apply an upgrade, replacing the card's data with the upgraded version.
+        /// </summary>
+        /// <param name="upgradedData">Upgraded card data (optional - uses UpgradedVersion if null)</param>
+        /// <returns>True if upgrade was applied</returns>
+        public bool ApplyUpgrade(CardDataSO upgradedData = null)
+        {
+            if (IsUpgraded)
+            {
+                Debug.LogWarning($"[CardInstance] {_currentData.CardName} is already upgraded");
+                return false;
+            }
+
+            var targetData = upgradedData ?? _currentData.UpgradedVersion;
+            if (targetData == null)
+            {
+                Debug.LogWarning($"[CardInstance] {_currentData.CardName} has no upgrade path");
+                return false;
+            }
+
+            _currentData = targetData;
+            IsUpgraded = true;
+            RecalculateCost();
+
+            Debug.Log($"[CardInstance] Upgraded to {_currentData.CardName}");
+            return true;
         }
 
         // ============================================
@@ -103,9 +151,9 @@ namespace HNR.Cards
         /// <summary>
         /// Recalculate current cost based on base cost and modifiers.
         /// </summary>
-        private void RecalculateCost()
+        public void RecalculateCost()
         {
-            CurrentCost = Data.APCost;
+            CurrentCost = _currentData.APCost;
 
             foreach (var mod in Modifiers.Where(m => m.Type == ModifierType.Cost))
             {
@@ -200,7 +248,13 @@ namespace HNR.Cards
         /// <returns>New CardInstance with same data and modifiers</returns>
         public CardInstance Clone()
         {
-            var clone = new CardInstance(Data, IsUpgraded);
+            var clone = new CardInstance(_originalData, IsUpgraded);
+            // If this card was upgraded, apply the same upgrade to the clone
+            if (IsUpgraded && _currentData != _originalData)
+            {
+                clone._currentData = _currentData;
+                clone.IsUpgraded = true;
+            }
             foreach (var mod in Modifiers)
             {
                 clone.Modifiers.Add(new CardModifier(mod.Type, mod.Value, mod.RemainingTurns, mod.Source));

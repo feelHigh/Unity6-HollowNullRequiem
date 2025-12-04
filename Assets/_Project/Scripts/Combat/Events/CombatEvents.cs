@@ -269,4 +269,26 @@ namespace HNR.Combat
     {
         public CardTargetCancelledEvent() { }
     }
+
+    // ============================================
+    // REQUIEM ART EVENTS
+    // ============================================
+
+    /// <summary>
+    /// Published when a Requiem activates their special Art ability.
+    /// </summary>
+    public class RequiemArtActivatedEvent : GameEvent
+    {
+        /// <summary>The Requiem who activated the Art.</summary>
+        public RequiemInstance Requiem { get; }
+
+        /// <summary>The Art that was activated.</summary>
+        public RequiemArtDataSO Art { get; }
+
+        public RequiemArtActivatedEvent(RequiemInstance requiem, RequiemArtDataSO art)
+        {
+            Requiem = requiem;
+            Art = art;
+        }
+    }
 }
