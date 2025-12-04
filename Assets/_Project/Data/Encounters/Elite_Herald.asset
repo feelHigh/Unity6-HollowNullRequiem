@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00000000000000000000000000000000, type: 3}
+  m_Name: Elite_Herald
+  m_EditorClassIdentifier:
+  _encounterId: elite_herald
+  _encounterName: Null Herald
+  _zone: 0
+  _difficulty: 3
+  _isElite: 1
+  _isBoss: 0
+  _enemyPool: []
+  _minEnemies: 1
+  _maxEnemies: 1
+  _fixedFormation: []
+  _rewardMultiplier: 2.5
+  _guaranteedCardTier: 3
+  _arenaCorruptionPerTurn: 3
+  _arenaDescription: The Herald spreads corruption with each breath.
