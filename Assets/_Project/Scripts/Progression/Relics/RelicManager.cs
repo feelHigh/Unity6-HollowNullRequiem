@@ -288,35 +288,42 @@ namespace HNR.Progression
             switch (relic.EffectType)
             {
                 case RelicEffectType.ModifyMaxHP:
-                    // TODO: Get IRunManager and increase max HP
-                    Debug.Log($"[RelicManager] ModifyMaxHP by {relic.EffectValue}");
+                    if (ServiceLocator.TryGet<IRunManager>(out var runManager))
+                    {
+                        runManager.IncreaseMaxHP(relic.EffectValue);
+                    }
                     break;
 
                 case RelicEffectType.ModifyDamage:
-                    // Damage modification is checked during damage calculation
-                    Debug.Log($"[RelicManager] ModifyDamage by {relic.EffectValue}");
+                    // Damage modification is checked during damage calculation via GetDamageModifier()
                     break;
 
                 case RelicEffectType.ModifyBlock:
-                    if (ServiceLocator.TryGet<HNR.Combat.TurnManager>(out var turnManager))
+                    if (ServiceLocator.TryGet<HNR.Combat.TurnManager>(out var blockTm))
                     {
-                        turnManager.AddTeamBlock(relic.EffectValue);
+                        blockTm.AddTeamBlock(relic.EffectValue);
                     }
                     break;
 
                 case RelicEffectType.GainSoulEssence:
-                    // TODO: Add SoulEssence method to TurnManager/CombatContext
-                    Debug.Log($"[RelicManager] GainSoulEssence: +{relic.EffectValue} SE");
+                    if (ServiceLocator.TryGet<HNR.Combat.TurnManager>(out var seTm))
+                    {
+                        seTm.AddSoulEssence(relic.EffectValue);
+                    }
                     break;
 
                 case RelicEffectType.ReduceCorruption:
-                    // TODO: Get CorruptionManager and reduce corruption
-                    Debug.Log($"[RelicManager] ReduceCorruption by {relic.EffectValue}");
+                    if (ServiceLocator.TryGet<HNR.Characters.CorruptionManager>(out var corruptionManager))
+                    {
+                        corruptionManager.RemoveCorruptionFromTeam(relic.EffectValue);
+                    }
                     break;
 
                 case RelicEffectType.DrawCard:
-                    // TODO: Add DrawCards method to TurnManager
-                    Debug.Log($"[RelicManager] DrawCard: +{relic.EffectValue} cards");
+                    if (ServiceLocator.TryGet<HNR.Combat.TurnManager>(out var drawTm))
+                    {
+                        drawTm.DrawCards(relic.EffectValue);
+                    }
                     break;
 
                 case RelicEffectType.Healing:
@@ -334,8 +341,10 @@ namespace HNR.Progression
                     break;
 
                 case RelicEffectType.GainAP:
-                    // TODO: Add AddAP method to TurnManager/CombatContext
-                    Debug.Log($"[RelicManager] GainAP: +{relic.EffectValue} AP");
+                    if (ServiceLocator.TryGet<HNR.Combat.TurnManager>(out var apTm))
+                    {
+                        apTm.AddAP(relic.EffectValue);
+                    }
                     break;
             }
 

@@ -335,5 +335,69 @@ namespace HNR.Combat
             EventBus.Publish(new TeamHPChangedEvent(_context.TeamHP, _context.TeamMaxHP, actualHeal));
             Debug.Log($"[TurnManager] Team healed {actualHeal}. HP: {_context.TeamHP}/{_context.TeamMaxHP}");
         }
+
+        // ============================================
+        // AP Management
+        // ============================================
+
+        /// <summary>
+        /// Add AP to the current turn.
+        /// </summary>
+        /// <param name="amount">AP amount to add</param>
+        public void AddAP(int amount)
+        {
+            if (amount <= 0) return;
+
+            _context.CurrentAP += amount;
+            EventBus.Publish(new APChangedEvent(_context.CurrentAP, _context.MaxAP));
+            Debug.Log($"[TurnManager] Gained {amount} AP. Current: {_context.CurrentAP}/{_context.MaxAP}");
+        }
+
+        // ============================================
+        // Card Draw
+        // ============================================
+
+        /// <summary>
+        /// Draw cards from the deck.
+        /// </summary>
+        /// <param name="count">Number of cards to draw</param>
+        public void DrawCards(int count)
+        {
+            if (count <= 0) return;
+
+            if (_context.DeckManager == null)
+            {
+                Debug.LogWarning("[TurnManager] DeckManager not available for card draw");
+                return;
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                var card = _context.DeckManager.Draw();
+                if (card != null && _context.HandManager != null)
+                {
+                    _context.HandManager.AddCard(card);
+                }
+            }
+
+            Debug.Log($"[TurnManager] Drew {count} cards");
+        }
+
+        // ============================================
+        // Soul Essence
+        // ============================================
+
+        /// <summary>
+        /// Add Soul Essence to the active Requiem.
+        /// </summary>
+        /// <param name="amount">SE amount to add</param>
+        public void AddSoulEssence(int amount)
+        {
+            if (amount <= 0) return;
+
+            _context.SoulEssence += amount;
+            EventBus.Publish(new SoulEssenceChangedEvent(_context.SoulEssence, _context.SoulEssence - amount));
+            Debug.Log($"[TurnManager] Gained {amount} Soul Essence. Current: {_context.SoulEssence}");
+        }
     }
 }
