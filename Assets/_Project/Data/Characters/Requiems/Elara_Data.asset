@@ -22,7 +22,12 @@ MonoBehaviour:
   _baseATK: 6
   _baseDEF: 8
   _seRate: 1
-  _startingCards: []
+  _startingCards:
+  - {fileID: 11400000, guid: 4d7fa734393783a4d84adb857ed3c590, type: 2}
+  - {fileID: 11400000, guid: 5c93c019b97e8744cbed16fc49af0f6d, type: 2}
+  - {fileID: 11400000, guid: 84a02e3662efe52419e27fc336e7d62e, type: 2}
+  - {fileID: 11400000, guid: 482db0cad3bccde4b91f98af8c7565b2, type: 2}
+  - {fileID: 11400000, guid: 58b105f7152abde4c8a2a2033a17660f, type: 2}
   _unlockableCards: []
   _requiemArt: {fileID: 0}
   _nullStateEffect: 2
