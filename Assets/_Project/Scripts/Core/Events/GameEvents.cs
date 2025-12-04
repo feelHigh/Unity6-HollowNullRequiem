@@ -8,7 +8,6 @@ using HNR.Core.Interfaces;
 using HNR.Cards;
 using HNR.Combat;
 using HNR.Characters;
-using HNR.Progression;
 
 namespace HNR.Core.Events
 {
@@ -330,119 +329,11 @@ namespace HNR.Core.Events
     }
 
     // ============================================
-    // PROGRESSION EVENTS
+    // PROGRESSION/SHOP EVENTS
     // ============================================
-
-    /// <summary>
-    /// Published when Void Shards (currency) amount changes.
-    /// </summary>
-    public class VoidShardsChangedEvent : GameEvent
-    {
-        /// <summary>Amount before the change.</summary>
-        public int OldAmount { get; }
-
-        /// <summary>Amount after the change.</summary>
-        public int NewAmount { get; }
-
-        /// <summary>The change in shards (positive = gained, negative = spent).</summary>
-        public int Delta => NewAmount - OldAmount;
-
-        public VoidShardsChangedEvent(int oldAmount, int newAmount)
-        {
-            OldAmount = oldAmount;
-            NewAmount = newAmount;
-        }
-    }
-
-    /// <summary>
-    /// Published when a relic is acquired.
-    /// </summary>
-    public class RelicAcquiredEvent : GameEvent
-    {
-        /// <summary>ID of the acquired relic.</summary>
-        public string RelicId { get; }
-
-        public RelicAcquiredEvent(string relicId)
-        {
-            RelicId = relicId;
-        }
-    }
-
-    /// <summary>
-    /// Published when a card is added to the deck.
-    /// </summary>
-    public class CardAddedToDeckEvent : GameEvent
-    {
-        /// <summary>ID of the card added.</summary>
-        public string CardId { get; }
-
-        public CardAddedToDeckEvent(string cardId)
-        {
-            CardId = cardId;
-        }
-    }
-
-    /// <summary>
-    /// Published when a card is removed from the deck.
-    /// </summary>
-    public class CardRemovedFromDeckEvent : GameEvent
-    {
-        /// <summary>ID of the card removed.</summary>
-        public string CardId { get; }
-
-        public CardRemovedFromDeckEvent(string cardId)
-        {
-            CardId = cardId;
-        }
-    }
-
-    // ============================================
-    // SHOP EVENTS
-    // ============================================
-
-    /// <summary>
-    /// Published when an item is purchased from the shop.
-    /// </summary>
-    public class ShopItemPurchasedEvent : GameEvent
-    {
-        /// <summary>The purchased item.</summary>
-        public ShopItem Item { get; }
-
-        /// <summary>Type of item purchased.</summary>
-        public ShopItemType ItemType => Item?.Type ?? ShopItemType.Card;
-
-        /// <summary>Price paid for the item.</summary>
-        public int Price => Item?.Price ?? 0;
-
-        public ShopItemPurchasedEvent(ShopItem item)
-        {
-            Item = item;
-        }
-    }
-
-    /// <summary>
-    /// Published when a shop is opened.
-    /// </summary>
-    public class ShopOpenedEvent : GameEvent
-    {
-        /// <summary>Zone number where shop was opened.</summary>
-        public int ZoneNumber { get; }
-
-        /// <summary>Number of items in the shop.</summary>
-        public int ItemCount { get; }
-
-        public ShopOpenedEvent(int zoneNumber, int itemCount)
-        {
-            ZoneNumber = zoneNumber;
-            ItemCount = itemCount;
-        }
-    }
-
-    /// <summary>
-    /// Published when a shop is closed.
-    /// </summary>
-    public class ShopClosedEvent : GameEvent
-    {
-        public ShopClosedEvent() { }
-    }
+    // See ShopEvents.cs for:
+    // - VoidShardsChangedEvent
+    // - ShopOpenedEvent, ShopClosedEvent, ShopItemPurchasedEvent
+    // - CardAddedToDeckEvent, CardRemovedFromDeckEvent
+    // - RelicAcquiredEvent
 }

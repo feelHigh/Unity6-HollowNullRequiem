@@ -221,7 +221,7 @@ namespace HNR.Progression
                     if (item.CardData != null)
                     {
                         // Publish event for RunManager to handle deck addition
-                        EventBus.Publish(new CardAddedToDeckEvent(item.CardData.CardId));
+                        EventBus.Publish(new CardAddedToDeckEvent(item.CardData));
                         Debug.Log($"[ShopManager] Card added to deck: {item.CardData.CardName}");
                     }
                     break;
@@ -230,7 +230,7 @@ namespace HNR.Progression
                     if (item.RelicData != null)
                     {
                         // Publish event for RelicManager to handle
-                        EventBus.Publish(new RelicAcquiredEvent(item.RelicData.RelicId));
+                        EventBus.Publish(new RelicAcquiredEvent(item.RelicData));
                         Debug.Log($"[ShopManager] Relic acquired: {item.RelicData.RelicName}");
                     }
                     break;
