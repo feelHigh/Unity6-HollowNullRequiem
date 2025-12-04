@@ -6,7 +6,7 @@
 using HNR.Core.Events;
 using HNR.Characters;
 
-// EnemyInstance is defined in HNR.Core.Events (placeholder)
+// EnemyInstance is now defined in HNR.Combat.EnemyInstance
 
 namespace HNR.Combat
 {
@@ -119,6 +119,28 @@ namespace HNR.Combat
     // ============================================
     // ENEMY EVENTS
     // ============================================
+
+    /// <summary>
+    /// Published when an enemy takes damage.
+    /// </summary>
+    public class EnemyDamagedEvent : GameEvent
+    {
+        /// <summary>The enemy that took damage.</summary>
+        public EnemyInstance Enemy { get; }
+
+        /// <summary>Amount of damage dealt (after block).</summary>
+        public int Damage { get; }
+
+        /// <summary>Amount of damage blocked.</summary>
+        public int Blocked { get; }
+
+        public EnemyDamagedEvent(EnemyInstance enemy, int damage, int blocked = 0)
+        {
+            Enemy = enemy;
+            Damage = damage;
+            Blocked = blocked;
+        }
+    }
 
     /// <summary>
     /// Published when an enemy is defeated.

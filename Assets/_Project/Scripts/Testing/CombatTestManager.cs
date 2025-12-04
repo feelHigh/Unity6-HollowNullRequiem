@@ -10,8 +10,9 @@ using HNR.Core.Events;
 using HNR.Combat;
 using HNR.Cards;
 
-// Resolve ambiguity: use real RequiemDataSO from Characters
+// Resolve ambiguity: use real types from proper namespaces
 using RequiemDataSO = HNR.Characters.RequiemDataSO;
+using EnemyInstance = HNR.Combat.EnemyInstance;
 
 namespace HNR.Testing
 {
@@ -105,15 +106,16 @@ namespace HNR.Testing
                 team.Add(requiem);
             }
 
-            // Create test enemies
+            // Create test enemies (EnemyInstance is a MonoBehaviour)
             var enemies = new List<EnemyInstance>();
             for (int i = 0; i < _enemyCount; i++)
             {
-                var enemy = new EnemyInstance
+                var enemyGO = new GameObject($"TestEnemy_{i}");
+                var enemy = enemyGO.AddComponent<EnemyInstance>();
+                if (_testEnemy != null)
                 {
-                    Data = _testEnemy
-                };
-                enemy.Initialize();
+                    enemy.Initialize(_testEnemy, 1);
+                }
                 enemies.Add(enemy);
             }
 
@@ -169,8 +171,8 @@ namespace HNR.Testing
                 if (context.Enemies.Count > 0)
                 {
                     var enemy = context.Enemies[0];
-                    enemy.CurrentHP = 0;
-                    EventBus.Publish(new EnemyDefeatedEvent(enemy));
+                    // Deal massive damage to kill instantly
+                    enemy.TakeDamage(9999);
                     Debug.Log("[CombatTestManager] Killed first enemy");
                 }
             }

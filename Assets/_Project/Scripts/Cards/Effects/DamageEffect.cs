@@ -7,6 +7,9 @@ using UnityEngine;
 using HNR.Core.Events;
 using HNR.Combat;
 
+// Resolve ambiguity: use real EnemyInstance from Combat
+using EnemyInstance = HNR.Combat.EnemyInstance;
+
 namespace HNR.Cards
 {
     /// <summary>

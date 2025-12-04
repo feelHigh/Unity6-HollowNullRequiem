@@ -7,8 +7,9 @@ using System.Collections.Generic;
 using HNR.Combat;
 using HNR.Core.Events;
 
-// Resolve ambiguity: use real RequiemDataSO from Characters
+// Resolve ambiguity: use real implementations from proper namespaces
 using RequiemDataSO = HNR.Characters.RequiemDataSO;
+using EnemyInstance = HNR.Combat.EnemyInstance;
 
 namespace HNR.Cards
 {

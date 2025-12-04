@@ -166,9 +166,9 @@ namespace HNR.Core.Events
     public class CombatStartedEvent : GameEvent
     {
         /// <summary>The enemies in this encounter.</summary>
-        public IReadOnlyList<EnemyInstance> Enemies { get; }
+        public IReadOnlyList<HNR.Combat.EnemyInstance> Enemies { get; }
 
-        public CombatStartedEvent(List<EnemyInstance> enemies)
+        public CombatStartedEvent(List<HNR.Combat.EnemyInstance> enemies)
         {
             Enemies = enemies?.AsReadOnly();
         }
