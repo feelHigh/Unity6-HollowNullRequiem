@@ -284,9 +284,25 @@ namespace HNR.Map
 
         private void ShowShop()
         {
-            // TODO: Implement shop screen transition
-            Debug.Log("[MapScreen] Shop not implemented yet");
-            _mapManager?.CompleteCurrentNode();
+            // Open shop via ShopManager
+            var shopManager = ServiceLocator.Get<IShopManager>();
+            if (shopManager != null)
+            {
+                int zone = _mapManager?.CurrentZone ?? 1;
+                shopManager.OpenShop(zone);
+            }
+
+            // Navigate to shop screen
+            var uiManager = ServiceLocator.Get<IUIManager>();
+            if (uiManager != null)
+            {
+                uiManager.ShowScreen<ShopScreen>();
+            }
+            else
+            {
+                Debug.LogWarning("[MapScreen] UIManager not available for shop transition");
+                _mapManager?.CompleteCurrentNode();
+            }
         }
 
         private void ShowSanctuary()
