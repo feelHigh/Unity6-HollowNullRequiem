@@ -238,12 +238,40 @@ namespace HNR.Combat
             _context.CurrentAP -= instance.CurrentCost;
             EventBus.Publish(new APChangedEvent(_context.CurrentAP, _context.MaxAP));
 
-            // Publish card played event
-            EventBus.Publish(new CardPlayedEvent(instance, null)); // TODO: Convert ICombatTarget to ITargetable
+            // Execute card effects via CardExecutor
+            if (ServiceLocator.TryGet<CardExecutor>(out var executor))
+            {
+                // For cards targeting all enemies/allies, get the full target list
+                var targetType = instance.Data.TargetType;
+                if (targetType == TargetType.AllEnemies || targetType == TargetType.AllAllies)
+                {
+                    var targetingSystem = ServiceLocator.TryGet<TargetingSystem>(out var ts) ? ts : null;
+                    var allTargets = targetingSystem?.GetAllTargets(targetType) ?? new System.Collections.Generic.List<ICombatTarget>();
+                    executor.Execute(instance, allTargets);
+                }
+                else
+                {
+                    executor.Execute(instance, target);
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[TurnManager] CardExecutor not found - effects not executed");
+            }
 
-            // Remove from hand and discard
+            // Remove from hand
             _context.HandManager?.RemoveCard(card);
-            _context.DeckManager?.Discard(instance);
+
+            // Handle card after play: Power cards exhaust, others discard
+            if (instance.Data.CardType == CardType.Power)
+            {
+                _context.DeckManager?.Exhaust(instance);
+                Debug.Log($"[TurnManager] Power card exhausted: {instance.Data.CardName}");
+            }
+            else
+            {
+                _context.DeckManager?.Discard(instance);
+            }
 
             Debug.Log($"[TurnManager] Played card: {instance.Data.CardName} (Cost: {instance.CurrentCost}, AP remaining: {_context.CurrentAP})");
             return true;

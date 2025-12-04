@@ -6,6 +6,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using HNR.Core;
+using HNR.Core.Events;
 using HNR.Core.Interfaces;
 using HNR.Cards;
 using DG.Tweening;
@@ -228,17 +229,98 @@ namespace HNR.Combat
         }
 
         // ============================================
+        // Card Play Flow
+        // ============================================
+
+        /// <summary>
+        /// Handle a card play attempt. Routes to targeting or immediate play.
+        /// </summary>
+        /// <param name="card">Card attempting to be played</param>
+        public void HandleCardPlayAttempt(Card card)
+        {
+            if (card?.CardInstance == null) return;
+
+            // Check if we're in player phase
+            if (!ServiceLocator.TryGet<TurnManager>(out var turnManager)) return;
+            if (turnManager.CurrentPhase != CombatPhase.PlayerPhase)
+            {
+                Debug.Log("[HandManager] Cannot play card - not in player phase");
+                return;
+            }
+
+            // Check if card is playable
+            var instance = card.CardInstance;
+            if (!instance.CanPlay(turnManager.Context.CurrentAP))
+            {
+                Debug.Log($"[HandManager] Cannot play card - not enough AP ({turnManager.Context.CurrentAP}/{instance.CurrentCost})");
+                return;
+            }
+
+            var targetType = instance.Data.TargetType;
+
+            // Cards that don't require targeting
+            if (targetType == TargetType.None ||
+                targetType == TargetType.Self ||
+                targetType == TargetType.AllEnemies ||
+                targetType == TargetType.AllAllies ||
+                targetType == TargetType.Random)
+            {
+                // Play immediately
+                turnManager.TryPlayCard(card, null);
+                return;
+            }
+
+            // Cards that require targeting (SingleEnemy, SingleAlly)
+            if (ServiceLocator.TryGet<TargetingSystem>(out var targetingSystem))
+            {
+                targetingSystem.BeginTargeting(instance);
+                _pendingCard = card;
+                SubscribeToTargeting();
+                Debug.Log($"[HandManager] Started targeting for {instance.Data.CardName}");
+            }
+        }
+
+        private Card _pendingCard;
+
+        private void SubscribeToTargeting()
+        {
+            EventBus.Subscribe<CardTargetConfirmedEvent>(OnTargetConfirmed);
+            EventBus.Subscribe<CardTargetCancelledEvent>(OnTargetCancelled);
+        }
+
+        private void UnsubscribeFromTargeting()
+        {
+            EventBus.Unsubscribe<CardTargetConfirmedEvent>(OnTargetConfirmed);
+            EventBus.Unsubscribe<CardTargetCancelledEvent>(OnTargetCancelled);
+        }
+
+        private void OnTargetConfirmed(CardTargetConfirmedEvent evt)
+        {
+            UnsubscribeFromTargeting();
+
+            if (_pendingCard != null && ServiceLocator.TryGet<TurnManager>(out var turnManager))
+            {
+                turnManager.TryPlayCard(_pendingCard, evt.Target);
+            }
+
+            _pendingCard = null;
+        }
+
+        private void OnTargetCancelled(CardTargetCancelledEvent evt)
+        {
+            UnsubscribeFromTargeting();
+            _pendingCard = null;
+            Debug.Log("[HandManager] Targeting cancelled");
+        }
+
+        // ============================================
         // Selection
         // ============================================
 
         private void HandleCardClicked(Card card)
         {
-            if (_selectedCard == card)
-            {
-                DeselectCard();
-                return;
-            }
-            SelectCard(card);
+            // Try to play the card
+            HandleCardPlayAttempt(card);
         }
 
         private void SelectCard(Card card)

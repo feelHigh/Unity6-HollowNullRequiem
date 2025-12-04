@@ -130,7 +130,8 @@ namespace HNR.Combat
         /// <summary>
         /// Cancel current targeting and clear state.
         /// </summary>
-        public void CancelTargeting()
+        /// <param name="publishEvent">Whether to publish the cancelled event</param>
+        public void CancelTargeting(bool publishEvent = true)
         {
             // Remove highlights from all targets
             foreach (var target in _validTargets)
@@ -148,6 +149,12 @@ namespace HNR.Combat
             if (_targetingLine != null)
             {
                 _targetingLine.enabled = false;
+            }
+
+            // Publish cancel event
+            if (publishEvent)
+            {
+                EventBus.Publish(new CardTargetCancelledEvent());
             }
 
             Debug.Log("[TargetingSystem] Targeting cancelled");
@@ -172,7 +179,12 @@ namespace HNR.Combat
             }
 
             var selected = _hoveredTarget;
-            CancelTargeting();
+
+            // Clear targeting state without publishing cancel event
+            CancelTargeting(publishEvent: false);
+
+            // Publish confirmed event
+            EventBus.Publish(new CardTargetConfirmedEvent(selected));
 
             Debug.Log($"[TargetingSystem] Target confirmed: {selected.Name}");
             return selected;

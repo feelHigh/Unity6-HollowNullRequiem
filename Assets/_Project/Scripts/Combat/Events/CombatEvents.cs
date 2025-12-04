@@ -243,4 +243,30 @@ namespace HNR.Combat
             Value = value;
         }
     }
+
+    // ============================================
+    // TARGETING EVENTS
+    // ============================================
+
+    /// <summary>
+    /// Published when a card target is confirmed.
+    /// </summary>
+    public class CardTargetConfirmedEvent : GameEvent
+    {
+        /// <summary>The confirmed target.</summary>
+        public ICombatTarget Target { get; }
+
+        public CardTargetConfirmedEvent(ICombatTarget target)
+        {
+            Target = target;
+        }
+    }
+
+    /// <summary>
+    /// Published when card targeting is cancelled.
+    /// </summary>
+    public class CardTargetCancelledEvent : GameEvent
+    {
+        public CardTargetCancelledEvent() { }
+    }
 }
