@@ -95,24 +95,60 @@ namespace HNR.Cards
             int amount = data.Value;
             string action = _isGain ? "Gained" : "Reduced";
 
-            // TODO: Implement full Corruption system in Week 6
-            // Will need to:
-            // 1. Track corruption per RequiemInstance
-            // 2. Trigger Null State at 100 corruption
-            // 3. Apply Null State effects based on Requiem type
+            // Find the source RequiemInstance from the team
+            var requiem = GetSourceRequiem(context);
+            if (requiem == null)
+            {
+                Debug.LogWarning("[CorruptionEffect] Could not find source Requiem for corruption effect");
+                return;
+            }
 
-            Debug.Log($"[CorruptionEffect] {action} {amount} Corruption");
+            // Apply corruption change via RequiemInstance methods (which publish events)
+            if (_isGain)
+            {
+                requiem.AddCorruption(amount);
+            }
+            else
+            {
+                requiem.RemoveCorruption(amount);
+            }
 
-            // When corruption system is implemented:
-            // var requiem = GetSourceRequiem(context);
-            // int previousValue = requiem.Corruption;
-            // requiem.Corruption = _isGain
-            //     ? Mathf.Min(100, requiem.Corruption + amount)
-            //     : Mathf.Max(0, requiem.Corruption - amount);
-            // EventBus.Publish(new CorruptionChangedEvent(requiem, previousValue, requiem.Corruption));
-            //
-            // if (requiem.Corruption >= 100 && previousValue < 100)
-            //     EventBus.Publish(new NullStateEnteredEvent(requiem));
+            Debug.Log($"[CorruptionEffect] {requiem.Name} {action} {amount} Corruption. Total: {requiem.Corruption}");
+        }
+
+        /// <summary>
+        /// Find the RequiemInstance that owns the card from the combat team.
+        /// </summary>
+        private HNR.Characters.RequiemInstance GetSourceRequiem(EffectContext context)
+        {
+            // If no source data, can't find instance
+            if (context.Source == null) return null;
+
+            // Search the team for matching RequiemDataSO
+            if (context.CombatContext?.Team != null)
+            {
+                foreach (var requiem in context.CombatContext.Team)
+                {
+                    if (requiem.Data == context.Source)
+                    {
+                        return requiem;
+                    }
+                }
+            }
+
+            // Fallback: Return first living team member for neutral cards
+            if (context.CombatContext?.Team != null && context.CombatContext.Team.Count > 0)
+            {
+                foreach (var requiem in context.CombatContext.Team)
+                {
+                    if (!requiem.IsDead)
+                    {
+                        return requiem;
+                    }
+                }
+            }
+
+            return null;
         }
     }
 }
