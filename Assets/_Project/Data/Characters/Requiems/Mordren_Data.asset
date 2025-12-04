@@ -15,19 +15,32 @@ MonoBehaviour:
   _requiemId: mordren
   _requiemName: Mordren
   _title: Shadow Reaper
-  _backstory: A fallen hero of the Shadow aspect.
+  _backstory: A former necromancer who bound his soul to the Void, Mordren now walks
+    between life and death. He drains the essence of his enemies to sustain his cursed
+    existence.
   _class: 1
   _soulAspect: 2
   _baseHP: 60
   _baseATK: 8
   _baseDEF: 6
   _seRate: 2
-  _startingCards: []
-  _unlockableCards: []
-  _requiemArt: {fileID: 0}
+  _startingCards:
+  - {fileID: 11400000, guid: d5e224f18af38eb4abeaf5772f498c41, type: 2}
+  - {fileID: 11400000, guid: ca66489f287134a44a9142a45ccb12ee, type: 2}
+  - {fileID: 11400000, guid: c807ca011b2302c4da6b4a433b16f53a, type: 2}
+  - {fileID: 11400000, guid: 7b31c5481a043cc4683a1efdf99c017d, type: 2}
+  - {fileID: 11400000, guid: 261c22a347eb1694abc580afda21d47b, type: 2}
+  - {fileID: 11400000, guid: 91295e7aae7f3bf40ac0fdaa5cfe54e8, type: 2}
+  _unlockableCards:
+  - {fileID: 11400000, guid: d444e96f8cac6c24ea2681d0c550f6fe, type: 2}
+  - {fileID: 11400000, guid: 3729214085208c3408af987f0d0bf782, type: 2}
+  - {fileID: 11400000, guid: be19fb3de13294b4ca1bba37880a5f03, type: 2}
+  - {fileID: 11400000, guid: 4e66b0b12014d344caf11544b44b7c9a, type: 2}
+  _requiemArt: {fileID: 11400000, guid: 37a3a047643762f499870a596244e4a3, type: 2}
   _nullStateEffect: 1
-  _nullStateDescription: HP drain effects heal for double.
+  _nullStateDescription: Drain effects heal for double. Enemies take 50% of damage
+    they deal to themselves.
   _portrait: {fileID: 0}
   _fullBodySprite: {fileID: 0}
   _animator: {fileID: 0}
-  _aspectColor: {r: 1, g: 1, b: 1, a: 1}
+  _aspectColor: {r: 0.4, g: 0.1, b: 0.6, a: 1}
