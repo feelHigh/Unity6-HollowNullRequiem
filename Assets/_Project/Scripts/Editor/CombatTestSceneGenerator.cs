@@ -38,6 +38,16 @@ namespace HNR.Editor
             handManagerObj.transform.SetParent(managersParent.transform);
             var handManager = handManagerObj.AddComponent<Combat.HandManager>();
 
+            // === CardExecutor (Week 4) ===
+            GameObject cardExecutorObj = new GameObject("CardExecutor");
+            cardExecutorObj.transform.SetParent(managersParent.transform);
+            cardExecutorObj.AddComponent<Cards.CardExecutor>();
+
+            // === TargetingSystem (Week 4) ===
+            GameObject targetingSystemObj = new GameObject("TargetingSystem");
+            targetingSystemObj.transform.SetParent(managersParent.transform);
+            targetingSystemObj.AddComponent<Combat.TargetingSystem>();
+
             // === Create UI Canvas ===
             GameObject canvasObj = new GameObject("CombatCanvas");
             Canvas canvas = canvasObj.AddComponent<Canvas>();
@@ -127,9 +137,26 @@ namespace HNR.Editor
             handRect.anchoredPosition = new Vector2(0, 200);
             handRect.sizeDelta = new Vector2(800, 300);
 
-            // === Test Manager ===
+            // === Test Managers ===
             GameObject testManagerObj = new GameObject("CombatTestManager");
             testManagerObj.AddComponent<Testing.CombatTestManager>();
+
+            GameObject week4TestObj = new GameObject("Week4IntegrationTest");
+            week4TestObj.AddComponent<Testing.Week4IntegrationTest>();
+
+            // === DamageNumberSpawner (Week 4) ===
+            GameObject damageSpawnerObj = new GameObject("DamageNumberSpawner");
+            damageSpawnerObj.transform.SetParent(canvasObj.transform, false);
+            damageSpawnerObj.AddComponent<UI.DamageNumberSpawner>();
+
+            // === Enemy Container ===
+            GameObject enemyContainer = new GameObject("EnemyContainer");
+            enemyContainer.transform.SetParent(canvasObj.transform, false);
+            RectTransform enemyRect = enemyContainer.AddComponent<RectTransform>();
+            enemyRect.anchorMin = new Vector2(0.5f, 0.6f);
+            enemyRect.anchorMax = new Vector2(0.5f, 0.6f);
+            enemyRect.anchoredPosition = Vector2.zero;
+            enemyRect.sizeDelta = new Vector2(600, 200);
 
             // === Wire References ===
             SerializedObject screenSO = new SerializedObject(combatScreen);
@@ -153,7 +180,8 @@ namespace HNR.Editor
             EditorSceneManager.SaveScene(scene, scenePath);
 
             Debug.Log($"[CombatTestSceneGenerator] Created combat test scene at {scenePath}");
-            Debug.Log("Controls: T = Start Combat, Space = End Turn, D = Deal Damage, B = Add Block, K = Kill Enemy");
+            Debug.Log("Controls: T = Start Combat/Run Tests, Y = Test Card Play, Space = End Turn, D = Deal Damage, B = Add Block, K = Kill Enemy");
+            Debug.Log("Week 4 Components: CardExecutor, TargetingSystem, DamageNumberSpawner, Week4IntegrationTest");
         }
 
         private static GameObject CreatePanel(GameObject parent, string name, Vector2 anchorMin, Vector2 anchorMax, Vector2 position, Vector2 size)
