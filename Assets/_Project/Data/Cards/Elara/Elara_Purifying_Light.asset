@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c0eace20f48a584397dbb77125b8907, type: 3}
+  m_Name: Elara_Purifying_Light
+  m_EditorClassIdentifier: 
+  _cardId: elara_purifying_light
+  _cardName: Purifying Light
+  _description: Reduce [CorruptionReduce] Corruption.
+  _flavorText: '"Darkness cannot endure the dawn."'
+  _cardType: 2
+  _rarity: 1
+  _soulAspect: 5
+  _owner: {fileID: 11400000, guid: 5c8f6a2568f0d5e4983f3ddd9b44fc74, type: 2}
+  _apCost: 2
+  _targetType: 0
+  _targetCount: 1
+  _effects:
+  - _effectType: 11
+    _value: 15
+    _duration: 0
+    _customData: 
+  _upgradedVersion: {fileID: 0}
+  _cardArt: {fileID: 0}
+  _borderColor: {r: 0.2, g: 0.7, b: 0.3, a: 1}
