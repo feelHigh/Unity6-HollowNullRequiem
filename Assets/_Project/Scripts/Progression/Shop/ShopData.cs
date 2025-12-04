@@ -11,53 +11,6 @@ using HNR.Cards;
 namespace HNR.Progression
 {
     // ============================================
-    // FORWARD DECLARATIONS
-    // TODO: Move to Progression/Relics/RelicDataSO.cs when implemented
-    // ============================================
-
-    /// <summary>
-    /// Placeholder for relic data. See TDD 07 for full implementation.
-    /// </summary>
-    [Serializable]
-    public class RelicDataSO : ScriptableObject
-    {
-        [SerializeField] private string _relicId;
-        [SerializeField] private string _relicName;
-        [SerializeField] private RelicRarity _rarity;
-        [SerializeField] private Sprite _icon;
-
-        /// <summary>Unique identifier for save/load.</summary>
-        public string RelicId => _relicId;
-
-        /// <summary>Display name of the relic.</summary>
-        public string RelicName => _relicName;
-
-        /// <summary>Relic rarity tier.</summary>
-        public RelicRarity Rarity => _rarity;
-
-        /// <summary>Relic icon sprite.</summary>
-        public Sprite Icon => _icon;
-    }
-
-    /// <summary>
-    /// Relic rarity tiers affecting shop prices and drop rates.
-    /// </summary>
-    public enum RelicRarity
-    {
-        /// <summary>Common relics, lower price.</summary>
-        Common,
-
-        /// <summary>Uncommon relics, moderate price.</summary>
-        Uncommon,
-
-        /// <summary>Rare relics, higher price.</summary>
-        Rare,
-
-        /// <summary>Boss-exclusive relics, not sold in shops.</summary>
-        Boss
-    }
-
-    // ============================================
     // SHOP ENUMS
     // ============================================
 
