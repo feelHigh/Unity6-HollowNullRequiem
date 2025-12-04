@@ -27,23 +27,23 @@ namespace HNR.Map
         [SerializeField, Tooltip("Display title")]
         private string _eventTitle;
 
+        [SerializeField, TextArea(3, 6), Tooltip("Event narrative text")]
+        private string _narrative;
+
         // ============================================
-        // Presentation
+        // Visuals
         // ============================================
 
-        [Header("Presentation")]
-        [SerializeField, TextArea(3, 8), Tooltip("Event narrative text")]
-        private string _description;
-
-        [SerializeField, Tooltip("Event illustration")]
-        private Sprite _eventImage;
+        [Header("Visuals")]
+        [SerializeField, Tooltip("Background illustration for the event")]
+        private Sprite _backgroundImage;
 
         // ============================================
         // Choices
         // ============================================
 
         [Header("Choices")]
-        [SerializeField, Tooltip("Available choices for this event")]
+        [SerializeField, Tooltip("Available choices for this event (2-4 recommended)")]
         private List<EchoChoice> _choices = new();
 
         // ============================================
@@ -68,10 +68,10 @@ namespace HNR.Map
         public string EventTitle => _eventTitle;
 
         /// <summary>Narrative description.</summary>
-        public string Description => _description;
+        public string Narrative => _narrative;
 
-        /// <summary>Event illustration.</summary>
-        public Sprite EventImage => _eventImage;
+        /// <summary>Background illustration.</summary>
+        public Sprite BackgroundImage => _backgroundImage;
 
         /// <summary>Available choices.</summary>
         public IReadOnlyList<EchoChoice> Choices => _choices;
@@ -112,30 +112,59 @@ namespace HNR.Map
 
     /// <summary>
     /// A single choice within an Echo event.
+    /// Each choice can have multiple outcomes.
     /// </summary>
     [Serializable]
     public class EchoChoice
     {
-        [Tooltip("Choice button text")]
-        public string ChoiceText;
+        [SerializeField, Tooltip("Choice button text")]
+        private string _choiceText;
 
-        [TextArea(2, 4), Tooltip("Outcome description shown after choosing")]
-        public string OutcomeText;
+        [SerializeField, TextArea(2, 4), Tooltip("Outcome description shown after choosing")]
+        private string _outcomeText;
 
-        [Tooltip("Type of reward/effect")]
-        public EchoOutcomeType OutcomeType;
+        [SerializeField, Tooltip("Effects applied when this choice is selected")]
+        private List<EchoOutcome> _outcomes = new();
 
-        [Tooltip("Value associated with the outcome")]
-        public int OutcomeValue;
+        /// <summary>Text displayed on the choice button.</summary>
+        public string ChoiceText => _choiceText;
 
-        [Tooltip("Optional: Specific card reward")]
-        public HNR.Cards.CardDataSO CardReward;
+        /// <summary>Narrative text shown after selecting this choice.</summary>
+        public string OutcomeText => _outcomeText;
 
-        [Tooltip("Optional: Cost in HP to choose this option")]
-        public int HPCost;
+        /// <summary>List of effects applied by this choice.</summary>
+        public IReadOnlyList<EchoOutcome> Outcomes => _outcomes;
+    }
 
-        [Tooltip("Optional: Cost in corruption to choose this option")]
-        public int CorruptionCost;
+    /// <summary>
+    /// A single outcome effect from an Echo choice.
+    /// </summary>
+    [Serializable]
+    public class EchoOutcome
+    {
+        [SerializeField, Tooltip("Type of effect")]
+        private EchoOutcomeType _type;
+
+        [SerializeField, Tooltip("Numeric value for the effect")]
+        private int _value;
+
+        [SerializeField, Tooltip("Card ID for card-related outcomes")]
+        private string _cardId;
+
+        [SerializeField, Tooltip("Relic ID for relic-related outcomes")]
+        private string _relicId;
+
+        /// <summary>Type of outcome effect.</summary>
+        public EchoOutcomeType Type => _type;
+
+        /// <summary>Numeric value (amount of gold, HP, corruption, etc.).</summary>
+        public int Value => _value;
+
+        /// <summary>Card ID for GainCard/RemoveCard/UpgradeCard outcomes.</summary>
+        public string CardId => _cardId;
+
+        /// <summary>Relic ID for GainRelic outcome.</summary>
+        public string RelicId => _relicId;
     }
 
     /// <summary>
@@ -146,40 +175,49 @@ namespace HNR.Map
         /// <summary>No mechanical effect.</summary>
         None,
 
-        /// <summary>Heal team HP.</summary>
-        Heal,
-
-        /// <summary>Take damage.</summary>
-        Damage,
-
-        /// <summary>Gain corruption.</summary>
-        GainCorruption,
-
-        /// <summary>Reduce corruption.</summary>
-        ReduceCorruption,
-
         /// <summary>Gain Void Shards (currency).</summary>
-        GainCurrency,
+        GainGold,
 
         /// <summary>Lose Void Shards.</summary>
-        LoseCurrency,
+        LoseGold,
 
-        /// <summary>Gain a random card.</summary>
-        GainRandomCard,
+        /// <summary>Heal team HP.</summary>
+        GainHP,
+
+        /// <summary>Take damage.</summary>
+        LoseHP,
 
         /// <summary>Gain a specific card.</summary>
-        GainSpecificCard,
+        GainCard,
 
         /// <summary>Remove a card from deck.</summary>
         RemoveCard,
 
-        /// <summary>Upgrade a card.</summary>
-        UpgradeCard,
-
-        /// <summary>Gain a random relic.</summary>
+        /// <summary>Gain a specific relic.</summary>
         GainRelic,
 
+        /// <summary>Gain corruption on team.</summary>
+        GainCorruption,
+
+        /// <summary>Reduce corruption on team.</summary>
+        LoseCorruption,
+
+        /// <summary>Upgrade a random card.</summary>
+        UpgradeCard,
+
+        /// <summary>Permanently increase max HP.</summary>
+        GainMaxHP,
+
+        /// <summary>Permanently decrease max HP.</summary>
+        LoseMaxHP,
+
         /// <summary>Start a combat encounter.</summary>
-        Combat
+        StartCombat,
+
+        /// <summary>Gain a random card from pool.</summary>
+        GainRandomCard,
+
+        /// <summary>Gain a random relic from pool.</summary>
+        GainRandomRelic
     }
 }
