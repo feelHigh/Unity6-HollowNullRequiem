@@ -393,17 +393,39 @@ namespace HNR.Testing
             if (!turnManager.IsCombatActive)
             {
                 Debug.LogWarning("[Week4Test] Combat not active. Starting test combat...");
-                StartTestCombat(turnManager);
+                StartTestCombat(turnManager, deckManager, handManager);
             }
 
-            // Wait for player phase
+            // Ensure we're in player phase with AP
+            var context = turnManager.Context;
             if (turnManager.CurrentPhase != CombatPhase.PlayerPhase)
             {
                 Debug.LogWarning($"[Week4Test] Not in PlayerPhase (current: {turnManager.CurrentPhase}). Transitioning...");
                 turnManager.TransitionToPhase(CombatPhase.PlayerPhase);
             }
 
-            var context = turnManager.Context;
+            // Ensure AP is available
+            if (context.CurrentAP <= 0)
+            {
+                context.CurrentAP = context.MaxAP;
+                Debug.Log($"[Week4Test] Set AP to {context.CurrentAP}");
+            }
+
+            // Add test card to hand if empty
+            if (handManager.CardCount == 0 && _testGuardCard != null)
+            {
+                // Use Guard card (TargetType.None) for simpler testing
+                var testInstance = new CardInstance(_testGuardCard);
+                handManager.AddCard(testInstance);
+                Debug.Log($"[Week4Test] Added test card to hand: {_testGuardCard.CardName}");
+            }
+            else if (handManager.CardCount == 0 && _testStrikeCard != null)
+            {
+                var testInstance = new CardInstance(_testStrikeCard);
+                handManager.AddCard(testInstance);
+                Debug.Log($"[Week4Test] Added test card to hand: {_testStrikeCard.CardName}");
+            }
+
             int initialAP = context.CurrentAP;
             int initialHandCount = handManager.CardCount;
             int initialDiscardCount = deckManager.DiscardPileCount;
@@ -416,10 +438,22 @@ namespace HNR.Testing
                 var card = handManager.Hand[0];
                 var cardName = card.CardInstance?.Data?.CardName ?? "Unknown";
                 var cardCost = card.CardInstance?.CurrentCost ?? 0;
+                var targetType = card.CardInstance?.Data?.TargetType ?? TargetType.None;
 
-                Debug.Log($"[Week4Test] Attempting to play: {cardName} (Cost: {cardCost})");
+                Debug.Log($"[Week4Test] Attempting to play: {cardName} (Cost: {cardCost}, TargetType: {targetType})");
 
-                handManager.HandleCardPlayAttempt(card);
+                // For SingleEnemy cards, we need to provide a target or skip
+                if (targetType == TargetType.SingleEnemy || targetType == TargetType.SingleAlly)
+                {
+                    Debug.LogWarning($"[Week4Test] Card requires targeting - testing TryPlayCard directly with null target");
+                    // For testing, play directly with first enemy as target
+                    ICombatTarget target = context.Enemies.Count > 0 ? context.Enemies[0] : null;
+                    turnManager.TryPlayCard(card, target);
+                }
+                else
+                {
+                    handManager.HandleCardPlayAttempt(card);
+                }
 
                 // Check results
                 int finalAP = context.CurrentAP;
@@ -438,13 +472,13 @@ namespace HNR.Testing
             }
             else
             {
-                Debug.LogWarning("[Week4Test] No cards in hand to test");
+                Debug.LogWarning("[Week4Test] No cards in hand to test - assign test cards in inspector");
             }
 
             Debug.Log("========================================");
         }
 
-        private void StartTestCombat(TurnManager turnManager)
+        private void StartTestCombat(TurnManager turnManager, DeckManager deckManager, HandManager handManager)
         {
             // Create minimal test team
             var team = new List<RequiemInstance>
@@ -462,7 +496,16 @@ namespace HNR.Testing
                 enemies.Add(enemy);
             }
 
+            // Start combat
             turnManager.StartCombat(team, enemies);
+
+            // Manually set up for testing (skip normal phase flow)
+            var context = turnManager.Context;
+            context.CurrentAP = context.MaxAP;
+            context.IsPlayerTurn = true;
+            context.TurnNumber = 1;
+
+            Debug.Log($"[Week4Test] Combat started with AP={context.CurrentAP}, Enemies={enemies.Count}");
         }
 
         // ============================================
