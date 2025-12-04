@@ -4,12 +4,40 @@
 // ============================================
 
 using System.Collections.Generic;
+using HNR.Core.Events;
 
 namespace HNR.Combat
 {
+    // ============================================
+    // FORWARD DECLARATIONS - Placeholder Types
+    // TODO: Move to proper locations when implemented
+    // ============================================
+
     /// <summary>
-    /// Shared context for all combat phases.
-    /// Contains all state needed during combat.
+    /// Placeholder: Manages deck shuffling and card draws.
+    /// TODO: Implement in Scripts/Cards/DeckManager.cs
+    /// </summary>
+    public class DeckManager { }
+
+    /// <summary>
+    /// Placeholder: Manages cards in hand.
+    /// TODO: Implement in Scripts/Cards/HandManager.cs
+    /// </summary>
+    public class HandManager { }
+
+    /// <summary>
+    /// Placeholder: Manages status effects on combatants.
+    /// TODO: Implement in Scripts/Combat/StatusEffects/StatusEffectManager.cs
+    /// </summary>
+    public class StatusEffectManager { }
+
+    // ============================================
+    // COMBAT CONTEXT
+    // ============================================
+
+    /// <summary>
+    /// Shared context passed to all combat phases.
+    /// Contains complete state of the current combat encounter.
     /// </summary>
     public class CombatContext
     {
@@ -17,13 +45,16 @@ namespace HNR.Combat
         // Team State
         // ============================================
 
+        /// <summary>The active Requiem team in this combat.</summary>
+        public List<RequiemInstance> Team { get; set; } = new();
+
         /// <summary>Current team HP (shared pool).</summary>
         public int TeamHP { get; set; }
 
         /// <summary>Maximum team HP.</summary>
         public int TeamMaxHP { get; set; }
 
-        /// <summary>Current team Block (absorbs damage).</summary>
+        /// <summary>Current team Block (absorbs damage, resets each turn).</summary>
         public int TeamBlock { get; set; }
 
         // ============================================
@@ -33,11 +64,18 @@ namespace HNR.Combat
         /// <summary>Current Action Points available this turn.</summary>
         public int CurrentAP { get; set; }
 
-        /// <summary>Maximum AP per turn.</summary>
-        public int MaxAP { get; set; }
+        /// <summary>Maximum AP per turn (default 3).</summary>
+        public int MaxAP { get; set; } = 3;
 
         /// <summary>Soul Essence resource for special abilities.</summary>
         public int SoulEssence { get; set; }
+
+        // ============================================
+        // Enemies
+        // ============================================
+
+        /// <summary>Active enemies in this combat encounter.</summary>
+        public List<EnemyInstance> Enemies { get; set; } = new();
 
         // ============================================
         // Turn Tracking
@@ -50,6 +88,19 @@ namespace HNR.Combat
         public bool IsPlayerTurn { get; set; }
 
         // ============================================
+        // Manager References
+        // ============================================
+
+        /// <summary>Reference to deck management system.</summary>
+        public DeckManager DeckManager { get; set; }
+
+        /// <summary>Reference to hand management system.</summary>
+        public HandManager HandManager { get; set; }
+
+        /// <summary>Reference to status effect management system.</summary>
+        public StatusEffectManager StatusManager { get; set; }
+
+        // ============================================
         // Combat State Flags
         // ============================================
 
@@ -58,5 +109,32 @@ namespace HNR.Combat
 
         /// <summary>True if player won, false if defeated.</summary>
         public bool PlayerVictory { get; set; }
+
+        // ============================================
+        // Methods
+        // ============================================
+
+        /// <summary>
+        /// Reset all combat state to default values.
+        /// Called when initializing a new combat encounter.
+        /// </summary>
+        public void Reset()
+        {
+            Team.Clear();
+            Enemies.Clear();
+            TeamHP = 0;
+            TeamMaxHP = 0;
+            TeamBlock = 0;
+            CurrentAP = 0;
+            MaxAP = 3;
+            SoulEssence = 0;
+            TurnNumber = 0;
+            IsPlayerTurn = false;
+            DeckManager = null;
+            HandManager = null;
+            StatusManager = null;
+            CombatEnded = false;
+            PlayerVictory = false;
+        }
     }
 }
