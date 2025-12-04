@@ -4,6 +4,7 @@
 // ============================================
 
 using HNR.Core.Events;
+using HNR.Characters;
 
 // EnemyInstance is defined in HNR.Core.Events (placeholder)
 
@@ -148,6 +149,76 @@ namespace HNR.Combat
         {
             Enemy = enemy;
             Intent = intent;
+        }
+    }
+
+    // ============================================
+    // STATUS EFFECT EVENTS
+    // ============================================
+
+    /// <summary>
+    /// Published when a status effect is applied to a target.
+    /// </summary>
+    public class StatusAppliedEvent : GameEvent
+    {
+        /// <summary>The target receiving the status.</summary>
+        public ICombatTarget Target { get; }
+
+        /// <summary>The type of status applied.</summary>
+        public StatusType StatusType { get; }
+
+        /// <summary>Number of stacks applied.</summary>
+        public int Stacks { get; }
+
+        /// <summary>Duration in turns (0 = permanent until removed).</summary>
+        public int Duration { get; }
+
+        public StatusAppliedEvent(ICombatTarget target, StatusType statusType, int stacks, int duration = 0)
+        {
+            Target = target;
+            StatusType = statusType;
+            Stacks = stacks;
+            Duration = duration;
+        }
+    }
+
+    /// <summary>
+    /// Published when a status effect is removed from a target.
+    /// </summary>
+    public class StatusRemovedEvent : GameEvent
+    {
+        /// <summary>The target losing the status.</summary>
+        public ICombatTarget Target { get; }
+
+        /// <summary>The type of status removed.</summary>
+        public StatusType StatusType { get; }
+
+        public StatusRemovedEvent(ICombatTarget target, StatusType statusType)
+        {
+            Target = target;
+            StatusType = statusType;
+        }
+    }
+
+    /// <summary>
+    /// Published when a status effect ticks (deals damage, heals, etc.).
+    /// </summary>
+    public class StatusTickedEvent : GameEvent
+    {
+        /// <summary>The target affected.</summary>
+        public ICombatTarget Target { get; }
+
+        /// <summary>The status that ticked.</summary>
+        public StatusType StatusType { get; }
+
+        /// <summary>Value of the tick effect (damage, heal, etc.).</summary>
+        public int Value { get; }
+
+        public StatusTickedEvent(ICombatTarget target, StatusType statusType, int value)
+        {
+            Target = target;
+            StatusType = statusType;
+            Value = value;
         }
     }
 }

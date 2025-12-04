@@ -15,120 +15,12 @@ using RequiemDataSO = HNR.Characters.RequiemDataSO;
 namespace HNR.Cards
 {
     // ============================================
-    // NOTE: DamageEffect, DamageMultipleEffect, and BlockEffect
-    // are now in separate files with enhanced implementations:
-    // - DamageEffect.cs (includes Soul Aspect multipliers)
-    // - BlockEffect.cs
+    // NOTE: Core effects are now in separate files:
+    // - DamageEffect.cs (DamageEffect, DamageMultipleEffect)
+    // - BlockEffect.cs (BlockEffect)
+    // - HealEffect.cs (HealEffect, HealPercentEffect)
+    // - ApplyStatusEffect.cs (ApplyStatusEffect, RemoveStatusEffect)
     // ============================================
-
-    // ============================================
-    // HEALING EFFECTS
-    // ============================================
-
-    /// <summary>
-    /// Heal flat HP amount.
-    /// </summary>
-    public class HealEffect : ICardEffect
-    {
-        public void Execute(CardEffectData data, EffectContext context)
-        {
-            int heal = context.CalculateHeal(data.Value);
-
-            if (context.TurnManager != null)
-            {
-                context.TurnManager.HealTeam(heal);
-            }
-            else if (context.CombatContext != null)
-            {
-                int previousHP = context.CombatContext.TeamHP;
-                context.CombatContext.TeamHP = Mathf.Min(
-                    context.CombatContext.TeamHP + heal,
-                    context.CombatContext.TeamMaxHP
-                );
-                int actualHeal = context.CombatContext.TeamHP - previousHP;
-                EventBus.Publish(new TeamHPChangedEvent(
-                    context.CombatContext.TeamHP,
-                    context.CombatContext.TeamMaxHP,
-                    actualHeal
-                ));
-            }
-
-            Debug.Log($"[HealEffect] Healed {heal} HP");
-        }
-    }
-
-    /// <summary>
-    /// Heal percentage of max HP.
-    /// </summary>
-    public class HealPercentEffect : ICardEffect
-    {
-        public void Execute(CardEffectData data, EffectContext context)
-        {
-            if (context.CombatContext == null)
-            {
-                Debug.LogWarning("[HealPercentEffect] No combat context");
-                return;
-            }
-
-            int maxHP = context.CombatContext.TeamMaxHP;
-            int healAmount = Mathf.RoundToInt(maxHP * (data.Value / 100f));
-            healAmount = context.CalculateHeal(healAmount);
-
-            if (context.TurnManager != null)
-            {
-                context.TurnManager.HealTeam(healAmount);
-            }
-            else
-            {
-                int previousHP = context.CombatContext.TeamHP;
-                context.CombatContext.TeamHP = Mathf.Min(
-                    context.CombatContext.TeamHP + healAmount,
-                    maxHP
-                );
-                int actualHeal = context.CombatContext.TeamHP - previousHP;
-                EventBus.Publish(new TeamHPChangedEvent(
-                    context.CombatContext.TeamHP,
-                    maxHP,
-                    actualHeal
-                ));
-            }
-
-            Debug.Log($"[HealPercentEffect] Healed {data.Value}% ({healAmount} HP)");
-        }
-    }
-
-    // ============================================
-    // STATUS EFFECT APPLICATION
-    // ============================================
-
-    /// <summary>
-    /// Apply a status effect to target.
-    /// </summary>
-    public class ApplyStatusEffect : ICardEffect
-    {
-        private readonly StatusType _statusType;
-
-        public ApplyStatusEffect(StatusType statusType)
-        {
-            _statusType = statusType;
-        }
-
-        public void Execute(CardEffectData data, EffectContext context)
-        {
-            if (context.Target == null)
-            {
-                Debug.LogWarning($"[ApplyStatusEffect] No target for {_statusType}");
-                return;
-            }
-
-            // TODO: Implement StatusEffectManager integration
-            // For now, log the intended effect
-            Debug.Log($"[ApplyStatusEffect] Applied {data.Value} stacks of {_statusType} to {context.Target.Name} for {data.Duration} turns");
-
-            // Publish event for status application
-            // EventBus.Publish(new StatusAppliedEvent(context.Target, _statusType, data.Value, data.Duration));
-        }
-    }
 
     // ============================================
     // CARD MANIPULATION EFFECTS
