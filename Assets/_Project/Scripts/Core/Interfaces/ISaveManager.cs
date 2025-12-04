@@ -3,7 +3,7 @@
 // Persistence and save data interface
 // ============================================
 
-using HNR.Data;
+using HNR.Progression;
 
 namespace HNR.Core.Interfaces
 {
@@ -13,7 +13,7 @@ namespace HNR.Core.Interfaces
     /// </summary>
     /// <remarks>
     /// Register with ServiceLocator at startup.
-    /// Implementation: SaveManager (non-MonoBehaviour)
+    /// Implementation: SaveManager (MonoBehaviour)
     /// Uses Easy Save 3 for serialization.
     /// </remarks>
     public interface ISaveManager
@@ -26,14 +26,14 @@ namespace HNR.Core.Interfaces
         /// <summary>
         /// Load the saved run data.
         /// </summary>
-        /// <returns>The loaded run data, or null if no save exists</returns>
+        /// <returns>The loaded run data, or null if no save exists.</returns>
         RunSaveData LoadRun();
 
         /// <summary>
         /// Save the current run data.
         /// Called automatically at checkpoints and manually on exit.
         /// </summary>
-        /// <param name="data">The run data to save</param>
+        /// <param name="data">The run data to save.</param>
         void SaveRun(RunSaveData data);
 
         /// <summary>
@@ -46,13 +46,25 @@ namespace HNR.Core.Interfaces
         /// Load player settings.
         /// Returns default settings if no save exists.
         /// </summary>
-        /// <returns>The loaded settings data</returns>
+        /// <returns>The loaded settings data.</returns>
         SettingsData LoadSettings();
 
         /// <summary>
         /// Save player settings.
         /// </summary>
-        /// <param name="data">The settings data to save</param>
+        /// <param name="data">The settings data to save.</param>
         void SaveSettings(SettingsData data);
+
+        /// <summary>
+        /// Load meta-progression data (unlocks, achievements).
+        /// </summary>
+        /// <returns>The loaded meta data.</returns>
+        MetaSaveData LoadMeta();
+
+        /// <summary>
+        /// Save meta-progression data.
+        /// </summary>
+        /// <param name="data">The meta data to save.</param>
+        void SaveMeta(MetaSaveData data);
     }
 }
