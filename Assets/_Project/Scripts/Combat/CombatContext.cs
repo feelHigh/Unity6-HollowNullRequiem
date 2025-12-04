@@ -14,12 +14,6 @@ namespace HNR.Combat
     // ============================================
 
     /// <summary>
-    /// Placeholder: Manages deck shuffling and card draws.
-    /// TODO: Implement in Scripts/Cards/DeckManager.cs
-    /// </summary>
-    public class DeckManager { }
-
-    /// <summary>
     /// Placeholder: Manages cards in hand.
     /// TODO: Implement in Scripts/Cards/HandManager.cs
     /// </summary>

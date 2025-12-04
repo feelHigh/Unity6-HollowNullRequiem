@@ -5,6 +5,7 @@
 
 using System.Collections.Generic;
 using HNR.Core.Interfaces;
+using HNR.Cards;
 
 namespace HNR.Core.Events
 {
@@ -31,11 +32,7 @@ namespace HNR.Core.Events
     /// </summary>
     public class EnemyInstance { }
 
-    /// <summary>
-    /// Placeholder: Runtime instance of a card.
-    /// TODO: Implement in Scripts/Cards/Runtime/CardInstance.cs
-    /// </summary>
-    public class CardInstance { }
+    // CardInstance is now implemented in HNR.Cards.CardInstance
 
     /// <summary>
     /// Placeholder: Interface for anything that can be targeted.
