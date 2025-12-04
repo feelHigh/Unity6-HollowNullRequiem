@@ -26,8 +26,10 @@ namespace HNR.Core.Events
     /// </summary>
     public class RequiemInstance
     {
+        public HNR.Characters.RequiemDataSO Data { get; set; }
         public int MaxHP { get; set; } = 100;
         public int CurrentHP { get; set; } = 100;
+        public bool IsDead => CurrentHP <= 0;
     }
 
     /// <summary>
@@ -39,6 +41,7 @@ namespace HNR.Core.Events
         public HNR.Combat.EnemyDataSO Data { get; set; }
         public int CurrentHP { get; set; }
         public int Block { get; set; }
+        public bool IsDead => CurrentHP <= 0;
     }
 
     // CardInstance is now implemented in HNR.Cards.CardInstance
