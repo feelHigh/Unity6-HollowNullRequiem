@@ -47,7 +47,7 @@ namespace HNR.Progression
         }
 
         /// <summary>Path to the save file.</summary>
-        public string SaveFilePath => ES3Settings.defaultSettings.FullPath(SAVE_FILE);
+        public string SaveFilePath => System.IO.Path.Combine(Application.persistentDataPath, SAVE_FILE);
 
         // ============================================
         // Unity Lifecycle

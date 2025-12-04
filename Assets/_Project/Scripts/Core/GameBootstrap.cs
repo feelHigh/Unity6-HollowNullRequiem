@@ -7,6 +7,7 @@ using UnityEngine;
 using HNR.Core.Interfaces;
 using HNR.UI;
 using HNR.Audio;
+using HNR.Progression;
 
 namespace HNR.Core
 {
@@ -76,7 +77,7 @@ namespace HNR.Core
         // ============================================
 
         /// <summary>
-        /// Initialize the SaveManager (non-MonoBehaviour).
+        /// Initialize the SaveManager (MonoBehaviour).
         /// </summary>
         private void InitializeSaveManager()
         {
@@ -86,11 +87,17 @@ namespace HNR.Core
                 return;
             }
 
-            var saveManager = new SaveManager();
-            saveManager.Initialize();
-            ServiceLocator.Register<ISaveManager>(saveManager);
-
-            Debug.Log("[GameBootstrap] SaveManager initialized.");
+            var saveManager = FindAnyObjectByType<SaveManager>();
+            if (saveManager == null)
+            {
+                var go = new GameObject("[SaveManager]");
+                go.AddComponent<SaveManager>();
+                Debug.Log("[GameBootstrap] SaveManager created dynamically.");
+            }
+            else
+            {
+                Debug.Log("[GameBootstrap] SaveManager found in scene.");
+            }
         }
 
         /// <summary>

@@ -326,6 +326,36 @@ namespace HNR.Characters
         }
 
         // ============================================
+        // Save/Load Restoration
+        // ============================================
+
+        /// <summary>
+        /// Set HP values directly (for save/load restoration).
+        /// </summary>
+        public void SetHP(int currentHP, int maxHP)
+        {
+            _maxHP = maxHP;
+            _currentHP = Mathf.Clamp(currentHP, 0, _maxHP);
+        }
+
+        /// <summary>
+        /// Set corruption value directly (for save/load restoration).
+        /// </summary>
+        public void SetCorruption(int corruption)
+        {
+            _corruption = Mathf.Clamp(corruption, 0, 100);
+            _inNullState = _corruption >= 100;
+        }
+
+        /// <summary>
+        /// Set soul essence value directly (for save/load restoration).
+        /// </summary>
+        public void SetSoulEssence(int soulEssence)
+        {
+            _soulEssence = Mathf.Max(0, soulEssence);
+        }
+
+        // ============================================
         // Death
         // ============================================
 
