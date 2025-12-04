@@ -51,6 +51,9 @@ namespace HNR.UI
         [SerializeField]
         private Color _criticalColor = new Color(1f, 0.8f, 0f, 1f);
 
+        [SerializeField]
+        private Color _corruptionColor = new Color(0.42f, 0.25f, 0.63f, 1f); // HollowViolet
+
         // ============================================
         // Runtime
         // ============================================
@@ -104,6 +107,7 @@ namespace HNR.UI
             {
                 DamageNumberType.Heal => $"+{value}",
                 DamageNumberType.Block => $"[{value}]",
+                DamageNumberType.Corruption => $"+{value}",
                 _ => value.ToString()
             };
 
@@ -132,6 +136,7 @@ namespace HNR.UI
             {
                 DamageNumberType.Heal => $"+{value}",
                 DamageNumberType.Block => $"[{value}]",
+                DamageNumberType.Corruption => $"+{value}",
                 _ => value.ToString()
             };
 
@@ -185,6 +190,7 @@ namespace HNR.UI
                 DamageNumberType.Damage => _damageColor,
                 DamageNumberType.Heal => _healColor,
                 DamageNumberType.Block => _blockColor,
+                DamageNumberType.Corruption => _corruptionColor,
                 _ => Color.white
             };
         }
@@ -230,6 +236,7 @@ namespace HNR.UI
     {
         Damage,
         Heal,
-        Block
+        Block,
+        Corruption
     }
 }
