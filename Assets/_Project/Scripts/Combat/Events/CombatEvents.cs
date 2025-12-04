@@ -10,21 +10,6 @@ using HNR.Core.Events;
 namespace HNR.Combat
 {
     // ============================================
-    // FORWARD DECLARATIONS
-    // ============================================
-
-    /// <summary>
-    /// Placeholder: Interface for anything that can be targeted in combat.
-    /// TODO: Implement in Scripts/Combat/ICombatTarget.cs
-    /// </summary>
-    public interface ICombatTarget
-    {
-        int CurrentHP { get; }
-        int MaxHP { get; }
-        int Block { get; }
-    }
-
-    // ============================================
     // RESOURCE EVENTS
     // ============================================
 
