@@ -14,12 +14,6 @@ namespace HNR.Combat
     // ============================================
 
     /// <summary>
-    /// Placeholder: Manages cards in hand.
-    /// TODO: Implement in Scripts/Cards/HandManager.cs
-    /// </summary>
-    public class HandManager { }
-
-    /// <summary>
     /// Placeholder: Manages status effects on combatants.
     /// TODO: Implement in Scripts/Combat/StatusEffects/StatusEffectManager.cs
     /// </summary>
