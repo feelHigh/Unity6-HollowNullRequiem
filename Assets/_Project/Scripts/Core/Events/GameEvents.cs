@@ -14,11 +14,7 @@ namespace HNR.Core.Events
     // TODO: Move to proper locations when implemented
     // ============================================
 
-    /// <summary>
-    /// Placeholder: ScriptableObject data for a Requiem character.
-    /// TODO: Implement in Scripts/Characters/Data/RequiemDataSO.cs
-    /// </summary>
-    public class RequiemDataSO : UnityEngine.ScriptableObject { }
+    // RequiemDataSO is implemented in HNR.Characters.RequiemDataSO
 
     /// <summary>
     /// Placeholder: Runtime instance of a Requiem character.
@@ -126,11 +122,25 @@ namespace HNR.Core.Events
     public class RunStartedEvent : GameEvent
     {
         /// <summary>The team of Requiems selected for this run.</summary>
-        public IReadOnlyList<RequiemDataSO> SelectedTeam { get; }
+        public IReadOnlyList<HNR.Characters.RequiemDataSO> SelectedTeam { get; }
 
-        public RunStartedEvent(List<RequiemDataSO> selectedTeam)
+        public RunStartedEvent(List<HNR.Characters.RequiemDataSO> selectedTeam)
         {
             SelectedTeam = selectedTeam?.AsReadOnly();
+        }
+    }
+
+    /// <summary>
+    /// Published when a team is selected for a new run.
+    /// </summary>
+    public class TeamSelectedEvent : GameEvent
+    {
+        /// <summary>The selected team of Requiems.</summary>
+        public IReadOnlyList<HNR.Characters.RequiemDataSO> SelectedTeam { get; }
+
+        public TeamSelectedEvent(HNR.Characters.RequiemDataSO[] team)
+        {
+            SelectedTeam = new List<HNR.Characters.RequiemDataSO>(team).AsReadOnly();
         }
     }
 
