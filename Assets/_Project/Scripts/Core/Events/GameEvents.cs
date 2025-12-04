@@ -24,13 +24,22 @@ namespace HNR.Core.Events
     /// Placeholder: Runtime instance of a Requiem character.
     /// TODO: Implement in Scripts/Characters/RequiemInstance.cs
     /// </summary>
-    public class RequiemInstance { }
+    public class RequiemInstance
+    {
+        public int MaxHP { get; set; } = 100;
+        public int CurrentHP { get; set; } = 100;
+    }
 
     /// <summary>
     /// Placeholder: Runtime instance of an enemy.
     /// TODO: Implement in Scripts/Enemies/EnemyInstance.cs
     /// </summary>
-    public class EnemyInstance { }
+    public class EnemyInstance
+    {
+        public HNR.Combat.EnemyDataSO Data { get; set; }
+        public int CurrentHP { get; set; }
+        public int Block { get; set; }
+    }
 
     // CardInstance is now implemented in HNR.Cards.CardInstance
 
