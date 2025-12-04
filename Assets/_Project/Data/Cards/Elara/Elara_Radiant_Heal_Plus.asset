@@ -10,24 +10,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7c0eace20f48a584397dbb77125b8907, type: 3}
-  m_Name: Thornwick_Basic_Strike
+  m_Name: Elara_Radiant_Heal_Plus
   m_EditorClassIdentifier: 
-  _cardId: thornwick_basic_strike
-  _cardName: Basic Strike
-  _description: Deal [Damage] damage.
-  _flavorText: '"Even roots can strike."'
-  _cardType: 0
+  _cardId: elara_radiant_heal_plus
+  _cardName: Radiant Heal+
+  _description: Heal [Heal] HP.
+  _flavorText: '"Let the light mend you."'
+  _cardType: 2
   _rarity: 0
-  _soulAspect: 3
-  _owner: {fileID: 11400000, guid: dc4971173b6aab64e9fe8c149ed54647, type: 2}
+  _soulAspect: 5
+  _owner: {fileID: 11400000, guid: 5c8f6a2568f0d5e4983f3ddd9b44fc74, type: 2}
   _apCost: 1
-  _targetType: 1
+  _targetType: 0
   _targetCount: 1
   _effects:
-  - _effectType: 0
-    _value: 6
+  - _effectType: 3
+    _value: 14
     _duration: 0
     _customData: 
-  _upgradedVersion: {fileID: 11400000, guid: 3346437d176ca9f4a98b5c156942905f, type: 2}
+  _upgradedVersion: {fileID: 0}
   _cardArt: {fileID: 0}
-  _borderColor: {r: 0.8, g: 0.2, b: 0.1, a: 1}
+  _borderColor: {r: 0.3, g: 0.9, b: 0.4, a: 1}

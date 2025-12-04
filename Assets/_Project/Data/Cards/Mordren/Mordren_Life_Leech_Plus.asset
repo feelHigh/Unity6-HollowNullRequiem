@@ -10,24 +10,28 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7c0eace20f48a584397dbb77125b8907, type: 3}
-  m_Name: Kira_Ember_Dance
+  m_Name: Mordren_Life_Leech_Plus
   m_EditorClassIdentifier: 
-  _cardId: kira_ember_dance
-  _cardName: Ember Dance
-  _description: Deal [DamageMultiple] damage 2 times.
-  _flavorText: '"Each step leaves fire in its wake."'
+  _cardId: mordren_life_leech_plus
+  _cardName: Life Leech+
+  _description: Deal [Damage] damage. Heal [Heal] HP.
+  _flavorText: '"A taste of your essence."'
   _cardType: 0
-  _rarity: 1
-  _soulAspect: 1
-  _owner: {fileID: 11400000, guid: 7d63b240612d0af4d988e78b48b3298d, type: 2}
+  _rarity: 0
+  _soulAspect: 2
+  _owner: {fileID: 11400000, guid: 5672e6584b7620d4dbe5067f920bd53e, type: 2}
   _apCost: 1
   _targetType: 1
   _targetCount: 1
   _effects:
-  - _effectType: 1
-    _value: 5
-    _duration: 2
+  - _effectType: 0
+    _value: 6
+    _duration: 0
     _customData: 
-  _upgradedVersion: {fileID: 11400000, guid: 983d9dadf51c642408a843c8f93c1ebb, type: 2}
+  - _effectType: 3
+    _value: 6
+    _duration: 0
+    _customData: 
+  _upgradedVersion: {fileID: 0}
   _cardArt: {fileID: 0}
-  _borderColor: {r: 0.8, g: 0.2, b: 0.1, a: 1}
+  _borderColor: {r: 1, g: 0.3, b: 0.2, a: 1}

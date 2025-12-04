@@ -94,7 +94,7 @@ namespace HNR.Editor
             TextMeshProUGUI descText = descObj.GetComponent<TextMeshProUGUI>();
             descText.alignment = TextAlignmentOptions.Center;
             descText.color = new Color(0.8f, 0.8f, 0.8f, 1f);
-            descText.enableWordWrapping = true;
+            descText.textWrappingMode = TextWrappingModes.Normal;
 
             // === Selection Glow ===
             GameObject glowObj = CreateChildImage(cardRoot, "SelectionGlow", new Vector2(220, 300));

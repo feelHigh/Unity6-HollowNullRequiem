@@ -28,6 +28,6 @@ MonoBehaviour:
     _value: 0
     _duration: 0
     _customData: TriggerAllBurn
-  _upgradedVersion: {fileID: 0}
+  _upgradedVersion: {fileID: 11400000, guid: d3bae3a12008c5e4ba56a3d994943e38, type: 2}
   _cardArt: {fileID: 0}
   _borderColor: {r: 0.2, g: 0.7, b: 0.3, a: 1}

@@ -10,28 +10,28 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7c0eace20f48a584397dbb77125b8907, type: 3}
-  m_Name: Mordren_Drain_Soul
+  m_Name: Mordren_Creeping_Darkness_Plus
   m_EditorClassIdentifier: 
-  _cardId: mordren_drain_soul
-  _cardName: Drain Soul
-  _description: Deal [Damage] damage. Heal [Heal] HP.
-  _flavorText: '"Your life force sustains me."'
-  _cardType: 0
-  _rarity: 1
+  _cardId: mordren_creeping_darkness_plus
+  _cardName: Creeping Darkness+
+  _description: Apply [ApplyWeakness] Weakness. Apply [ApplyVulnerability] Vulnerable.
+  _flavorText: '"The void consumes all strength."'
+  _cardType: 2
+  _rarity: 2
   _soulAspect: 2
   _owner: {fileID: 11400000, guid: 5672e6584b7620d4dbe5067f920bd53e, type: 2}
-  _apCost: 2
+  _apCost: 1
   _targetType: 1
   _targetCount: 1
   _effects:
-  - _effectType: 0
-    _value: 8
-    _duration: 0
+  - _effectType: 7
+    _value: 2
+    _duration: 2
     _customData: 
-  - _effectType: 3
-    _value: 5
-    _duration: 0
+  - _effectType: 8
+    _value: 2
+    _duration: 2
     _customData: 
-  _upgradedVersion: {fileID: 11400000, guid: e92696b8955314c4f8fe6e0ac2d5d305, type: 2}
+  _upgradedVersion: {fileID: 0}
   _cardArt: {fileID: 0}
-  _borderColor: {r: 0.8, g: 0.2, b: 0.1, a: 1}
+  _borderColor: {r: 0.3, g: 0.9, b: 0.4, a: 1}

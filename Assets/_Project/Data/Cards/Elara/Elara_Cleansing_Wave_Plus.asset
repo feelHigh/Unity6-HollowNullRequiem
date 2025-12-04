@@ -10,24 +10,28 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7c0eace20f48a584397dbb77125b8907, type: 3}
-  m_Name: Elara_Basic_Strike
+  m_Name: Elara_Cleansing_Wave_Plus
   m_EditorClassIdentifier: 
-  _cardId: elara_basic_strike
-  _cardName: Basic Strike
-  _description: Deal [Damage] damage.
-  _flavorText: '"Even light can pierce."'
-  _cardType: 0
-  _rarity: 0
+  _cardId: elara_cleansing_wave_plus
+  _cardName: Cleansing Wave+
+  _description: Heal all allies for [Heal] HP. Remove all debuffs.
+  _flavorText: '"Be purified in holy radiance."'
+  _cardType: 2
+  _rarity: 2
   _soulAspect: 5
   _owner: {fileID: 11400000, guid: 5c8f6a2568f0d5e4983f3ddd9b44fc74, type: 2}
-  _apCost: 1
-  _targetType: 1
+  _apCost: 2
+  _targetType: 4
   _targetCount: 1
   _effects:
-  - _effectType: 0
-    _value: 6
+  - _effectType: 3
+    _value: 12
     _duration: 0
     _customData: 
-  _upgradedVersion: {fileID: 11400000, guid: e3209e57f0c91f7419b2d3e513954a0a, type: 2}
+  - _effectType: 19
+    _value: 0
+    _duration: 0
+    _customData: RemoveDebuffs
+  _upgradedVersion: {fileID: 0}
   _cardArt: {fileID: 0}
-  _borderColor: {r: 0.8, g: 0.2, b: 0.1, a: 1}
+  _borderColor: {r: 0.3, g: 0.9, b: 0.4, a: 1}

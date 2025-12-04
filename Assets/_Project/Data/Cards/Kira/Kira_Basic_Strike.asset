@@ -28,6 +28,6 @@ MonoBehaviour:
     _value: 6
     _duration: 0
     _customData: 
-  _upgradedVersion: {fileID: 0}
+  _upgradedVersion: {fileID: 11400000, guid: 9d26fba69ed1a3c4290db1be4e7a9a63, type: 2}
   _cardArt: {fileID: 0}
   _borderColor: {r: 0.8, g: 0.2, b: 0.1, a: 1}

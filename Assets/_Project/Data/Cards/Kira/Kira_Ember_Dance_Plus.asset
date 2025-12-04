@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7c0eace20f48a584397dbb77125b8907, type: 3}
-  m_Name: Kira_Ember_Dance
+  m_Name: Kira_Ember_Dance_Plus
   m_EditorClassIdentifier: 
-  _cardId: kira_ember_dance
-  _cardName: Ember Dance
+  _cardId: kira_ember_dance_plus
+  _cardName: Ember Dance+
   _description: Deal [DamageMultiple] damage 2 times.
   _flavorText: '"Each step leaves fire in its wake."'
   _cardType: 0
@@ -25,9 +25,9 @@ MonoBehaviour:
   _targetCount: 1
   _effects:
   - _effectType: 1
-    _value: 5
+    _value: 6
     _duration: 2
     _customData: 
-  _upgradedVersion: {fileID: 11400000, guid: 983d9dadf51c642408a843c8f93c1ebb, type: 2}
+  _upgradedVersion: {fileID: 0}
   _cardArt: {fileID: 0}
-  _borderColor: {r: 0.8, g: 0.2, b: 0.1, a: 1}
+  _borderColor: {r: 1, g: 0.3, b: 0.2, a: 1}
