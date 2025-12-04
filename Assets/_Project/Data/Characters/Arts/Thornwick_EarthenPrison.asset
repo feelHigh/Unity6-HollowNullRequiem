@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe1fe9c0e9637ef4ab1da5520f2f03fc, type: 3}
+  m_Name: Thornwick_EarthenPrison
+  m_EditorClassIdentifier: 
+  _artName: Earthen Prison
+  _description: Stun all enemies for 2 turns. Gain 30 Block.
+  _flavorText: '"The earth itself rises to bind you."'
+  _seCost: 30
+  _oncePerCombat: 1
+  _targetType: 2
+  _effects:
+  - _effectType: 9
+    _value: 1
+    _duration: 2
+    _customData: 
+  - _effectType: 2
+    _value: 30
+    _duration: 0
+    _customData: 
+  _icon: {fileID: 0}
+  _vfxPrefab: {fileID: 0}
+  _flashColor: {r: 0.4, g: 0.3, b: 0.1, a: 1}
+  _effectDuration: 2
+  _activationSound: {fileID: 0}
+  _voiceLine: {fileID: 0}
