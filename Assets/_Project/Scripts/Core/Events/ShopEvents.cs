@@ -141,4 +141,27 @@ namespace HNR.Core.Events
             Relic = relic;
         }
     }
+
+    /// <summary>
+    /// Published when a relic effect is triggered.
+    /// </summary>
+    public class RelicTriggeredEvent : GameEvent
+    {
+        /// <summary>The relic that was triggered.</summary>
+        public RelicDataSO Relic { get; }
+
+        /// <summary>The trigger type that activated the relic.</summary>
+        public RelicTrigger Trigger => Relic?.Trigger ?? RelicTrigger.Passive;
+
+        /// <summary>The effect that was applied.</summary>
+        public RelicEffectType EffectType => Relic?.EffectType ?? RelicEffectType.Healing;
+
+        /// <summary>The value of the effect.</summary>
+        public int EffectValue => Relic?.EffectValue ?? 0;
+
+        public RelicTriggeredEvent(RelicDataSO relic)
+        {
+            Relic = relic;
+        }
+    }
 }
