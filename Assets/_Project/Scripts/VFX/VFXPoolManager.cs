@@ -244,7 +244,7 @@ namespace HNR.VFX
         /// </summary>
         public void StopAll()
         {
-            var activeInstances = FindObjectsOfType<VFXInstance>();
+            var activeInstances = FindObjectsByType<VFXInstance>(FindObjectsSortMode.None);
             foreach (var instance in activeInstances)
             {
                 if (instance.gameObject.activeInHierarchy)
@@ -259,7 +259,7 @@ namespace HNR.VFX
         /// </summary>
         public void ReturnAll()
         {
-            var activeInstances = FindObjectsOfType<VFXInstance>();
+            var activeInstances = FindObjectsByType<VFXInstance>(FindObjectsSortMode.None);
             foreach (var instance in activeInstances)
             {
                 if (instance.gameObject.activeInHierarchy)
