@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    link.xml - Code Stripping Preservation
+    Prevents IL2CPP from stripping required assemblies during build.
+    See TDD 11 for build optimization details.
+-->
+<linker>
+    <!-- ============================================ -->
+    <!-- DOTween - Animation library -->
+    <!-- ============================================ -->
+    <assembly fullname="DOTween" preserve="all"/>
+    <assembly fullname="DOTweenPro" preserve="all"/>
+
+    <!-- ============================================ -->
+    <!-- Easy Save 3 - Serialization/Persistence -->
+    <!-- ============================================ -->
+    <assembly fullname="ES3" preserve="all"/>
+    <assembly fullname="Easy Save 3" preserve="all"/>
+
+    <!-- ============================================ -->
+    <!-- Feel - Game juice/feedback library -->
+    <!-- ============================================ -->
+    <assembly fullname="MoreMountains.Feedbacks" preserve="all"/>
+    <assembly fullname="MoreMountains.Tools" preserve="all"/>
+
+    <!-- ============================================ -->
+    <!-- Beautify - Post-processing effects -->
+    <!-- ============================================ -->
+    <assembly fullname="Beautify" preserve="all"/>
+    <assembly fullname="Beautify3" preserve="all"/>
+
+    <!-- ============================================ -->
+    <!-- Unity UI Systems -->
+    <!-- ============================================ -->
+    <assembly fullname="UnityEngine.UI" preserve="all"/>
+    <assembly fullname="Unity.TextMeshPro" preserve="all"/>
+
+    <!-- ============================================ -->
+    <!-- HNR Game Assemblies -->
+    <!-- ============================================ -->
+    <assembly fullname="HNR.Core" preserve="all"/>
+    <assembly fullname="HNR.Combat" preserve="all"/>
+    <assembly fullname="HNR.Cards" preserve="all"/>
+    <assembly fullname="HNR.Characters" preserve="all"/>
+    <assembly fullname="HNR.Progression" preserve="all"/>
+    <assembly fullname="HNR.UI" preserve="all"/>
+    <assembly fullname="HNR.VFX" preserve="all"/>
+    <assembly fullname="HNR.Audio" preserve="all"/>
+    <assembly fullname="HNR.Map" preserve="all"/>
+    <assembly fullname="HNR.Data" preserve="all"/>
+    <assembly fullname="HNR.Diagnostics" preserve="all"/>
+</linker>
