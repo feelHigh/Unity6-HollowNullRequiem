@@ -6,7 +6,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using HNR.Combat;
+using HNR.Characters;
 
 namespace HNR.UI.Combat
 {
@@ -72,8 +72,10 @@ namespace HNR.UI.Combat
                 StatusType.Poison => new Color(0.4f, 0.8f, 0.2f),
                 StatusType.Weakness => new Color(0.6f, 0.4f, 0.6f),
                 StatusType.Strength => new Color(1f, 0.6f, 0.2f),
-                StatusType.Vulnerable => new Color(0.8f, 0.2f, 0.2f),
-                StatusType.Block => UIColors.SoulCyan,
+                StatusType.Vulnerability => new Color(0.8f, 0.2f, 0.2f),
+                StatusType.Dexterity => UIColors.SoulCyan,
+                StatusType.Regeneration => UIColors.NatureAspect,
+                StatusType.Shielded => UIColors.SoulGold,
                 _ => UIColors.PanelGray
             };
         }
