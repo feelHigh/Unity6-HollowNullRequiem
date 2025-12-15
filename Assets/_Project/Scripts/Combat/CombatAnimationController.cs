@@ -83,7 +83,7 @@ namespace HNR.Combat
             EventBus.Subscribe<CombatEndedEvent>(OnCombatEnded);
             EventBus.Subscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
             EventBus.Subscribe<NullStateEnteredEvent>(OnNullStateEntered);
-            EventBus.Subscribe<RequiemArtUsedEvent>(OnRequiemArtUsed);
+            EventBus.Subscribe<RequiemArtActivatedEvent>(OnRequiemArtActivated);
         }
 
         private void UnsubscribeFromEvents()
@@ -93,7 +93,7 @@ namespace HNR.Combat
             EventBus.Unsubscribe<CombatEndedEvent>(OnCombatEnded);
             EventBus.Unsubscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
             EventBus.Unsubscribe<NullStateEnteredEvent>(OnNullStateEntered);
-            EventBus.Unsubscribe<RequiemArtUsedEvent>(OnRequiemArtUsed);
+            EventBus.Unsubscribe<RequiemArtActivatedEvent>(OnRequiemArtActivated);
         }
 
         // ============================================
@@ -172,9 +172,9 @@ namespace HNR.Combat
         }
 
         /// <summary>
-        /// Handle Requiem Art used - play skill animation.
+        /// Handle Requiem Art activated - play skill animation.
         /// </summary>
-        private void OnRequiemArtUsed(RequiemArtUsedEvent evt)
+        private void OnRequiemArtActivated(RequiemArtActivatedEvent evt)
         {
             evt.Requiem?.Visual?.PlaySkill();
         }
