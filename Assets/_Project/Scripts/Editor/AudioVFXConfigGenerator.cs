@@ -169,11 +169,11 @@ namespace HNR.Editor
                 // Create VFX prefab
                 GameObject vfxObj = new GameObject(effectId);
 
-                // Add VFXInstance component
+                // Add VFXInstance component (auto-adds ParticleSystem via RequireComponent)
                 var vfxInstance = vfxObj.AddComponent<VFXInstance>();
 
-                // Add placeholder ParticleSystem
-                var ps = vfxObj.AddComponent<ParticleSystem>();
+                // Get the auto-added ParticleSystem
+                var ps = vfxObj.GetComponent<ParticleSystem>();
                 var main = ps.main;
                 main.duration = 1f;
                 main.loop = false;
