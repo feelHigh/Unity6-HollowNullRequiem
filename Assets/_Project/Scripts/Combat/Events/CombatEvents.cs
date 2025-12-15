@@ -291,4 +291,16 @@ namespace HNR.Combat
             Art = art;
         }
     }
+
+    // ============================================
+    // UI REQUEST EVENTS
+    // ============================================
+
+    /// <summary>
+    /// Published when the player requests to end their turn via UI.
+    /// </summary>
+    public class EndTurnRequestedEvent : GameEvent
+    {
+        public EndTurnRequestedEvent() { }
+    }
 }
