@@ -183,10 +183,10 @@ namespace HNR.Combat
         /// <summary>
         /// Attempt to play a card on a target.
         /// </summary>
-        /// <param name="card">Card to play.</param>
+        /// <param name="card">Card visual component to play.</param>
         /// <param name="target">Target for the card.</param>
         /// <returns>True if card was played successfully.</returns>
-        public bool TryPlayCard(CardInstance card, ICombatTarget target = null)
+        public bool TryPlayCard(Card card, ICombatTarget target = null)
         {
             if (!IsPlayerTurn)
             {
@@ -206,7 +206,18 @@ namespace HNR.Combat
         /// <returns>List of drawn cards.</returns>
         public List<CardInstance> DrawCards(int count)
         {
-            return _deckManager?.Draw(count) ?? new List<CardInstance>();
+            if (_deckManager == null) return new List<CardInstance>();
+
+            var drawnCards = new List<CardInstance>();
+            for (int i = 0; i < count; i++)
+            {
+                var card = _deckManager.Draw();
+                if (card != null)
+                {
+                    drawnCards.Add(card);
+                }
+            }
+            return drawnCards;
         }
 
         /// <summary>
@@ -215,7 +226,7 @@ namespace HNR.Combat
         /// <param name="card">Card to discard.</param>
         public void DiscardCard(CardInstance card)
         {
-            _handManager?.DiscardCard(card);
+            _deckManager?.Discard(card);
         }
 
         /// <summary>
@@ -241,7 +252,8 @@ namespace HNR.Combat
         /// <param name="source">Source of damage (optional).</param>
         public void DealDamage(ICombatTarget target, int amount, ICombatTarget source = null)
         {
-            _turnManager?.DealDamage(target, amount, source);
+            if (target == null) return;
+            target.TakeDamage(amount);
         }
 
         /// <summary>
@@ -268,7 +280,22 @@ namespace HNR.Combat
         /// <param name="amount">Damage amount.</param>
         public void DealDamageToTeam(int amount)
         {
-            _turnManager?.DealDamageToTeam(amount);
+            if (Context == null) return;
+
+            // Apply block first
+            int remainingDamage = amount;
+            if (Context.TeamBlock > 0)
+            {
+                int blocked = Mathf.Min(Context.TeamBlock, remainingDamage);
+                Context.TeamBlock -= blocked;
+                remainingDamage -= blocked;
+            }
+
+            if (remainingDamage > 0)
+            {
+                Context.TeamHP = Mathf.Max(0, Context.TeamHP - remainingDamage);
+                EventBus.Publish(new TeamHPChangedEvent(Context.TeamHP, Context.TeamMaxHP));
+            }
         }
 
         /// <summary>
@@ -277,7 +304,10 @@ namespace HNR.Combat
         /// <param name="amount">Heal amount.</param>
         public void HealTeam(int amount)
         {
-            _turnManager?.HealTeam(amount);
+            if (Context == null) return;
+
+            Context.TeamHP = Mathf.Min(Context.TeamMaxHP, Context.TeamHP + amount);
+            EventBus.Publish(new TeamHPChangedEvent(Context.TeamHP, Context.TeamMaxHP));
         }
 
         /// <summary>
@@ -286,7 +316,10 @@ namespace HNR.Combat
         /// <param name="amount">Block amount.</param>
         public void AddBlock(int amount)
         {
-            _turnManager?.AddBlock(amount);
+            if (Context == null) return;
+
+            Context.TeamBlock += amount;
+            EventBus.Publish(new BlockChangedEvent(Context.TeamBlock));
         }
 
         // ============================================
@@ -334,7 +367,7 @@ namespace HNR.Combat
         /// <returns>Number of stacks (0 if none).</returns>
         public int GetStatusStacks(ICombatTarget target, StatusType statusType)
         {
-            return _statusManager?.GetStacks(target, statusType) ?? 0;
+            return _statusManager?.GetStatusStacks(target, statusType) ?? 0;
         }
 
         // ============================================
@@ -407,10 +440,10 @@ namespace HNR.Combat
         /// <summary>
         /// Get cards in hand.
         /// </summary>
-        /// <returns>List of cards in hand.</returns>
-        public List<CardInstance> GetHand()
+        /// <returns>Read-only list of Card visuals in hand.</returns>
+        public IReadOnlyList<Card> GetHand()
         {
-            return _handManager?.GetHand() ?? new List<CardInstance>();
+            return _handManager?.Hand ?? (IReadOnlyList<Card>)new List<Card>();
         }
 
         /// <summary>

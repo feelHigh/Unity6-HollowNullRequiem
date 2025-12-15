@@ -389,9 +389,9 @@ namespace HNR.Testing
             // UIColors static class test
             Log("UIColors.SoulCyan accessible", UIColors.SoulCyan.a > 0);
             Log("UIColors.GetAspectColor works", UIColors.GetAspectColor(SoulAspect.Flame) != Color.clear);
-            Log("UIColors.WithAlpha works", UIColors.WithAlpha(Color.white, 0.5f).a == 0.5f);
-            Log("UIColors.Brighten works", UIColors.Brighten(Color.gray).r > Color.gray.r);
-            Log("UIColors.Darken works", UIColors.Darken(Color.gray).r < Color.gray.r);
+            Log("UIColors.GetRarityColor works", UIColors.GetRarityColor(CardRarity.Rare) != Color.clear);
+            Log("UIColors.FlameAspect accessible", UIColors.FlameAspect.a > 0);
+            Log("UIColors.ShadowAspect accessible", UIColors.ShadowAspect.a > 0);
 
             Debug.Log("  Meta-Game UI tests complete");
         }

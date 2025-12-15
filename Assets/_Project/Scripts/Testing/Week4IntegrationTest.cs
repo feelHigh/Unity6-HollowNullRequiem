@@ -14,6 +14,7 @@ using System.Collections.Generic;
 // Resolve ambiguity: use real types from proper namespaces
 using RequiemInstance = HNR.Characters.RequiemInstance;
 using EnemyInstance = HNR.Combat.EnemyInstance;
+using CardModifierType = HNR.Cards.ModifierType;
 
 namespace HNR.Testing
 {
@@ -356,7 +357,7 @@ namespace HNR.Testing
             var instance = new CardInstance(_testStrikeCard);
             int baseCost = instance.CurrentCost;
 
-            instance.AddModifier(new CardModifier(ModifierType.Cost, -1, 1, "Test"));
+            instance.AddModifier(new CardModifier(CardModifierType.Cost, -1, 1, "Test"));
             int modifiedCost = instance.CurrentCost;
 
             Log("Cost modifier applied", modifiedCost == baseCost - 1 || baseCost == 0);
