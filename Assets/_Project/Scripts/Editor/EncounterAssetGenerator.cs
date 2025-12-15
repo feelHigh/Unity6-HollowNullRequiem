@@ -140,7 +140,12 @@ namespace HNR.Editor
         // ============================================
 
         [MenuItem("HNR/Generate Encounter Assets/Encounters Only")]
-        public static void GenerateAllEncounters(Dictionary<string, EnemyDataSO> enemies = null)
+        public static void GenerateEncountersMenuItem()
+        {
+            GenerateAllEncounters(null);
+        }
+
+        public static void GenerateAllEncounters(Dictionary<string, EnemyDataSO> enemies)
         {
             EnsureDirectoriesExist();
 
