@@ -78,12 +78,11 @@ namespace HNR.Core.GameStates
         {
             Debug.Log("[MainMenuState] Loading MainMenu scene...");
 
-            // Check if scene exists in build settings
-            // SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
-
-            // TODO: Implement async scene loading with loading screen
-            // var operation = SceneManager.LoadSceneAsync("MainMenu");
-            // operation.allowSceneActivation = true;
+            // Only load if not already in MainMenu scene
+            if (SceneManager.GetActiveScene().name != "MainMenu")
+            {
+                SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
+            }
         }
 
         /// <summary>

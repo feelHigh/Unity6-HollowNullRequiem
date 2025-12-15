@@ -78,12 +78,11 @@ namespace HNR.Core.GameStates
         {
             Debug.Log("[BastionState] Loading Bastion scene...");
 
-            // Check if scene exists in build settings
-            // SceneManager.LoadScene("Bastion", LoadSceneMode.Single);
-
-            // TODO: Implement async scene loading with loading screen
-            // var operation = SceneManager.LoadSceneAsync("Bastion");
-            // operation.allowSceneActivation = true;
+            // Only load if not already in Bastion scene
+            if (SceneManager.GetActiveScene().name != "Bastion")
+            {
+                SceneManager.LoadScene("Bastion", LoadSceneMode.Single);
+            }
         }
 
         /// <summary>

@@ -33,12 +33,13 @@ namespace HNR.Core.GameStates
         {
             Debug.Log("[RunState] Starting run navigation...");
 
-            // TODO: Load NullRift scene
-            // SceneManager.LoadScene("NullRift", LoadSceneMode.Single);
+            // Load NullRift scene
+            if (SceneManager.GetActiveScene().name != "NullRift")
+            {
+                SceneManager.LoadScene("NullRift", LoadSceneMode.Single);
+            }
 
-            // TODO: Show MapScreen via UIManager
-            // TODO: Generate or load map
-            // TODO: Play zone music
+            // MapManager will handle map generation/display when scene loads
         }
 
         /// <summary>

@@ -33,12 +33,13 @@ namespace HNR.Core.GameStates
         {
             Debug.Log("[CombatState] Entering combat...");
 
-            // TODO: Load Combat scene
-            // SceneManager.LoadScene("Combat", LoadSceneMode.Single);
+            // Load Combat scene
+            if (SceneManager.GetActiveScene().name != "Combat")
+            {
+                SceneManager.LoadScene("Combat", LoadSceneMode.Single);
+            }
 
-            // TODO: Show CombatScreen via UIManager
-            // TODO: Initialize CombatManager with encounter data
-            // TODO: Play combat music
+            // TurnManager and CombatManager will initialize when scene loads
         }
 
         /// <summary>
