@@ -7,6 +7,7 @@ using UnityEngine;
 using HNR.Core;
 using HNR.Core.Events;
 using HNR.Characters;
+using HNR.Characters.Visuals;
 
 namespace HNR.Combat
 {
@@ -40,6 +41,7 @@ namespace HNR.Combat
         private int _zone = 1;
         private IntentPattern _intentPattern;
         private System.Collections.Generic.Dictionary<StatusType, int> _statusEffects = new();
+        private ICharacterVisual _visual;
 
         // ============================================
         // Properties
@@ -69,6 +71,9 @@ namespace HNR.Combat
         /// <summary>Current zone (for scaling).</summary>
         public int Zone => _zone;
 
+        /// <summary>Character visual component for animations.</summary>
+        public ICharacterVisual Visual => _visual;
+
         // ============================================
         // Initialization
         // ============================================
@@ -91,7 +96,7 @@ namespace HNR.Combat
             _intentPattern = data.IntentPattern?.Clone();
             _intentPattern?.Reset();
 
-            // Set up visuals
+            // Set up basic visuals
             if (_sprite != null && data.Sprite != null)
             {
                 _sprite.sprite = data.Sprite;
@@ -102,6 +107,9 @@ namespace HNR.Combat
             {
                 _highlightRing.SetActive(false);
             }
+
+            // Initialize character visual (HeroEditor prefab)
+            InitializeVisual();
 
             Debug.Log($"[EnemyInstance] {Name} initialized: HP {_currentHP}/{_maxHP} (Zone {zone})");
         }
@@ -344,6 +352,57 @@ namespace HNR.Combat
             }
 
             return Mathf.RoundToInt(damage * multiplier);
+        }
+
+        // ============================================
+        // Visual System
+        // ============================================
+
+        /// <summary>
+        /// Initialize the character visual from the data prefab.
+        /// </summary>
+        private void InitializeVisual()
+        {
+            // Check if visual prefab is assigned
+            if (_data?.VisualPrefab == null)
+            {
+                // Try to find existing ICharacterVisual component
+                _visual = GetComponentInChildren<ICharacterVisual>();
+                return;
+            }
+
+            // Destroy any existing visual
+            if (_visual is MonoBehaviour existingVisual && existingVisual != null)
+            {
+                Destroy(existingVisual.gameObject);
+            }
+
+            // Instantiate the visual prefab
+            var visualGO = Instantiate(_data.VisualPrefab, transform);
+            visualGO.name = $"{Name}_Visual";
+            visualGO.transform.localPosition = Vector3.zero;
+            visualGO.transform.localScale = Vector3.one * _data.SpriteScale;
+
+            // Get the ICharacterVisual component
+            _visual = visualGO.GetComponent<ICharacterVisual>();
+
+            if (_visual == null)
+            {
+                Debug.LogWarning($"[EnemyInstance] Visual prefab for {Name} has no ICharacterVisual component");
+            }
+            else
+            {
+                // Set facing (enemies face left by default)
+                _visual.SetFacing(false);
+            }
+        }
+
+        /// <summary>
+        /// Set a pre-existing visual component (for testing or manual setup).
+        /// </summary>
+        public void SetVisual(ICharacterVisual visual)
+        {
+            _visual = visual;
         }
 
         // ============================================

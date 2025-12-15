@@ -6,6 +6,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using HNR.Cards;
+using HNR.Characters.Visuals;
 
 namespace HNR.Combat
 {
@@ -108,6 +109,13 @@ namespace HNR.Combat
         [SerializeField, Tooltip("Scale multiplier for sprite")]
         private float _spriteScale = 1f;
 
+        [Header("Character Visual")]
+        [SerializeField, Tooltip("HeroEditor visual prefab for animated combat display")]
+        private GameObject _visualPrefab;
+
+        [SerializeField, Tooltip("Preferred attack animation type")]
+        private AttackType _preferredAttackType = AttackType.Slash;
+
         // ============================================
         // Audio
         // ============================================
@@ -185,6 +193,12 @@ namespace HNR.Combat
 
         /// <summary>Death sound effect.</summary>
         public AudioClip DeathSound => _deathSound;
+
+        /// <summary>HeroEditor visual prefab for animated combat display.</summary>
+        public GameObject VisualPrefab => _visualPrefab;
+
+        /// <summary>Preferred attack animation type.</summary>
+        public AttackType PreferredAttackType => _preferredAttackType;
 
         // ============================================
         // Zone Scaling Methods

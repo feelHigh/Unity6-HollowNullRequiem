@@ -6,6 +6,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using HNR.Cards;
+using HNR.Characters.Visuals;
 
 namespace HNR.Characters
 {
@@ -108,6 +109,13 @@ namespace HNR.Characters
         [SerializeField, Tooltip("Color associated with Soul Aspect for UI theming")]
         private Color _aspectColor = Color.white;
 
+        [Header("Character Visual")]
+        [SerializeField, Tooltip("HeroEditor visual prefab for animated combat display")]
+        private GameObject _visualPrefab;
+
+        [SerializeField, Tooltip("Preferred attack animation type")]
+        private AttackType _preferredAttackType = AttackType.Slash;
+
         // ============================================
         // Public Accessors
         // ============================================
@@ -168,6 +176,12 @@ namespace HNR.Characters
 
         /// <summary>Soul Aspect theme color.</summary>
         public Color AspectColor => _aspectColor;
+
+        /// <summary>HeroEditor visual prefab for animated combat display.</summary>
+        public GameObject VisualPrefab => _visualPrefab;
+
+        /// <summary>Preferred attack animation type.</summary>
+        public AttackType PreferredAttackType => _preferredAttackType;
 
         // ============================================
         // Utility Methods

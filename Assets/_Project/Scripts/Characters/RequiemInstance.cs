@@ -8,6 +8,7 @@ using HNR.Core;
 using HNR.Core.Events;
 using HNR.Combat;
 using HNR.Cards;
+using HNR.Characters.Visuals;
 
 namespace HNR.Characters
 {
@@ -42,6 +43,7 @@ namespace HNR.Characters
         private int _soulEssence;
         private bool _inNullState;
         private bool _hasUsedArtThisCombat;
+        private ICharacterVisual _visual;
 
         // Null State Modifiers
         private float _burnDamageMultiplier = 1.0f;
@@ -90,6 +92,9 @@ namespace HNR.Characters
         /// <summary>Combat class/role.</summary>
         public RequiemClass Class => _data?.Class ?? RequiemClass.Striker;
 
+        /// <summary>Character visual component for animations.</summary>
+        public ICharacterVisual Visual => _visual;
+
         /// <summary>Whether this Requiem has used their Art this combat.</summary>
         public bool HasUsedArtThisCombat
         {
@@ -136,7 +141,7 @@ namespace HNR.Characters
             _inNullState = false;
             _hasUsedArtThisCombat = false;
 
-            // Set up visuals
+            // Set up basic visuals
             if (_sprite != null && data?.Portrait != null)
             {
                 _sprite.sprite = data.Portrait;
@@ -146,6 +151,9 @@ namespace HNR.Characters
             {
                 _highlightRing.SetActive(false);
             }
+
+            // Initialize character visual (HeroEditor prefab)
+            InitializeVisual();
 
             Debug.Log($"[RequiemInstance] {Name} initialized: HP {_currentHP}/{_maxHP}");
         }
@@ -442,6 +450,56 @@ namespace HNR.Characters
                 Heal(_nullStateHealRegen);
                 Debug.Log($"[RequiemInstance] {Name} Null State regen: +{_nullStateHealRegen} HP");
             }
+        }
+
+        // ============================================
+        // Visual System
+        // ============================================
+
+        /// <summary>
+        /// Initialize the character visual from the data prefab.
+        /// </summary>
+        private void InitializeVisual()
+        {
+            // Check if visual prefab is assigned
+            if (_data?.VisualPrefab == null)
+            {
+                // Try to find existing ICharacterVisual component
+                _visual = GetComponentInChildren<ICharacterVisual>();
+                return;
+            }
+
+            // Destroy any existing visual
+            if (_visual is MonoBehaviour existingVisual && existingVisual != null)
+            {
+                Destroy(existingVisual.gameObject);
+            }
+
+            // Instantiate the visual prefab
+            var visualGO = Instantiate(_data.VisualPrefab, transform);
+            visualGO.name = $"{Name}_Visual";
+            visualGO.transform.localPosition = Vector3.zero;
+
+            // Get the ICharacterVisual component
+            _visual = visualGO.GetComponent<ICharacterVisual>();
+
+            if (_visual == null)
+            {
+                Debug.LogWarning($"[RequiemInstance] Visual prefab for {Name} has no ICharacterVisual component");
+            }
+            else
+            {
+                // Set facing (Requiems face right by default)
+                _visual.SetFacing(true);
+            }
+        }
+
+        /// <summary>
+        /// Set a pre-existing visual component (for testing or manual setup).
+        /// </summary>
+        public void SetVisual(ICharacterVisual visual)
+        {
+            _visual = visual;
         }
 
         // ============================================
