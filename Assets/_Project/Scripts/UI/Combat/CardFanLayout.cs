@@ -12,6 +12,8 @@ using HNR.Core.Interfaces;
 using HNR.Cards;
 using HNR.Combat;
 
+#pragma warning disable CS0414 // Field is assigned but never used (reserved for future Inspector configuration)
+
 namespace HNR.UI.Combat
 {
     /// <summary>
