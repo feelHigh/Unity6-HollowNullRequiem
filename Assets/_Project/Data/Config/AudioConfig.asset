@@ -1,0 +1,205 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d075a03ad463ee438c7a2d476a37836, type: 3}
+  m_Name: AudioConfig
+  m_EditorClassIdentifier: 
+  _musicEntries:
+  - Id: menu_theme
+    Clip: {fileID: 0}
+    Category: 0
+    Volume: 1
+    Pitch: 1
+    Loop: 1
+  - Id: bastion_theme
+    Clip: {fileID: 0}
+    Category: 0
+    Volume: 1
+    Pitch: 1
+    Loop: 1
+  - Id: combat_theme
+    Clip: {fileID: 0}
+    Category: 0
+    Volume: 1
+    Pitch: 1
+    Loop: 1
+  - Id: boss_theme
+    Clip: {fileID: 0}
+    Category: 0
+    Volume: 1
+    Pitch: 1
+    Loop: 1
+  - Id: victory_theme
+    Clip: {fileID: 0}
+    Category: 0
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: defeat_theme
+    Clip: {fileID: 0}
+    Category: 0
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  _uiEntries:
+  - Id: ui_click
+    Clip: {fileID: 0}
+    Category: 1
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: ui_hover
+    Clip: {fileID: 0}
+    Category: 1
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: ui_confirm
+    Clip: {fileID: 0}
+    Category: 1
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: ui_cancel
+    Clip: {fileID: 0}
+    Category: 1
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: ui_error
+    Clip: {fileID: 0}
+    Category: 1
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: ui_navigate
+    Clip: {fileID: 0}
+    Category: 1
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  _combatEntries:
+  - Id: card_draw
+    Clip: {fileID: 0}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: card_play
+    Clip: {fileID: 0}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: card_discard
+    Clip: {fileID: 0}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: damage_hit
+    Clip: {fileID: 0}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: damage_critical
+    Clip: {fileID: 0}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: block_gain
+    Clip: {fileID: 0}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: block_break
+    Clip: {fileID: 0}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: heal
+    Clip: {fileID: 0}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: buff_apply
+    Clip: {fileID: 0}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: debuff_apply
+    Clip: {fileID: 0}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: turn_start
+    Clip: {fileID: 0}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: turn_end
+    Clip: {fileID: 0}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: enemy_attack
+    Clip: {fileID: 0}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: enemy_die
+    Clip: {fileID: 0}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: requiem_art
+    Clip: {fileID: 0}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  _ambientEntries:
+  - Id: corruption_pulse
+    Clip: {fileID: 0}
+    Category: 3
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: null_state_trigger
+    Clip: {fileID: 0}
+    Category: 3
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: void_ambient
+    Clip: {fileID: 0}
+    Category: 3
+    Volume: 1
+    Pitch: 1
+    Loop: 1
+  - Id: combat_ambient
+    Clip: {fileID: 0}
+    Category: 3
+    Volume: 1
+    Pitch: 1
+    Loop: 1
+  _voiceEntries: []
