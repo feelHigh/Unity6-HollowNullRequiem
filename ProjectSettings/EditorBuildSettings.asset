@@ -15,11 +15,11 @@ EditorBuildSettings:
     path: Assets/_Project/Scenes/Bastion.unity
     guid: dde0d036aff2b6746add290e0fa3e800
   - enabled: 1
-    path: Assets/_Project/Scenes/Combat.unity
-    guid: 779c1481004827c4f9b74d73eca20f61
-  - enabled: 1
     path: Assets/_Project/Scenes/NullRift.unity
     guid: 61b77589aaeabdb43a42a001437e507f
+  - enabled: 1
+    path: Assets/_Project/Scenes/Combat.unity
+    guid: 779c1481004827c4f9b74d73eca20f61
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
