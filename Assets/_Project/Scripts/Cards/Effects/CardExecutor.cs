@@ -165,7 +165,7 @@ namespace HNR.Cards
         }
 
         /// <summary>
-        /// Execute a single effect with the given context.
+        /// Execute a single effect with the given context (internal use).
         /// </summary>
         private void ExecuteEffect(CardEffectData effectData, EffectContext context)
         {
@@ -177,6 +177,17 @@ namespace HNR.Cards
             {
                 Debug.LogWarning($"[CardExecutor] No handler registered for effect type: {effectData.EffectType}");
             }
+        }
+
+        /// <summary>
+        /// Execute a single effect with the given context.
+        /// Public API for use by RequiemArtExecutor and other systems.
+        /// </summary>
+        /// <param name="effectData">Effect data to execute.</param>
+        /// <param name="context">Execution context with targets and modifiers.</param>
+        public void ExecuteSingleEffect(CardEffectData effectData, EffectContext context)
+        {
+            ExecuteEffect(effectData, context);
         }
 
         // ============================================

@@ -251,8 +251,16 @@ namespace HNR.Combat
             // Mark as used this combat
             requiem.HasUsedArtThisCombat = true;
 
-            // Execute Art effects
-            // TODO: Implement RequiemArtExecutor for complex Art effects
+            // Execute Art effects via RequiemArtExecutor
+            if (ServiceLocator.TryGet<RequiemArtExecutor>(out var artExecutor))
+            {
+                artExecutor.ExecuteArt(requiem, art);
+            }
+            else
+            {
+                Debug.LogWarning($"[SoulEssenceManager] RequiemArtExecutor not found, Art effects not executed");
+            }
+
             Debug.Log($"[SoulEssenceManager] {requiem.Name} activated {art.ArtName}!");
 
             // Publish event
