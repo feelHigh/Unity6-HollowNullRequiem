@@ -19,7 +19,14 @@ namespace HNR.Editor
     {
         private const string REQUIEM_PREFAB_PATH = "Assets/_Project/Prefabs/Characters/Requiems";
         private const string ENEMY_PREFAB_PATH = "Assets/_Project/Prefabs/Characters/Enemies";
-        private const string HEROEDITOR_EXAMPLE_PATH = "Assets/HeroEditor/Common/ExampleScenes/Prefabs/ExampleCharacter.prefab";
+
+        // HeroEditor template paths (in order of preference)
+        private static readonly string[] HEROEDITOR_TEMPLATE_PATHS = new[]
+        {
+            "Assets/_Project/Art/Characters/Requiems/ExampleCharacter.prefab",
+            "Assets/ThirdParty/HeroEditor/FantasyHeroes/Prefabs/Human.prefab",
+            "Assets/ThirdParty/HeroEditor/UndeadHeroes/Prefabs/Undead.prefab"
+        };
 
         // ============================================
         // Menu Items
@@ -56,7 +63,23 @@ namespace HNR.Editor
         [MenuItem("HNR/Generate Character Visual Prefabs", true)]
         public static bool ValidateGeneratePrefabs()
         {
-            return File.Exists(HEROEDITOR_EXAMPLE_PATH);
+            // Always show menu - will create placeholder if no template found
+            return true;
+        }
+
+        /// <summary>
+        /// Find the first available HeroEditor template.
+        /// </summary>
+        private static string FindTemplatePath()
+        {
+            foreach (var path in HEROEDITOR_TEMPLATE_PATHS)
+            {
+                if (File.Exists(path))
+                {
+                    return path;
+                }
+            }
+            return null;
         }
 
         [MenuItem("HNR/Create Empty Visual Prefab")]
@@ -113,8 +136,15 @@ namespace HNR.Editor
 
         private static bool CreateVisualPrefabFromTemplate(string outputPath)
         {
-            // Load HeroEditor example character
-            GameObject template = AssetDatabase.LoadAssetAtPath<GameObject>(HEROEDITOR_EXAMPLE_PATH);
+            // Find available HeroEditor template
+            string templatePath = FindTemplatePath();
+            GameObject template = null;
+
+            if (templatePath != null)
+            {
+                template = AssetDatabase.LoadAssetAtPath<GameObject>(templatePath);
+                Debug.Log($"[CharacterVisualPrefabGenerator] Using template: {templatePath}");
+            }
 
             if (template == null)
             {
