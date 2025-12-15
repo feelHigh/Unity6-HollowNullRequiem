@@ -174,6 +174,24 @@ namespace HNR.Combat
         }
     }
 
+    /// <summary>
+    /// Published when an enemy's displayed intent changes.
+    /// </summary>
+    public class EnemyIntentChangedEvent : GameEvent
+    {
+        /// <summary>The enemy whose intent changed.</summary>
+        public EnemyInstance Enemy { get; }
+
+        /// <summary>The new intent to display.</summary>
+        public IntentStep Intent { get; }
+
+        public EnemyIntentChangedEvent(EnemyInstance enemy, IntentStep intent)
+        {
+            Enemy = enemy;
+            Intent = intent;
+        }
+    }
+
     // ============================================
     // STATUS EFFECT EVENTS
     // ============================================
