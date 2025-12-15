@@ -11,10 +11,25 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd6b10894daa9f649ae087c143d4b76c, type: 3}
   m_Name: Boss_HollowKing
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   _enemyId: boss_hollow_king
   _enemyName: The Hollow King
-  _description: "The first true lord of the Hollow, once a noble king who sought to control the corruption. Now he IS the corruption.\n\nPHASE 1 (100-70%): Awakening - Predictable attacks with Strength buildup.\nPHASE 2 (70-30%): Corruption Surge - Mass corruption, multi-hits, applies Vulnerability.\nPHASE 3 (<30%): Desperate Onslaught - Enraged +50% damage, relentless multi-attacks.\n\nARENA: +5 Corruption to team each turn."
+  _description: 'The first true lord of the Hollow, once a noble king who sought
+    to control the corruption. Now he IS the corruption.
+
+
+    PHASE 1 (100-70%):
+    Awakening - Predictable attacks with Strength buildup.
+
+    PHASE 2 (70-30%):
+    Corruption Surge - Mass corruption, multi-hits, applies Vulnerability.
+
+    PHASE
+    3 (<30%): Desperate Onslaught - Enraged +50% damage, relentless multi-attacks.
+
+
+    ARENA:
+    +5 Corruption to team each turn.'
   _soulAspect: 2
   _isElite: 0
   _isBoss: 1
@@ -28,17 +43,17 @@ MonoBehaviour:
       _value: 20
       _secondaryValue: 0
       _statusType: 0
-      _customDescription:
+      _customDescription: 
     - _intentType: 3
       _value: 20
       _secondaryValue: 0
       _statusType: 0
-      _customDescription:
+      _customDescription: 
     - _intentType: 0
       _value: 20
       _secondaryValue: 0
       _statusType: 0
-      _customDescription:
+      _customDescription: 
     - _intentType: 4
       _value: 3
       _secondaryValue: 0
@@ -51,6 +66,8 @@ MonoBehaviour:
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
   _spriteScale: 1.8
+  _visualPrefab: {fileID: 2382928303475647343, guid: 84014540d69b1bc4788bd5d2b07c3b61, type: 3}
+  _preferredAttackType: 0
   _attackSound: {fileID: 0}
   _hitSound: {fileID: 0}
   _deathSound: {fileID: 0}

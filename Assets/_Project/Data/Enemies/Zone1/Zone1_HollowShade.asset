@@ -11,10 +11,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd6b10894daa9f649ae087c143d4b76c, type: 3}
   m_Name: Zone1_HollowShade
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   _enemyId: z1_hollow_shade
   _enemyName: Hollow Shade
-  _description: A shadowy remnant of the corrupted, drifting through the Hollow Depths. Its attacks are relentless but predictable.
+  _description: A shadowy remnant of the corrupted, drifting through the Hollow Depths.
+    Its attacks are relentless but predictable.
   _soulAspect: 2
   _isElite: 0
   _isBoss: 0
@@ -28,17 +29,17 @@ MonoBehaviour:
       _value: 6
       _secondaryValue: 0
       _statusType: 0
-      _customDescription:
+      _customDescription: 
     - _intentType: 0
       _value: 6
       _secondaryValue: 0
       _statusType: 0
-      _customDescription:
+      _customDescription: 
     - _intentType: 3
       _value: 5
       _secondaryValue: 0
       _statusType: 0
-      _customDescription:
+      _customDescription: 
     _looping: 1
   _voidShardReward: 10
   _cardDropChance: 0.25
@@ -46,6 +47,8 @@ MonoBehaviour:
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
   _spriteScale: 1
+  _visualPrefab: {fileID: 22005641893815819, guid: 6c749ab418e728f4f9735a56141f60e2, type: 3}
+  _preferredAttackType: 0
   _attackSound: {fileID: 0}
   _hitSound: {fileID: 0}
   _deathSound: {fileID: 0}

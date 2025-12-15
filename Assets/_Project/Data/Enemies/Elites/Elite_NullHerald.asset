@@ -11,10 +11,12 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd6b10894daa9f649ae087c143d4b76c, type: 3}
   m_Name: Elite_NullHerald
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   _enemyId: elite_null_herald
   _enemyName: Null Herald
-  _description: A prophet of the Hollow that spreads corruption through the team. Its special attack inflicts +10 Corruption to all Requiems. At 50% HP, gains multi-hit attacks.
+  _description: A prophet of the Hollow that spreads corruption through the team.
+    Its special attack inflicts +10 Corruption to all Requiems. At 50% HP, gains
+    multi-hit attacks.
   _soulAspect: 0
   _isElite: 1
   _isBoss: 0
@@ -28,12 +30,12 @@ MonoBehaviour:
       _value: 2
       _secondaryValue: 2
       _statusType: 3
-      _customDescription:
+      _customDescription: 
     - _intentType: 0
       _value: 12
       _secondaryValue: 0
       _statusType: 0
-      _customDescription:
+      _customDescription: 
     - _intentType: 6
       _value: 10
       _secondaryValue: 0
@@ -46,6 +48,8 @@ MonoBehaviour:
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
   _spriteScale: 1.4
+  _visualPrefab: {fileID: 842533529170260809, guid: 8e96951d69273b1499f7f270eb4d85d7, type: 3}
+  _preferredAttackType: 0
   _attackSound: {fileID: 0}
   _hitSound: {fileID: 0}
   _deathSound: {fileID: 0}

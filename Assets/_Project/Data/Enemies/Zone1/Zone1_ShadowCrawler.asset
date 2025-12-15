@@ -11,10 +11,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd6b10894daa9f649ae087c143d4b76c, type: 3}
   m_Name: Zone1_ShadowCrawler
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   _enemyId: z1_shadow_crawler
   _enemyName: Shadow Crawler
-  _description: A skittering creature that weakens its prey before striking. Its venom saps the strength of those it touches.
+  _description: A skittering creature that weakens its prey before striking. Its
+    venom saps the strength of those it touches.
   _soulAspect: 2
   _isElite: 0
   _isBoss: 0
@@ -28,17 +29,17 @@ MonoBehaviour:
       _value: 1
       _secondaryValue: 1
       _statusType: 2
-      _customDescription:
+      _customDescription: 
     - _intentType: 0
       _value: 5
       _secondaryValue: 0
       _statusType: 0
-      _customDescription:
+      _customDescription: 
     - _intentType: 0
       _value: 5
       _secondaryValue: 0
       _statusType: 0
-      _customDescription:
+      _customDescription: 
     _looping: 1
   _voidShardReward: 12
   _cardDropChance: 0.25
@@ -46,6 +47,8 @@ MonoBehaviour:
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
   _spriteScale: 0.9
+  _visualPrefab: {fileID: 2328503038315143946, guid: c10aad6641d62fc4f9eead87c8b345cf, type: 3}
+  _preferredAttackType: 0
   _attackSound: {fileID: 0}
   _hitSound: {fileID: 0}
   _deathSound: {fileID: 0}

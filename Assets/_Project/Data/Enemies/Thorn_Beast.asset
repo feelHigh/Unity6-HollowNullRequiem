@@ -31,6 +31,8 @@ MonoBehaviour:
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
   _spriteScale: 1
+  _visualPrefab: {fileID: 3801373436573338048, guid: 33ba6cbb0d3e40944bc64628cbd857d1, type: 3}
+  _preferredAttackType: 0
   _attackSound: {fileID: 0}
   _hitSound: {fileID: 0}
   _deathSound: {fileID: 0}

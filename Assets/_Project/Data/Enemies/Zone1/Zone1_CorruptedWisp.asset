@@ -11,10 +11,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd6b10894daa9f649ae087c143d4b76c, type: 3}
   m_Name: Zone1_CorruptedWisp
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   _enemyId: z1_corrupted_wisp
   _enemyName: Corrupted Wisp
-  _description: A small floating orb of corrupted energy. Weak but its attacks spread the Hollow's taint with each hit.
+  _description: A small floating orb of corrupted energy. Weak but its attacks spread
+    the Hollow's taint with each hit.
   _soulAspect: 0
   _isElite: 0
   _isBoss: 0
@@ -28,17 +29,17 @@ MonoBehaviour:
       _value: 4
       _secondaryValue: 0
       _statusType: 0
-      _customDescription:
+      _customDescription: 
     - _intentType: 0
       _value: 4
       _secondaryValue: 0
       _statusType: 0
-      _customDescription:
+      _customDescription: 
     - _intentType: 0
       _value: 4
       _secondaryValue: 0
       _statusType: 0
-      _customDescription:
+      _customDescription: 
     _looping: 1
   _voidShardReward: 8
   _cardDropChance: 0.2
@@ -46,6 +47,8 @@ MonoBehaviour:
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
   _spriteScale: 0.8
+  _visualPrefab: {fileID: 6331879202345751904, guid: 74f564d40e7179542a458cd83fe3c83a, type: 3}
+  _preferredAttackType: 0
   _attackSound: {fileID: 0}
   _hitSound: {fileID: 0}
   _deathSound: {fileID: 0}

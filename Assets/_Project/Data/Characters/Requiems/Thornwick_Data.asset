@@ -44,3 +44,5 @@ MonoBehaviour:
   _fullBodySprite: {fileID: 0}
   _animator: {fileID: 0}
   _aspectColor: {r: 0.2, g: 0.6, b: 0.2, a: 1}
+  _visualPrefab: {fileID: 7262068679770712504, guid: 65026100b10967644a34b018c2f1fc25, type: 3}
+  _preferredAttackType: 0

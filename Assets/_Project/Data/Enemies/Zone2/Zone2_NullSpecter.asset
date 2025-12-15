@@ -11,10 +11,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd6b10894daa9f649ae087c143d4b76c, type: 3}
   m_Name: Zone2_NullSpecter
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   _enemyId: z2_null_specter
   _enemyName: Null Specter
-  _description: A ghostly manifestation of pure Hollow energy. It weakens its victims before cursing their very souls, polluting their deck with useless cards.
+  _description: A ghostly manifestation of pure Hollow energy. It weakens its victims
+    before cursing their very souls, polluting their deck with useless cards.
   _soulAspect: 2
   _isElite: 0
   _isBoss: 0
@@ -28,12 +29,12 @@ MonoBehaviour:
       _value: 2
       _secondaryValue: 2
       _statusType: 3
-      _customDescription:
+      _customDescription: 
     - _intentType: 0
       _value: 8
       _secondaryValue: 0
       _statusType: 0
-      _customDescription:
+      _customDescription: 
     - _intentType: 10
       _value: 0
       _secondaryValue: 0
@@ -43,7 +44,7 @@ MonoBehaviour:
       _value: 8
       _secondaryValue: 0
       _statusType: 0
-      _customDescription:
+      _customDescription: 
     _looping: 1
   _voidShardReward: 18
   _cardDropChance: 0.3
@@ -51,6 +52,8 @@ MonoBehaviour:
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
   _spriteScale: 1
+  _visualPrefab: {fileID: 5082457611253068602, guid: 3774dfef65a50af42a81aed5c0ef50e8, type: 3}
+  _preferredAttackType: 0
   _attackSound: {fileID: 0}
   _hitSound: {fileID: 0}
   _deathSound: {fileID: 0}

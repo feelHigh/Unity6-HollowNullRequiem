@@ -11,10 +11,12 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd6b10894daa9f649ae087c143d4b76c, type: 3}
   m_Name: Zone3_HollowAmalgam
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   _enemyId: z3_hollow_amalgam
   _enemyName: Hollow Amalgam
-  _description: A grotesque fusion of countless corrupted souls. It grows stronger as your team's Corruption rises, punishing those who have embraced the Hollow's taint.
+  _description: A grotesque fusion of countless corrupted souls. It grows stronger
+    as your team's Corruption rises, punishing those who have embraced the Hollow's
+    taint.
   _soulAspect: 0
   _isElite: 0
   _isBoss: 0
@@ -28,7 +30,7 @@ MonoBehaviour:
       _value: 14
       _secondaryValue: 0
       _statusType: 0
-      _customDescription:
+      _customDescription: 
     - _intentType: 4
       _value: 0
       _secondaryValue: 0
@@ -38,17 +40,17 @@ MonoBehaviour:
       _value: 14
       _secondaryValue: 0
       _statusType: 0
-      _customDescription:
+      _customDescription: 
     - _intentType: 0
       _value: 14
       _secondaryValue: 0
       _statusType: 0
-      _customDescription:
+      _customDescription: 
     - _intentType: 5
       _value: 2
       _secondaryValue: 2
       _statusType: 2
-      _customDescription:
+      _customDescription: 
     _looping: 1
   _voidShardReward: 35
   _cardDropChance: 0.4
@@ -56,6 +58,8 @@ MonoBehaviour:
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
   _spriteScale: 1.4
+  _visualPrefab: {fileID: 6396803405162726082, guid: bf91bede39945c74d997a0a5e7331490, type: 3}
+  _preferredAttackType: 0
   _attackSound: {fileID: 0}
   _hitSound: {fileID: 0}
   _deathSound: {fileID: 0}
