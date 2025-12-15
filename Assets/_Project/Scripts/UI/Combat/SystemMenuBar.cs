@@ -1,0 +1,162 @@
+// ============================================
+// SystemMenuBar.cs
+// Top-right combat menu bar with speed, auto-battle, settings
+// ============================================
+
+using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+using HNR.Core.Events;
+using HNR.Combat;
+
+namespace HNR.UI.Combat
+{
+    /// <summary>
+    /// Top-right menu bar with speed toggle, auto-battle, and settings.
+    /// Per CZN layout specification.
+    /// </summary>
+    public class SystemMenuBar : MonoBehaviour
+    {
+        [Header("Speed Toggle")]
+        [SerializeField] private Button _speedToggle;
+        [SerializeField] private TMP_Text _speedLabel;
+        [SerializeField] private Image _speedIcon;
+
+        [Header("Auto-Battle")]
+        [SerializeField] private Button _autoBattleToggle;
+        [SerializeField] private Image _autoBattleIcon;
+
+        [Header("Menu Buttons")]
+        [SerializeField] private Button _settingsButton;
+        [SerializeField] private Button _menuButton;
+
+        private readonly float[] _speedOptions = { 1f, 1.5f, 2f };
+        private int _currentSpeedIndex = 0;
+        private bool _autoBattleEnabled = false;
+
+        private void Start()
+        {
+            if (_speedToggle != null)
+                _speedToggle.onClick.AddListener(CycleSpeed);
+
+            if (_autoBattleToggle != null)
+                _autoBattleToggle.onClick.AddListener(ToggleAutoBattle);
+
+            if (_settingsButton != null)
+                _settingsButton.onClick.AddListener(OpenSettings);
+
+            if (_menuButton != null)
+                _menuButton.onClick.AddListener(OpenMenu);
+
+            UpdateSpeedDisplay();
+            UpdateAutoBattleDisplay();
+        }
+
+        private void OnDestroy()
+        {
+            if (_speedToggle != null)
+                _speedToggle.onClick.RemoveListener(CycleSpeed);
+
+            if (_autoBattleToggle != null)
+                _autoBattleToggle.onClick.RemoveListener(ToggleAutoBattle);
+
+            if (_settingsButton != null)
+                _settingsButton.onClick.RemoveListener(OpenSettings);
+
+            if (_menuButton != null)
+                _menuButton.onClick.RemoveListener(OpenMenu);
+        }
+
+        /// <summary>
+        /// Cycles through speed options: 1x → 1.5x → 2x → 1x.
+        /// </summary>
+        private void CycleSpeed()
+        {
+            _currentSpeedIndex = (_currentSpeedIndex + 1) % _speedOptions.Length;
+            Time.timeScale = _speedOptions[_currentSpeedIndex];
+            UpdateSpeedDisplay();
+            EventBus.Publish(new GameSpeedChangedEvent(_speedOptions[_currentSpeedIndex]));
+        }
+
+        private void UpdateSpeedDisplay()
+        {
+            if (_speedLabel == null) return;
+
+            float speed = _speedOptions[_currentSpeedIndex];
+            _speedLabel.text = speed == 1f ? "1x" : $"{speed}x";
+        }
+
+        /// <summary>
+        /// Toggles auto-battle mode on/off.
+        /// </summary>
+        private void ToggleAutoBattle()
+        {
+            _autoBattleEnabled = !_autoBattleEnabled;
+            UpdateAutoBattleDisplay();
+            EventBus.Publish(new AutoBattleToggledEvent(_autoBattleEnabled));
+        }
+
+        private void UpdateAutoBattleDisplay()
+        {
+            if (_autoBattleIcon == null) return;
+
+            _autoBattleIcon.color = _autoBattleEnabled ? UIColors.SoulCyan : UIColors.PanelGray;
+        }
+
+        private void OpenSettings()
+        {
+            EventBus.Publish(new OpenSettingsRequestEvent());
+        }
+
+        private void OpenMenu()
+        {
+            EventBus.Publish(new OpenPauseMenuRequestEvent());
+        }
+
+        /// <summary>
+        /// Resets all settings to defaults when combat ends.
+        /// </summary>
+        public void ResetOnCombatEnd()
+        {
+            _currentSpeedIndex = 0;
+            Time.timeScale = 1f;
+            UpdateSpeedDisplay();
+
+            _autoBattleEnabled = false;
+            UpdateAutoBattleDisplay();
+        }
+
+        /// <summary>
+        /// Gets the current game speed multiplier.
+        /// </summary>
+        public float CurrentSpeed => _speedOptions[_currentSpeedIndex];
+
+        /// <summary>
+        /// Gets whether auto-battle is currently enabled.
+        /// </summary>
+        public bool IsAutoBattleEnabled => _autoBattleEnabled;
+
+        /// <summary>
+        /// Sets the speed index directly (for loading saved state).
+        /// </summary>
+        /// <param name="index">Speed index (0=1x, 1=1.5x, 2=2x).</param>
+        public void SetSpeedIndex(int index)
+        {
+            if (index < 0 || index >= _speedOptions.Length) return;
+
+            _currentSpeedIndex = index;
+            Time.timeScale = _speedOptions[_currentSpeedIndex];
+            UpdateSpeedDisplay();
+        }
+
+        /// <summary>
+        /// Sets auto-battle state directly (for loading saved state).
+        /// </summary>
+        /// <param name="enabled">Whether auto-battle should be enabled.</param>
+        public void SetAutoBattle(bool enabled)
+        {
+            _autoBattleEnabled = enabled;
+            UpdateAutoBattleDisplay();
+        }
+    }
+}

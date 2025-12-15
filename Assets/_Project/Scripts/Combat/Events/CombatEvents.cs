@@ -303,4 +303,48 @@ namespace HNR.Combat
     {
         public EndTurnRequestedEvent() { }
     }
+
+    /// <summary>
+    /// Published when game speed is changed via UI.
+    /// </summary>
+    public class GameSpeedChangedEvent : GameEvent
+    {
+        /// <summary>New game speed multiplier (1x, 1.5x, 2x).</summary>
+        public float Speed { get; }
+
+        public GameSpeedChangedEvent(float speed)
+        {
+            Speed = speed;
+        }
+    }
+
+    /// <summary>
+    /// Published when auto-battle mode is toggled.
+    /// </summary>
+    public class AutoBattleToggledEvent : GameEvent
+    {
+        /// <summary>True if auto-battle is now enabled.</summary>
+        public bool Enabled { get; }
+
+        public AutoBattleToggledEvent(bool enabled)
+        {
+            Enabled = enabled;
+        }
+    }
+
+    /// <summary>
+    /// Published when settings screen is requested from combat.
+    /// </summary>
+    public class OpenSettingsRequestEvent : GameEvent
+    {
+        public OpenSettingsRequestEvent() { }
+    }
+
+    /// <summary>
+    /// Published when pause menu is requested from combat.
+    /// </summary>
+    public class OpenPauseMenuRequestEvent : GameEvent
+    {
+        public OpenPauseMenuRequestEvent() { }
+    }
 }
