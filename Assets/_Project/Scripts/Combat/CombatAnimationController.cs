@@ -123,18 +123,17 @@ namespace HNR.Combat
         }
 
         /// <summary>
-        /// Handle card played event - trigger attack animation for attack cards.
+        /// Handle card played event - animations are primarily handled by DamageDealtEvent.
+        /// This handles skill cards that don't deal damage.
         /// </summary>
         private void OnCardPlayed(CardPlayedEvent evt)
         {
-            // Only play attack animation for attack cards (damage events handle the rest)
-            if (evt.Card?.Data?.Type != CardType.Attack)
+            // Skill cards that don't deal damage won't trigger DamageDealtEvent
+            // so we handle their animation here
+            if (evt.Card?.Data?.CardType == CardType.Skill)
             {
-                // For skill cards, play skill animation on the caster
-                if (evt.Card?.Data?.Type == CardType.Skill && evt.Requiem?.Visual != null)
-                {
-                    evt.Requiem.Visual.PlaySkill();
-                }
+                // For skills, we don't have direct requiem reference in event
+                // Animation will be handled when effects execute
             }
         }
 
