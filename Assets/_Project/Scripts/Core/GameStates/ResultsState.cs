@@ -5,6 +5,7 @@
 
 using UnityEngine;
 using HNR.Core.Interfaces;
+using HNR.UI;
 
 namespace HNR.Core.GameStates
 {
@@ -32,10 +33,15 @@ namespace HNR.Core.GameStates
         {
             Debug.Log("[ResultsState] Showing run results...");
 
-            // TODO: Show ResultsScreen via UIManager
-            // TODO: Display run statistics
-            // TODO: Show rewards and unlocks
-            // TODO: Clear saved run data via SaveManager
+            // Show ResultsScreen via UIManager
+            if (ServiceLocator.TryGet<IUIManager>(out var uiManager))
+            {
+                uiManager.ShowScreen<ResultsScreen>();
+            }
+            else
+            {
+                Debug.LogWarning("[ResultsState] UIManager not available - cannot show ResultsScreen");
+            }
         }
 
         /// <summary>
@@ -53,7 +59,15 @@ namespace HNR.Core.GameStates
         {
             Debug.Log("[ResultsState] Exiting results...");
 
-            // TODO: Apply meta-progression rewards
+            // Screen is automatically hidden when another screen is shown via UIManager.ShowScreen
+            // No explicit hide needed - the next state will show its own screen
+
+            // Clear saved run data after viewing results
+            if (ServiceLocator.TryGet<ISaveManager>(out var saveManager))
+            {
+                saveManager.DeleteRun();
+                Debug.Log("[ResultsState] Cleared run save data");
+            }
         }
     }
 }

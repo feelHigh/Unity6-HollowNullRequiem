@@ -6,6 +6,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using HNR.Core.Interfaces;
+using HNR.UI;
 
 namespace HNR.Core.GameStates
 {
@@ -92,11 +93,14 @@ namespace HNR.Core.GameStates
         {
             Debug.Log("[BastionState] Showing BastionScreen...");
 
-            // TODO: Show Bastion UI via UIManager
-            // if (ServiceLocator.TryGet<IUIManager>(out var uiManager))
-            // {
-            //     uiManager.ShowScreen<BastionScreen>();
-            // }
+            if (ServiceLocator.TryGet<IUIManager>(out var uiManager))
+            {
+                uiManager.ShowScreen<BastionScreen>();
+            }
+            else
+            {
+                Debug.LogWarning("[BastionState] UIManager not available - cannot show BastionScreen");
+            }
         }
 
         /// <summary>
@@ -106,11 +110,8 @@ namespace HNR.Core.GameStates
         {
             Debug.Log("[BastionState] Hiding BastionScreen...");
 
-            // TODO: Hide Bastion UI via UIManager
-            // if (ServiceLocator.TryGet<IUIManager>(out var uiManager))
-            // {
-            //     uiManager.HideScreen<BastionScreen>();
-            // }
+            // Screen is automatically hidden when another screen is shown via UIManager.ShowScreen
+            // No explicit hide needed - the next state will show its own screen
         }
 
         /// <summary>
