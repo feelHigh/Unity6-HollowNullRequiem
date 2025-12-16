@@ -117,6 +117,24 @@ namespace HNR.Editor
             RelicAssetGenerator.GenerateRelicAssets();
         }
 
+        [MenuItem("HNR/1. Data Assets/Production/Generate All Zone Data", priority = 25)]
+        public static void GenerateAllZoneData()
+        {
+            ProductionDataGenerator.GenerateAllZoneData();
+        }
+
+        [MenuItem("HNR/1. Data Assets/Production/Zone Configs Only", priority = 26)]
+        public static void GenerateZoneConfigsOnly()
+        {
+            ProductionDataGenerator.GenerateZoneConfigsOnly();
+        }
+
+        [MenuItem("HNR/1. Data Assets/Production/Zone 2 & 3 Encounters", priority = 27)]
+        public static void GenerateZone2And3Encounters()
+        {
+            ProductionDataGenerator.GenerateZone2And3Encounters();
+        }
+
         // ============================================
         // 2. Prefabs (priority 30-49)
         // ============================================

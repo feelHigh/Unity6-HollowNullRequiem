@@ -17,6 +17,9 @@ using HNR.Characters;
 using HNR.Cards;
 using HNR.Map;
 using HNR.Progression;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace HNR.Testing
 {
@@ -174,8 +177,8 @@ namespace HNR.Testing
 
         private void TestCardSystem()
         {
-            var cards = Resources.LoadAll<CardDataSO>("");
-            Log("Cards loadable", cards != null && cards.Length > 0);
+            int count = CountAssetsOfType<CardDataSO>();
+            Log("Cards loadable", count > 0);
         }
 
         private void TestCorruptionSystem()
@@ -251,38 +254,52 @@ namespace HNR.Testing
 
         private void TestRequiems()
         {
-            var requiems = Resources.LoadAll<RequiemDataSO>("");
-            Log($"Requiems exist ({requiems.Length})", requiems.Length >= 4);
+            int count = CountAssetsOfType<RequiemDataSO>();
+            Log($"Requiems exist ({count})", count >= 4);
         }
 
         private void TestCards()
         {
-            var cards = Resources.LoadAll<CardDataSO>("");
-            Log($"Cards exist ({cards.Length})", cards.Length >= 40);
+            int count = CountAssetsOfType<CardDataSO>();
+            Log($"Cards exist ({count})", count >= 40);
         }
 
         private void TestEnemies()
         {
-            var enemies = Resources.LoadAll<EnemyDataSO>("");
-            Log($"Enemies exist ({enemies.Length})", enemies.Length >= 8);
+            int count = CountAssetsOfType<EnemyDataSO>();
+            Log($"Enemies exist ({count})", count >= 8);
         }
 
         private void TestRelics()
         {
-            var relics = Resources.LoadAll<RelicDataSO>("");
-            Log($"Relics exist ({relics.Length})", relics.Length >= 10);
+            int count = CountAssetsOfType<RelicDataSO>();
+            Log($"Relics exist ({count})", count >= 10);
         }
 
         private void TestEchoEvents()
         {
-            var events = Resources.LoadAll<EchoEventDataSO>("");
-            Log($"Echo events exist ({events.Length})", events.Length >= 6);
+            int count = CountAssetsOfType<EchoEventDataSO>();
+            Log($"Echo events exist ({count})", count >= 6);
         }
 
         private void TestZones()
         {
-            var zones = Resources.LoadAll<ZoneConfigSO>("");
-            Log($"Zones configured ({zones.Length})", zones.Length >= 3);
+            int count = CountAssetsOfType<ZoneConfigSO>();
+            Log($"Zones configured ({count})", count >= 3);
+        }
+
+        /// <summary>
+        /// Count assets of a given ScriptableObject type using AssetDatabase (Editor) or Resources (Runtime).
+        /// </summary>
+        private int CountAssetsOfType<T>() where T : ScriptableObject
+        {
+#if UNITY_EDITOR
+            string[] guids = AssetDatabase.FindAssets($"t:{typeof(T).Name}");
+            return guids.Length;
+#else
+            var assets = Resources.LoadAll<T>("");
+            return assets.Length;
+#endif
         }
 
         // ============================================
