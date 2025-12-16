@@ -219,18 +219,14 @@ namespace HNR.UI
                 Debug.Log("[MainMenuScreen] Deleted existing saved run");
             }
 
-            // Navigate to Requiem selection
-            if (ServiceLocator.TryGet<IUIManager>(out var uiManager))
+            // Navigate to Bastion (hub scene where team selection happens)
+            if (ServiceLocator.TryGet<IGameManager>(out var gameManager))
             {
-                uiManager.ShowScreen<RequiemSelectionScreen>();
+                gameManager.ChangeState(GameState.Bastion);
             }
             else
             {
-                // Fallback: change game state directly
-                if (ServiceLocator.TryGet<IGameManager>(out var gameManager))
-                {
-                    gameManager.ChangeState(GameState.Bastion);
-                }
+                Debug.LogWarning("[MainMenuScreen] GameManager not found!");
             }
         }
 

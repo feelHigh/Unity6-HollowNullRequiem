@@ -18,7 +18,7 @@ namespace HNR.Editor
     /// </summary>
     public static class PlaceholderAssetGenerator
     {
-        private const string DATA_PATH = "Assets/_Project/Data";
+        private const string DATA_PATH = "Assets/_Project/Resources/Data";
         private const string REQUIEMS_PATH = DATA_PATH + "/Characters/Requiems";
         private const string CARDS_PATH = DATA_PATH + "/Cards";
         private const string ENEMIES_PATH = DATA_PATH + "/Enemies";
@@ -60,7 +60,8 @@ namespace HNR.Editor
 
         private static void EnsureFoldersExist()
         {
-            CreateFolderIfNeeded("Assets/_Project", "Data");
+            CreateFolderIfNeeded("Assets/_Project", "Resources");
+            CreateFolderIfNeeded("Assets/_Project/Resources", "Data");
             CreateFolderIfNeeded(DATA_PATH, "Characters");
             CreateFolderIfNeeded(DATA_PATH + "/Characters", "Requiems");
             CreateFolderIfNeeded(DATA_PATH + "/Characters", "Arts");

@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd3bcd9369213404aaaf1b59b5549209, type: 3}
+  m_Name: Thornwick_Data
+  m_EditorClassIdentifier: 
+  _requiemId: thornwick
+  _requiemName: Thornwick
+  _title: Iron Root
+  _backstory: A fallen hero of the Nature aspect.
+  _class: 3
+  _soulAspect: 3
+  _baseHP: 100
+  _baseATK: 8
+  _baseDEF: 10
+  _seRate: 1
+  _startingCards: []
+  _unlockableCards: []
+  _requiemArt: {fileID: 0}
+  _nullStateEffect: 3
+  _nullStateDescription: Regenerate 5 HP at turn start. +50% Block.
+  _portrait: {fileID: 0}
+  _fullBodySprite: {fileID: 0}
+  _animator: {fileID: 0}
+  _aspectColor: {r: 1, g: 1, b: 1, a: 1}
+  _visualPrefab: {fileID: 0}
+  _preferredAttackType: 0

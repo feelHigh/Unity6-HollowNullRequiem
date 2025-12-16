@@ -19,9 +19,9 @@ namespace HNR.Editor
     public static class MordrenAssetGenerator
     {
         // Asset paths
-        private const string RequiemDataPath = "Assets/_Project/Data/Characters/Requiems";
-        private const string RequiemArtPath = "Assets/_Project/Data/Characters/Arts";
-        private const string CardDataPath = "Assets/_Project/Data/Cards/Mordren";
+        private const string RequiemDataPath = "Assets/_Project/Resources/Data/Characters/Requiems";
+        private const string RequiemArtPath = "Assets/_Project/Resources/Data/Characters/Arts";
+        private const string CardDataPath = "Assets/_Project/Resources/Data/Cards/Mordren";
 
         public static void GenerateMordrenAssets()
         {

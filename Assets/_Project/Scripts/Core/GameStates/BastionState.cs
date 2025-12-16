@@ -34,14 +34,30 @@ namespace HNR.Core.GameStates
         {
             Debug.Log("[BastionState] Entering Bastion hub...");
 
+            // Subscribe to scene loaded to show UI after scene is ready
+            SceneManager.sceneLoaded += OnBastionSceneLoaded;
+
             // Load the Bastion scene
             LoadBastionScene();
 
-            // Show Bastion UI
-            ShowBastionScreen();
-
             // Play Bastion ambient music
             PlayBastionMusic();
+        }
+
+        /// <summary>
+        /// Called when Bastion scene finishes loading.
+        /// </summary>
+        private void OnBastionSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (scene.name != "Bastion") return;
+
+            // Unsubscribe to prevent multiple calls
+            SceneManager.sceneLoaded -= OnBastionSceneLoaded;
+
+            Debug.Log("[BastionState] Bastion scene loaded. Showing UI...");
+
+            // Show Bastion UI now that scene is loaded
+            ShowBastionScreen();
 
             Debug.Log("[BastionState] Bastion ready.");
         }
@@ -60,6 +76,9 @@ namespace HNR.Core.GameStates
         public void Exit()
         {
             Debug.Log("[BastionState] Leaving Bastion...");
+
+            // Unsubscribe from scene loaded in case we exit early
+            SceneManager.sceneLoaded -= OnBastionSceneLoaded;
 
             // Stop Bastion music
             StopBastionMusic();

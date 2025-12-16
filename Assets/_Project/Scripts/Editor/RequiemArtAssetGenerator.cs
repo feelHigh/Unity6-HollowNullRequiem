@@ -19,7 +19,7 @@ namespace HNR.Editor
     /// </summary>
     public static class RequiemArtAssetGenerator
     {
-        private const string ASSET_PATH = "Assets/_Project/Data/Characters/RequiemArts";
+        private const string ASSET_PATH = "Assets/_Project/Resources/Data/Characters/RequiemArts";
 
         public static void GenerateAllRequiemArts()
         {

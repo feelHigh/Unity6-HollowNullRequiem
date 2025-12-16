@@ -239,18 +239,24 @@ namespace HNR.Map
 
         private void CalculatePositions(MapData mapData)
         {
+            // Horizontal progression: Start on left, Boss on right
+            // Nodes within each "row" (column visually) are stacked vertically
             for (int row = 0; row < _config.RowCount; row++)
             {
                 var rowNodes = mapData.GetRow(row);
                 int count = rowNodes.Count;
 
-                float rowWidth = (count - 1) * _config.HorizontalSpacing;
-                float startX = -rowWidth / 2f;
-                float y = row * _config.VerticalSpacing;
+                // X = horizontal progression (left to right)
+                float baseX = row * _config.HorizontalSpacing;
+
+                // Y = vertical spread within this column (centered)
+                float columnHeight = (count - 1) * _config.VerticalSpacing;
+                float startY = -columnHeight / 2f;
 
                 for (int i = 0; i < count; i++)
                 {
-                    float x = startX + (i * _config.HorizontalSpacing);
+                    float x = baseX;
+                    float y = startY + (i * _config.VerticalSpacing);
 
                     // Add jitter for visual variety (not on start/boss)
                     if (row > 0 && row < _config.RowCount - 1)

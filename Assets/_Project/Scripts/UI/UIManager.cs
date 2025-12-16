@@ -56,6 +56,7 @@ namespace HNR.UI
         private Stack<ScreenBase> _overlayStack = new();
         private ScreenBase _currentScreen;
         private bool _isTransitioning;
+        private bool _isRegisteredInstance;
 
         // ============================================
         // Properties
@@ -80,6 +81,7 @@ namespace HNR.UI
             if (ServiceLocator.Has<IUIManager>())
             {
                 Debug.Log("[UIManager] UIManager already exists. Destroying duplicate.");
+                _isRegisteredInstance = false;
                 Destroy(gameObject);
                 return;
             }
@@ -93,6 +95,7 @@ namespace HNR.UI
                 ServiceLocator.Initialize();
             }
             ServiceLocator.Register<IUIManager>(this);
+            _isRegisteredInstance = true;
 
             // Subscribe to scene loaded events to re-cache screens
             SceneManager.sceneLoaded += OnSceneLoaded;
@@ -102,11 +105,15 @@ namespace HNR.UI
 
         private void OnDestroy()
         {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
-
-            if (ServiceLocator.Has<IUIManager>())
+            // Only unsubscribe and unregister if this was the registered instance
+            if (_isRegisteredInstance)
             {
-                ServiceLocator.Unregister<IUIManager>();
+                SceneManager.sceneLoaded -= OnSceneLoaded;
+
+                if (ServiceLocator.Has<IUIManager>())
+                {
+                    ServiceLocator.Unregister<IUIManager>();
+                }
             }
         }
 

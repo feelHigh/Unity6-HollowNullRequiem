@@ -16,8 +16,8 @@ namespace HNR.Editor
     /// </summary>
     public static class EchoEventGenerator
     {
-        private const string EventsPath = "Assets/_Project/Data/Events";
-        private const string ZoneConfigPath = "Assets/_Project/Data/Zones";
+        private const string EventsPath = "Assets/_Project/Resources/Data/Events";
+        private const string ZoneConfigPath = "Assets/_Project/Resources/Data/Zones";
 
         public static void GenerateTestEchoEvents()
         {

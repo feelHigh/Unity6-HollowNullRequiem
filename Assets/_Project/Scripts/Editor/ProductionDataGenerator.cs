@@ -19,10 +19,10 @@ namespace HNR.Editor
     /// </summary>
     public static class ProductionDataGenerator
     {
-        private const string ZONE_PATH = "Assets/_Project/Data/Zones";
-        private const string ENCOUNTER_PATH = "Assets/_Project/Data/Encounters";
-        private const string ENEMY_PATH = "Assets/_Project/Data/Enemies";
-        private const string EVENTS_PATH = "Assets/_Project/Data/Events";
+        private const string ZONE_PATH = "Assets/_Project/Resources/Data/Zones";
+        private const string ENCOUNTER_PATH = "Assets/_Project/Resources/Data/Encounters";
+        private const string ENEMY_PATH = "Assets/_Project/Resources/Data/Enemies";
+        private const string EVENTS_PATH = "Assets/_Project/Resources/Data/Events";
 
         // ============================================
         // Public Methods (called from EditorMenuOrganizer)

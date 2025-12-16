@@ -17,7 +17,7 @@ namespace HNR.Editor
     /// </summary>
     public static class SharedCardsAssetGenerator
     {
-        private const string CardDataPath = "Assets/_Project/Data/Cards/Shared";
+        private const string CardDataPath = "Assets/_Project/Resources/Data/Cards/Shared";
 
         public static void GenerateSharedCards()
         {

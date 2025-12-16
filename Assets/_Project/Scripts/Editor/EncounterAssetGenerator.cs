@@ -19,8 +19,8 @@ namespace HNR.Editor
     /// </summary>
     public static class EncounterAssetGenerator
     {
-        private const string ENEMY_PATH = "Assets/_Project/Data/Enemies";
-        private const string ENCOUNTER_PATH = "Assets/_Project/Data/Encounters";
+        private const string ENEMY_PATH = "Assets/_Project/Resources/Data/Enemies";
+        private const string ENCOUNTER_PATH = "Assets/_Project/Resources/Data/Encounters";
 
         // ============================================
         // Main Generation

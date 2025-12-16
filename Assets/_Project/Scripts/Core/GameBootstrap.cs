@@ -68,6 +68,7 @@ namespace HNR.Core
             InitializeUIManager();
             InitializePoolManager();
             InitializeAudioManager();
+            InitializeRunManager();
 
             Debug.Log("[GameBootstrap] Core systems initialized.");
         }
@@ -174,6 +175,31 @@ namespace HNR.Core
             else
             {
                 Debug.Log("[GameBootstrap] AudioManager found in scene.");
+            }
+        }
+
+        /// <summary>
+        /// Find or create RunManager.
+        /// RunManager self-registers in Awake.
+        /// </summary>
+        private void InitializeRunManager()
+        {
+            if (ServiceLocator.Has<IRunManager>())
+            {
+                Debug.Log("[GameBootstrap] RunManager already registered.");
+                return;
+            }
+
+            var runManager = FindAnyObjectByType<RunManager>();
+            if (runManager == null)
+            {
+                var go = new GameObject("[RunManager]");
+                go.AddComponent<RunManager>();
+                Debug.Log("[GameBootstrap] RunManager created dynamically.");
+            }
+            else
+            {
+                Debug.Log("[GameBootstrap] RunManager found in scene.");
             }
         }
     }

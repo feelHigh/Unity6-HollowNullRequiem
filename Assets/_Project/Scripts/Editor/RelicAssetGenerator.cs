@@ -15,8 +15,8 @@ namespace HNR.Editor
     /// </summary>
     public static class RelicAssetGenerator
     {
-        private const string RelicPath = "Assets/_Project/Data/Relics";
-        private const string ResourcesPath = "Assets/Resources/Data/Relics";
+        private const string RelicPath = "Assets/_Project/Resources/Data/Relics";
+        private const string ResourcesPath = "Assets/_Project/Resources/Data/Relics";
 
         public static void GenerateRelicAssets()
         {

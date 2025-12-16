@@ -22,7 +22,11 @@ namespace HNR.Editor
 {
     /// <summary>
     /// Editor tool to generate and configure all production scenes.
-    /// Creates Boot, MainMenu, Bastion, NullRift, and Combat scenes.
+    ///
+    /// Architecture:
+    /// - Boot scene: Creates ALL persistent managers (GameManager, UIManager, etc.)
+    /// - Other scenes: Only contain UI screens and scene-specific content
+    /// - Managers use DontDestroyOnLoad and persist across scene transitions
     /// </summary>
     public static class ProductionSceneSetupGenerator
     {
@@ -30,14 +34,18 @@ namespace HNR.Editor
         private const string PREFABS_PATH = "Assets/_Project/Prefabs";
 
         // ============================================
-        // Public Methods
+        // Public Methods - Menu Items
         // ============================================
 
         public static void SetupAllScenes()
         {
             if (!EditorUtility.DisplayDialog("Setup Production Scenes",
                 "This will regenerate all production scenes:\n\n" +
-                "- Boot\n- MainMenu\n- Bastion\n- NullRift\n- Combat\n\n" +
+                "- Boot (managers only)\n" +
+                "- MainMenu\n" +
+                "- Bastion\n" +
+                "- NullRift\n" +
+                "- Combat\n\n" +
                 "Existing scenes will be overwritten. Continue?",
                 "Yes, Setup All", "Cancel"))
             {
@@ -53,9 +61,14 @@ namespace HNR.Editor
 
             EditorUtility.DisplayDialog("Production Scenes Setup Complete",
                 "All production scenes have been created and configured.\n\n" +
-                "Build Settings have been updated with the correct scene order.",
+                "Build Settings have been updated with the correct scene order.\n\n" +
+                "IMPORTANT: Always start from Boot scene to ensure proper initialization.",
                 "OK");
         }
+
+        // ============================================
+        // Boot Scene - Managers Only
+        // ============================================
 
         public static void SetupBootScene()
         {
@@ -64,12 +77,12 @@ namespace HNR.Editor
             // === Camera ===
             CreateMainCamera("Boot");
 
-            // === Bootstrap ===
-            GameObject bootstrapObj = new GameObject("[Bootstrap]");
-            bootstrapObj.AddComponent<GameBootstrap>();
-
             // === EventSystem ===
             CreateEventSystem();
+
+            // === Bootstrap (creates all managers) ===
+            GameObject bootstrapObj = new GameObject("[Bootstrap]");
+            bootstrapObj.AddComponent<GameBootstrap>();
 
             // Save scene
             string scenePath = $"{SCENES_PATH}/Boot.unity";
@@ -78,6 +91,10 @@ namespace HNR.Editor
 
             Debug.Log($"[ProductionSceneSetupGenerator] Created Boot scene at {scenePath}");
         }
+
+        // ============================================
+        // MainMenu Scene - UI Only
+        // ============================================
 
         public static void SetupMainMenuScene()
         {
@@ -89,9 +106,6 @@ namespace HNR.Editor
             // === EventSystem ===
             CreateEventSystem();
 
-            // === UIManager ===
-            GameObject uiManagerObj = CreateUIManager();
-
             // === Main Canvas ===
             GameObject canvasObj = CreateMainCanvas("MainMenuCanvas");
 
@@ -99,21 +113,10 @@ namespace HNR.Editor
             GameObject screenContainer = CreateUIContainer(canvasObj, "ScreenContainer");
 
             // === MainMenuScreen ===
-            GameObject mainMenuObj = CreateMainMenuScreen(screenContainer);
+            GameObject mainMenuScreen = CreateMainMenuScreen(screenContainer);
 
             // === Overlay Container ===
             GameObject overlayContainer = CreateUIContainer(canvasObj, "OverlayContainer");
-
-            // === Fade Overlay ===
-            GameObject fadeOverlay = CreateFadeOverlay(canvasObj);
-
-            // === Wire UIManager references ===
-            var uiManager = uiManagerObj.GetComponent<UIManager>();
-            SerializedObject uiManagerSO = new SerializedObject(uiManager);
-            uiManagerSO.FindProperty("_screenContainer").objectReferenceValue = screenContainer.transform;
-            uiManagerSO.FindProperty("_overlayContainer").objectReferenceValue = overlayContainer.transform;
-            uiManagerSO.FindProperty("_fadeOverlay").objectReferenceValue = fadeOverlay.GetComponent<CanvasGroup>();
-            uiManagerSO.ApplyModifiedPropertiesWithoutUndo();
 
             // === Background ===
             CreateBackground(canvasObj, new Color(0.05f, 0.02f, 0.1f));
@@ -124,6 +127,10 @@ namespace HNR.Editor
 
             Debug.Log($"[ProductionSceneSetupGenerator] Created MainMenu scene at {scenePath}");
         }
+
+        // ============================================
+        // Bastion Scene - Hub UI
+        // ============================================
 
         public static void SetupBastionScene()
         {
@@ -141,8 +148,14 @@ namespace HNR.Editor
             // === Screen Container ===
             GameObject screenContainer = CreateUIContainer(canvasObj, "ScreenContainer");
 
-            // === Bastion Hub UI ===
-            GameObject bastionHub = CreateBastionHubUI(screenContainer);
+            // === BastionScreen ===
+            GameObject bastionScreen = CreateBastionScreen(screenContainer);
+
+            // === Overlay Container ===
+            GameObject overlayContainer = CreateUIContainer(canvasObj, "OverlayContainer");
+
+            // === RequiemSelectionScreen (overlay) ===
+            GameObject requiemSelectionScreen = CreateRequiemSelectionScreen(overlayContainer);
 
             // === Global Header Placeholder ===
             GameObject header = CreateGlobalHeaderPlaceholder(canvasObj);
@@ -160,6 +173,10 @@ namespace HNR.Editor
             Debug.Log($"[ProductionSceneSetupGenerator] Created Bastion scene at {scenePath}");
         }
 
+        // ============================================
+        // NullRift Scene - Map UI
+        // ============================================
+
         public static void SetupNullRiftScene()
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -170,15 +187,15 @@ namespace HNR.Editor
             // === EventSystem ===
             CreateEventSystem();
 
-            // === Managers ===
+            // === Scene-Specific Managers ===
             GameObject managersParent = new GameObject("--- MANAGERS ---");
 
             GameObject mapManagerObj = new GameObject("MapManager");
             mapManagerObj.transform.SetParent(managersParent.transform);
-            mapManagerObj.AddComponent<MapManager>();
+            var mapManager = mapManagerObj.AddComponent<MapManager>();
 
-            // Note: MapGenerator is a plain C# class, not a MonoBehaviour
-            // It's instantiated by MapManager when needed
+            // Wire zone configs to MapManager
+            WireZoneConfigs(mapManager);
 
             GameObject echoEventObj = new GameObject("EchoEventManager");
             echoEventObj.transform.SetParent(managersParent.transform);
@@ -191,16 +208,16 @@ namespace HNR.Editor
             GameObject screenContainer = CreateUIContainer(canvasObj, "ScreenContainer");
 
             // === MapScreen ===
-            GameObject mapScreenObj = CreateMapScreen(screenContainer);
-
-            // === EchoEventScreen ===
-            GameObject echoScreenObj = CreateEchoEventScreen(screenContainer);
-
-            // === ShopScreen ===
-            GameObject shopScreenObj = CreateShopScreen(screenContainer);
+            GameObject mapScreen = CreateMapScreen(screenContainer);
 
             // === Overlay Container ===
             GameObject overlayContainer = CreateUIContainer(canvasObj, "OverlayContainer");
+
+            // === EchoEventScreen (overlay) ===
+            GameObject echoScreen = CreateEchoEventScreen(overlayContainer);
+
+            // === ShopScreen (overlay) ===
+            GameObject shopScreen = CreateShopScreen(overlayContainer);
 
             // === Background ===
             CreateBackground(canvasObj, new Color(0.03f, 0.01f, 0.08f));
@@ -212,6 +229,10 @@ namespace HNR.Editor
             Debug.Log($"[ProductionSceneSetupGenerator] Created NullRift scene at {scenePath}");
         }
 
+        // ============================================
+        // Combat Scene - Combat UI
+        // ============================================
+
         public static void SetupCombatScene()
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -222,50 +243,41 @@ namespace HNR.Editor
             // === EventSystem ===
             CreateEventSystem();
 
-            // === Managers Parent ===
+            // === Scene-Specific Managers ===
             GameObject managersParent = new GameObject("--- MANAGERS ---");
 
-            // === TurnManager ===
             GameObject turnManagerObj = new GameObject("TurnManager");
             turnManagerObj.transform.SetParent(managersParent.transform);
             turnManagerObj.AddComponent<TurnManager>();
 
-            // === DeckManager ===
             GameObject deckManagerObj = new GameObject("DeckManager");
             deckManagerObj.transform.SetParent(managersParent.transform);
             deckManagerObj.AddComponent<DeckManager>();
 
-            // === HandManager ===
             GameObject handManagerObj = new GameObject("HandManager");
             handManagerObj.transform.SetParent(managersParent.transform);
             var handManager = handManagerObj.AddComponent<HandManager>();
 
-            // === CardExecutor ===
             GameObject cardExecutorObj = new GameObject("CardExecutor");
             cardExecutorObj.transform.SetParent(managersParent.transform);
             cardExecutorObj.AddComponent<CardExecutor>();
 
-            // === TargetingSystem ===
             GameObject targetingObj = new GameObject("TargetingSystem");
             targetingObj.transform.SetParent(managersParent.transform);
             targetingObj.AddComponent<TargetingSystem>();
 
-            // === EncounterManager ===
             GameObject encounterObj = new GameObject("EncounterManager");
             encounterObj.transform.SetParent(managersParent.transform);
             encounterObj.AddComponent<EncounterManager>();
 
-            // === StatusEffectManager ===
             GameObject statusObj = new GameObject("StatusEffectManager");
             statusObj.transform.SetParent(managersParent.transform);
             statusObj.AddComponent<StatusEffectManager>();
 
-            // === SoulEssenceManager ===
             GameObject soulEssenceObj = new GameObject("SoulEssenceManager");
             soulEssenceObj.transform.SetParent(managersParent.transform);
             soulEssenceObj.AddComponent<SoulEssenceManager>();
 
-            // === CombatManager ===
             GameObject combatManagerObj = new GameObject("CombatManager");
             combatManagerObj.transform.SetParent(managersParent.transform);
             combatManagerObj.AddComponent<CombatManager>();
@@ -276,8 +288,8 @@ namespace HNR.Editor
             // === Screen Container ===
             GameObject screenContainer = CreateUIContainer(canvasObj, "ScreenContainer");
 
-            // === CombatScreen (CZN Layout) ===
-            GameObject combatScreenObj = CreateCombatScreenCZN(screenContainer);
+            // === CombatScreenCZN ===
+            GameObject combatScreen = CreateCombatScreenCZN(screenContainer);
 
             // === Hand Container ===
             GameObject handContainer = CreateHandContainer(canvasObj);
@@ -305,11 +317,14 @@ namespace HNR.Editor
             Debug.Log($"[ProductionSceneSetupGenerator] Created Combat scene at {scenePath}");
         }
 
+        // ============================================
+        // Build Settings Configuration
+        // ============================================
+
         public static void ConfigureBuildSettings()
         {
             List<EditorBuildSettingsScene> scenes = new List<EditorBuildSettingsScene>();
 
-            // Add scenes in correct order
             string[] sceneOrder = new string[]
             {
                 $"{SCENES_PATH}/Boot.unity",
@@ -352,10 +367,7 @@ namespace HNR.Editor
             camera.nearClipPlane = -10f;
             camera.farClipPlane = 100f;
 
-            // Add URP camera data
             cameraObj.AddComponent<UniversalAdditionalCameraData>();
-
-            // Add AudioListener
             cameraObj.AddComponent<AudioListener>();
 
             return cameraObj;
@@ -367,13 +379,6 @@ namespace HNR.Editor
             eventSystemObj.AddComponent<UnityEngine.EventSystems.EventSystem>();
             eventSystemObj.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
             return eventSystemObj;
-        }
-
-        private static GameObject CreateUIManager()
-        {
-            GameObject uiManagerObj = new GameObject("[UIManager]");
-            uiManagerObj.AddComponent<UIManager>();
-            return uiManagerObj;
         }
 
         // ============================================
@@ -410,29 +415,6 @@ namespace HNR.Editor
             return container;
         }
 
-        private static GameObject CreateFadeOverlay(GameObject parent)
-        {
-            GameObject overlay = new GameObject("FadeOverlay");
-            overlay.transform.SetParent(parent.transform, false);
-
-            RectTransform rect = overlay.AddComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.sizeDelta = Vector2.zero;
-
-            Image img = overlay.AddComponent<Image>();
-            img.color = Color.black;
-            img.raycastTarget = true;
-
-            CanvasGroup group = overlay.AddComponent<CanvasGroup>();
-            group.alpha = 0f;
-            group.blocksRaycasts = false;
-
-            overlay.SetActive(false);
-
-            return overlay;
-        }
-
         private static void CreateBackground(GameObject canvas, Color color)
         {
             GameObject bg = new GameObject("Background");
@@ -449,8 +431,46 @@ namespace HNR.Editor
             img.raycastTarget = false;
         }
 
+        private static void WireZoneConfigs(MapManager mapManager)
+        {
+            // Load zone configs from Data folder
+            var zone1 = AssetDatabase.LoadAssetAtPath<ZoneConfigSO>("Assets/_Project/Data/Zones/Zone1_Config.asset");
+            var zone2 = AssetDatabase.LoadAssetAtPath<ZoneConfigSO>("Assets/_Project/Data/Zones/Zone2_Config.asset");
+            var zone3 = AssetDatabase.LoadAssetAtPath<ZoneConfigSO>("Assets/_Project/Data/Zones/Zone3_Config.asset");
+
+            // Wire via SerializedObject
+            SerializedObject so = new SerializedObject(mapManager);
+            var zoneConfigsProp = so.FindProperty("_zoneConfigs");
+
+            // Count available configs
+            int count = 0;
+            if (zone1 != null) count++;
+            if (zone2 != null) count++;
+            if (zone3 != null) count++;
+
+            zoneConfigsProp.arraySize = count;
+
+            int index = 0;
+            if (zone1 != null)
+            {
+                zoneConfigsProp.GetArrayElementAtIndex(index++).objectReferenceValue = zone1;
+            }
+            if (zone2 != null)
+            {
+                zoneConfigsProp.GetArrayElementAtIndex(index++).objectReferenceValue = zone2;
+            }
+            if (zone3 != null)
+            {
+                zoneConfigsProp.GetArrayElementAtIndex(index++).objectReferenceValue = zone3;
+            }
+
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            Debug.Log($"[ProductionSceneSetupGenerator] Wired {count} zone configs to MapManager");
+        }
+
         // ============================================
-        // Helper Methods - Screen Creation
+        // Screen Creation - MainMenu
         // ============================================
 
         private static GameObject CreateMainMenuScreen(GameObject parent)
@@ -468,8 +488,8 @@ namespace HNR.Editor
             // === Title ===
             GameObject titleObj = CreateText(screenObj, "Title", "HOLLOW NULL REQUIEM", 64);
             RectTransform titleRect = titleObj.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0.5f, 0.8f);
-            titleRect.anchorMax = new Vector2(0.5f, 0.8f);
+            titleRect.anchorMin = new Vector2(0.5f, 0.75f);
+            titleRect.anchorMax = new Vector2(0.5f, 0.75f);
             titleRect.anchoredPosition = Vector2.zero;
             titleRect.sizeDelta = new Vector2(800, 100);
 
@@ -477,9 +497,9 @@ namespace HNR.Editor
             GameObject buttonContainer = new GameObject("ButtonContainer");
             buttonContainer.transform.SetParent(screenObj.transform, false);
             RectTransform buttonContainerRect = buttonContainer.AddComponent<RectTransform>();
-            buttonContainerRect.anchorMin = new Vector2(0.5f, 0.5f);
-            buttonContainerRect.anchorMax = new Vector2(0.5f, 0.5f);
-            buttonContainerRect.sizeDelta = new Vector2(300, 400);
+            buttonContainerRect.anchorMin = new Vector2(0.5f, 0.4f);
+            buttonContainerRect.anchorMax = new Vector2(0.5f, 0.4f);
+            buttonContainerRect.sizeDelta = new Vector2(300, 350);
 
             VerticalLayoutGroup layout = buttonContainer.AddComponent<VerticalLayoutGroup>();
             layout.spacing = 20f;
@@ -489,10 +509,10 @@ namespace HNR.Editor
             layout.childControlWidth = true;
             layout.childControlHeight = false;
 
-            // === Continue Button ===
+            // === Continue Button (hidden by default) ===
             GameObject continueBtn = CreateMenuButton(buttonContainer, "ContinueButton", "CONTINUE");
             CanvasGroup continueGroup = continueBtn.AddComponent<CanvasGroup>();
-            continueBtn.SetActive(false); // Hidden by default
+            continueBtn.SetActive(false);
 
             // === New Run Button ===
             GameObject newRunBtn = CreateMenuButton(buttonContainer, "NewRunButton", "NEW RUN");
@@ -527,46 +547,176 @@ namespace HNR.Editor
             return screenObj;
         }
 
-        private static GameObject CreateBastionHubUI(GameObject parent)
-        {
-            GameObject hubObj = new GameObject("BastionHub");
-            hubObj.transform.SetParent(parent.transform, false);
+        // ============================================
+        // Screen Creation - Bastion
+        // ============================================
 
-            RectTransform rect = hubObj.AddComponent<RectTransform>();
+        private static GameObject CreateBastionScreen(GameObject parent)
+        {
+            GameObject screenObj = new GameObject("BastionScreen");
+            screenObj.transform.SetParent(parent.transform, false);
+
+            RectTransform rect = screenObj.AddComponent<RectTransform>();
             rect.anchorMin = Vector2.zero;
             rect.anchorMax = Vector2.one;
             rect.sizeDelta = Vector2.zero;
 
+            var bastionScreen = screenObj.AddComponent<BastionScreen>();
+
             // === Title ===
-            GameObject titleObj = CreateText(hubObj, "Title", "THE BASTION", 48);
+            GameObject titleObj = CreateText(screenObj, "Title", "THE BASTION", 48);
+            RectTransform titleRect = titleObj.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0.5f, 0.85f);
+            titleRect.anchorMax = new Vector2(0.5f, 0.85f);
+            titleRect.sizeDelta = new Vector2(400, 60);
+
+            // === Subtitle ===
+            GameObject subtitleObj = CreateText(screenObj, "Subtitle", "Command Center", 24);
+            RectTransform subtitleRect = subtitleObj.GetComponent<RectTransform>();
+            subtitleRect.anchorMin = new Vector2(0.5f, 0.8f);
+            subtitleRect.anchorMax = new Vector2(0.5f, 0.8f);
+            subtitleRect.sizeDelta = new Vector2(300, 40);
+
+            // === Team Section ===
+            GameObject teamSection = new GameObject("TeamSection");
+            teamSection.transform.SetParent(screenObj.transform, false);
+            RectTransform teamRect = teamSection.AddComponent<RectTransform>();
+            teamRect.anchorMin = new Vector2(0.1f, 0.4f);
+            teamRect.anchorMax = new Vector2(0.5f, 0.75f);
+            teamRect.sizeDelta = Vector2.zero;
+
+            GameObject teamTitle = CreateText(teamSection, "TeamSectionTitle", "SELECTED TEAM", 20);
+            RectTransform teamTitleRect = teamTitle.GetComponent<RectTransform>();
+            teamTitleRect.anchorMin = new Vector2(0.5f, 0.95f);
+            teamTitleRect.anchorMax = new Vector2(0.5f, 0.95f);
+            teamTitleRect.sizeDelta = new Vector2(200, 30);
+
+            GameObject teamContainer = new GameObject("TeamContainer");
+            teamContainer.transform.SetParent(teamSection.transform, false);
+            RectTransform teamContainerRect = teamContainer.AddComponent<RectTransform>();
+            teamContainerRect.anchorMin = new Vector2(0.05f, 0.1f);
+            teamContainerRect.anchorMax = new Vector2(0.95f, 0.85f);
+            teamContainerRect.sizeDelta = Vector2.zero;
+
+            HorizontalLayoutGroup teamLayout = teamContainer.AddComponent<HorizontalLayoutGroup>();
+            teamLayout.spacing = 20f;
+            teamLayout.childAlignment = TextAnchor.MiddleCenter;
+            teamLayout.childForceExpandWidth = false;
+            teamLayout.childForceExpandHeight = false;
+
+            // === Action Buttons Container ===
+            GameObject buttonContainer = new GameObject("ActionButtons");
+            buttonContainer.transform.SetParent(screenObj.transform, false);
+            RectTransform containerRect = buttonContainer.AddComponent<RectTransform>();
+            containerRect.anchorMin = new Vector2(0.55f, 0.4f);
+            containerRect.anchorMax = new Vector2(0.9f, 0.75f);
+            containerRect.sizeDelta = Vector2.zero;
+
+            VerticalLayoutGroup btnLayout = buttonContainer.AddComponent<VerticalLayoutGroup>();
+            btnLayout.spacing = 15f;
+            btnLayout.childAlignment = TextAnchor.MiddleCenter;
+            btnLayout.childForceExpandWidth = true;
+            btnLayout.childForceExpandHeight = false;
+            btnLayout.childControlWidth = true;
+            btnLayout.childControlHeight = false;
+
+            // Action buttons
+            GameObject newRunBtn = CreateMenuButton(buttonContainer, "NewRunButton", "ENTER NULL RIFT");
+            newRunBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(280, 60);
+
+            GameObject changeTeamBtn = CreateMenuButton(buttonContainer, "ChangeTeamButton", "CHANGE TEAM");
+            changeTeamBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(280, 50);
+
+            GameObject viewDeckBtn = CreateMenuButton(buttonContainer, "ViewDeckButton", "VIEW DECK");
+            viewDeckBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(280, 50);
+
+            GameObject continueBtn = CreateMenuButton(buttonContainer, "ContinueRunButton", "CONTINUE RUN");
+            continueBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(280, 50);
+            CanvasGroup continueGroup = continueBtn.AddComponent<CanvasGroup>();
+            continueBtn.SetActive(false);
+
+            // === Team Stats ===
+            GameObject statsContainer = new GameObject("TeamStats");
+            statsContainer.transform.SetParent(screenObj.transform, false);
+            RectTransform statsRect = statsContainer.AddComponent<RectTransform>();
+            statsRect.anchorMin = new Vector2(0.1f, 0.3f);
+            statsRect.anchorMax = new Vector2(0.5f, 0.38f);
+            statsRect.sizeDelta = Vector2.zero;
+
+            HorizontalLayoutGroup statsLayout = statsContainer.AddComponent<HorizontalLayoutGroup>();
+            statsLayout.spacing = 30f;
+            statsLayout.childAlignment = TextAnchor.MiddleCenter;
+
+            GameObject hpText = CreateText(statsContainer, "TeamHPText", "150 HP", 18);
+            GameObject atkText = CreateText(statsContainer, "TeamATKText", "30 ATK", 18);
+            GameObject defText = CreateText(statsContainer, "TeamDEFText", "15 DEF", 18);
+
+            // === Wire References ===
+            SerializedObject screenSO = new SerializedObject(bastionScreen);
+            screenSO.FindProperty("_titleText").objectReferenceValue = titleObj.GetComponent<TextMeshProUGUI>();
+            screenSO.FindProperty("_subtitleText").objectReferenceValue = subtitleObj.GetComponent<TextMeshProUGUI>();
+            screenSO.FindProperty("_teamContainer").objectReferenceValue = teamContainer.transform;
+            screenSO.FindProperty("_teamSectionTitle").objectReferenceValue = teamTitle.GetComponent<TextMeshProUGUI>();
+            screenSO.FindProperty("_newRunButton").objectReferenceValue = newRunBtn.GetComponent<Button>();
+            screenSO.FindProperty("_changeTeamButton").objectReferenceValue = changeTeamBtn.GetComponent<Button>();
+            screenSO.FindProperty("_viewDeckButton").objectReferenceValue = viewDeckBtn.GetComponent<Button>();
+            screenSO.FindProperty("_continueRunButton").objectReferenceValue = continueBtn.GetComponent<Button>();
+            screenSO.FindProperty("_continueButtonGroup").objectReferenceValue = continueGroup;
+            screenSO.FindProperty("_teamHPText").objectReferenceValue = hpText.GetComponent<TextMeshProUGUI>();
+            screenSO.FindProperty("_teamATKText").objectReferenceValue = atkText.GetComponent<TextMeshProUGUI>();
+            screenSO.FindProperty("_teamDEFText").objectReferenceValue = defText.GetComponent<TextMeshProUGUI>();
+            screenSO.FindProperty("_showGlobalHeader").boolValue = true;
+            screenSO.FindProperty("_showGlobalNav").boolValue = true;
+            screenSO.ApplyModifiedPropertiesWithoutUndo();
+
+            return screenObj;
+        }
+
+        private static GameObject CreateRequiemSelectionScreen(GameObject parent)
+        {
+            GameObject screenObj = new GameObject("RequiemSelectionScreen");
+            screenObj.transform.SetParent(parent.transform, false);
+
+            RectTransform rect = screenObj.AddComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.sizeDelta = Vector2.zero;
+
+            screenObj.AddComponent<RequiemSelectionScreen>();
+            screenObj.SetActive(false);
+
+            // === Panel Background ===
+            Image bg = screenObj.AddComponent<Image>();
+            bg.color = new Color(0.1f, 0.08f, 0.15f, 0.95f);
+
+            // === Title ===
+            GameObject titleObj = CreateText(screenObj, "Title", "SELECT YOUR REQUIEMS", 36);
             RectTransform titleRect = titleObj.GetComponent<RectTransform>();
             titleRect.anchorMin = new Vector2(0.5f, 0.9f);
             titleRect.anchorMax = new Vector2(0.5f, 0.9f);
-            titleRect.sizeDelta = new Vector2(400, 60);
+            titleRect.sizeDelta = new Vector2(500, 50);
 
-            // === Hub Buttons Container ===
-            GameObject buttonContainer = new GameObject("HubButtons");
-            buttonContainer.transform.SetParent(hubObj.transform, false);
-            RectTransform containerRect = buttonContainer.AddComponent<RectTransform>();
-            containerRect.anchorMin = new Vector2(0.5f, 0.5f);
-            containerRect.anchorMax = new Vector2(0.5f, 0.5f);
-            containerRect.sizeDelta = new Vector2(600, 300);
+            // === Selection Container ===
+            GameObject selectionContainer = new GameObject("SelectionContainer");
+            selectionContainer.transform.SetParent(screenObj.transform, false);
+            RectTransform selRect = selectionContainer.AddComponent<RectTransform>();
+            selRect.anchorMin = new Vector2(0.1f, 0.2f);
+            selRect.anchorMax = new Vector2(0.9f, 0.8f);
+            selRect.sizeDelta = Vector2.zero;
 
-            GridLayoutGroup grid = buttonContainer.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(250, 80);
-            grid.spacing = new Vector2(30, 20);
-            grid.childAlignment = TextAnchor.MiddleCenter;
-            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = 2;
+            // === Confirm Button ===
+            GameObject confirmBtn = CreateMenuButton(screenObj, "ConfirmButton", "CONFIRM TEAM");
+            RectTransform confirmRect = confirmBtn.GetComponent<RectTransform>();
+            confirmRect.anchorMin = new Vector2(0.5f, 0.08f);
+            confirmRect.anchorMax = new Vector2(0.5f, 0.08f);
+            confirmRect.sizeDelta = new Vector2(250, 50);
 
-            // Hub buttons
-            CreateMenuButton(buttonContainer, "EnterRiftButton", "ENTER NULL RIFT");
-            CreateMenuButton(buttonContainer, "RequiemsButton", "REQUIEMS");
-            CreateMenuButton(buttonContainer, "CollectionButton", "COLLECTION");
-            CreateMenuButton(buttonContainer, "AchievementsButton", "ACHIEVEMENTS");
-
-            return hubObj;
+            return screenObj;
         }
+
+        // ============================================
+        // Screen Creation - NullRift
+        // ============================================
 
         private static GameObject CreateMapScreen(GameObject parent)
         {
@@ -578,9 +728,9 @@ namespace HNR.Editor
             rect.anchorMax = Vector2.one;
             rect.sizeDelta = Vector2.zero;
 
-            screenObj.AddComponent<MapScreen>();
+            var mapScreen = screenObj.AddComponent<MapScreen>();
 
-            // === Map Container (scrollable area) ===
+            // === Map Container ===
             GameObject mapContainer = new GameObject("MapContainer");
             mapContainer.transform.SetParent(screenObj.transform, false);
             RectTransform mapRect = mapContainer.AddComponent<RectTransform>();
@@ -614,6 +764,23 @@ namespace HNR.Editor
             pathRect.anchorMin = Vector2.zero;
             pathRect.anchorMax = Vector2.one;
             pathRect.sizeDelta = Vector2.zero;
+
+            // === Wire MapScreen references ===
+            var nodePrefab = AssetDatabase.LoadAssetAtPath<MapNodeUI>("Assets/_Project/Prefabs/UI/Map/MapNodeUI.prefab");
+
+            SerializedObject so = new SerializedObject(mapScreen);
+            so.FindProperty("_nodeContainer").objectReferenceValue = nodeContainer.transform;
+            so.FindProperty("_mapContent").objectReferenceValue = mapRect;
+            if (nodePrefab != null)
+            {
+                so.FindProperty("_nodePrefab").objectReferenceValue = nodePrefab;
+                Debug.Log("[ProductionSceneSetupGenerator] Wired MapNodeUI prefab to MapScreen");
+            }
+            else
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] MapNodeUI prefab not found at Assets/_Project/Prefabs/UI/Map/MapNodeUI.prefab");
+            }
+            so.ApplyModifiedPropertiesWithoutUndo();
 
             return screenObj;
         }
@@ -687,6 +854,10 @@ namespace HNR.Editor
             screenObj.AddComponent<ShopScreen>();
             screenObj.SetActive(false);
 
+            // === Background ===
+            Image bg = screenObj.AddComponent<Image>();
+            bg.color = new Color(0.08f, 0.05f, 0.12f, 0.98f);
+
             // === Shop Title ===
             GameObject titleObj = CreateText(screenObj, "ShopTitle", "VOID MARKET", 42);
             RectTransform titleRect = titleObj.GetComponent<RectTransform>();
@@ -697,8 +868,8 @@ namespace HNR.Editor
             // === Currency Display ===
             GameObject currencyObj = CreateText(screenObj, "CurrencyDisplay", "Void Shards: 0", 24);
             RectTransform currencyRect = currencyObj.GetComponent<RectTransform>();
-            currencyRect.anchorMin = new Vector2(0.9f, 0.92f);
-            currencyRect.anchorMax = new Vector2(0.9f, 0.92f);
+            currencyRect.anchorMin = new Vector2(0.85f, 0.92f);
+            currencyRect.anchorMax = new Vector2(0.85f, 0.92f);
             currencyRect.sizeDelta = new Vector2(200, 40);
 
             // === Items Container ===
@@ -726,6 +897,10 @@ namespace HNR.Editor
             return screenObj;
         }
 
+        // ============================================
+        // Screen Creation - Combat
+        // ============================================
+
         private static GameObject CreateCombatScreenCZN(GameObject parent)
         {
             GameObject screenObj = new GameObject("CombatScreenCZN");
@@ -736,8 +911,7 @@ namespace HNR.Editor
             rect.anchorMax = Vector2.one;
             rect.sizeDelta = Vector2.zero;
 
-            // Add CombatScreenCZN
-            var combatScreenCZN = screenObj.AddComponent<CombatScreenCZN>();
+            var combatScreen = screenObj.AddComponent<CombatScreenCZN>();
 
             // === Top Section - Shared Vitality Bar ===
             GameObject vitalityBar = CreateSharedVitalityBar(screenObj);
@@ -774,17 +948,13 @@ namespace HNR.Editor
             phaseRect.sizeDelta = new Vector2(200, 30);
 
             // Wire references
-            SerializedObject screenSO = new SerializedObject(combatScreenCZN);
+            SerializedObject screenSO = new SerializedObject(combatScreen);
             screenSO.FindProperty("_showGlobalHeader").boolValue = false;
             screenSO.FindProperty("_showGlobalNav").boolValue = false;
             screenSO.ApplyModifiedPropertiesWithoutUndo();
 
             return screenObj;
         }
-
-        // ============================================
-        // Helper Methods - Combat UI Components
-        // ============================================
 
         private static GameObject CreateSharedVitalityBar(GameObject parent)
         {
@@ -843,7 +1013,6 @@ namespace HNR.Editor
             Image bg = sidebar.AddComponent<Image>();
             bg.color = new Color(0.1f, 0.08f, 0.15f, 0.8f);
 
-            // Party slots container
             VerticalLayoutGroup layout = sidebar.AddComponent<VerticalLayoutGroup>();
             layout.spacing = 10f;
             layout.padding = new RectOffset(5, 5, 10, 10);
@@ -935,7 +1104,6 @@ namespace HNR.Editor
             Button btn = btnObj.AddComponent<Button>();
             btn.targetGraphic = bg;
 
-            // Button text
             GameObject textObj = CreateText(btnObj, "Text", "END\nTURN", 16);
             RectTransform textRect = textObj.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
@@ -978,7 +1146,7 @@ namespace HNR.Editor
         }
 
         // ============================================
-        // Helper Methods - Global UI
+        // Helper Methods - Global UI Placeholders
         // ============================================
 
         private static GameObject CreateGlobalHeaderPlaceholder(GameObject canvas)
@@ -994,7 +1162,6 @@ namespace HNR.Editor
             Image bg = header.AddComponent<Image>();
             bg.color = new Color(0.1f, 0.08f, 0.15f, 0.95f);
 
-            // Placeholder text
             GameObject text = CreateText(header, "HeaderText", "GLOBAL HEADER - Currency / Profile", 18);
             RectTransform textRect = text.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
@@ -1017,7 +1184,6 @@ namespace HNR.Editor
             Image bg = dock.AddComponent<Image>();
             bg.color = new Color(0.1f, 0.08f, 0.15f, 0.95f);
 
-            // Nav buttons container
             HorizontalLayoutGroup layout = dock.AddComponent<HorizontalLayoutGroup>();
             layout.spacing = 50f;
             layout.padding = new RectOffset(50, 50, 10, 10);

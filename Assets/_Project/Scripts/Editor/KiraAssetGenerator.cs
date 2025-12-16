@@ -19,9 +19,9 @@ namespace HNR.Editor
     public static class KiraAssetGenerator
     {
         // Asset paths
-        private const string RequiemDataPath = "Assets/_Project/Data/Characters/Requiems";
-        private const string RequiemArtPath = "Assets/_Project/Data/Characters/Arts";
-        private const string CardDataPath = "Assets/_Project/Data/Cards/Kira";
+        private const string RequiemDataPath = "Assets/_Project/Resources/Data/Characters/Requiems";
+        private const string RequiemArtPath = "Assets/_Project/Resources/Data/Characters/Arts";
+        private const string CardDataPath = "Assets/_Project/Resources/Data/Cards/Kira";
 
         public static void GenerateKiraAssets()
         {
