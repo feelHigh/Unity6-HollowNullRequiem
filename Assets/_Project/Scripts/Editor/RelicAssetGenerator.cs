@@ -18,7 +18,6 @@ namespace HNR.Editor
         private const string RelicPath = "Assets/_Project/Data/Relics";
         private const string ResourcesPath = "Assets/Resources/Data/Relics";
 
-        [MenuItem("HNR/Generate Relic Assets")]
         public static void GenerateRelicAssets()
         {
             // Ensure directories exist
@@ -220,7 +219,6 @@ namespace HNR.Editor
             }
         }
 
-        [MenuItem("HNR/Verify Relic Assets")]
         public static void VerifyRelicAssets()
         {
             var relics = Resources.LoadAll<RelicDataSO>("Data/Relics");

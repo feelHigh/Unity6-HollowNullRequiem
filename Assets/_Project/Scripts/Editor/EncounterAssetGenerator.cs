@@ -15,7 +15,7 @@ namespace HNR.Editor
 {
     /// <summary>
     /// Generates EnemyDataSO and EncounterDataSO assets for all zones.
-    /// Access via HNR > Generate Encounter Assets
+    /// Called from EditorMenuOrganizer.
     /// </summary>
     public static class EncounterAssetGenerator
     {
@@ -26,7 +26,6 @@ namespace HNR.Editor
         // Main Generation
         // ============================================
 
-        [MenuItem("HNR/Generate Encounter Assets")]
         public static void GenerateAllAssets()
         {
             EnsureDirectoriesExist();
@@ -51,7 +50,6 @@ namespace HNR.Editor
         // Enemy Generation
         // ============================================
 
-        [MenuItem("HNR/Generate Encounter Assets/Enemies Only")]
         public static Dictionary<string, EnemyDataSO> GenerateAllEnemies()
         {
             EnsureDirectoriesExist();
@@ -139,7 +137,6 @@ namespace HNR.Editor
         // Encounter Generation
         // ============================================
 
-        [MenuItem("HNR/Generate Encounter Assets/Encounters Only")]
         public static void GenerateEncountersMenuItem()
         {
             GenerateAllEncounters(null);

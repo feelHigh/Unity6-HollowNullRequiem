@@ -13,7 +13,6 @@ namespace HNR.Editor
 {
     public static class DamageNumberPrefabGenerator
     {
-        [MenuItem("HNR/Generate DamageNumber Prefab")]
         public static void GeneratePrefab()
         {
             // Create root GameObject

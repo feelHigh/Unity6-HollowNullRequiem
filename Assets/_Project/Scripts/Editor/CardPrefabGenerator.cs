@@ -13,7 +13,6 @@ namespace HNR.Editor
 {
     public static class CardPrefabGenerator
     {
-        [MenuItem("HNR/Generate Card Prefab")]
         public static void GenerateCardPrefab()
         {
             // Ensure directory exists

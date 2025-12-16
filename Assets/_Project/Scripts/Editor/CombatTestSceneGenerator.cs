@@ -14,7 +14,6 @@ namespace HNR.Editor
 {
     public static class CombatTestSceneGenerator
     {
-        [MenuItem("HNR/Generate Combat Test Scene")]
         public static void GenerateCombatTestScene()
         {
             // Create new scene

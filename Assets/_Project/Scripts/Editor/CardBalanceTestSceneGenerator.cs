@@ -16,7 +16,6 @@ namespace HNR.Editor
 {
     public static class CardBalanceTestSceneGenerator
     {
-        [MenuItem("HNR/Generate Card Balance Test Scene")]
         public static void GenerateCardBalanceTestScene()
         {
             // Create new scene

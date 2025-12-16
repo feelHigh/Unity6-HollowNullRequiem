@@ -29,10 +29,9 @@ namespace HNR.Editor
         };
 
         // ============================================
-        // Menu Items
+        // Public Methods
         // ============================================
 
-        [MenuItem("HNR/Generate Character Visual Prefabs")]
         public static void GenerateAllPrefabs()
         {
             EnsureDirectoriesExist();
@@ -60,13 +59,6 @@ namespace HNR.Editor
             );
         }
 
-        [MenuItem("HNR/Generate Character Visual Prefabs", true)]
-        public static bool ValidateGeneratePrefabs()
-        {
-            // Always show menu - will create placeholder if no template found
-            return true;
-        }
-
         /// <summary>
         /// Find the first available HeroEditor template.
         /// </summary>
@@ -82,7 +74,6 @@ namespace HNR.Editor
             return null;
         }
 
-        [MenuItem("HNR/Create Empty Visual Prefab")]
         public static void CreateEmptyVisualPrefab()
         {
             string path = EditorUtility.SaveFilePanelInProject(
@@ -251,7 +242,6 @@ namespace HNR.Editor
         // Prefab Assignment Helper
         // ============================================
 
-        [MenuItem("HNR/Assign Visual Prefabs to Data Assets")]
         public static void AssignPrefabsToDataAssets()
         {
             int assigned = 0;

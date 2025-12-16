@@ -15,7 +15,6 @@ namespace HNR.Editor
 {
     public static class RequiemSelectionSceneGenerator
     {
-        [MenuItem("HNR/Generate Requiem Selection Scene")]
         public static void GenerateRequiemSelectionScene()
         {
             // Create new scene

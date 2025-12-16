@@ -13,13 +13,12 @@ namespace HNR.Editor
 {
     /// <summary>
     /// Editor tool to generate shared neutral cards (no owner).
-    /// Menu: HNR/Generate Shared Cards
+    /// Called from EditorMenuOrganizer.
     /// </summary>
     public static class SharedCardsAssetGenerator
     {
         private const string CardDataPath = "Assets/_Project/Data/Cards/Shared";
 
-        [MenuItem("HNR/Generate Shared Cards")]
         public static void GenerateSharedCards()
         {
             // Ensure directory exists

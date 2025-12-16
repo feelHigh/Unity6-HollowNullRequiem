@@ -31,10 +31,9 @@ namespace HNR.Editor
         private const string DATA_PATH = "Assets/_Project/Data";
 
         // ============================================
-        // Menu Items
+        // Public Methods
         // ============================================
 
-        [MenuItem("HNR/Production Setup/Run Full Setup", priority = 50)]
         public static void RunFullSetup()
         {
             if (!EditorUtility.DisplayDialog("Run Full Production Setup",
@@ -62,7 +61,6 @@ namespace HNR.Editor
         // Prefab Creation
         // ============================================
 
-        [MenuItem("HNR/Production Setup/1. Create All Prefabs", priority = 60)]
         public static void CreateAllPrefabs()
         {
             int created = 0;
@@ -77,7 +75,6 @@ namespace HNR.Editor
             Debug.Log($"[ProductionSetupTool] Created {created} prefabs");
         }
 
-        [MenuItem("HNR/Production Setup/2. Link Visual Prefabs to Data", priority = 61)]
         public static void LinkAllVisualPrefabs()
         {
             int linked = 0;

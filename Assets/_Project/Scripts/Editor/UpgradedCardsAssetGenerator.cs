@@ -12,13 +12,12 @@ namespace HNR.Editor
 {
     /// <summary>
     /// Editor tool to generate upgraded versions of cards and link them.
-    /// Menu: HNR/Generate Upgraded Cards
+    /// Called from EditorMenuOrganizer.
     /// </summary>
     public static class UpgradedCardsAssetGenerator
     {
         private static int _linkedCount;
 
-        [MenuItem("HNR/Generate Upgraded Cards")]
         public static void GenerateUpgradedCards()
         {
             int createdCount = 0;

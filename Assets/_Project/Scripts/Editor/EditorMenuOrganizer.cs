@@ -10,7 +10,7 @@ namespace HNR.Editor
 {
     /// <summary>
     /// Provides an organized menu structure for all HNR editor tools.
-    /// This class creates a clean, hierarchical menu that calls existing generators.
+    /// This class is the single source of truth for HNR menu items.
     ///
     /// Menu Structure:
     /// HNR/
@@ -18,7 +18,7 @@ namespace HNR.Editor
     /// ├── 2. Prefabs/         (priority 30-49) - UI and visual prefabs
     /// ├── 3. Production/      (priority 50-69) - Production setup
     /// ├── 4. Audio & VFX/     (priority 70-79) - Audio/VFX configuration
-    /// ├── 5. Scenes/          (priority 80-139) - Test and production scenes
+    /// ├── 5. Scenes/          (priority 100-139) - Production scenes
     /// └── 6. Utilities/       (priority 200+) - Verification and utilities
     /// </summary>
     public static class EditorMenuOrganizer
@@ -256,66 +256,46 @@ namespace HNR.Editor
         }
 
         // ============================================
-        // 5. Scenes (priority 80-139)
+        // 5. Scenes (priority 100-139)
         // ============================================
 
-        // Test Scenes (80-99)
-        [MenuItem("HNR/5. Scenes/Test/Combat Test Scene", priority = 80)]
-        public static void GenerateCombatTestScene()
-        {
-            CombatTestSceneGenerator.GenerateCombatTestScene();
-        }
-
-        [MenuItem("HNR/5. Scenes/Test/Card Balance Test Scene", priority = 81)]
-        public static void GenerateCardBalanceTestScene()
-        {
-            CardBalanceTestSceneGenerator.GenerateCardBalanceTestScene();
-        }
-
-        [MenuItem("HNR/5. Scenes/Test/Requiem Selection Scene", priority = 82)]
-        public static void GenerateRequiemSelectionScene()
-        {
-            RequiemSelectionSceneGenerator.GenerateRequiemSelectionScene();
-        }
-
-        // Production Scenes (100-139)
-        [MenuItem("HNR/5. Scenes/Production/Setup All Scenes", priority = 100)]
+        [MenuItem("HNR/5. Scenes/Setup All Scenes", priority = 100)]
         public static void SetupAllProductionScenes()
         {
             ProductionSceneSetupGenerator.SetupAllScenes();
         }
 
-        [MenuItem("HNR/5. Scenes/Production/1. Setup Boot Scene", priority = 110)]
+        [MenuItem("HNR/5. Scenes/1. Setup Boot Scene", priority = 110)]
         public static void SetupBootScene()
         {
             ProductionSceneSetupGenerator.SetupBootScene();
         }
 
-        [MenuItem("HNR/5. Scenes/Production/2. Setup MainMenu Scene", priority = 111)]
+        [MenuItem("HNR/5. Scenes/2. Setup MainMenu Scene", priority = 111)]
         public static void SetupMainMenuScene()
         {
             ProductionSceneSetupGenerator.SetupMainMenuScene();
         }
 
-        [MenuItem("HNR/5. Scenes/Production/3. Setup Bastion Scene", priority = 112)]
+        [MenuItem("HNR/5. Scenes/3. Setup Bastion Scene", priority = 112)]
         public static void SetupBastionScene()
         {
             ProductionSceneSetupGenerator.SetupBastionScene();
         }
 
-        [MenuItem("HNR/5. Scenes/Production/4. Setup NullRift Scene", priority = 113)]
+        [MenuItem("HNR/5. Scenes/4. Setup NullRift Scene", priority = 113)]
         public static void SetupNullRiftScene()
         {
             ProductionSceneSetupGenerator.SetupNullRiftScene();
         }
 
-        [MenuItem("HNR/5. Scenes/Production/5. Setup Combat Scene", priority = 114)]
+        [MenuItem("HNR/5. Scenes/5. Setup Combat Scene", priority = 114)]
         public static void SetupCombatScene()
         {
             ProductionSceneSetupGenerator.SetupCombatScene();
         }
 
-        [MenuItem("HNR/5. Scenes/Production/Configure Build Settings", priority = 130)]
+        [MenuItem("HNR/5. Scenes/Configure Build Settings", priority = 130)]
         public static void ConfigureBuildSettings()
         {
             ProductionSceneSetupGenerator.ConfigureBuildSettings();
@@ -335,7 +315,7 @@ namespace HNR.Editor
         public static void ShowMenuOrganization()
         {
             Debug.Log(@"
-[EditorMenuOrganizer] HNR Menu Structure:
+[EditorMenuOrganizer] HNR Production Menu Structure:
 
 HNR/
 ├── 1. Data Assets/         (10-29)  - Content generation
@@ -344,7 +324,8 @@ HNR/
 │   ├── Cards/ (Shared, Upgraded)
 │   ├── Enemies & Encounters/
 │   ├── Events/ (Echo Events, Zone Config)
-│   └── Relics
+│   ├── Relics
+│   └── Production/ (Zone Data, Zone Configs, Zone 2&3 Encounters)
 │
 ├── 2. Prefabs/             (30-49)  - UI and visual prefabs
 │   ├── UI/ (Card, DamageNumber, EnemySlotUI, Meta-Game)
@@ -361,9 +342,10 @@ HNR/
 │   ├── Generate VFX Prefabs
 │   └── Create VFXPoolManager Config
 │
-├── 5. Scenes/              (80-139) - Test and production scenes
-│   ├── Test/ (Combat, Card Balance, Requiem Selection)
-│   └── Production/ (Boot, MainMenu, Bastion, NullRift, Combat)
+├── 5. Scenes/              (100-139) - Production scenes
+│   ├── Setup All Scenes
+│   ├── 1-5. Setup Individual Scenes
+│   └── Configure Build Settings
 │
 └── 6. Utilities/           (200+)   - Verification tools
     ├── Verify Relic Assets

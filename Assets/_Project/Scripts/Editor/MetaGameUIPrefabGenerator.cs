@@ -16,13 +16,12 @@ namespace HNR.Editor
 {
     /// <summary>
     /// Generates meta-game UI prefabs for GlobalHeader, GlobalNavDock, and Toast.
-    /// Access via HNR > Generate Meta-Game UI Prefabs
+    /// Called from EditorMenuOrganizer.
     /// </summary>
     public static class MetaGameUIPrefabGenerator
     {
         private const string PREFAB_PATH = "Assets/_Project/Prefabs/UI";
 
-        [MenuItem("HNR/Generate Meta-Game UI Prefabs")]
         public static void GenerateAllPrefabs()
         {
             EnsureDirectoryExists();
@@ -38,7 +37,6 @@ namespace HNR.Editor
             Debug.Log("[MetaGameUIPrefabGenerator] All prefabs generated successfully!");
         }
 
-        [MenuItem("HNR/Generate Meta-Game UI Prefabs/Toast Only")]
         public static void GenerateToastPrefab()
         {
             EnsureDirectoryExists();
@@ -112,7 +110,6 @@ namespace HNR.Editor
             Debug.Log($"[MetaGameUIPrefabGenerator] Created Toast prefab at {path}");
         }
 
-        [MenuItem("HNR/Generate Meta-Game UI Prefabs/GlobalHeader Only")]
         public static void GenerateGlobalHeaderPrefab()
         {
             EnsureDirectoryExists();
@@ -190,7 +187,6 @@ namespace HNR.Editor
             Debug.Log($"[MetaGameUIPrefabGenerator] Created GlobalHeader prefab at {path}");
         }
 
-        [MenuItem("HNR/Generate Meta-Game UI Prefabs/GlobalNavDock Only")]
         public static void GenerateGlobalNavDockPrefab()
         {
             EnsureDirectoryExists();
@@ -237,7 +233,6 @@ namespace HNR.Editor
             Debug.Log($"[MetaGameUIPrefabGenerator] Created GlobalNavDock prefab at {path}");
         }
 
-        [MenuItem("HNR/Generate Meta-Game UI Prefabs/CurrencyTicker Only")]
         public static void GenerateCurrencyTickerPrefab()
         {
             EnsureDirectoryExists();

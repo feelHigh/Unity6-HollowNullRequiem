@@ -14,7 +14,7 @@ namespace HNR.Editor
 {
     /// <summary>
     /// Editor tool to generate Thornwick's RequiemDataSO, RequiemArtDataSO, and 10 cards.
-    /// Menu: HNR/Generate Thornwick Assets
+    /// Called from EditorMenuOrganizer.
     /// </summary>
     public static class ThornwickAssetGenerator
     {
@@ -23,7 +23,6 @@ namespace HNR.Editor
         private const string RequiemArtPath = "Assets/_Project/Data/Characters/Arts";
         private const string CardDataPath = "Assets/_Project/Data/Cards/Thornwick";
 
-        [MenuItem("HNR/Generate Thornwick Assets")]
         public static void GenerateThornwickAssets()
         {
             // Ensure directories exist

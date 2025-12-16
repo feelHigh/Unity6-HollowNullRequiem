@@ -15,13 +15,12 @@ namespace HNR.Editor
 {
     /// <summary>
     /// Generates RequiemArtDataSO assets for the 4 playable Requiems.
-    /// Access via HNR > Generate Requiem Art Assets
+    /// Called from EditorMenuOrganizer.
     /// </summary>
     public static class RequiemArtAssetGenerator
     {
         private const string ASSET_PATH = "Assets/_Project/Data/Characters/RequiemArts";
 
-        [MenuItem("HNR/Generate Requiem Art Assets")]
         public static void GenerateAllRequiemArts()
         {
             EnsureDirectoryExists();
@@ -41,7 +40,6 @@ namespace HNR.Editor
         // Kira - Inferno's Wrath
         // ============================================
 
-        [MenuItem("HNR/Generate Requiem Art Assets/Kira - Inferno's Wrath")]
         public static void GenerateKiraArt()
         {
             EnsureDirectoryExists();
@@ -80,7 +78,6 @@ namespace HNR.Editor
         // Mordren - Soul Harvest
         // ============================================
 
-        [MenuItem("HNR/Generate Requiem Art Assets/Mordren - Soul Harvest")]
         public static void GenerateMordrenArt()
         {
             EnsureDirectoryExists();
@@ -120,7 +117,6 @@ namespace HNR.Editor
         // Elara - Divine Aegis
         // ============================================
 
-        [MenuItem("HNR/Generate Requiem Art Assets/Elara - Divine Aegis")]
         public static void GenerateElaraArt()
         {
             EnsureDirectoryExists();
@@ -159,7 +155,6 @@ namespace HNR.Editor
         // Thornwick - Earthen Prison
         // ============================================
 
-        [MenuItem("HNR/Generate Requiem Art Assets/Thornwick - Earthen Prison")]
         public static void GenerateThornwickArt()
         {
             EnsureDirectoryExists();

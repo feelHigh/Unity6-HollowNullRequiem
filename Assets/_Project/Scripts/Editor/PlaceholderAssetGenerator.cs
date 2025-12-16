@@ -13,8 +13,8 @@ using HNR.Combat;
 namespace HNR.Editor
 {
     /// <summary>
-    /// Editor utility to generate placeholder ScriptableObject assets for testing.
-    /// Access via menu: HNR/Generate Placeholder Assets
+    /// Editor utility to generate placeholder ScriptableObject assets.
+    /// Called from EditorMenuOrganizer.
     /// </summary>
     public static class PlaceholderAssetGenerator
     {
@@ -23,7 +23,6 @@ namespace HNR.Editor
         private const string CARDS_PATH = DATA_PATH + "/Cards";
         private const string ENEMIES_PATH = DATA_PATH + "/Enemies";
 
-        [MenuItem("HNR/Generate Placeholder Assets")]
         public static void GenerateAll()
         {
             EnsureFoldersExist();
@@ -35,7 +34,6 @@ namespace HNR.Editor
             Debug.Log("[PlaceholderAssetGenerator] All placeholder assets generated!");
         }
 
-        [MenuItem("HNR/Generate Placeholder Assets/Requiems Only")]
         public static void GenerateRequiemsOnly()
         {
             EnsureFoldersExist();
@@ -44,7 +42,6 @@ namespace HNR.Editor
             AssetDatabase.Refresh();
         }
 
-        [MenuItem("HNR/Generate Placeholder Assets/Cards Only")]
         public static void GenerateCardsOnly()
         {
             EnsureFoldersExist();
@@ -53,7 +50,6 @@ namespace HNR.Editor
             AssetDatabase.Refresh();
         }
 
-        [MenuItem("HNR/Generate Placeholder Assets/Enemies Only")]
         public static void GenerateEnemiesOnly()
         {
             EnsureFoldersExist();

@@ -23,10 +23,9 @@ namespace HNR.Editor
         private const string AUDIO_PATH = "Assets/_Project/Audio";
 
         // ============================================
-        // Menu Items
+        // Public Methods
         // ============================================
 
-        [MenuItem("HNR/Audio & VFX/Generate All Configs", priority = 70)]
         public static void GenerateAllConfigs()
         {
             GenerateAudioConfig();
@@ -40,7 +39,6 @@ namespace HNR.Editor
                 "OK");
         }
 
-        [MenuItem("HNR/Audio & VFX/1. Generate Audio Config", priority = 71)]
         public static void GenerateAudioConfig()
         {
             EnsureDirectoryExists($"{CONFIG_PATH}/placeholder.asset");
@@ -126,7 +124,6 @@ namespace HNR.Editor
             Debug.Log($"[AudioVFXConfigGenerator] Created AudioConfig at {assetPath}");
         }
 
-        [MenuItem("HNR/Audio & VFX/2. Generate VFX Prefabs", priority = 72)]
         public static void GenerateVFXPrefabs()
         {
             EnsureDirectoryExists($"{VFX_PREFAB_PATH}/placeholder.prefab");
@@ -211,7 +208,6 @@ namespace HNR.Editor
             Debug.Log($"[AudioVFXConfigGenerator] Created {created} VFX prefabs");
         }
 
-        [MenuItem("HNR/Audio & VFX/3. Create VFXPoolManager Config", priority = 73)]
         public static void CreateVFXPoolManagerConfig()
         {
             // Find VFXPoolManager in scene or create one

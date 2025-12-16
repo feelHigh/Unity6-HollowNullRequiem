@@ -14,7 +14,7 @@ namespace HNR.Editor
 {
     /// <summary>
     /// Editor tool to generate Mordren's RequiemDataSO, RequiemArtDataSO, and 10 cards.
-    /// Menu: HNR/Generate Mordren Assets
+    /// Called from EditorMenuOrganizer.
     /// </summary>
     public static class MordrenAssetGenerator
     {
@@ -23,7 +23,6 @@ namespace HNR.Editor
         private const string RequiemArtPath = "Assets/_Project/Data/Characters/Arts";
         private const string CardDataPath = "Assets/_Project/Data/Cards/Mordren";
 
-        [MenuItem("HNR/Generate Mordren Assets")]
         public static void GenerateMordrenAssets()
         {
             // Ensure directories exist

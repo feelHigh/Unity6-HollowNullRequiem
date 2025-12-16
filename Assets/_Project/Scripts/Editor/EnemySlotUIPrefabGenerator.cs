@@ -13,7 +13,6 @@ namespace HNR.Editor
 {
     public static class EnemySlotUIPrefabGenerator
     {
-        [MenuItem("HNR/Generate EnemySlotUI Prefab")]
         public static void GeneratePrefab()
         {
             // Create root GameObject

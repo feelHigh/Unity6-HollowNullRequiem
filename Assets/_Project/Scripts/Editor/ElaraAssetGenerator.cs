@@ -14,7 +14,7 @@ namespace HNR.Editor
 {
     /// <summary>
     /// Editor tool to generate Elara's RequiemDataSO, RequiemArtDataSO, and 10 cards.
-    /// Menu: HNR/Generate Elara Assets
+    /// Called from EditorMenuOrganizer.
     /// </summary>
     public static class ElaraAssetGenerator
     {
@@ -23,7 +23,6 @@ namespace HNR.Editor
         private const string RequiemArtPath = "Assets/_Project/Data/Characters/Arts";
         private const string CardDataPath = "Assets/_Project/Data/Cards/Elara";
 
-        [MenuItem("HNR/Generate Elara Assets")]
         public static void GenerateElaraAssets()
         {
             // Ensure directories exist

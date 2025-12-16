@@ -19,7 +19,6 @@ namespace HNR.Editor
         private const string EventsPath = "Assets/_Project/Data/Events";
         private const string ZoneConfigPath = "Assets/_Project/Data/Zones";
 
-        [MenuItem("HNR/Generate Test Echo Events")]
         public static void GenerateTestEchoEvents()
         {
             // Ensure directories exist
@@ -39,7 +38,6 @@ namespace HNR.Editor
             Debug.Log("[EchoEventGenerator] Generated 6 test Echo events");
         }
 
-        [MenuItem("HNR/Generate Test Zone Config")]
         public static void GenerateTestZoneConfig()
         {
             EnsureDirectoryExists(ZoneConfigPath);

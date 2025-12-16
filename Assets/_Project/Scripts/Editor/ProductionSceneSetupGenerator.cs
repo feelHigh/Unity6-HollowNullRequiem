@@ -30,10 +30,9 @@ namespace HNR.Editor
         private const string PREFABS_PATH = "Assets/_Project/Prefabs";
 
         // ============================================
-        // Menu Items
+        // Public Methods
         // ============================================
 
-        [MenuItem("HNR/Production Scenes/Setup All Scenes", priority = 100)]
         public static void SetupAllScenes()
         {
             if (!EditorUtility.DisplayDialog("Setup Production Scenes",
@@ -58,7 +57,6 @@ namespace HNR.Editor
                 "OK");
         }
 
-        [MenuItem("HNR/Production Scenes/1. Setup Boot Scene", priority = 110)]
         public static void SetupBootScene()
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -81,7 +79,6 @@ namespace HNR.Editor
             Debug.Log($"[ProductionSceneSetupGenerator] Created Boot scene at {scenePath}");
         }
 
-        [MenuItem("HNR/Production Scenes/2. Setup MainMenu Scene", priority = 111)]
         public static void SetupMainMenuScene()
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -128,7 +125,6 @@ namespace HNR.Editor
             Debug.Log($"[ProductionSceneSetupGenerator] Created MainMenu scene at {scenePath}");
         }
 
-        [MenuItem("HNR/Production Scenes/3. Setup Bastion Scene", priority = 112)]
         public static void SetupBastionScene()
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -164,7 +160,6 @@ namespace HNR.Editor
             Debug.Log($"[ProductionSceneSetupGenerator] Created Bastion scene at {scenePath}");
         }
 
-        [MenuItem("HNR/Production Scenes/4. Setup NullRift Scene", priority = 113)]
         public static void SetupNullRiftScene()
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -217,7 +212,6 @@ namespace HNR.Editor
             Debug.Log($"[ProductionSceneSetupGenerator] Created NullRift scene at {scenePath}");
         }
 
-        [MenuItem("HNR/Production Scenes/5. Setup Combat Scene", priority = 114)]
         public static void SetupCombatScene()
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -311,7 +305,6 @@ namespace HNR.Editor
             Debug.Log($"[ProductionSceneSetupGenerator] Created Combat scene at {scenePath}");
         }
 
-        [MenuItem("HNR/Production Scenes/Configure Build Settings", priority = 130)]
         public static void ConfigureBuildSettings()
         {
             List<EditorBuildSettingsScene> scenes = new List<EditorBuildSettingsScene>();

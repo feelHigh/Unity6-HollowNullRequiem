@@ -14,7 +14,7 @@ namespace HNR.Editor
 {
     /// <summary>
     /// Editor tool to generate Kira's RequiemDataSO, RequiemArtDataSO, and 10 cards.
-    /// Menu: HNR/Generate Kira Assets
+    /// Called from EditorMenuOrganizer.
     /// </summary>
     public static class KiraAssetGenerator
     {
@@ -23,7 +23,6 @@ namespace HNR.Editor
         private const string RequiemArtPath = "Assets/_Project/Data/Characters/Arts";
         private const string CardDataPath = "Assets/_Project/Data/Cards/Kira";
 
-        [MenuItem("HNR/Generate Kira Assets")]
         public static void GenerateKiraAssets()
         {
             // Ensure directories exist
