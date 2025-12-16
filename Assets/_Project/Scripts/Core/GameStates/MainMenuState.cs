@@ -6,6 +6,8 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using HNR.Core.Interfaces;
+using HNR.UI;
+using HNR.UI.Screens;
 
 namespace HNR.Core.GameStates
 {
@@ -33,14 +35,30 @@ namespace HNR.Core.GameStates
         {
             Debug.Log("[MainMenuState] Entering main menu...");
 
+            // Subscribe to scene loaded to show UI after scene is ready
+            SceneManager.sceneLoaded += OnMainMenuSceneLoaded;
+
             // Load the main menu scene
             LoadMainMenuScene();
 
-            // Show main menu UI
-            ShowMainMenuScreen();
-
             // Play menu music
             PlayMenuMusic();
+        }
+
+        /// <summary>
+        /// Called when MainMenu scene finishes loading.
+        /// </summary>
+        private void OnMainMenuSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (scene.name != "MainMenu") return;
+
+            // Unsubscribe to prevent multiple calls
+            SceneManager.sceneLoaded -= OnMainMenuSceneLoaded;
+
+            Debug.Log("[MainMenuState] MainMenu scene loaded. Showing UI...");
+
+            // Show main menu UI now that scene is loaded
+            ShowMainMenuScreen();
 
             Debug.Log("[MainMenuState] Main menu ready.");
         }
@@ -59,6 +77,9 @@ namespace HNR.Core.GameStates
         public void Exit()
         {
             Debug.Log("[MainMenuState] Exiting main menu...");
+
+            // Unsubscribe from scene loaded in case we exit early
+            SceneManager.sceneLoaded -= OnMainMenuSceneLoaded;
 
             // Stop menu music
             StopMenuMusic();
@@ -92,11 +113,14 @@ namespace HNR.Core.GameStates
         {
             Debug.Log("[MainMenuState] Showing MainMenuScreen...");
 
-            // TODO: Show main menu via UIManager
-            // if (ServiceLocator.TryGet<IUIManager>(out var uiManager))
-            // {
-            //     uiManager.ShowScreen<MainMenuScreen>();
-            // }
+            if (ServiceLocator.TryGet<IUIManager>(out var uiManager))
+            {
+                uiManager.ShowScreen<MainMenuScreen>();
+            }
+            else
+            {
+                Debug.LogWarning("[MainMenuState] UIManager not found!");
+            }
         }
 
         /// <summary>

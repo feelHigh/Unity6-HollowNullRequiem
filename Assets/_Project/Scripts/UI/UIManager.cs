@@ -7,6 +7,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using HNR.Core;
 using HNR.Core.Interfaces;
 
@@ -75,6 +76,14 @@ namespace HNR.UI
 
         private void Awake()
         {
+            // Prevent duplicates - destroy self if UIManager already exists
+            if (ServiceLocator.Has<IUIManager>())
+            {
+                Debug.Log("[UIManager] UIManager already exists. Destroying duplicate.");
+                Destroy(gameObject);
+                return;
+            }
+
             // Persist across scene loads
             DontDestroyOnLoad(gameObject);
 
@@ -85,18 +94,36 @@ namespace HNR.UI
             }
             ServiceLocator.Register<IUIManager>(this);
 
-            // Cache all screens
-            CacheScreens();
+            // Subscribe to scene loaded events to re-cache screens
+            SceneManager.sceneLoaded += OnSceneLoaded;
 
             Debug.Log("[UIManager] Initialized.");
         }
 
         private void OnDestroy()
         {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+
             if (ServiceLocator.Has<IUIManager>())
             {
                 ServiceLocator.Unregister<IUIManager>();
             }
+        }
+
+        /// <summary>
+        /// Called when a new scene is loaded. Re-caches screens from the new scene.
+        /// </summary>
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            Debug.Log($"[UIManager] Scene loaded: {scene.name}. Re-caching screens...");
+
+            // Clear previous screen cache
+            _screens.Clear();
+            _currentScreen = null;
+            _overlayStack.Clear();
+
+            // Re-cache screens from new scene
+            CacheScreens();
         }
 
         private void Update()
@@ -114,6 +141,7 @@ namespace HNR.UI
 
         /// <summary>
         /// Cache all screens from containers for fast lookup.
+        /// If no containers are assigned, searches the entire scene.
         /// </summary>
         private void CacheScreens()
         {
@@ -131,6 +159,17 @@ namespace HNR.UI
             if (_overlayContainer != null)
             {
                 foreach (var screen in _overlayContainer.GetComponentsInChildren<ScreenBase>(true))
+                {
+                    _screens[screen.GetType()] = screen;
+                    screen.gameObject.SetActive(false);
+                }
+            }
+
+            // If no containers set, search entire scene for screens
+            if (_screenContainer == null && _overlayContainer == null)
+            {
+                var allScreens = FindObjectsByType<ScreenBase>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+                foreach (var screen in allScreens)
                 {
                     _screens[screen.GetType()] = screen;
                     screen.gameObject.SetActive(false);

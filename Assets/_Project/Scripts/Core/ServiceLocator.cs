@@ -22,8 +22,16 @@ namespace HNR.Core
     /// </example>
     public static class ServiceLocator
     {
-        private static readonly Dictionary<Type, object> _services = new();
+        private static Dictionary<Type, object> _services = new();
         private static bool _isInitialized;
+
+        // Reset static state when entering play mode (Editor only)
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            _services = new Dictionary<Type, object>();
+            _isInitialized = false;
+        }
 
         /// <summary>
         /// Initialize the Service Locator. Call once at startup.

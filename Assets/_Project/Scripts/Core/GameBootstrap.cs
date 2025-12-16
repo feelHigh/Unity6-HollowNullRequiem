@@ -107,12 +107,10 @@ namespace HNR.Core
         {
             if (_gameManagerPrefab == null)
             {
-                Debug.LogError("[GameBootstrap] GameManager prefab not assigned!");
-
-                // Create GameManager dynamically as fallback
+                // Create GameManager dynamically as fallback (this is fine for development)
                 var go = new GameObject("[GameManager]");
                 go.AddComponent<GameManager>();
-                Debug.LogWarning("[GameBootstrap] Created GameManager dynamically. Assign prefab for proper setup.");
+                Debug.Log("[GameBootstrap] GameManager created dynamically.");
                 return;
             }
 
@@ -131,7 +129,9 @@ namespace HNR.Core
             var uiManager = FindAnyObjectByType<UIManager>();
             if (uiManager == null)
             {
-                Debug.LogWarning("[GameBootstrap] UIManager not found in scene. UI features will be unavailable.");
+                var go = new GameObject("[UIManager]");
+                go.AddComponent<UIManager>();
+                Debug.Log("[GameBootstrap] UIManager created dynamically.");
             }
             else
             {

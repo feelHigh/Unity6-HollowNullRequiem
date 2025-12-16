@@ -220,16 +220,17 @@ namespace HNR.UI
             }
 
             // Navigate to Requiem selection
-            var uiManager = ServiceLocator.Get<IUIManager>();
-            if (uiManager != null)
+            if (ServiceLocator.TryGet<IUIManager>(out var uiManager))
             {
                 uiManager.ShowScreen<RequiemSelectionScreen>();
             }
             else
             {
                 // Fallback: change game state directly
-                var gameManager = ServiceLocator.Get<IGameManager>();
-                gameManager?.ChangeState(GameState.Bastion);
+                if (ServiceLocator.TryGet<IGameManager>(out var gameManager))
+                {
+                    gameManager.ChangeState(GameState.Bastion);
+                }
             }
         }
 
