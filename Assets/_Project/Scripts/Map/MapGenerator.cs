@@ -241,13 +241,18 @@ namespace HNR.Map
         {
             // Horizontal progression: Start on left, Boss on right
             // Nodes within each "row" (column visually) are stacked vertically
+            // Center the entire map so middle is at origin
+
+            float totalWidth = (_config.RowCount - 1) * _config.HorizontalSpacing;
+            float offsetX = -totalWidth / 2f;
+
             for (int row = 0; row < _config.RowCount; row++)
             {
                 var rowNodes = mapData.GetRow(row);
                 int count = rowNodes.Count;
 
-                // X = horizontal progression (left to right)
-                float baseX = row * _config.HorizontalSpacing;
+                // X = horizontal progression (left to right), centered
+                float baseX = offsetX + (row * _config.HorizontalSpacing);
 
                 // Y = vertical spread within this column (centered)
                 float columnHeight = (count - 1) * _config.VerticalSpacing;

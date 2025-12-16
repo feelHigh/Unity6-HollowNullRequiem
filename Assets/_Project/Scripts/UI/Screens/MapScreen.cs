@@ -128,8 +128,7 @@ namespace HNR.Map
                 _pathRenderer.RenderPaths(mapData, _nodeUIs);
             }
 
-            // Center map on current node
-            CenterOnCurrentNode();
+            // Map is already centered by MapGenerator - no additional offset needed
 
             Debug.Log($"[MapScreen] Rendered {_nodeUIs.Count} nodes");
         }
