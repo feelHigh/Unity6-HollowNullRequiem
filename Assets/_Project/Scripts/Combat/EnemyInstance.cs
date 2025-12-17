@@ -3,11 +3,13 @@
 // Runtime enemy instance implementing ICombatTarget
 // ============================================
 
+using System.Collections;
 using UnityEngine;
 using HNR.Core;
 using HNR.Core.Events;
 using HNR.Characters;
 using HNR.Characters.Visuals;
+using HNR.VFX;
 
 namespace HNR.Combat
 {
@@ -327,8 +329,47 @@ namespace HNR.Combat
 
             // Check for combat end - handled by phase logic listening to EnemyDefeatedEvent
 
-            // Play death animation/effects
-            // TODO: Add death animation before destroying
+            // Start death sequence with animation
+            StartCoroutine(DeathSequence());
+        }
+
+        /// <summary>
+        /// Death animation sequence - plays visual feedback before cleanup.
+        /// </summary>
+        private IEnumerator DeathSequence()
+        {
+            // Play death animation if visual exists
+            _visual?.PlayDeath(true);
+
+            // Spawn death VFX
+            if (ServiceLocator.TryGet<VFXPoolManager>(out var vfxPool))
+            {
+                vfxPool.Spawn("vfx_corruption", transform.position, Quaternion.identity);
+            }
+
+            // Fade out sprite if available
+            if (_sprite != null)
+            {
+                float fadeTime = 0.5f;
+                float elapsed = 0f;
+                Color startColor = _sprite.color;
+
+                while (elapsed < fadeTime)
+                {
+                    elapsed += Time.deltaTime;
+                    float alpha = Mathf.Lerp(1f, 0f, elapsed / fadeTime);
+                    _sprite.color = new Color(startColor.r, startColor.g, startColor.b, alpha);
+                    yield return null;
+                }
+            }
+            else
+            {
+                // Wait for animation if no sprite fade
+                yield return new WaitForSeconds(0.5f);
+            }
+
+            // Cleanup
+            Destroy(gameObject);
         }
 
         // ============================================

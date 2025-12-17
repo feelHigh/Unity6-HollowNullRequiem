@@ -6,6 +6,7 @@
 using UnityEngine;
 using HNR.Core;
 using HNR.Core.Events;
+using HNR.Characters;
 
 namespace HNR.Combat
 {
@@ -99,20 +100,36 @@ namespace HNR.Combat
                     break;
 
                 case IntentType.Buff:
-                    // TODO: Apply buff status effect
-                    Debug.Log($"[EnemyPhase] {enemy.Name} buffs self");
+                    // Apply Strength buff to self
+                    var buffStatusMgr = ServiceLocator.Get<StatusEffectManager>();
+                    int buffStacks = intent.Value > 0 ? intent.Value : 2;
+                    buffStatusMgr?.ApplyStatus(enemy, StatusType.Strength, buffStacks);
+                    Debug.Log($"[EnemyPhase] {enemy.Name} gains {buffStacks} Strength");
                     EventBus.Publish(new EnemyIntentExecutedEvent(enemy, intent));
                     break;
 
                 case IntentType.Debuff:
-                    // TODO: Apply debuff to team
-                    Debug.Log($"[EnemyPhase] {enemy.Name} debuffs team");
+                    // Apply Weakness to random team member
+                    var debuffStatusMgr = ServiceLocator.Get<StatusEffectManager>();
+                    if (context.Team != null && context.Team.Count > 0)
+                    {
+                        int targetIndex = Random.Range(0, context.Team.Count);
+                        var target = context.Team[targetIndex];
+                        int debuffStacks = intent.Value > 0 ? intent.Value : 2;
+                        debuffStatusMgr?.ApplyStatus(target, StatusType.Weakness, debuffStacks, 2);
+                        Debug.Log($"[EnemyPhase] {enemy.Name} applies {debuffStacks} Weakness to {target.Name}");
+                    }
                     EventBus.Publish(new EnemyIntentExecutedEvent(enemy, intent));
                     break;
 
                 case IntentType.Corrupt:
-                    // TODO: Apply corruption
-                    Debug.Log($"[EnemyPhase] {enemy.Name} corrupts team by {intent.Value}");
+                    // Apply corruption to all team members
+                    int corruptionAmount = intent.Value > 0 ? intent.Value : 5;
+                    foreach (var requiem in context.Team)
+                    {
+                        requiem.AddCorruption(corruptionAmount);
+                    }
+                    Debug.Log($"[EnemyPhase] {enemy.Name} corrupts team by {corruptionAmount}");
                     EventBus.Publish(new EnemyIntentExecutedEvent(enemy, intent));
                     break;
 

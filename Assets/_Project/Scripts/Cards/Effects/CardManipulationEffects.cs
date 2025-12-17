@@ -204,11 +204,9 @@ namespace HNR.Cards
                 return;
             }
 
-            // Note: DeckManager handles this automatically when draw pile is empty
-            // This effect forces an immediate reshuffle
-            // TODO: Add ForceReshuffle method to DeckManager
-
-            Debug.Log("[ShuffleDiscardEffect] Shuffled discard pile into draw pile");
+            // Force immediate reshuffle of discard pile into draw pile
+            deckManager.ForceReshuffle();
+            Debug.Log("[ShuffleDiscardEffect] Forced reshuffle of discard pile into draw pile");
         }
     }
 }

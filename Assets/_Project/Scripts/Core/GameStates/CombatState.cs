@@ -6,6 +6,8 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using HNR.Core.Interfaces;
+using HNR.Combat;
+using HNR.VFX;
 
 namespace HNR.Core.GameStates
 {
@@ -57,8 +59,20 @@ namespace HNR.Core.GameStates
         {
             Debug.Log("[CombatState] Exiting combat...");
 
-            // TODO: Cleanup combat systems
-            // TODO: Apply combat results to run state
+            // Cleanup status effects
+            if (ServiceLocator.TryGet<StatusEffectManager>(out var statusMgr))
+            {
+                statusMgr.ClearAllEffects();
+            }
+
+            // Return all VFX to pools
+            if (ServiceLocator.TryGet<VFXPoolManager>(out var vfxPool))
+            {
+                vfxPool.ReturnAll();
+            }
+
+            // Combat results are applied by CombatManager before state transition
+            // RunManager subscribes to CombatEndedEvent for reward/progress application
         }
     }
 }

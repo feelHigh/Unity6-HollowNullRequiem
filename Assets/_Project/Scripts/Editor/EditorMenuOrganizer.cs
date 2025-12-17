@@ -209,6 +209,58 @@ namespace HNR.Editor
         // 3. Production Setup (priority 50-69)
         // ============================================
 
+        [MenuItem("HNR/3. Production/Complete Production Finalization", priority = 49)]
+        public static void CompleteProductionFinalization()
+        {
+            if (!EditorUtility.DisplayDialog("Complete Production Finalization",
+                "This will run ALL production setup steps:\n\n" +
+                "1. Create all prefabs (Card, MapNode, Enemy, Character)\n" +
+                "2. Link visual prefabs to data assets\n" +
+                "3. Generate Audio & VFX configs\n" +
+                "4. Setup all 5 production scenes\n" +
+                "5. Configure build settings\n\n" +
+                "This may take a few minutes. Continue?",
+                "Yes, Run All", "Cancel"))
+            {
+                return;
+            }
+
+            Debug.Log("[Production Finalization] Starting complete production setup...");
+
+            // Step 1: Create prefabs
+            EditorUtility.DisplayProgressBar("Production Finalization", "Creating prefabs...", 0.1f);
+            ProductionSetupTool.CreateAllPrefabs();
+
+            // Step 2: Link visual prefabs to data
+            EditorUtility.DisplayProgressBar("Production Finalization", "Linking visual prefabs...", 0.3f);
+            ProductionSetupTool.LinkAllVisualPrefabs();
+
+            // Step 3: Generate Audio & VFX configs
+            EditorUtility.DisplayProgressBar("Production Finalization", "Generating Audio & VFX configs...", 0.5f);
+            AudioVFXConfigGenerator.GenerateAllConfigs();
+
+            // Step 4: Setup all scenes
+            EditorUtility.DisplayProgressBar("Production Finalization", "Setting up scenes...", 0.7f);
+            ProductionSceneSetupGenerator.SetupAllScenes();
+
+            // Step 5: Configure build settings
+            EditorUtility.DisplayProgressBar("Production Finalization", "Configuring build settings...", 0.9f);
+            ProductionSceneSetupGenerator.ConfigureBuildSettings();
+
+            EditorUtility.ClearProgressBar();
+
+            Debug.Log("[Production Finalization] Complete!");
+            EditorUtility.DisplayDialog("Production Finalization Complete",
+                "All production setup steps completed:\n\n" +
+                "- Prefabs created\n" +
+                "- Visual prefabs linked to data\n" +
+                "- Audio & VFX configs generated\n" +
+                "- All 5 scenes setup\n" +
+                "- Build settings configured\n\n" +
+                "Run integration tests to verify everything works.",
+                "OK");
+        }
+
         [MenuItem("HNR/3. Production/Run Full Setup", priority = 50)]
         public static void RunFullProductionSetup()
         {

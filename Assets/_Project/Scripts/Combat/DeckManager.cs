@@ -185,6 +185,20 @@ namespace HNR.Combat
         // ============================================
 
         /// <summary>
+        /// Force reshuffle discard pile into draw pile.
+        /// Called by ShuffleDiscardEffect or other forced reshuffle mechanics.
+        /// </summary>
+        public void ForceReshuffle()
+        {
+            if (_discardPile.Count == 0)
+            {
+                Debug.Log("[DeckManager] No cards in discard pile to reshuffle");
+                return;
+            }
+            ReshuffleDiscardIntoDraw();
+        }
+
+        /// <summary>
         /// Reshuffle all discarded cards back into the draw pile.
         /// Called automatically when draw pile is empty.
         /// </summary>

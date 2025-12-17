@@ -765,12 +765,31 @@ namespace HNR.Editor
             pathRect.anchorMax = Vector2.one;
             pathRect.sizeDelta = Vector2.zero;
 
+            // === MapPathRenderer ===
+            GameObject pathRendererObj = new GameObject("MapPathRenderer");
+            pathRendererObj.transform.SetParent(mapContainer.transform, false);
+            var pathRenderer = pathRendererObj.AddComponent<MapPathRenderer>();
+
+            // Create or load path prefab
+            var pathPrefab = CreateOrLoadPathPrefab();
+
+            // Wire MapPathRenderer
+            SerializedObject pathSo = new SerializedObject(pathRenderer);
+            pathSo.FindProperty("_pathPrefab").objectReferenceValue = pathPrefab;
+            pathSo.FindProperty("_pathContainer").objectReferenceValue = pathContainer.transform;
+            pathSo.FindProperty("_pathWidth").floatValue = 4f;
+            pathSo.FindProperty("_availableColor").colorValue = new Color(0.4f, 0.8f, 1f, 0.8f); // Cyan-ish
+            pathSo.FindProperty("_visitedColor").colorValue = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            pathSo.FindProperty("_lockedColor").colorValue = new Color(0.3f, 0.3f, 0.3f, 0.3f);
+            pathSo.ApplyModifiedPropertiesWithoutUndo();
+
             // === Wire MapScreen references ===
             var nodePrefab = AssetDatabase.LoadAssetAtPath<MapNodeUI>("Assets/_Project/Prefabs/UI/Map/MapNodeUI.prefab");
 
             SerializedObject so = new SerializedObject(mapScreen);
             so.FindProperty("_nodeContainer").objectReferenceValue = nodeContainer.transform;
             so.FindProperty("_mapContent").objectReferenceValue = mapRect;
+            so.FindProperty("_pathRenderer").objectReferenceValue = pathRenderer;
             if (nodePrefab != null)
             {
                 so.FindProperty("_nodePrefab").objectReferenceValue = nodePrefab;
@@ -781,6 +800,8 @@ namespace HNR.Editor
                 Debug.LogWarning("[ProductionSceneSetupGenerator] MapNodeUI prefab not found at Assets/_Project/Prefabs/UI/Map/MapNodeUI.prefab");
             }
             so.ApplyModifiedPropertiesWithoutUndo();
+
+            Debug.Log("[ProductionSceneSetupGenerator] Created MapPathRenderer with path connections");
 
             return screenObj;
         }
@@ -1251,6 +1272,54 @@ namespace HNR.Editor
         // ============================================
         // Utility
         // ============================================
+
+        /// <summary>
+        /// Creates or loads the path line prefab for map connections.
+        /// </summary>
+        private static Image CreateOrLoadPathPrefab()
+        {
+            string prefabPath = "Assets/_Project/Prefabs/UI/Map/MapPathLine.prefab";
+
+            // Try to load existing prefab
+            var existingPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (existingPrefab != null)
+            {
+                var existingImage = existingPrefab.GetComponent<Image>();
+                if (existingImage != null)
+                {
+                    Debug.Log("[ProductionSceneSetupGenerator] Loaded existing MapPathLine prefab");
+                    return existingImage;
+                }
+            }
+
+            // Create new path line prefab
+            EnsureDirectoryExists(prefabPath);
+
+            GameObject pathLineObj = new GameObject("MapPathLine");
+            RectTransform rect = pathLineObj.AddComponent<RectTransform>();
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(100f, 4f); // Default size, will be stretched
+
+            Image pathImage = pathLineObj.AddComponent<Image>();
+            pathImage.color = Color.white;
+            pathImage.raycastTarget = false;
+
+            // Save as prefab
+            bool success;
+            GameObject savedPrefab = PrefabUtility.SaveAsPrefabAsset(pathLineObj, prefabPath, out success);
+            Object.DestroyImmediate(pathLineObj);
+
+            if (success)
+            {
+                Debug.Log($"[ProductionSceneSetupGenerator] Created MapPathLine prefab at {prefabPath}");
+                return savedPrefab.GetComponent<Image>();
+            }
+            else
+            {
+                Debug.LogError("[ProductionSceneSetupGenerator] Failed to create MapPathLine prefab");
+                return null;
+            }
+        }
 
         private static void EnsureDirectoryExists(string filePath)
         {
