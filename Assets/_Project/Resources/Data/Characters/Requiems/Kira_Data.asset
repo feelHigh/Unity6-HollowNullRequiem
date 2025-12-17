@@ -15,21 +15,34 @@ MonoBehaviour:
   _requiemId: kira
   _requiemName: Kira
   _title: Ember Blade
-  _backstory: A fallen hero of the Flame aspect.
+  _backstory: Once a soldier of the Hollow Legion, Kira now burns with a fire that
+    consumes everything in its path. Her blade carries the fury of a thousand fallen
+    comrades.
   _class: 0
   _soulAspect: 1
   _baseHP: 70
   _baseATK: 12
   _baseDEF: 4
   _seRate: 1.5
-  _startingCards: []
-  _unlockableCards: []
-  _requiemArt: {fileID: 0}
+  _startingCards:
+  - {fileID: 11400000, guid: fa4169283ec8ab947b2c6d6d2f1d4ca8, type: 2}
+  - {fileID: 11400000, guid: 7eb82c6ffe20edf45a8084e6f435ded0, type: 2}
+  - {fileID: 11400000, guid: 5a4593f64b624c84891969d0a452d78e, type: 2}
+  - {fileID: 11400000, guid: 89329d8d6c1baa94bbe5512615849dae, type: 2}
+  - {fileID: 11400000, guid: 9d998f685f25170469ae21cde9d9aeb0, type: 2}
+  - {fileID: 11400000, guid: 872c92e70254c52488f2f7096db8f8b6, type: 2}
+  _unlockableCards:
+  - {fileID: 11400000, guid: 15ae7704ee6790a4e945031a6d0bad77, type: 2}
+  - {fileID: 11400000, guid: 13e537bb12407e64e900f34fde6e97fd, type: 2}
+  - {fileID: 11400000, guid: b4510eadcd0a2554bb832aaa9f1d321b, type: 2}
+  - {fileID: 11400000, guid: 0a512fca9723fbd429b73b6822e24970, type: 2}
+  _requiemArt: {fileID: 11400000, guid: 0bdc48debf479ac41bb61701a2f3d14b, type: 2}
   _nullStateEffect: 0
-  _nullStateDescription: All Burn effects deal double damage.
+  _nullStateDescription: Burn effects deal double damage. Cards gain 'Apply 2 Burn'
+    if they didn't already apply Burn.
   _portrait: {fileID: 0}
   _fullBodySprite: {fileID: 0}
   _animator: {fileID: 0}
-  _aspectColor: {r: 1, g: 1, b: 1, a: 1}
+  _aspectColor: {r: 1, g: 0.4, b: 0.1, a: 1}
   _visualPrefab: {fileID: 0}
   _preferredAttackType: 0

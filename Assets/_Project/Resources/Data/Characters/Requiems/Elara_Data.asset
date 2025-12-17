@@ -14,22 +14,35 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _requiemId: elara
   _requiemName: Elara
-  _title: Light Bringer
-  _backstory: A fallen hero of the Light aspect.
+  _title: Lightkeeper
+  _backstory: Once a priestess of the Dawn Temple, Elara now channels divine light
+    through the Void. Her healing powers mend both body and soul, though each miracle
+    draws her closer to the darkness.
   _class: 2
   _soulAspect: 5
   _baseHP: 80
   _baseATK: 6
   _baseDEF: 8
   _seRate: 1
-  _startingCards: []
-  _unlockableCards: []
-  _requiemArt: {fileID: 0}
+  _startingCards:
+  - {fileID: 11400000, guid: 7d0fd84bcb9d7a144a1beb0d155150c9, type: 2}
+  - {fileID: 11400000, guid: 5e7653e1110de9347b52e4cc44dc6a7d, type: 2}
+  - {fileID: 11400000, guid: 331dc0d37dce2754b9182ccb3c93945b, type: 2}
+  - {fileID: 11400000, guid: 267a10cb826fd8f4ba5d929f70a65845, type: 2}
+  - {fileID: 11400000, guid: 6175e760cc26d4e4299aeef9e7601f71, type: 2}
+  - {fileID: 11400000, guid: 089246f1ced465d4aad2a515eaf4e3f7, type: 2}
+  _unlockableCards:
+  - {fileID: 11400000, guid: 3120ed47621ecc9498b20bdd3bea3ec7, type: 2}
+  - {fileID: 11400000, guid: 15d315aa7aed5c14faf6a4b7ae0047c0, type: 2}
+  - {fileID: 11400000, guid: eafb111a2ed9b7d498675ee70989e3fe, type: 2}
+  - {fileID: 11400000, guid: c5d73986b40c55646a3e4ceae7724402, type: 2}
+  _requiemArt: {fileID: 11400000, guid: dbd237b1a1c1c9e4d9a62abeaad938aa, type: 2}
   _nullStateEffect: 2
-  _nullStateDescription: Healing effects also deal equal damage.
+  _nullStateDescription: Healing effects also deal equal damage to a random enemy.
+    Light damage ignores enemy Block.
   _portrait: {fileID: 0}
   _fullBodySprite: {fileID: 0}
   _animator: {fileID: 0}
-  _aspectColor: {r: 1, g: 1, b: 1, a: 1}
+  _aspectColor: {r: 1, g: 0.9, b: 0.4, a: 1}
   _visualPrefab: {fileID: 0}
   _preferredAttackType: 0

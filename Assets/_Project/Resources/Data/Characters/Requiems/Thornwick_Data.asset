@@ -14,22 +14,35 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _requiemId: thornwick
   _requiemName: Thornwick
-  _title: Iron Root
-  _backstory: A fallen hero of the Nature aspect.
+  _title: Grove Warden
+  _backstory: An ancient treant spirit bound to the Void, Thornwick remembers when
+    forests covered the world. Now he stands as an immovable guardian, his bark-like
+    skin turning aside all harm.
   _class: 3
   _soulAspect: 3
   _baseHP: 100
   _baseATK: 8
   _baseDEF: 10
   _seRate: 1
-  _startingCards: []
-  _unlockableCards: []
-  _requiemArt: {fileID: 0}
+  _startingCards:
+  - {fileID: 11400000, guid: 886e9f57245c8624fb5413fca0601414, type: 2}
+  - {fileID: 11400000, guid: 90709ef07c0a5e84c95c9670671e64a2, type: 2}
+  - {fileID: 11400000, guid: 7b50e55cc66f9c54f8f2cfc1a1caa656, type: 2}
+  - {fileID: 11400000, guid: c2e6ca9d3559a7b4d80654f4f5f14aae, type: 2}
+  - {fileID: 11400000, guid: 61d32c8dce6756b408091558b0e60bbe, type: 2}
+  - {fileID: 11400000, guid: e06cb3f96a786344f9bfb7db31108c31, type: 2}
+  _unlockableCards:
+  - {fileID: 11400000, guid: 6a91b3fc0a5fb744cb4bf363095bc59d, type: 2}
+  - {fileID: 11400000, guid: 2b95362bcb3331a4fab252f6ffb301f0, type: 2}
+  - {fileID: 11400000, guid: d34310e8a4ea8944f8e3b8a48e2f8727, type: 2}
+  - {fileID: 11400000, guid: 5ee95b8224721464aa638e84de9409c8, type: 2}
+  _requiemArt: {fileID: 11400000, guid: 4a91162ebdb85054fa5a9e5d3e16704d, type: 2}
   _nullStateEffect: 3
-  _nullStateDescription: Regenerate 5 HP at turn start. +50% Block.
+  _nullStateDescription: Regenerate 5 HP at turn start. All Block effects increased
+    by 50%.
   _portrait: {fileID: 0}
   _fullBodySprite: {fileID: 0}
   _animator: {fileID: 0}
-  _aspectColor: {r: 1, g: 1, b: 1, a: 1}
+  _aspectColor: {r: 0.2, g: 0.6, b: 0.2, a: 1}
   _visualPrefab: {fileID: 0}
   _preferredAttackType: 0

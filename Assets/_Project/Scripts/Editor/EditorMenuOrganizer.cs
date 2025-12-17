@@ -5,6 +5,7 @@
 
 using UnityEditor;
 using UnityEngine;
+using HNR.Combat;
 
 namespace HNR.Editor
 {
@@ -143,6 +144,12 @@ namespace HNR.Editor
         public static void GenerateCardPrefab()
         {
             CardPrefabGenerator.GenerateCardPrefab();
+        }
+
+        [MenuItem("HNR/2. Prefabs/UI/CombatCard Prefab (CZN)", priority = 30)]
+        public static void GenerateCombatCardPrefab()
+        {
+            CombatCardPrefabGenerator.GenerateCombatCardPrefab();
         }
 
         [MenuItem("HNR/2. Prefabs/UI/DamageNumber Prefab", priority = 31)]
@@ -361,6 +368,183 @@ namespace HNR.Editor
         public static void VerifyRelicAssets()
         {
             RelicAssetGenerator.VerifyRelicAssets();
+        }
+
+        [MenuItem("HNR/6. Utilities/Fix Enemy Visual Prefabs", priority = 202)]
+        public static void FixEnemyVisualPrefabs()
+        {
+            string prefabsPath = "Assets/_Project/Prefabs/Characters/Enemies";
+            string[] guids = AssetDatabase.FindAssets("t:Prefab", new[] { prefabsPath });
+
+            Sprite placeholderSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+
+            int fixedCount = 0;
+            foreach (string guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var prefabContents = PrefabUtility.LoadPrefabContents(path);
+
+                var spriteRenderer = prefabContents.GetComponent<SpriteRenderer>();
+                if (spriteRenderer != null)
+                {
+                    // Assign placeholder sprite if missing
+                    if (spriteRenderer.sprite == null)
+                    {
+                        spriteRenderer.sprite = placeholderSprite;
+                    }
+                    fixedCount++;
+                }
+
+                // Scale up the prefab to be visible (0.16 units -> ~2 units)
+                prefabContents.transform.localScale = new Vector3(12f, 12f, 1f);
+
+                // Wire SimpleCharacterVisual._renderer if present
+                var simpleVisual = prefabContents.GetComponent<HNR.Characters.Visuals.SimpleCharacterVisual>();
+                if (simpleVisual != null)
+                {
+                    var so = new SerializedObject(simpleVisual);
+                    if (so.FindProperty("_renderer").objectReferenceValue == null && spriteRenderer != null)
+                    {
+                        so.FindProperty("_renderer").objectReferenceValue = spriteRenderer;
+                        so.ApplyModifiedPropertiesWithoutUndo();
+                    }
+                }
+
+                PrefabUtility.SaveAsPrefabAsset(prefabContents, path);
+                PrefabUtility.UnloadPrefabContents(prefabContents);
+            }
+
+            Debug.Log($"[EditorMenuOrganizer] Fixed {fixedCount} enemy visual prefabs (sprite + scale)");
+
+            // Also fix EnemyDataSO sprite scales
+            FixEnemyDataSpriteScales();
+        }
+
+        private static void FixEnemyDataSpriteScales()
+        {
+            string[] enemyPaths = new[]
+            {
+                "Assets/_Project/Data/Enemies/Zone1",
+                "Assets/_Project/Data/Enemies/Zone2",
+                "Assets/_Project/Data/Enemies/Zone3",
+                "Assets/_Project/Data/Enemies/Elites",
+                "Assets/_Project/Data/Enemies/Bosses",
+                "Assets/_Project/Data/Enemies"
+            };
+
+            int fixedCount = 0;
+            foreach (string folder in enemyPaths)
+            {
+                string[] guids = AssetDatabase.FindAssets("t:EnemyDataSO", new[] { folder });
+                foreach (string guid in guids)
+                {
+                    string path = AssetDatabase.GUIDToAssetPath(guid);
+                    var enemyData = AssetDatabase.LoadAssetAtPath<EnemyDataSO>(path);
+                    if (enemyData != null)
+                    {
+                        var so = new SerializedObject(enemyData);
+                        var scaleProperty = so.FindProperty("_spriteScale");
+                        if (scaleProperty != null && scaleProperty.floatValue < 10f)
+                        {
+                            scaleProperty.floatValue = 12f;
+                            so.ApplyModifiedPropertiesWithoutUndo();
+                            EditorUtility.SetDirty(enemyData);
+                            fixedCount++;
+                        }
+                    }
+                }
+            }
+
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[EditorMenuOrganizer] Fixed {fixedCount} EnemyDataSO sprite scales to 12x");
+        }
+
+        [MenuItem("HNR/6. Utilities/Fix Combat Scene Background", priority = 204)]
+        public static void FixCombatSceneBackground()
+        {
+            // Find Background object in current scene and disable it
+            var background = GameObject.Find("Background");
+            if (background != null)
+            {
+                var image = background.GetComponent<UnityEngine.UI.Image>();
+                if (image != null)
+                {
+                    // Make it transparent instead of deleting (preserve structure)
+                    image.color = new Color(0, 0, 0, 0);
+                    EditorUtility.SetDirty(background);
+                    Debug.Log("[EditorMenuOrganizer] Combat scene Background made transparent");
+                }
+            }
+            else
+            {
+                Debug.Log("[EditorMenuOrganizer] No Background object found in current scene");
+            }
+
+            // Mark scene dirty
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
+                UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
+        }
+
+        [MenuItem("HNR/6. Utilities/Fix EnemyInstance Prefab Wiring", priority = 205)]
+        public static void FixEnemyInstancePrefab()
+        {
+            string prefabPath = "Assets/_Project/Prefabs/Combat/EnemyInstance.prefab";
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+
+            if (prefab == null)
+            {
+                Debug.LogError("[EditorMenuOrganizer] EnemyInstance.prefab not found. Run 'Create All Prefabs' first.");
+                return;
+            }
+
+            // Load prefab for editing
+            var prefabContents = PrefabUtility.LoadPrefabContents(prefabPath);
+            var enemy = prefabContents.GetComponent<EnemyInstance>();
+
+            if (enemy == null)
+            {
+                Debug.LogError("[EditorMenuOrganizer] EnemyInstance component not found on prefab");
+                PrefabUtility.UnloadPrefabContents(prefabContents);
+                return;
+            }
+
+            // Add BoxCollider2D if missing (required for targeting raycast)
+            var collider = prefabContents.GetComponent<BoxCollider2D>();
+            if (collider == null)
+            {
+                collider = prefabContents.AddComponent<BoxCollider2D>();
+                collider.size = new Vector2(2f, 2f);
+                collider.isTrigger = true;
+                Debug.Log("[EditorMenuOrganizer] Added BoxCollider2D for targeting");
+            }
+
+            // Find existing sprite renderer
+            var spriteRenderer = prefabContents.GetComponentInChildren<SpriteRenderer>();
+
+            // Find or create highlight ring
+            var highlightRing = prefabContents.transform.Find("HighlightRing");
+            if (highlightRing == null)
+            {
+                var ringObj = new GameObject("HighlightRing");
+                ringObj.transform.SetParent(prefabContents.transform, false);
+                var ringSprite = ringObj.AddComponent<SpriteRenderer>();
+                ringSprite.color = new Color(1f, 1f, 0f, 0.5f);
+                ringSprite.sortingOrder = -1;
+                ringObj.SetActive(false);
+                highlightRing = ringObj.transform;
+            }
+
+            // Wire references
+            var so = new SerializedObject(enemy);
+            so.FindProperty("_sprite").objectReferenceValue = spriteRenderer;
+            so.FindProperty("_highlightRing").objectReferenceValue = highlightRing.gameObject;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            // Save prefab
+            PrefabUtility.SaveAsPrefabAsset(prefabContents, prefabPath);
+            PrefabUtility.UnloadPrefabContents(prefabContents);
+
+            Debug.Log("[EditorMenuOrganizer] EnemyInstance prefab wiring fixed successfully!");
         }
 
         [MenuItem("HNR/6. Utilities/Show Menu Organization", priority = 201)]

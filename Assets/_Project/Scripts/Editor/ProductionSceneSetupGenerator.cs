@@ -268,7 +268,7 @@ namespace HNR.Editor
 
             GameObject encounterObj = new GameObject("EncounterManager");
             encounterObj.transform.SetParent(managersParent.transform);
-            encounterObj.AddComponent<EncounterManager>();
+            var encounterManager = encounterObj.AddComponent<EncounterManager>();
 
             GameObject statusObj = new GameObject("StatusEffectManager");
             statusObj.transform.SetParent(managersParent.transform);
@@ -306,13 +306,59 @@ namespace HNR.Editor
             damageSpawnerObj.transform.SetParent(canvasObj.transform, false);
             damageSpawnerObj.AddComponent<DamageNumberSpawner>();
 
-            // === Wire HandManager container ===
+            // === Wire HandManager ===
+            var cardPrefab = AssetDatabase.LoadAssetAtPath<Cards.Card>("Assets/_Project/Prefabs/Cards/Card.prefab");
             SerializedObject handSO = new SerializedObject(handManager);
             handSO.FindProperty("_handContainer").objectReferenceValue = handContainer.transform;
+            if (cardPrefab != null)
+            {
+                handSO.FindProperty("_cardPrefab").objectReferenceValue = cardPrefab;
+                Debug.Log("[ProductionSceneSetupGenerator] Wired HandManager with Card prefab");
+            }
+            else
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] Card.prefab not found - run HNR > 2. Prefabs > UI > Card Prefab first");
+            }
             handSO.ApplyModifiedPropertiesWithoutUndo();
 
-            // === Background ===
-            CreateBackground(canvasObj, new Color(0.02f, 0.01f, 0.05f));
+            // === Create World Space Enemy Slots ===
+            GameObject enemySlotsParent = new GameObject("--- ENEMY SLOTS ---");
+            Transform[] enemySlots = new Transform[3];
+
+            // Position enemy slots in world space (spread across screen)
+            float[] xPositions = { -3f, 0f, 3f };
+            for (int i = 0; i < 3; i++)
+            {
+                GameObject slot = new GameObject($"EnemySlot_{i}");
+                slot.transform.SetParent(enemySlotsParent.transform);
+                slot.transform.position = new Vector3(xPositions[i], 1.5f, 0f);
+                enemySlots[i] = slot.transform;
+            }
+
+            // === Wire EncounterManager ===
+            var enemyPrefab = AssetDatabase.LoadAssetAtPath<EnemyInstance>("Assets/_Project/Prefabs/Combat/EnemyInstance.prefab");
+            if (enemyPrefab != null)
+            {
+                SerializedObject encounterSO = new SerializedObject(encounterManager);
+                encounterSO.FindProperty("_enemyPrefab").objectReferenceValue = enemyPrefab;
+
+                var slotsArray = encounterSO.FindProperty("_enemySlots");
+                slotsArray.arraySize = 3;
+                for (int i = 0; i < 3; i++)
+                {
+                    slotsArray.GetArrayElementAtIndex(i).objectReferenceValue = enemySlots[i];
+                }
+
+                encounterSO.ApplyModifiedPropertiesWithoutUndo();
+                Debug.Log("[ProductionSceneSetupGenerator] Wired EncounterManager with enemy prefab and slots");
+            }
+            else
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] EnemyInstance.prefab not found - run HNR > Production > Create All Prefabs first");
+            }
+
+            // NOTE: No opaque background for Combat scene - we need to see world-space enemies
+            // Camera background color provides the backdrop instead
 
             // Save scene
             string scenePath = $"{SCENES_PATH}/Combat.unity";
@@ -363,12 +409,15 @@ namespace HNR.Editor
             GameObject cameraObj = new GameObject("Main Camera");
             cameraObj.tag = "MainCamera";
 
+            // Position camera at Z=-10 to view 2D objects at Z=0
+            cameraObj.transform.position = new Vector3(0f, 0f, -10f);
+
             Camera camera = cameraObj.AddComponent<Camera>();
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0.05f, 0.02f, 0.1f);
             camera.orthographic = true;
             camera.orthographicSize = 5f;
-            camera.nearClipPlane = -10f;
+            camera.nearClipPlane = 0.1f;
             camera.farClipPlane = 100f;
 
             cameraObj.AddComponent<UniversalAdditionalCameraData>();

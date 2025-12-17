@@ -57,7 +57,7 @@ MonoBehaviour:
   _cardDropPool: []
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
-  _spriteScale: 1.4
+  _spriteScale: 12
   _visualPrefab: {fileID: 6396803405162726082, guid: bf91bede39945c74d997a0a5e7331490, type: 3}
   _preferredAttackType: 0
   _attackSound: {fileID: 0}

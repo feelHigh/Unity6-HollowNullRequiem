@@ -194,7 +194,7 @@ namespace HNR.Editor
             descTextRect.sizeDelta = Vector2.zero;
             var descTMP = descText.GetComponent<TextMeshProUGUI>();
             descTMP.alignment = TextAlignmentOptions.Top;
-            descTMP.enableWordWrapping = true;
+            descTMP.textWrappingMode = TMPro.TextWrappingModes.Normal;
 
             // Aspect indicator (colored bar)
             GameObject aspectBar = new GameObject("AspectBar");
@@ -357,6 +357,11 @@ namespace HNR.Editor
             // Add EnemyInstance component
             var enemy = enemyObj.AddComponent<EnemyInstance>();
 
+            // Add BoxCollider2D for targeting raycast detection
+            var collider = enemyObj.AddComponent<BoxCollider2D>();
+            collider.size = new Vector2(2f, 2f); // Size to match scaled visual
+            collider.isTrigger = true; // Use trigger so it doesn't affect physics
+
             // Visual placeholder (will be replaced by visual prefab at runtime)
             GameObject visualPlaceholder = new GameObject("VisualPlaceholder");
             visualPlaceholder.transform.SetParent(enemyObj.transform, false);
@@ -372,6 +377,20 @@ namespace HNR.Editor
             GameObject hpBarParent = new GameObject("HPBar");
             hpBarParent.transform.SetParent(enemyObj.transform, false);
             hpBarParent.transform.localPosition = new Vector3(0, -0.8f, 0);
+
+            // Highlight ring (for targeting feedback)
+            GameObject highlightRing = new GameObject("HighlightRing");
+            highlightRing.transform.SetParent(enemyObj.transform, false);
+            var ringSprite = highlightRing.AddComponent<SpriteRenderer>();
+            ringSprite.color = new Color(1f, 1f, 0f, 0.5f);
+            ringSprite.sortingOrder = -1;
+            highlightRing.SetActive(false);
+
+            // Wire references using SerializedObject
+            SerializedObject so = new SerializedObject(enemy);
+            so.FindProperty("_sprite").objectReferenceValue = spriteRenderer;
+            so.FindProperty("_highlightRing").objectReferenceValue = highlightRing;
+            so.ApplyModifiedPropertiesWithoutUndo();
 
             // Save prefab
             bool success;
