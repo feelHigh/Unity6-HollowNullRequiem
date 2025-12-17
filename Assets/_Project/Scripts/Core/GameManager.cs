@@ -8,6 +8,7 @@ using UnityEngine;
 using HNR.Core.Events;
 using HNR.Core.GameStates;
 using HNR.Core.Interfaces;
+using HNR.Characters;
 
 namespace HNR.Core
 {
@@ -36,6 +37,12 @@ namespace HNR.Core
         public GameState CurrentState { get; private set; }
 
         // ============================================
+        // Pending Team Selection
+        // ============================================
+
+        private List<RequiemDataSO> _pendingTeam = new();
+
+        // ============================================
         // Unity Lifecycle
         // ============================================
 
@@ -59,6 +66,24 @@ namespace HNR.Core
             Debug.Log("[GameManager] Initialized.");
         }
 
+        private void OnEnable()
+        {
+            // Subscribe to events
+            EventBus.Subscribe<TeamSelectedEvent>(OnTeamSelected);
+            Debug.Log($"[GameManager] OnEnable - Subscribed to TeamSelectedEvent. Subscriber count: {EventBus.GetSubscriberCount<TeamSelectedEvent>()}");
+        }
+
+        private void OnTeamSelected(TeamSelectedEvent evt)
+        {
+            Debug.Log($"[GameManager] OnTeamSelected received! Event has {evt.SelectedTeam?.Count ?? 0} Requiems");
+            _pendingTeam.Clear();
+            if (evt.SelectedTeam != null)
+            {
+                _pendingTeam.AddRange(evt.SelectedTeam);
+            }
+            Debug.Log($"[GameManager] _pendingTeam now has {_pendingTeam.Count} Requiems");
+        }
+
         private void Start()
         {
             // Begin in Boot state
@@ -69,6 +94,13 @@ namespace HNR.Core
         {
             // Delegate update to current state
             _currentStateObject?.Update();
+        }
+
+        private void OnDisable()
+        {
+            // Unsubscribe from events
+            EventBus.Unsubscribe<TeamSelectedEvent>(OnTeamSelected);
+            Debug.Log("[GameManager] OnDisable - Unsubscribed from TeamSelectedEvent");
         }
 
         private void OnDestroy()
@@ -155,11 +187,27 @@ namespace HNR.Core
         /// </summary>
         public void StartNewRun()
         {
-            Debug.Log("[GameManager] Starting new run...");
+            Debug.Log($"[GameManager] Starting new run... Pending team count: {_pendingTeam.Count}");
 
-            // TODO: Initialize run data via RunManager
-            // var runManager = ServiceLocator.Get<IRunManager>();
-            // runManager.InitializeNewRun();
+            // Initialize run data via RunManager
+            if (_pendingTeam.Count > 0)
+            {
+                var runManager = ServiceLocator.Get<IRunManager>();
+                if (runManager != null)
+                {
+                    Debug.Log($"[GameManager] Calling RunManager.InitializeNewRun with {_pendingTeam.Count} Requiems: {string.Join(", ", _pendingTeam.ConvertAll(r => r?.RequiemName ?? "null"))}");
+                    runManager.InitializeNewRun(_pendingTeam);
+                    Debug.Log($"[GameManager] After init - RunManager.IsRunActive: {runManager.IsRunActive}, Team.Count: {runManager.Team?.Count ?? -1}");
+                }
+                else
+                {
+                    Debug.LogError("[GameManager] RunManager not found - cannot initialize run!");
+                }
+            }
+            else
+            {
+                Debug.LogError("[GameManager] No team selected - _pendingTeam is empty! Did TeamSelectedEvent fire?");
+            }
 
             ChangeState(GameState.Run);
         }

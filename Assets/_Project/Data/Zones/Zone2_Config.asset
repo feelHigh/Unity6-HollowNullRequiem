@@ -27,8 +27,13 @@ MonoBehaviour:
   _eliteMinRow: 2
   _guaranteedShop: 1
   _guaranteedSanctuary: 1
-  _combatEncounters: []
-  _eliteEncounters: []
+  _combatEncounters:
+  - {fileID: 11400000, guid: 7450eb281b54c9349ac6d18e1678fe13, type: 2}
+  - {fileID: 11400000, guid: 14ad2da4c4400934e901aef5e3245a83, type: 2}
+  - {fileID: 11400000, guid: ce05eae4516347f46ad128647cc7c6db, type: 2}
+  _eliteEncounters:
+  - {fileID: 11400000, guid: 200b7d021c2e3be4caa2267e5d040917, type: 2}
+  - {fileID: 11400000, guid: 5ea076431206f7a4f95d9131fb26af68, type: 2}
   _bossEncounter: {fileID: 0}
   _echoEvents:
   - {fileID: 11400000, guid: f81789dbf591b0743a4c360044dfe242, type: 2}

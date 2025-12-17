@@ -302,13 +302,44 @@ namespace HNR.Characters
             EventBus.Publish(new NullStateEnteredEvent(this));
             Debug.Log($"[RequiemInstance] {Name} entered Null State!");
 
-            // Apply Null State effect based on character
-            // TODO: Implement specific Null State effects per Requiem
+            // Apply Null State effect based on character's Soul Aspect
+            ApplyNullStateEffects();
+        }
+
+        /// <summary>
+        /// Apply character-specific Null State effects based on Soul Aspect.
+        /// Per TDD: Kira=+50% burn, Mordren=lifesteal, Elara=healing damages, Thornwick=regen
+        /// </summary>
+        private void ApplyNullStateEffects()
+        {
+            switch (_data?.SoulAspect ?? SoulAspect.None)
+            {
+                case SoulAspect.Flame: // Kira - Burn damage +50%
+                    SetBurnDamageMultiplier(1.5f);
+                    Debug.Log($"[RequiemInstance] {Name} Null State: Burn damage increased by 50%");
+                    break;
+
+                case SoulAspect.Shadow: // Mordren - All damage heals for 25%
+                    SetLifestealMultiplier(0.25f);
+                    Debug.Log($"[RequiemInstance] {Name} Null State: Lifesteal active (25%)");
+                    break;
+
+                case SoulAspect.Light: // Elara - Healing also damages random enemy
+                    SetHealingDamagesEnemies(true);
+                    Debug.Log($"[RequiemInstance] {Name} Null State: Healing now damages enemies");
+                    break;
+
+                case SoulAspect.Nature: // Thornwick - Gain 3 Block and 2 HP at turn start
+                    SetNullStateRegen(3, 2);
+                    Debug.Log($"[RequiemInstance] {Name} Null State: Turn-start regen active (+3 Block, +2 HP)");
+                    break;
+            }
         }
 
         private void ExitNullState()
         {
             _inNullState = false;
+            ResetNullStateModifiers();
             EventBus.Publish(new NullStateExitedEvent(this));
             Debug.Log($"[RequiemInstance] {Name} exited Null State");
         }

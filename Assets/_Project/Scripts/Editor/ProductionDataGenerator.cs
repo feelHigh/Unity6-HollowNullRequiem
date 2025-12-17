@@ -19,10 +19,10 @@ namespace HNR.Editor
     /// </summary>
     public static class ProductionDataGenerator
     {
-        private const string ZONE_PATH = "Assets/_Project/Resources/Data/Zones";
-        private const string ENCOUNTER_PATH = "Assets/_Project/Resources/Data/Encounters";
-        private const string ENEMY_PATH = "Assets/_Project/Resources/Data/Enemies";
-        private const string EVENTS_PATH = "Assets/_Project/Resources/Data/Events";
+        private const string ZONE_PATH = "Assets/_Project/Data/Zones";
+        private const string ENCOUNTER_PATH = "Assets/_Project/Data/Encounters";
+        private const string ENEMY_PATH = "Assets/_Project/Data/Enemies";
+        private const string EVENTS_PATH = "Assets/_Project/Data/Events";
 
         // ============================================
         // Public Methods (called from EditorMenuOrganizer)
@@ -123,17 +123,17 @@ namespace HNR.Editor
             so.FindProperty("_guaranteedShop").boolValue = true;
             so.FindProperty("_guaranteedSanctuary").boolValue = true;
 
-            // Combat Encounters
+            // Combat Encounters (keys have underscores removed in LoadAllEncounters)
             var combatProp = so.FindProperty("_combatEncounters");
             combatProp.ClearArray();
-            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone1_easy"));
-            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone1_medium"));
-            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone1_hard"));
+            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone1easy"));
+            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone1medium"));
+            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone1hard"));
 
             // Elite Encounters
             var eliteProp = so.FindProperty("_eliteEncounters");
             eliteProp.ClearArray();
-            AddEncounterToList(eliteProp, encounters.GetValueOrDefault("elite_warden"));
+            AddEncounterToList(eliteProp, encounters.GetValueOrDefault("elitewarden"));
 
             // Boss - Zone 1 doesn't have a boss
             so.FindProperty("_bossEncounter").objectReferenceValue = null;
@@ -186,18 +186,18 @@ namespace HNR.Editor
             so.FindProperty("_guaranteedShop").boolValue = true;
             so.FindProperty("_guaranteedSanctuary").boolValue = true;
 
-            // Combat Encounters
+            // Combat Encounters (keys have underscores removed)
             var combatProp = so.FindProperty("_combatEncounters");
             combatProp.ClearArray();
-            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone2_easy"));
-            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone2_medium"));
-            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone2_hard"));
+            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone2easy"));
+            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone2medium"));
+            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone2hard"));
 
             // Elite Encounters
             var eliteProp = so.FindProperty("_eliteEncounters");
             eliteProp.ClearArray();
-            AddEncounterToList(eliteProp, encounters.GetValueOrDefault("elite_warden"));
-            AddEncounterToList(eliteProp, encounters.GetValueOrDefault("elite_herald"));
+            AddEncounterToList(eliteProp, encounters.GetValueOrDefault("elitewarden"));
+            AddEncounterToList(eliteProp, encounters.GetValueOrDefault("eliteherald"));
 
             // Boss - Zone 2 doesn't have a boss
             so.FindProperty("_bossEncounter").objectReferenceValue = null;
@@ -250,21 +250,21 @@ namespace HNR.Editor
             so.FindProperty("_guaranteedShop").boolValue = true;
             so.FindProperty("_guaranteedSanctuary").boolValue = true;
 
-            // Combat Encounters
+            // Combat Encounters (keys have underscores removed)
             var combatProp = so.FindProperty("_combatEncounters");
             combatProp.ClearArray();
-            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone3_easy"));
-            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone3_medium"));
-            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone3_hard"));
+            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone3easy"));
+            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone3medium"));
+            AddEncounterToList(combatProp, encounters.GetValueOrDefault("zone3hard"));
 
             // Elite Encounters
             var eliteProp = so.FindProperty("_eliteEncounters");
             eliteProp.ClearArray();
-            AddEncounterToList(eliteProp, encounters.GetValueOrDefault("elite_herald"));
-            AddEncounterToList(eliteProp, encounters.GetValueOrDefault("elite_warden"));
+            AddEncounterToList(eliteProp, encounters.GetValueOrDefault("eliteherald"));
+            AddEncounterToList(eliteProp, encounters.GetValueOrDefault("elitewarden"));
 
             // Boss - Zone 3 has the final boss
-            so.FindProperty("_bossEncounter").objectReferenceValue = encounters.GetValueOrDefault("boss_hollowking");
+            so.FindProperty("_bossEncounter").objectReferenceValue = encounters.GetValueOrDefault("bosshollowking");
 
             // Echo Events
             var echoProp = so.FindProperty("_echoEvents");
@@ -292,6 +292,12 @@ namespace HNR.Editor
         {
             var encounters = LoadAllEncounters();
 
+            // Populate Zone 1 encounters with enemies
+            PopulateZone1Encounters(enemies, encounters);
+
+            // Populate elite and boss encounters
+            PopulateEliteAndBossEncounters(enemies, encounters);
+
             // Create Zone 2 encounters if they don't exist
             CreateZone2Encounters(enemies, encounters);
 
@@ -301,13 +307,95 @@ namespace HNR.Editor
             return encounters;
         }
 
+        private static void PopulateZone1Encounters(Dictionary<string, EnemyDataSO> enemies, Dictionary<string, EncounterDataSO> encounters)
+        {
+            // Find Zone 1 enemies
+            var wisp = enemies.GetValueOrDefault("zone1corruptedwisp") ?? FindEnemyByPartialName(enemies, "Wisp");
+            var shade = enemies.GetValueOrDefault("zone1hollowshade") ?? FindEnemyByPartialName(enemies, "Shade");
+            var crawler = enemies.GetValueOrDefault("zone1shadowcrawler") ?? FindEnemyByPartialName(enemies, "Crawler");
+            var beast = enemies.GetValueOrDefault("zone1voidbeast") ?? FindEnemyByPartialName(enemies, "Beast");
+
+            Debug.Log($"[ProductionDataGenerator] Zone 1 enemies found: Wisp={wisp != null}, Shade={shade != null}, Crawler={crawler != null}, Beast={beast != null}");
+
+            // Populate Zone1_Easy
+            var zone1Easy = encounters.GetValueOrDefault("zone1easy");
+            if (zone1Easy != null)
+            {
+                PopulateEncounterEnemies(zone1Easy, new[] { wisp, crawler });
+            }
+
+            // Populate Zone1_Medium
+            var zone1Medium = encounters.GetValueOrDefault("zone1medium");
+            if (zone1Medium != null)
+            {
+                PopulateEncounterEnemies(zone1Medium, new[] { shade, beast });
+            }
+
+            // Populate Zone1_Hard
+            var zone1Hard = encounters.GetValueOrDefault("zone1hard");
+            if (zone1Hard != null)
+            {
+                PopulateEncounterEnemies(zone1Hard, new[] { shade, beast, wisp });
+            }
+        }
+
+        private static void PopulateEliteAndBossEncounters(Dictionary<string, EnemyDataSO> enemies, Dictionary<string, EncounterDataSO> encounters)
+        {
+            // Find elite enemies
+            var warden = enemies.GetValueOrDefault("elitecorruptedwarden") ?? FindEnemyByPartialName(enemies, "Warden");
+            var herald = enemies.GetValueOrDefault("elitenullherald") ?? FindEnemyByPartialName(enemies, "Herald");
+            var hollowKing = enemies.GetValueOrDefault("bosshollowking") ?? FindEnemyByPartialName(enemies, "King");
+
+            Debug.Log($"[ProductionDataGenerator] Elite/Boss enemies found: Warden={warden != null}, Herald={herald != null}, HollowKing={hollowKing != null}");
+
+            // Populate Elite_Warden
+            var eliteWarden = encounters.GetValueOrDefault("elitewarden");
+            if (eliteWarden != null && warden != null)
+            {
+                PopulateEncounterEnemies(eliteWarden, new[] { warden });
+            }
+
+            // Populate Elite_Herald
+            var eliteHerald = encounters.GetValueOrDefault("eliteherald");
+            if (eliteHerald != null && herald != null)
+            {
+                PopulateEncounterEnemies(eliteHerald, new[] { herald });
+            }
+
+            // Populate Boss_HollowKing
+            var bossHollowKing = encounters.GetValueOrDefault("bosshollowking");
+            if (bossHollowKing != null && hollowKing != null)
+            {
+                PopulateEncounterEnemies(bossHollowKing, new[] { hollowKing });
+            }
+        }
+
+        private static void PopulateEncounterEnemies(EncounterDataSO encounter, EnemyDataSO[] enemyPool)
+        {
+            var validEnemies = new List<EnemyDataSO>();
+            foreach (var enemy in enemyPool)
+            {
+                if (enemy != null) validEnemies.Add(enemy);
+            }
+
+            if (validEnemies.Count == 0)
+            {
+                Debug.LogWarning($"[ProductionDataGenerator] No valid enemies to add to {encounter.name}");
+                return;
+            }
+
+            SetField(encounter, "_enemyPool", validEnemies);
+            EditorUtility.SetDirty(encounter);
+            Debug.Log($"[ProductionDataGenerator] Populated {encounter.name} with {validEnemies.Count} enemies");
+        }
+
         private static void CreateZone2Encounters(Dictionary<string, EnemyDataSO> enemies, Dictionary<string, EncounterDataSO> existingEncounters = null)
         {
             existingEncounters ??= LoadAllEncounters();
 
-            // Zone 2 enemies
-            var knight = enemies.GetValueOrDefault("zone2_fracturedknight") ?? enemies.GetValueOrDefault("fracturedknight");
-            var specter = enemies.GetValueOrDefault("zone2_nullspecter") ?? enemies.GetValueOrDefault("nullspecter");
+            // Zone 2 enemies (keys have underscores removed in LoadAllEnemies)
+            var knight = enemies.GetValueOrDefault("zone2fracturedknight") ?? enemies.GetValueOrDefault("fracturedknight");
+            var specter = enemies.GetValueOrDefault("zone2nullspecter") ?? enemies.GetValueOrDefault("nullspecter");
 
             // Find by partial name if not found
             if (knight == null) knight = FindEnemyByPartialName(enemies, "Knight");
@@ -320,22 +408,22 @@ namespace HNR.Editor
                 specter = FindEnemyByPartialName(enemies, "Crawler");
             }
 
-            // Create Zone 2 Easy
-            if (!existingEncounters.ContainsKey("zone2_easy"))
+            // Create Zone 2 Easy (keys have underscores removed)
+            if (!existingEncounters.ContainsKey("zone2easy"))
             {
                 CreateEncounter("zone2_easy", "Fractured Patrol", 2, EncounterDifficulty.Easy,
                     new[] { knight ?? specter }, 1, 2, 1.0f);
             }
 
             // Create Zone 2 Medium
-            if (!existingEncounters.ContainsKey("zone2_medium"))
+            if (!existingEncounters.ContainsKey("zone2medium"))
             {
                 CreateEncounter("zone2_medium", "Null Ambush", 2, EncounterDifficulty.Normal,
                     new[] { knight, specter }, 2, 2, 1.2f);
             }
 
             // Create Zone 2 Hard
-            if (!existingEncounters.ContainsKey("zone2_hard"))
+            if (!existingEncounters.ContainsKey("zone2hard"))
             {
                 CreateEncounter("zone2_hard", "Spectral Convergence", 2, EncounterDifficulty.Hard,
                     new[] { specter, knight }, 2, 3, 1.4f);
@@ -346,9 +434,9 @@ namespace HNR.Editor
         {
             existingEncounters ??= LoadAllEncounters();
 
-            // Zone 3 enemies
-            var amalgam = enemies.GetValueOrDefault("zone3_hollowamalgam") ?? FindEnemyByPartialName(enemies, "Amalgam");
-            var executioner = enemies.GetValueOrDefault("zone3_voidexecutioner") ?? FindEnemyByPartialName(enemies, "Executioner");
+            // Zone 3 enemies (keys have underscores removed in LoadAllEnemies)
+            var amalgam = enemies.GetValueOrDefault("zone3hollowamalgam") ?? FindEnemyByPartialName(enemies, "Amalgam");
+            var executioner = enemies.GetValueOrDefault("zone3voidexecutioner") ?? FindEnemyByPartialName(enemies, "Executioner");
 
             if (amalgam == null && executioner == null)
             {
@@ -357,22 +445,22 @@ namespace HNR.Editor
                 executioner = FindEnemyByPartialName(enemies, "Specter");
             }
 
-            // Create Zone 3 Easy
-            if (!existingEncounters.ContainsKey("zone3_easy"))
+            // Create Zone 3 Easy (keys have underscores removed)
+            if (!existingEncounters.ContainsKey("zone3easy"))
             {
                 CreateEncounter("zone3_easy", "Hollow Manifestation", 3, EncounterDifficulty.Easy,
                     new[] { amalgam ?? executioner }, 1, 2, 1.2f);
             }
 
             // Create Zone 3 Medium
-            if (!existingEncounters.ContainsKey("zone3_medium"))
+            if (!existingEncounters.ContainsKey("zone3medium"))
             {
                 CreateEncounter("zone3_medium", "Void Legion", 3, EncounterDifficulty.Normal,
                     new[] { amalgam, executioner }, 2, 2, 1.4f);
             }
 
             // Create Zone 3 Hard
-            if (!existingEncounters.ContainsKey("zone3_hard"))
+            if (!existingEncounters.ContainsKey("zone3hard"))
             {
                 CreateEncounter("zone3_hard", "Executioner's Judgment", 3, EncounterDifficulty.Hard,
                     new[] { executioner, amalgam }, 2, 3, 1.6f);

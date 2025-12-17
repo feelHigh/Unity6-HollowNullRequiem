@@ -148,42 +148,21 @@ namespace HNR.UI
 
         /// <summary>
         /// Cache all screens from containers for fast lookup.
-        /// If no containers are assigned, searches the entire scene.
+        /// If no containers are assigned or valid, searches the entire scene.
         /// </summary>
         private void CacheScreens()
         {
-            // Cache screens from main container
-            if (_screenContainer != null)
+            // Since UIManager persists via DontDestroyOnLoad, container references from
+            // the original scene become invalid when new scenes load.
+            // Always do a scene-wide search to find screens in any scene.
+            var allScreens = FindObjectsByType<ScreenBase>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (var screen in allScreens)
             {
-                foreach (var screen in _screenContainer.GetComponentsInChildren<ScreenBase>(true))
-                {
-                    _screens[screen.GetType()] = screen;
-                    screen.gameObject.SetActive(false);
-                }
+                _screens[screen.GetType()] = screen;
+                screen.gameObject.SetActive(false);
             }
 
-            // Cache screens from overlay container
-            if (_overlayContainer != null)
-            {
-                foreach (var screen in _overlayContainer.GetComponentsInChildren<ScreenBase>(true))
-                {
-                    _screens[screen.GetType()] = screen;
-                    screen.gameObject.SetActive(false);
-                }
-            }
-
-            // If no containers set, search entire scene for screens
-            if (_screenContainer == null && _overlayContainer == null)
-            {
-                var allScreens = FindObjectsByType<ScreenBase>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-                foreach (var screen in allScreens)
-                {
-                    _screens[screen.GetType()] = screen;
-                    screen.gameObject.SetActive(false);
-                }
-            }
-
-            Debug.Log($"[UIManager] Cached {_screens.Count} screens.");
+            Debug.Log($"[UIManager] Cached {_screens.Count} screens from scene.");
         }
 
         // ============================================

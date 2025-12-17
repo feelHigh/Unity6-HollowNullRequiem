@@ -8,6 +8,7 @@ using UnityEngine;
 using HNR.Core;
 using HNR.Core.Events;
 using HNR.Core.Interfaces;
+using HNR.Combat;
 using HNR.UI;
 
 namespace HNR.Map
@@ -69,8 +70,17 @@ namespace HNR.Map
         public override void OnHide()
         {
             base.OnHide();
+            UnsubscribeFromEvents();
+        }
 
-            // Unsubscribe from events
+        private void OnDestroy()
+        {
+            // Ensure we unsubscribe when destroyed (scene change)
+            UnsubscribeFromEvents();
+        }
+
+        private void UnsubscribeFromEvents()
+        {
             EventBus.Unsubscribe<MapGeneratedEvent>(OnMapGenerated);
             EventBus.Unsubscribe<PlayerMovedToNodeEvent>(OnPlayerMoved);
             EventBus.Unsubscribe<NodeCompletedEvent>(OnNodeCompleted);
@@ -253,6 +263,10 @@ namespace HNR.Map
                 return;
             }
 
+            // Set pending combat data for CombatBootstrap
+            int zone = _mapManager?.CurrentZone ?? 1;
+            CombatBootstrap.SetPendingCombat(node.Encounter, zone);
+
             // Transition to combat state
             if (ServiceLocator.TryGet<IGameManager>(out var gameManager))
             {
@@ -262,6 +276,7 @@ namespace HNR.Map
             else
             {
                 Debug.LogWarning("[MapScreen] GameManager not available for combat transition");
+                CombatBootstrap.ClearPendingCombat();
             }
         }
 

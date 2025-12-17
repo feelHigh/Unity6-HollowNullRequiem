@@ -114,12 +114,28 @@ namespace HNR.Core.GameStates
             // Ensure we're unsubscribed
             SceneManager.sceneLoaded -= OnNullRiftSceneLoaded;
 
-            // Save run state
-            var runManager = ServiceLocator.Get<IRunManager>();
-            if (runManager?.IsRunActive == true)
+            // Skip saving during application quit (editor play mode exit or app shutdown)
+            // Services may already be destroyed at this point
+            if (Application.isPlaying && !IsApplicationQuitting())
             {
-                runManager.SaveRun();
+                // Save run state
+                if (ServiceLocator.TryGet<IRunManager>(out var runManager) && runManager.IsRunActive)
+                {
+                    runManager.SaveRun();
+                }
             }
+        }
+
+        /// <summary>
+        /// Check if the application is in the process of quitting.
+        /// </summary>
+        private static bool IsApplicationQuitting()
+        {
+#if UNITY_EDITOR
+            return !UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode;
+#else
+            return false;
+#endif
         }
     }
 }

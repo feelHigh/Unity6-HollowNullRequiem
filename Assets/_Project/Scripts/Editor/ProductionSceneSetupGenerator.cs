@@ -282,6 +282,10 @@ namespace HNR.Editor
             combatManagerObj.transform.SetParent(managersParent.transform);
             combatManagerObj.AddComponent<CombatManager>();
 
+            GameObject combatBootstrapObj = new GameObject("CombatBootstrap");
+            combatBootstrapObj.transform.SetParent(managersParent.transform);
+            combatBootstrapObj.AddComponent<CombatBootstrap>();
+
             // === Main Canvas ===
             GameObject canvasObj = CreateMainCanvas("CombatCanvas");
 

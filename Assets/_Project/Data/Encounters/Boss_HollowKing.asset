@@ -9,16 +9,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00000000000000000000000000000000, type: 3}
+  m_Script: {fileID: 11500000, guid: 5fe8c41b14aea83488f0b3926000b444, type: 3}
   m_Name: Boss_HollowKing
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   _encounterId: boss_hollow_king
   _encounterName: The Hollow King
   _zone: 1
   _difficulty: 4
   _isElite: 0
   _isBoss: 1
-  _enemyPool: []
+  _enemyPool:
+  - {fileID: 11400000, guid: edf96fd5f55a332448ad1f7d798c94f6, type: 2}
   _minEnemies: 1
   _maxEnemies: 1
   _fixedFormation: []

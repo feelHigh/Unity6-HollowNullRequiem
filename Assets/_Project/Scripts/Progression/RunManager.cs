@@ -263,7 +263,10 @@ namespace HNR.Progression
             UpdateMetaProgression(victory);
 
             // Delete run save
-            ServiceLocator.Get<ISaveManager>()?.DeleteRun();
+            if (ServiceLocator.TryGet<ISaveManager>(out var saveManager))
+            {
+                saveManager.DeleteRun();
+            }
 
             _isRunActive = false;
 
@@ -275,8 +278,7 @@ namespace HNR.Progression
 
         private void UpdateMetaProgression(bool victory)
         {
-            var saveManager = ServiceLocator.Get<ISaveManager>();
-            if (saveManager == null) return;
+            if (!ServiceLocator.TryGet<ISaveManager>(out var saveManager)) return;
 
             var meta = saveManager.LoadMeta();
             meta.TotalRunsStarted++;
@@ -322,8 +324,11 @@ namespace HNR.Progression
                 Stats = _stats
             };
 
-            ServiceLocator.Get<ISaveManager>()?.SaveRun(saveData);
-            Debug.Log("[RunManager] Run saved");
+            if (ServiceLocator.TryGet<ISaveManager>(out var saveManager))
+            {
+                saveManager.SaveRun(saveData);
+                Debug.Log("[RunManager] Run saved");
+            }
         }
 
         /// <summary>
@@ -378,8 +383,8 @@ namespace HNR.Progression
 
         private ProgressionSaveData CreateProgressionSaveData()
         {
-            var shopManager = ServiceLocator.Get<IShopManager>();
-            var relicManager = ServiceLocator.Get<IRelicManager>();
+            ServiceLocator.TryGet<IShopManager>(out var shopManager);
+            ServiceLocator.TryGet<IRelicManager>(out var relicManager);
 
             return new ProgressionSaveData
             {

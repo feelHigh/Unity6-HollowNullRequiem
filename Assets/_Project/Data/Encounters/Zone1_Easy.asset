@@ -9,20 +9,22 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00000000000000000000000000000000, type: 3}
+  m_Script: {fileID: 11500000, guid: 5fe8c41b14aea83488f0b3926000b444, type: 3}
   m_Name: Zone1_Easy
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   _encounterId: zone1_easy
   _encounterName: Hollow Depths - Easy
   _zone: 1
   _difficulty: 0
   _isElite: 0
   _isBoss: 0
-  _enemyPool: []
+  _enemyPool:
+  - {fileID: 11400000, guid: c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6, type: 2}
+  - {fileID: 11400000, guid: e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6, type: 2}
   _minEnemies: 1
   _maxEnemies: 2
   _fixedFormation: []
   _rewardMultiplier: 1
   _guaranteedCardTier: 0
   _arenaCorruptionPerTurn: 0
-  _arenaDescription:
+  _arenaDescription: 

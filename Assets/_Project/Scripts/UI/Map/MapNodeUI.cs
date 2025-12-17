@@ -68,6 +68,16 @@ namespace HNR.Map
         [SerializeField, Tooltip("Color when node is visited")]
         private Color _visitedColor = new Color(0.5f, 0.5f, 0.5f, 1f);
 
+        [Header("Node Type Colors")]
+        [SerializeField] private Color _startColor = new Color(0.3f, 0.8f, 0.3f, 1f);      // Green
+        [SerializeField] private Color _combatColor = new Color(0.9f, 0.3f, 0.3f, 1f);     // Red
+        [SerializeField] private Color _eliteColor = new Color(0.8f, 0.2f, 0.6f, 1f);      // Magenta
+        [SerializeField] private Color _shopColor = new Color(1f, 0.84f, 0f, 1f);          // Gold
+        [SerializeField] private Color _echoColor = new Color(0.4f, 0.6f, 0.9f, 1f);       // Blue
+        [SerializeField] private Color _sanctuaryColor = new Color(0.5f, 0.9f, 0.5f, 1f);  // Light Green
+        [SerializeField] private Color _treasureColor = new Color(1f, 0.6f, 0.1f, 1f);     // Orange
+        [SerializeField] private Color _bossColor = new Color(0.6f, 0.1f, 0.1f, 1f);       // Dark Red
+
         // ============================================
         // Runtime State
         // ============================================
@@ -147,7 +157,21 @@ namespace HNR.Map
         {
             if (_background == null) return;
 
-            _background.color = GetColorForState(_nodeData.State);
+            // Use node type color for available/current nodes, state color otherwise
+            if (_nodeData.State == NodeState.Available || _nodeData.State == NodeState.Current)
+            {
+                var typeColor = GetColorForType(_nodeData.Type);
+                // Add golden tint for current node
+                if (_nodeData.State == NodeState.Current)
+                {
+                    typeColor = Color.Lerp(typeColor, _currentColor, 0.3f);
+                }
+                _background.color = typeColor;
+            }
+            else
+            {
+                _background.color = GetColorForState(_nodeData.State);
+            }
         }
 
         private void UpdateIndicators()
@@ -194,6 +218,22 @@ namespace HNR.Map
                 NodeState.Current => _currentColor,
                 NodeState.Visited => _visitedColor,
                 _ => _lockedColor
+            };
+        }
+
+        private Color GetColorForType(NodeType type)
+        {
+            return type switch
+            {
+                NodeType.Start => _startColor,
+                NodeType.Combat => _combatColor,
+                NodeType.Elite => _eliteColor,
+                NodeType.Shop => _shopColor,
+                NodeType.Echo => _echoColor,
+                NodeType.Sanctuary => _sanctuaryColor,
+                NodeType.Treasure => _treasureColor,
+                NodeType.Boss => _bossColor,
+                _ => _combatColor
             };
         }
 

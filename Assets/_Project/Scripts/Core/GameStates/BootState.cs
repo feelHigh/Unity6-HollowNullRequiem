@@ -43,8 +43,8 @@ namespace HNR.Core.GameStates
             Debug.Log("[BootState] Initializing core systems...");
 
             // ServiceLocator is already initialized by GameManager.Awake()
-            // Clear any stale event subscribers from previous session
-            EventBus.Clear();
+            // Note: EventBus is reset via RuntimeInitializeOnLoadMethod - no manual Clear() needed
+            // (Manual Clear() here would wipe GameManager's subscriptions)
 
             // Initialize core services in dependency order
             InitializeSaveManager();

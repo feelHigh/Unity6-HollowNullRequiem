@@ -34,7 +34,14 @@ namespace HNR.Core.Events
     /// </example>
     public static class EventBus
     {
-        private static readonly Dictionary<Type, List<Delegate>> _subscribers = new();
+        private static Dictionary<Type, List<Delegate>> _subscribers = new();
+
+        // Reset static state when entering play mode (Editor only)
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            _subscribers = new Dictionary<Type, List<Delegate>>();
+        }
 
         /// <summary>
         /// Subscribe to an event type.
