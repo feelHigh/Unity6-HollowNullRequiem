@@ -3,11 +3,16 @@
 // Manages Echo (narrative) event execution
 // ============================================
 
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using HNR.Core;
 using HNR.Core.Events;
+using HNR.Core.Interfaces;
 using HNR.Characters;
+using HNR.Cards;
 using HNR.Combat;
+using HNR.Progression;
 
 namespace HNR.Map
 {
@@ -32,6 +37,10 @@ namespace HNR.Map
         private EchoEventDataSO _currentEvent;
         private EchoChoice _selectedChoice;
 
+        // Caches for card/relic lookups
+        private Dictionary<string, CardDataSO> _cardCache = new();
+        private Dictionary<string, RelicDataSO> _relicCache = new();
+
         // ============================================
         // Properties
         // ============================================
@@ -49,6 +58,35 @@ namespace HNR.Map
         private void Awake()
         {
             ServiceLocator.Register(this);
+            CacheResources();
+        }
+
+        /// <summary>
+        /// Cache card and relic assets for ID-based lookups.
+        /// </summary>
+        private void CacheResources()
+        {
+            // Cache all cards
+            var allCards = Resources.LoadAll<CardDataSO>("Data/Cards");
+            foreach (var card in allCards)
+            {
+                if (card != null && !string.IsNullOrEmpty(card.CardId))
+                {
+                    _cardCache[card.CardId] = card;
+                }
+            }
+
+            // Cache all relics
+            var allRelics = Resources.LoadAll<RelicDataSO>("Data/Relics");
+            foreach (var relic in allRelics)
+            {
+                if (relic != null && !string.IsNullOrEmpty(relic.RelicId))
+                {
+                    _relicCache[relic.RelicId] = relic;
+                }
+            }
+
+            Debug.Log($"[EchoEventManager] Cached {_cardCache.Count} cards, {_relicCache.Count} relics");
         }
 
         private void OnDestroy()
@@ -261,35 +299,75 @@ namespace HNR.Map
 
         private void ApplyGoldChange(int amount)
         {
-            // TODO: Integrate with RunManager/CurrencyManager
-            Debug.Log($"[EchoEvent] Gold {(amount >= 0 ? "+" : "")}{amount}");
+            // VoidShards are the currency in HNR (equivalent to gold)
+            if (ServiceLocator.TryGet<IShopManager>(out var shopManager))
+            {
+                if (amount > 0)
+                {
+                    shopManager.AddVoidShards(amount);
+                    Debug.Log($"[EchoEvent] Gained {amount} Void Shards");
+                }
+                else if (amount < 0)
+                {
+                    // Spend shards (doesn't fail if insufficient - just takes what's available)
+                    int toSpend = Mathf.Min(-amount, shopManager.VoidShards);
+                    if (toSpend > 0)
+                    {
+                        shopManager.SpendVoidShards(toSpend);
+                    }
+                    Debug.Log($"[EchoEvent] Lost {toSpend} Void Shards");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[EchoEvent] ShopManager not available - cannot apply gold change: {amount}");
+            }
         }
 
         private void ApplyHPChange(int amount)
         {
-            if (ServiceLocator.TryGet<TurnManager>(out var turnManager))
+            // Use RunManager for persistent HP changes (outside combat)
+            if (ServiceLocator.TryGet<IRunManager>(out var runManager))
             {
                 if (amount > 0)
                 {
-                    turnManager.HealTeam(amount);
+                    runManager.HealTeam(amount);
                     Debug.Log($"[EchoEvent] Healed {amount} HP");
                 }
-                else
+                else if (amount < 0)
                 {
-                    turnManager.DamageTeam(-amount);
+                    runManager.DamageTeam(-amount);
                     Debug.Log($"[EchoEvent] Damaged {-amount} HP");
                 }
             }
             else
             {
-                Debug.Log($"[EchoEvent] HP {(amount >= 0 ? "+" : "")}{amount} (TurnManager not available)");
+                Debug.LogWarning($"[EchoEvent] RunManager not available - cannot apply HP change: {amount}");
             }
         }
 
         private void ApplyMaxHPChange(int amount)
         {
-            // TODO: Integrate with team max HP system
-            Debug.Log($"[EchoEvent] Max HP {(amount >= 0 ? "+" : "")}{amount}");
+            if (ServiceLocator.TryGet<IRunManager>(out var runManager))
+            {
+                if (amount > 0)
+                {
+                    runManager.IncreaseMaxHP(amount);
+                    Debug.Log($"[EchoEvent] Max HP increased by {amount}");
+                }
+                else if (amount < 0)
+                {
+                    // For negative max HP, we need to reduce it
+                    // RunManager doesn't have DecreaseMaxHP, so we'll publish an event
+                    // that can be handled by whatever system manages this
+                    EventBus.Publish(new MaxHPChangedEvent(amount));
+                    Debug.Log($"[EchoEvent] Max HP decreased by {-amount}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[EchoEvent] RunManager not available - cannot apply max HP change: {amount}");
+            }
         }
 
         private void ApplyCorruptionChange(int amount)
@@ -298,61 +376,216 @@ namespace HNR.Map
             {
                 if (amount > 0)
                 {
-                    // Apply to random team member or spread
-                    Debug.Log($"[EchoEvent] Corruption +{amount}");
+                    corruptionManager.AddCorruptionToTeam(amount);
+                    Debug.Log($"[EchoEvent] Team gained {amount} corruption");
                 }
-                else
+                else if (amount < 0)
                 {
-                    Debug.Log($"[EchoEvent] Corruption {amount}");
+                    corruptionManager.RemoveCorruptionFromTeam(-amount);
+                    Debug.Log($"[EchoEvent] Team purified {-amount} corruption");
                 }
             }
             else
             {
-                Debug.Log($"[EchoEvent] Corruption {(amount >= 0 ? "+" : "")}{amount} (CorruptionManager not available)");
+                Debug.LogWarning($"[EchoEvent] CorruptionManager not available - cannot apply corruption change: {amount}");
             }
         }
 
         private void AddCard(string cardId)
         {
-            // TODO: Integrate with DeckManager/RunManager
-            Debug.Log($"[EchoEvent] Added card: {cardId}");
+            if (string.IsNullOrEmpty(cardId))
+            {
+                Debug.LogWarning("[EchoEvent] Cannot add card - cardId is null or empty");
+                return;
+            }
+
+            if (_cardCache.TryGetValue(cardId, out var card))
+            {
+                if (ServiceLocator.TryGet<IRunManager>(out var runManager))
+                {
+                    runManager.AddCardToDeck(card);
+                    Debug.Log($"[EchoEvent] Added card to deck: {card.CardName}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[EchoEvent] RunManager not available - cannot add card: {cardId}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[EchoEvent] Card not found in cache: {cardId}");
+            }
         }
 
         private void RemoveCard(string cardId)
         {
-            // TODO: Integrate with DeckManager/RunManager
-            Debug.Log($"[EchoEvent] Removed card: {cardId}");
+            if (string.IsNullOrEmpty(cardId))
+            {
+                Debug.LogWarning("[EchoEvent] Cannot remove card - cardId is null or empty");
+                return;
+            }
+
+            if (_cardCache.TryGetValue(cardId, out var card))
+            {
+                if (ServiceLocator.TryGet<IRunManager>(out var runManager))
+                {
+                    runManager.RemoveCardFromDeck(card);
+                    Debug.Log($"[EchoEvent] Removed card from deck: {card.CardName}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[EchoEvent] RunManager not available - cannot remove card: {cardId}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[EchoEvent] Card not found in cache: {cardId}");
+            }
         }
 
         private void UpgradeRandomCard()
         {
-            // TODO: Integrate with card upgrade system
-            Debug.Log("[EchoEvent] Upgraded random card");
+            if (!ServiceLocator.TryGet<IRunManager>(out var runManager))
+            {
+                Debug.LogWarning("[EchoEvent] RunManager not available - cannot upgrade card");
+                return;
+            }
+
+            var deck = runManager.Deck;
+            if (deck == null || deck.Count == 0)
+            {
+                Debug.Log("[EchoEvent] No cards in deck to upgrade");
+                return;
+            }
+
+            // Find cards that aren't already upgraded
+            var upgradableCards = deck.Where(c => c != null && !runManager.IsCardUpgraded(c.CardId)).ToList();
+
+            if (upgradableCards.Count == 0)
+            {
+                Debug.Log("[EchoEvent] All cards already upgraded");
+                return;
+            }
+
+            // Pick a random card to upgrade
+            var cardToUpgrade = upgradableCards[Random.Range(0, upgradableCards.Count)];
+            runManager.UpgradeCard(cardToUpgrade);
+            Debug.Log($"[EchoEvent] Upgraded card: {cardToUpgrade.CardName}");
         }
 
         private void AddRelic(string relicId)
         {
-            // TODO: Integrate with RelicManager
-            Debug.Log($"[EchoEvent] Added relic: {relicId}");
+            if (string.IsNullOrEmpty(relicId))
+            {
+                Debug.LogWarning("[EchoEvent] Cannot add relic - relicId is null or empty");
+                return;
+            }
+
+            if (_relicCache.TryGetValue(relicId, out var relic))
+            {
+                if (ServiceLocator.TryGet<IRelicManager>(out var relicManager))
+                {
+                    relicManager.AddRelic(relic);
+                    Debug.Log($"[EchoEvent] Added relic: {relic.RelicName}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[EchoEvent] RelicManager not available - cannot add relic: {relicId}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[EchoEvent] Relic not found in cache: {relicId}");
+            }
         }
 
         private void AddRandomCard()
         {
-            // TODO: Integrate with card reward system
-            Debug.Log("[EchoEvent] Added random card");
+            if (_cardCache.Count == 0)
+            {
+                Debug.LogWarning("[EchoEvent] No cards in cache for random selection");
+                return;
+            }
+
+            if (!ServiceLocator.TryGet<IRunManager>(out var runManager))
+            {
+                Debug.LogWarning("[EchoEvent] RunManager not available - cannot add random card");
+                return;
+            }
+
+            // Get cards not already in deck (or allow duplicates for deckbuilders)
+            var availableCards = _cardCache.Values.ToList();
+            if (availableCards.Count == 0)
+            {
+                Debug.Log("[EchoEvent] No cards available for random selection");
+                return;
+            }
+
+            var randomCard = availableCards[Random.Range(0, availableCards.Count)];
+            runManager.AddCardToDeck(randomCard);
+            Debug.Log($"[EchoEvent] Added random card: {randomCard.CardName}");
         }
 
         private void AddRandomRelic()
         {
-            // TODO: Integrate with relic reward system
-            Debug.Log("[EchoEvent] Added random relic");
+            if (_relicCache.Count == 0)
+            {
+                Debug.LogWarning("[EchoEvent] No relics in cache for random selection");
+                return;
+            }
+
+            if (!ServiceLocator.TryGet<IRelicManager>(out var relicManager))
+            {
+                Debug.LogWarning("[EchoEvent] RelicManager not available - cannot add random relic");
+                return;
+            }
+
+            // Get relics not already owned
+            var availableRelics = _relicCache.Values
+                .Where(r => !relicManager.HasRelic(r.RelicId))
+                .ToList();
+
+            if (availableRelics.Count == 0)
+            {
+                Debug.Log("[EchoEvent] All relics already owned");
+                return;
+            }
+
+            var randomRelic = availableRelics[Random.Range(0, availableRelics.Count)];
+            relicManager.AddRelic(randomRelic);
+            Debug.Log($"[EchoEvent] Added random relic: {randomRelic.RelicName}");
         }
 
         private void StartCombatEncounter()
         {
-            // TODO: Setup special combat from Echo event
-            Debug.Log("[EchoEvent] Starting combat encounter");
+            // Publish event for GameManager to handle combat transition
+            // The current event may have specific encounter data attached
+            EventBus.Publish(new EchoCombatRequestedEvent(_currentEvent));
+            Debug.Log("[EchoEvent] Requested combat encounter from Echo event");
         }
+    }
+
+    // ============================================
+    // Additional Events for Echo Outcomes
+    // ============================================
+
+    /// <summary>
+    /// Published when an Echo event requests a max HP change.
+    /// Handles negative max HP changes that RunManager doesn't directly support.
+    /// </summary>
+    public class MaxHPChangedEvent : GameEvent
+    {
+        public int Delta { get; }
+        public MaxHPChangedEvent(int delta) => Delta = delta;
+    }
+
+    /// <summary>
+    /// Published when an Echo event triggers a combat encounter.
+    /// </summary>
+    public class EchoCombatRequestedEvent : GameEvent
+    {
+        public EchoEventDataSO SourceEvent { get; }
+        public EchoCombatRequestedEvent(EchoEventDataSO sourceEvent) => SourceEvent = sourceEvent;
     }
 
     // ============================================

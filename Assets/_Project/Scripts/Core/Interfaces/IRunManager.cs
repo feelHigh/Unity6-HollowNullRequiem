@@ -121,6 +121,13 @@ namespace HNR.Core.Interfaces
         void IncreaseMaxHP(int amount);
 
         /// <summary>
+        /// Decrease the team's maximum HP (e.g., from curses).
+        /// Current HP is clamped to new max.
+        /// </summary>
+        /// <param name="amount">Amount to decrease.</param>
+        void DecreaseMaxHP(int amount);
+
+        /// <summary>
         /// Advance to the next zone.
         /// </summary>
         void AdvanceZone();

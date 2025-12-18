@@ -11,6 +11,7 @@ using HNR.Core.Events;
 using HNR.Core.Interfaces;
 using HNR.Cards;
 using HNR.Characters;
+using HNR.Map;
 
 namespace HNR.Progression
 {
@@ -137,6 +138,7 @@ namespace HNR.Progression
             EventBus.Subscribe<DamageDealtEvent>(OnDamageDealt);
             EventBus.Subscribe<HealingReceivedEvent>(OnHealingReceived);
             EventBus.Subscribe<CardPlayedEvent>(OnCardPlayed);
+            EventBus.Subscribe<MaxHPChangedEvent>(OnMaxHPChanged);
         }
 
         private void UnsubscribeFromEvents()
@@ -146,6 +148,7 @@ namespace HNR.Progression
             EventBus.Unsubscribe<DamageDealtEvent>(OnDamageDealt);
             EventBus.Unsubscribe<HealingReceivedEvent>(OnHealingReceived);
             EventBus.Unsubscribe<CardPlayedEvent>(OnCardPlayed);
+            EventBus.Unsubscribe<MaxHPChangedEvent>(OnMaxHPChanged);
         }
 
         // ============================================
@@ -185,6 +188,16 @@ namespace HNR.Progression
         private void OnCardPlayed(CardPlayedEvent evt)
         {
             _stats.CardsPlayed++;
+        }
+
+        private void OnMaxHPChanged(MaxHPChangedEvent evt)
+        {
+            // Handle negative max HP changes from Echo events
+            if (evt.Delta < 0)
+            {
+                DecreaseMaxHP(-evt.Delta);
+            }
+            // Positive changes are handled directly via IncreaseMaxHP
         }
 
         // ============================================
@@ -572,6 +585,26 @@ namespace HNR.Progression
             _teamMaxHP += amount;
             _teamCurrentHP += amount;
             Debug.Log($"[RunManager] Max HP increased by {amount}. New max: {_teamMaxHP}");
+        }
+
+        /// <summary>
+        /// Decrease max HP (e.g., from Echo event curses).
+        /// Current HP is clamped to new max.
+        /// </summary>
+        public void DecreaseMaxHP(int amount)
+        {
+            if (amount <= 0) return;
+
+            int oldMax = _teamMaxHP;
+            _teamMaxHP = Mathf.Max(1, _teamMaxHP - amount); // Minimum 1 max HP
+            _teamCurrentHP = Mathf.Min(_teamCurrentHP, _teamMaxHP);
+
+            Debug.Log($"[RunManager] Max HP decreased by {amount}. {oldMax} → {_teamMaxHP}, Current: {_teamCurrentHP}");
+
+            if (_teamCurrentHP <= 0)
+            {
+                EndRun(false);
+            }
         }
 
         /// <summary>
