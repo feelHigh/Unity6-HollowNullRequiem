@@ -9,6 +9,7 @@ using HNR.Core;
 using HNR.Core.Events;
 using HNR.Cards;
 using HNR.Characters;
+using HNR.Characters.Visuals;
 
 namespace HNR.Combat
 {
@@ -255,6 +256,9 @@ namespace HNR.Combat
             _context.CurrentAP -= instance.CurrentCost;
             EventBus.Publish(new APChangedEvent(_context.CurrentAP, _context.MaxAP));
 
+            // Trigger animation on the card owner's visual
+            PlayCardAnimation(instance);
+
             // Execute card effects via CardExecutor
             if (ServiceLocator.TryGet<CardExecutor>(out var executor))
             {
@@ -417,6 +421,86 @@ namespace HNR.Combat
             _context.SoulEssence += amount;
             EventBus.Publish(new SoulEssenceChangedEvent(_context.SoulEssence, _context.SoulEssence - amount));
             Debug.Log($"[TurnManager] Gained {amount} Soul Essence. Current: {_context.SoulEssence}");
+        }
+
+        // ============================================
+        // Animation
+        // ============================================
+
+        /// <summary>
+        /// Play animation on the card owner's visual based on card type.
+        /// </summary>
+        /// <param name="cardInstance">The card being played</param>
+        private void PlayCardAnimation(CardInstance cardInstance)
+        {
+            if (cardInstance?.Data == null)
+            {
+                Debug.LogWarning("[TurnManager] PlayCardAnimation - cardInstance or Data is null");
+                return;
+            }
+
+            Debug.Log($"[TurnManager] PlayCardAnimation called for: {cardInstance.Data.CardName}, Type: {cardInstance.Data.CardType}");
+
+            // Find the RequiemInstance that owns this card
+            RequiemInstance owner = null;
+            var ownerData = cardInstance.Data.Owner;
+
+            Debug.Log($"[TurnManager] Card owner data: {(ownerData != null ? ownerData.RequiemName : "NULL (neutral card)")}");
+
+            if (ownerData != null)
+            {
+                // Find matching RequiemInstance in team
+                foreach (var requiem in _context.Team)
+                {
+                    Debug.Log($"[TurnManager] Checking team member: {requiem.Name}, Data match: {requiem.Data == ownerData}");
+                    if (requiem.Data == ownerData)
+                    {
+                        owner = requiem;
+                        break;
+                    }
+                }
+            }
+
+            // If no owner found (neutral card), use first team member
+            if (owner == null && _context.Team.Count > 0)
+            {
+                owner = _context.Team[0];
+                Debug.Log($"[TurnManager] Using first team member as fallback: {owner.Name}");
+            }
+
+            if (owner == null)
+            {
+                Debug.LogWarning($"[TurnManager] No owner found for card: {cardInstance.Data.CardName}");
+                return;
+            }
+
+            Debug.Log($"[TurnManager] Owner found: {owner.Name}, Visual: {(owner.Visual != null ? "EXISTS" : "NULL")}");
+
+            if (owner.Visual == null)
+            {
+                Debug.LogWarning($"[TurnManager] No visual found for card animation: {cardInstance.Data.CardName}, Owner: {owner.Name}");
+                return;
+            }
+
+            // Play animation based on card type
+            switch (cardInstance.Data.CardType)
+            {
+                case CardType.Strike:
+                    owner.Visual.PlayAttack(owner.Data?.PreferredAttackType ?? AttackType.Slash);
+                    Debug.Log($"[TurnManager] {owner.Name} plays attack animation for {cardInstance.Data.CardName}");
+                    break;
+
+                case CardType.Guard:
+                    owner.Visual.PlayBlock();
+                    Debug.Log($"[TurnManager] {owner.Name} plays block animation for {cardInstance.Data.CardName}");
+                    break;
+
+                case CardType.Skill:
+                case CardType.Power:
+                    owner.Visual.PlaySkill();
+                    Debug.Log($"[TurnManager] {owner.Name} plays skill animation for {cardInstance.Data.CardName}");
+                    break;
+            }
         }
     }
 }

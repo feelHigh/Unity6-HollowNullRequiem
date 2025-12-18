@@ -304,6 +304,18 @@ namespace HNR.Editor
             ProductionSetupTool.LinkAllVisualPrefabs();
         }
 
+        [MenuItem("HNR/3. Production/Setup Requiem Visuals (Add Component + Link)", priority = 53)]
+        public static void SetupRequiemVisuals()
+        {
+            ProductionSetupTool.SetupAndLinkRequiemVisuals();
+        }
+
+        [MenuItem("HNR/3. Production/Setup Enemy Visuals (Add Component + Link)", priority = 54)]
+        public static void SetupEnemyVisuals()
+        {
+            ProductionSetupTool.SetupAndLinkEnemyVisuals();
+        }
+
         // ============================================
         // 4. Audio & VFX (priority 70-79)
         // ============================================

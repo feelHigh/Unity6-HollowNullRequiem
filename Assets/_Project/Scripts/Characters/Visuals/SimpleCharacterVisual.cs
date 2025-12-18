@@ -22,16 +22,17 @@ namespace HNR.Characters.Visuals
         [SerializeField] private SpriteRenderer _renderer;
         [SerializeField] private Animator _animator;
 
-        [Header("Animation Parameters")]
-        [SerializeField] private string _attackTrigger = "Attack";
+        [Header("Animation Parameters (HeroEditor)")]
+        [SerializeField] private string _attackTrigger = "Slash";
+        [SerializeField] private string _jabTrigger = "Jab";
         [SerializeField] private string _hitTrigger = "Hit";
-        [SerializeField] private string _deathTrigger = "Death";
-        [SerializeField] private string _blockTrigger = "Block";
-        [SerializeField] private string _skillTrigger = "Skill";
+        [SerializeField] private string _deathBoolBack = "DieBack";
+        [SerializeField] private string _deathBoolFront = "DieFront";
+        [SerializeField] private string _skillTrigger = "Cast";
 
         [Header("Settings")]
-        [SerializeField] private float _attackShakeAmount = 0.1f;
-        [SerializeField] private float _hitShakeAmount = 0.15f;
+        [SerializeField] private float _attackShakeAmount = 0f; // Disabled - causes position issues
+        [SerializeField] private float _hitShakeAmount = 0f; // Disabled - causes position issues
 
         // ============================================
         // Private State
@@ -42,6 +43,9 @@ namespace HNR.Characters.Visuals
         private Coroutine _shakeCoroutine;
         private Vector3 _originalPosition;
         private Color _originalColor;
+
+        [Header("Position Lock")]
+        [SerializeField] private bool _lockPosition = true;
 
         // ============================================
         // Properties
@@ -62,14 +66,45 @@ namespace HNR.Characters.Visuals
 
             if (_animator == null)
             {
-                _animator = GetComponentInChildren<Animator>();
+                // HeroEditor prefabs have animator in "Animation" child
+                var animationChild = transform.Find("Animation");
+                if (animationChild != null)
+                {
+                    _animator = animationChild.GetComponent<Animator>();
+                }
+
+                // Fallback to searching all children
+                if (_animator == null)
+                {
+                    _animator = GetComponentInChildren<Animator>();
+                }
             }
 
-            _originalPosition = transform.localPosition;
+            // Disable root motion to prevent animations from moving the character
+            if (_animator != null)
+            {
+                _animator.applyRootMotion = false;
+            }
+
+            // For combat visuals, we want to stay at local origin
+            // The parent (RequiemInstance) handles world positioning
+            _originalPosition = Vector3.zero;
+            transform.localPosition = Vector3.zero;
 
             if (_renderer != null)
             {
                 _originalColor = _renderer.color;
+            }
+
+            Debug.Log($"[SimpleCharacterVisual] Initialized - Animator: {(_animator != null ? _animator.name : "NULL")}");
+        }
+
+        private void LateUpdate()
+        {
+            // Lock position to prevent animation from moving the character
+            if (_lockPosition)
+            {
+                transform.localPosition = _originalPosition;
             }
         }
 
@@ -79,20 +114,35 @@ namespace HNR.Characters.Visuals
 
         public void PlayAttack(AttackType type = AttackType.Slash)
         {
-            TriggerAnimation(_attackTrigger);
-            ShakePosition(_attackShakeAmount, 0.2f);
+            // Use appropriate attack trigger based on type
+            string trigger = type == AttackType.Jab ? _jabTrigger : _attackTrigger;
+            TriggerAnimation(trigger);
+
+            if (_attackShakeAmount > 0)
+            {
+                ShakePosition(_attackShakeAmount, 0.2f);
+            }
         }
 
         public void PlayHit()
         {
             TriggerAnimation(_hitTrigger);
-            ShakePosition(_hitShakeAmount, 0.15f);
+
+            if (_hitShakeAmount > 0)
+            {
+                ShakePosition(_hitShakeAmount, 0.15f);
+            }
             FlashColor(Color.red, 0.1f);
         }
 
         public void PlayDeath(bool forward = false)
         {
-            TriggerAnimation(_deathTrigger);
+            // HeroEditor uses bool parameters for death, not triggers
+            if (_animator != null)
+            {
+                string deathBool = forward ? _deathBoolFront : _deathBoolBack;
+                _animator.SetBool(deathBool, true);
+            }
             _isAnimating = true;
         }
 
@@ -127,7 +177,9 @@ namespace HNR.Characters.Visuals
 
         public void PlayBlock()
         {
-            TriggerAnimation(_blockTrigger);
+            // HeroEditor doesn't have a dedicated block animation
+            // Use Cast as a defensive stance alternative
+            TriggerAnimation(_skillTrigger);
         }
 
         public void SetFacing(bool faceRight)
@@ -153,6 +205,11 @@ namespace HNR.Characters.Visuals
             if (_animator != null && !string.IsNullOrEmpty(trigger))
             {
                 _animator.SetTrigger(trigger);
+                Debug.Log($"[SimpleCharacterVisual] Triggered animation: {trigger} on {_animator.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"[SimpleCharacterVisual] Cannot trigger animation '{trigger}' - Animator: {(_animator != null ? _animator.name : "NULL")}");
             }
         }
 

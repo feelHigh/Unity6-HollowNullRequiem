@@ -351,14 +351,28 @@ namespace HNR.Editor
             GameObject enemySlotsParent = new GameObject("--- ENEMY SLOTS ---");
             Transform[] enemySlots = new Transform[3];
 
-            // Position enemy slots in world space (spread across screen)
-            float[] xPositions = { -3f, 0f, 3f };
+            // Position enemy slots in world space (right side of screen)
+            float[] enemyXPositions = { 3f, 5f, 7f };
             for (int i = 0; i < 3; i++)
             {
                 GameObject slot = new GameObject($"EnemySlot_{i}");
                 slot.transform.SetParent(enemySlotsParent.transform);
-                slot.transform.position = new Vector3(xPositions[i], 1.5f, 0f);
+                slot.transform.position = new Vector3(enemyXPositions[i], 0f, 0f);
                 enemySlots[i] = slot.transform;
+            }
+
+            // === Create World Space Ally Slots ===
+            GameObject allySlotsParent = new GameObject("--- ALLY SLOTS ---");
+            Transform[] allySlots = new Transform[3];
+
+            // Position ally slots in world space (left side of screen)
+            float[] allyXPositions = { -7f, -5f, -3f };
+            for (int i = 0; i < 3; i++)
+            {
+                GameObject slot = new GameObject($"AllySlot_{i}");
+                slot.transform.SetParent(allySlotsParent.transform);
+                slot.transform.position = new Vector3(allyXPositions[i], 0f, 0f);
+                allySlots[i] = slot.transform;
             }
 
             // === Wire EncounterManager ===
@@ -1550,6 +1564,28 @@ namespace HNR.Editor
                 SetPropertyIfExists(so, "_allyIndicatorContainer", worldSpaceAllyContainer.transform);
             else
                 Debug.LogWarning("[ProductionSceneSetupGenerator] WorldSpaceAllyIndicatorContainer not found - regenerate Combat scene");
+
+            // Wire ally slots
+            var allySlotsParent = GameObject.Find("--- ALLY SLOTS ---");
+            if (allySlotsParent != null)
+            {
+                var allySlotsArray = so.FindProperty("_allySlots");
+                if (allySlotsArray != null)
+                {
+                    int slotCount = allySlotsParent.transform.childCount;
+                    allySlotsArray.arraySize = slotCount;
+                    for (int i = 0; i < slotCount; i++)
+                    {
+                        var slot = allySlotsParent.transform.GetChild(i);
+                        allySlotsArray.GetArrayElementAtIndex(i).objectReferenceValue = slot;
+                    }
+                    Debug.Log($"[ProductionSceneSetupGenerator] Wired {slotCount} ally slots to CombatScreenCZN");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] Ally slots not found - regenerate Combat scene");
+            }
 
             // Wire Combat UI prefabs
             var enemyFloatingUIPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/Combat/EnemyFloatingUI.prefab");

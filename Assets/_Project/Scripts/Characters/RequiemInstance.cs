@@ -495,6 +495,7 @@ namespace HNR.Characters
             // Check if visual prefab is assigned
             if (_data?.VisualPrefab == null)
             {
+                Debug.LogWarning($"[RequiemInstance] {Name} has no VisualPrefab assigned in data!");
                 // Try to find existing ICharacterVisual component
                 _visual = GetComponentInChildren<ICharacterVisual>();
                 return;
@@ -510,6 +511,8 @@ namespace HNR.Characters
             var visualGO = Instantiate(_data.VisualPrefab, transform);
             visualGO.name = $"{Name}_Visual";
             visualGO.transform.localPosition = Vector3.zero;
+            visualGO.transform.localScale = Vector3.one * 0.5f; // Half size for combat display
+            Debug.Log($"[RequiemInstance] Instantiated visual for {Name}: {visualGO.name} at {visualGO.transform.position}");
 
             // Get the ICharacterVisual component
             _visual = visualGO.GetComponent<ICharacterVisual>();
@@ -522,6 +525,7 @@ namespace HNR.Characters
             {
                 // Set facing (Requiems face right by default)
                 _visual.SetFacing(true);
+                Debug.Log($"[RequiemInstance] {Name} visual initialized with ICharacterVisual");
             }
         }
 

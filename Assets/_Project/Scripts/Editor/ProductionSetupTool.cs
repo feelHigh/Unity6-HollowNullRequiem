@@ -18,6 +18,7 @@ using HNR.UI;
 using HNR.UI.Screens;
 using HNR.UI.Combat;
 using HNR.Map;
+using HNR.Characters.Visuals;
 
 namespace HNR.Editor
 {
@@ -83,6 +84,196 @@ namespace HNR.Editor
 
             AssetDatabase.SaveAssets();
             Debug.Log($"[ProductionSetupTool] Linked {linked} visual prefabs to data assets");
+        }
+
+        /// <summary>
+        /// Setup visual prefabs with SimpleCharacterVisual component and link to data assets.
+        /// </summary>
+        public static void SetupAndLinkRequiemVisuals()
+        {
+            string[] requiemNames = { "Kira", "Mordren", "Elara", "Thornwick" };
+            int setup = 0;
+            int linked = 0;
+
+            foreach (string name in requiemNames)
+            {
+                string prefabPath = $"{PREFABS_PATH}/Characters/Requiems/{name}_Visual.prefab";
+
+                // Data assets exist in both Data folder and Resources folder
+                string[] dataPaths = {
+                    $"{DATA_PATH}/Characters/Requiems/{name}_Data.asset",
+                    $"Assets/_Project/Resources/Data/Characters/Requiems/{name}_Data.asset"
+                };
+
+                var visualPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+
+                if (visualPrefab == null)
+                {
+                    Debug.LogWarning($"[ProductionSetupTool] Visual prefab not found: {prefabPath}");
+                    continue;
+                }
+
+                // Open prefab for editing to properly modify and save it
+                string assetPath = AssetDatabase.GetAssetPath(visualPrefab);
+                GameObject prefabRoot = PrefabUtility.LoadPrefabContents(assetPath);
+
+                // Add SimpleCharacterVisual component if missing
+                var visual = prefabRoot.GetComponent<SimpleCharacterVisual>();
+                bool needsSave = false;
+
+                if (visual == null)
+                {
+                    visual = prefabRoot.AddComponent<SimpleCharacterVisual>();
+                    needsSave = true;
+                    setup++;
+                    Debug.Log($"[ProductionSetupTool] Added SimpleCharacterVisual to {name}_Visual");
+                }
+
+                // Set correct HeroEditor animation trigger names via SerializedObject
+                SerializedObject visualSO = new SerializedObject(visual);
+                SetAnimationTriggerIfDifferent(visualSO, "_attackTrigger", "Slash", ref needsSave);
+                SetAnimationTriggerIfDifferent(visualSO, "_jabTrigger", "Jab", ref needsSave);
+                SetAnimationTriggerIfDifferent(visualSO, "_hitTrigger", "Hit", ref needsSave);
+                SetAnimationTriggerIfDifferent(visualSO, "_deathBoolBack", "DieBack", ref needsSave);
+                SetAnimationTriggerIfDifferent(visualSO, "_deathBoolFront", "DieFront", ref needsSave);
+                SetAnimationTriggerIfDifferent(visualSO, "_skillTrigger", "Cast", ref needsSave);
+                visualSO.ApplyModifiedProperties();
+
+                if (needsSave)
+                {
+                    Debug.Log($"[ProductionSetupTool] Updated animation triggers on {name}_Visual");
+                }
+
+                // Save and unload the prefab contents
+                PrefabUtility.SaveAsPrefabAsset(prefabRoot, assetPath);
+                PrefabUtility.UnloadPrefabContents(prefabRoot);
+
+                // Reload prefab reference for linking
+                visualPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+
+                // Link to ALL data assets (both Data and Resources folders)
+                foreach (string dataPath in dataPaths)
+                {
+                    var requiemData = AssetDatabase.LoadAssetAtPath<RequiemDataSO>(dataPath);
+
+                    if (requiemData != null)
+                    {
+                        SerializedObject so = new SerializedObject(requiemData);
+                        SerializedProperty visualProp = so.FindProperty("_visualPrefab");
+
+                        if (visualProp != null)
+                        {
+                            visualProp.objectReferenceValue = visualPrefab;
+                            so.ApplyModifiedProperties();
+                            linked++;
+                            Debug.Log($"[ProductionSetupTool] Linked {name}_Visual to {dataPath}");
+                        }
+                    }
+                }
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log($"[ProductionSetupTool] Setup {setup} visual prefabs, linked {linked} data assets");
+        }
+
+        /// <summary>
+        /// Setup visual prefabs with SimpleCharacterVisual component and link to data assets.
+        /// </summary>
+        public static void SetupAndLinkEnemyVisuals()
+        {
+            string enemyPrefabFolder = $"{PREFABS_PATH}/Characters/Enemies";
+            string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", new[] { enemyPrefabFolder });
+            int setup = 0;
+            int linked = 0;
+
+            foreach (string guid in prefabGuids)
+            {
+                string prefabPath = AssetDatabase.GUIDToAssetPath(guid);
+                var visualPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+
+                if (visualPrefab == null) continue;
+
+                // Open prefab for editing to properly modify and save it
+                string assetPath = AssetDatabase.GetAssetPath(visualPrefab);
+                GameObject prefabRoot = PrefabUtility.LoadPrefabContents(assetPath);
+
+                // Add SimpleCharacterVisual component if missing
+                var visual = prefabRoot.GetComponent<SimpleCharacterVisual>();
+                bool needsSave = false;
+
+                if (visual == null)
+                {
+                    visual = prefabRoot.AddComponent<SimpleCharacterVisual>();
+                    needsSave = true;
+                    setup++;
+                    Debug.Log($"[ProductionSetupTool] Added SimpleCharacterVisual to {visualPrefab.name}");
+                }
+
+                // Set correct HeroEditor animation trigger names via SerializedObject
+                SerializedObject visualSO = new SerializedObject(visual);
+                SetAnimationTriggerIfDifferent(visualSO, "_attackTrigger", "Slash", ref needsSave);
+                SetAnimationTriggerIfDifferent(visualSO, "_jabTrigger", "Jab", ref needsSave);
+                SetAnimationTriggerIfDifferent(visualSO, "_hitTrigger", "Hit", ref needsSave);
+                SetAnimationTriggerIfDifferent(visualSO, "_deathBoolBack", "DieBack", ref needsSave);
+                SetAnimationTriggerIfDifferent(visualSO, "_deathBoolFront", "DieFront", ref needsSave);
+                SetAnimationTriggerIfDifferent(visualSO, "_skillTrigger", "Cast", ref needsSave);
+                visualSO.ApplyModifiedProperties();
+
+                if (needsSave)
+                {
+                    Debug.Log($"[ProductionSetupTool] Updated animation triggers on {visualPrefab.name}");
+                }
+
+                // Save and unload the prefab contents
+                PrefabUtility.SaveAsPrefabAsset(prefabRoot, assetPath);
+                PrefabUtility.UnloadPrefabContents(prefabRoot);
+            }
+
+            // Now link to enemy data assets
+            string[] enemyDataGuids = AssetDatabase.FindAssets("t:EnemyDataSO", new[] { DATA_PATH });
+
+            foreach (string guid in enemyDataGuids)
+            {
+                string dataPath = AssetDatabase.GUIDToAssetPath(guid);
+                var enemyData = AssetDatabase.LoadAssetAtPath<EnemyDataSO>(dataPath);
+
+                if (enemyData == null) continue;
+
+                // Find matching visual prefab
+                string enemyName = enemyData.EnemyName.Replace(" ", "").Replace("_", "");
+                string[] possiblePaths = new[]
+                {
+                    $"{enemyPrefabFolder}/{enemyData.EnemyName.Replace(" ", "_")}_Visual.prefab",
+                    $"{enemyPrefabFolder}/{enemyName}_Visual.prefab",
+                    $"{enemyPrefabFolder}/{ExtractEnemyName(dataPath)}_Visual.prefab"
+                };
+
+                GameObject matchedPrefab = null;
+                foreach (string path in possiblePaths)
+                {
+                    matchedPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                    if (matchedPrefab != null) break;
+                }
+
+                if (matchedPrefab != null)
+                {
+                    SerializedObject so = new SerializedObject(enemyData);
+                    SerializedProperty visualProp = so.FindProperty("_visualPrefab");
+
+                    if (visualProp != null)
+                    {
+                        visualProp.objectReferenceValue = matchedPrefab;
+                        so.ApplyModifiedProperties();
+                        linked++;
+                        Debug.Log($"[ProductionSetupTool] Linked {matchedPrefab.name} to {enemyData.EnemyName}");
+                    }
+                }
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log($"[ProductionSetupTool] Setup {setup} enemy visual prefabs, linked {linked} to data assets");
         }
 
         // ============================================
@@ -452,6 +643,16 @@ namespace HNR.Editor
                 var spriteRenderer = visualObj.AddComponent<SpriteRenderer>();
                 spriteRenderer.color = GetEnemyColor(enemyName);
 
+                // Set correct HeroEditor animation triggers
+                SerializedObject visualSO = new SerializedObject(visual);
+                visualSO.FindProperty("_attackTrigger").stringValue = "Slash";
+                visualSO.FindProperty("_jabTrigger").stringValue = "Jab";
+                visualSO.FindProperty("_hitTrigger").stringValue = "Hit";
+                visualSO.FindProperty("_deathBoolBack").stringValue = "DieBack";
+                visualSO.FindProperty("_deathBoolFront").stringValue = "DieFront";
+                visualSO.FindProperty("_skillTrigger").stringValue = "Cast";
+                visualSO.ApplyModifiedPropertiesWithoutUndo();
+
                 // Save prefab
                 bool success;
                 PrefabUtility.SaveAsPrefabAsset(visualObj, prefabPath, out success);
@@ -635,6 +836,19 @@ namespace HNR.Editor
             {
                 Directory.CreateDirectory(directory);
                 AssetDatabase.Refresh();
+            }
+        }
+
+        /// <summary>
+        /// Sets a string property if it differs from the expected value.
+        /// </summary>
+        private static void SetAnimationTriggerIfDifferent(SerializedObject so, string propertyName, string expectedValue, ref bool needsSave)
+        {
+            var prop = so.FindProperty(propertyName);
+            if (prop != null && prop.stringValue != expectedValue)
+            {
+                prop.stringValue = expectedValue;
+                needsSave = true;
             }
         }
     }

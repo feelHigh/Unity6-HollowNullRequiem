@@ -69,13 +69,8 @@ namespace HNR.UI.Screens
         [SerializeField, Tooltip("Prefab for ally indicator")]
         private AllyIndicator _allyIndicatorPrefab;
 
-        [SerializeField, Tooltip("World positions for ally indicators (left side of screen)")]
-        private Vector3[] _allySlotPositions = new Vector3[]
-        {
-            new Vector3(-6f, -1f, 0f),
-            new Vector3(-6f, -2.5f, 0f),
-            new Vector3(-6f, -4f, 0f)
-        };
+        [SerializeField, Tooltip("Transforms for ally slot positions")]
+        private Transform[] _allySlots;
 
         // ============================================
         // Runtime State
@@ -200,42 +195,37 @@ namespace HNR.UI.Screens
 
         private void SpawnAllyIndicators()
         {
-            if (_allyIndicatorContainer == null)
-            {
-                Debug.LogWarning("[CombatScreenCZN] Cannot spawn ally indicators - _allyIndicatorContainer is null");
-                return;
-            }
-            if (_allyIndicatorPrefab == null)
-            {
-                Debug.LogWarning("[CombatScreenCZN] Cannot spawn ally indicators - _allyIndicatorPrefab is null");
-                return;
-            }
-
-            // Clear existing
-            foreach (Transform child in _allyIndicatorContainer)
-            {
-                Destroy(child.gameObject);
-            }
-
-            // Spawn for each team member at fixed slot positions
-            int spawnedCount = 0;
+            // Reparent RequiemInstances to ally slots - their visual prefabs will render there
+            int positionedCount = 0;
             for (int i = 0; i < _context.Team.Count; i++)
             {
                 var requiem = _context.Team[i];
                 if (requiem == null) continue;
 
-                var indicator = Instantiate(_allyIndicatorPrefab, _allyIndicatorContainer);
+                // Reparent RequiemInstance to ally slot
+                if (_allySlots != null && i < _allySlots.Length && _allySlots[i] != null)
+                {
+                    requiem.transform.SetParent(_allySlots[i], false);
+                    requiem.transform.localPosition = Vector3.zero;
+                    requiem.transform.localRotation = Quaternion.identity;
 
-                // Use fixed slot position instead of following requiem.transform
-                // (Requiems don't have world positions - they're data containers)
-                Vector3 slotPosition = i < _allySlotPositions.Length
-                    ? _allySlotPositions[i]
-                    : _allySlotPositions[_allySlotPositions.Length - 1];
+                    // Ensure visual is facing right (toward enemies)
+                    requiem.Visual?.SetFacing(true);
 
-                indicator.InitializeAtPosition(requiem, slotPosition);
-                spawnedCount++;
+                    Debug.Log($"[CombatScreenCZN] Reparented {requiem.Name} to slot {i}: {_allySlots[i].name}");
+                }
+                else
+                {
+                    // Fallback to fixed positions if slots not configured
+                    Vector3 fallbackPosition = new Vector3(-7f + (i * 2f), 0f, 0f);
+                    requiem.transform.position = fallbackPosition;
+                    requiem.Visual?.SetFacing(true);
+                    Debug.LogWarning($"[CombatScreenCZN] Using fallback position for {requiem.Name}: {fallbackPosition}");
+                }
+
+                positionedCount++;
             }
-            Debug.Log($"[CombatScreenCZN] Spawned {spawnedCount} ally indicators at fixed positions");
+            Debug.Log($"[CombatScreenCZN] Positioned {positionedCount} Requiem visuals at ally slots");
         }
 
         private void ClearWorldSpaceUI()
