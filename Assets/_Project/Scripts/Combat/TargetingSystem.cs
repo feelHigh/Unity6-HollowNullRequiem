@@ -343,7 +343,29 @@ namespace HNR.Combat
                     break;
 
                 case TargetType.Self:
-                    // TODO: Get the casting Requiem
+                    // Get the Requiem that owns this card
+                    // Card.Data.Owner is the RequiemDataSO - find matching RequiemInstance
+                    if (_sourceCard?.Data?.Owner != null)
+                    {
+                        var ownerData = _sourceCard.Data.Owner;
+                        foreach (var requiem in context.Team)
+                        {
+                            if (requiem.Data == ownerData && requiem is ICombatTarget combatTarget)
+                            {
+                                targets.Add(combatTarget);
+                                break; // Only one self target
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Neutral card with Self targeting - use first team member as fallback
+                        Debug.LogWarning("[TargetingSystem] Self-targeting card has no owner - using first team member");
+                        if (context.Team.Count > 0 && context.Team[0] is ICombatTarget fallbackTarget)
+                        {
+                            targets.Add(fallbackTarget);
+                        }
+                    }
                     break;
 
                 case TargetType.Random:

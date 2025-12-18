@@ -48,6 +48,25 @@ namespace HNR.UI.Combat
             _requiem = requiem;
             _followTarget = modelTransform;
 
+            SetupVisuals(requiem);
+        }
+
+        /// <summary>
+        /// Initializes the indicator at a fixed world position (for when Requiems have no world position).
+        /// </summary>
+        /// <param name="requiem">The Requiem to represent.</param>
+        /// <param name="fixedPosition">World position for the indicator.</param>
+        public void InitializeAtPosition(RequiemInstance requiem, Vector3 fixedPosition)
+        {
+            _requiem = requiem;
+            _followTarget = null; // Don't follow anything
+            transform.position = fixedPosition;
+
+            SetupVisuals(requiem);
+        }
+
+        private void SetupVisuals(RequiemInstance requiem)
+        {
             if (_miniPortrait != null && requiem?.Data?.Portrait != null)
             {
                 _miniPortrait.sprite = requiem.Data.Portrait;
@@ -61,15 +80,17 @@ namespace HNR.UI.Combat
 
         private void LateUpdate()
         {
+            // Update position if following a target
             if (_followTarget != null)
             {
                 transform.position = _followTarget.position + _offsetFromModel;
+            }
 
-                if (_mainCamera != null)
-                {
-                    transform.LookAt(_mainCamera.transform);
-                    transform.Rotate(0, 180, 0);
-                }
+            // Always billboard to camera (whether following or at fixed position)
+            if (_mainCamera != null)
+            {
+                transform.LookAt(_mainCamera.transform);
+                transform.Rotate(0, 180, 0);
             }
         }
 

@@ -321,15 +321,7 @@ namespace HNR.Combat
         {
             Debug.Log($"[EnemyInstance] {Name} defeated!");
 
-            // Grant Soul Essence on kill
-            if (ServiceLocator.TryGet<TurnManager>(out var turnManager) && turnManager.Context != null)
-            {
-                int seGain = 5;
-                turnManager.Context.SoulEssence += seGain;
-                EventBus.Publish(new SoulEssenceChangedEvent(turnManager.Context.SoulEssence, seGain));
-            }
-
-            // Publish defeat event
+            // Publish defeat event - SoulEssenceManager handles SE grant centrally
             EventBus.Publish(new EnemyDefeatedEvent(this));
 
             // Check for combat end - handled by phase logic listening to EnemyDefeatedEvent

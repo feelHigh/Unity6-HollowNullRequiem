@@ -65,9 +65,25 @@ namespace HNR.Combat
             InitializePhases();
         }
 
+        private void OnEnable()
+        {
+            EventBus.Subscribe<EndTurnRequestedEvent>(OnEndTurnRequested);
+        }
+
+        private void OnDisable()
+        {
+            EventBus.Unsubscribe<EndTurnRequestedEvent>(OnEndTurnRequested);
+        }
+
         private void OnDestroy()
         {
             ServiceLocator.Unregister<TurnManager>();
+        }
+
+        private void OnEndTurnRequested(EndTurnRequestedEvent evt)
+        {
+            Debug.Log("[TurnManager] EndTurnRequestedEvent received");
+            EndPlayerTurn();
         }
 
         private void Update()

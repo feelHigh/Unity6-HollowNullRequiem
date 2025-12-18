@@ -69,6 +69,14 @@ namespace HNR.UI.Screens
         [SerializeField, Tooltip("Prefab for ally indicator")]
         private AllyIndicator _allyIndicatorPrefab;
 
+        [SerializeField, Tooltip("World positions for ally indicators (left side of screen)")]
+        private Vector3[] _allySlotPositions = new Vector3[]
+        {
+            new Vector3(-6f, -1f, 0f),
+            new Vector3(-6f, -2.5f, 0f),
+            new Vector3(-6f, -4f, 0f)
+        };
+
         // ============================================
         // Runtime State
         // ============================================
@@ -160,7 +168,16 @@ namespace HNR.UI.Screens
 
         private void SpawnEnemyUIs()
         {
-            if (_enemyUIContainer == null || _enemyUIPrefab == null) return;
+            if (_enemyUIContainer == null)
+            {
+                Debug.LogWarning("[CombatScreenCZN] Cannot spawn enemy UIs - _enemyUIContainer is null");
+                return;
+            }
+            if (_enemyUIPrefab == null)
+            {
+                Debug.LogWarning("[CombatScreenCZN] Cannot spawn enemy UIs - _enemyUIPrefab is null");
+                return;
+            }
 
             // Clear existing
             foreach (Transform child in _enemyUIContainer)
@@ -169,18 +186,30 @@ namespace HNR.UI.Screens
             }
 
             // Spawn for each enemy
+            int spawnedCount = 0;
             foreach (var enemy in _context.Enemies)
             {
                 if (enemy == null || enemy.IsDead) continue;
 
                 var ui = Instantiate(_enemyUIPrefab, _enemyUIContainer);
                 ui.Initialize(enemy);
+                spawnedCount++;
             }
+            Debug.Log($"[CombatScreenCZN] Spawned {spawnedCount} enemy floating UIs");
         }
 
         private void SpawnAllyIndicators()
         {
-            if (_allyIndicatorContainer == null || _allyIndicatorPrefab == null) return;
+            if (_allyIndicatorContainer == null)
+            {
+                Debug.LogWarning("[CombatScreenCZN] Cannot spawn ally indicators - _allyIndicatorContainer is null");
+                return;
+            }
+            if (_allyIndicatorPrefab == null)
+            {
+                Debug.LogWarning("[CombatScreenCZN] Cannot spawn ally indicators - _allyIndicatorPrefab is null");
+                return;
+            }
 
             // Clear existing
             foreach (Transform child in _allyIndicatorContainer)
@@ -188,14 +217,25 @@ namespace HNR.UI.Screens
                 Destroy(child.gameObject);
             }
 
-            // Spawn for each team member
-            foreach (var requiem in _context.Team)
+            // Spawn for each team member at fixed slot positions
+            int spawnedCount = 0;
+            for (int i = 0; i < _context.Team.Count; i++)
             {
+                var requiem = _context.Team[i];
                 if (requiem == null) continue;
 
                 var indicator = Instantiate(_allyIndicatorPrefab, _allyIndicatorContainer);
-                indicator.Initialize(requiem, requiem.transform);
+
+                // Use fixed slot position instead of following requiem.transform
+                // (Requiems don't have world positions - they're data containers)
+                Vector3 slotPosition = i < _allySlotPositions.Length
+                    ? _allySlotPositions[i]
+                    : _allySlotPositions[_allySlotPositions.Length - 1];
+
+                indicator.InitializeAtPosition(requiem, slotPosition);
+                spawnedCount++;
             }
+            Debug.Log($"[CombatScreenCZN] Spawned {spawnedCount} ally indicators at fixed positions");
         }
 
         private void ClearWorldSpaceUI()

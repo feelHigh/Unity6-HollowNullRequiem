@@ -194,6 +194,24 @@ namespace HNR.Editor
             MetaGameUIPrefabGenerator.GenerateCurrencyTickerPrefab();
         }
 
+        [MenuItem("HNR/2. Prefabs/UI/Combat UI (All)", priority = 38)]
+        public static void GenerateAllCombatUIPrefabs()
+        {
+            CombatUIPrefabGenerator.GenerateAll();
+        }
+
+        [MenuItem("HNR/2. Prefabs/UI/Combat UI/EnemyFloatingUI Only", priority = 39)]
+        public static void GenerateEnemyFloatingUIPrefab()
+        {
+            CombatUIPrefabGenerator.GenerateEnemyFloatingUI();
+        }
+
+        [MenuItem("HNR/2. Prefabs/UI/Combat UI/AllyIndicator Only", priority = 39)]
+        public static void GenerateAllyIndicatorPrefab()
+        {
+            CombatUIPrefabGenerator.GenerateAllyIndicator();
+        }
+
         [MenuItem("HNR/2. Prefabs/Characters/Generate Visual Prefabs", priority = 40)]
         public static void GenerateCharacterVisualPrefabs()
         {
@@ -564,7 +582,7 @@ HNR/
 │   └── Production/ (Zone Data, Zone Configs, Zone 2&3 Encounters)
 │
 ├── 2. Prefabs/             (30-49)  - UI and visual prefabs
-│   ├── UI/ (Card, DamageNumber, EnemySlotUI, Meta-Game)
+│   ├── UI/ (Card, DamageNumber, EnemySlotUI, Meta-Game, Combat UI)
 │   └── Characters/ (Visual Prefabs, Create Empty, Link to Data)
 │
 ├── 3. Production/          (50-69)  - Production setup

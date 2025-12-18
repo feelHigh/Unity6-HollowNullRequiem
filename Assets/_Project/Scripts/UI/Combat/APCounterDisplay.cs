@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
+using HNR.Core;
 using HNR.Core.Events;
 using HNR.Combat;
 
@@ -44,11 +45,35 @@ namespace HNR.UI.Combat
 
             StartGlowAnimation();
             EventBus.Subscribe<APChangedEvent>(OnAPChanged);
+            EventBus.Subscribe<CombatStartedEvent>(OnCombatStarted);
+
+            // Initialize with current AP if combat already active
+            InitializeFromContext();
+        }
+
+        private void OnCombatStarted(CombatStartedEvent evt)
+        {
+            // Initialize AP display when combat starts
+            InitializeFromContext();
+        }
+
+        private void InitializeFromContext()
+        {
+            if (ServiceLocator.TryGet<TurnManager>(out var turnManager) && turnManager.Context != null)
+            {
+                SetAP(turnManager.Context.CurrentAP, turnManager.Context.MaxAP);
+            }
+            else
+            {
+                // Default display before combat starts
+                SetAP(3, 3);
+            }
         }
 
         private void OnDestroy()
         {
             EventBus.Unsubscribe<APChangedEvent>(OnAPChanged);
+            EventBus.Unsubscribe<CombatStartedEvent>(OnCombatStarted);
             _glowSequence?.Kill();
         }
 
@@ -56,9 +81,10 @@ namespace HNR.UI.Combat
         {
             if (_glowBackground == null) return;
 
+            // Subtle glow pulse - high base alpha with small variation
             _glowSequence = DOTween.Sequence();
-            _glowSequence.Append(_glowBackground.DOFade(0.3f, 1f));
-            _glowSequence.Append(_glowBackground.DOFade(0.6f, 1f));
+            _glowSequence.Append(_glowBackground.DOFade(0.7f, 1.5f).SetEase(Ease.InOutSine));
+            _glowSequence.Append(_glowBackground.DOFade(0.9f, 1.5f).SetEase(Ease.InOutSine));
             _glowSequence.SetLoops(-1);
         }
 

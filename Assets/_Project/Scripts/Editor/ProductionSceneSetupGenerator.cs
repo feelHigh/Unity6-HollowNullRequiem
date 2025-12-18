@@ -302,6 +302,16 @@ namespace HNR.Editor
             combatBootstrapObj.transform.SetParent(managersParent.transform);
             var combatBootstrap = combatBootstrapObj.AddComponent<CombatBootstrap>();
 
+            // === World Space UI Containers ===
+            // These are plain transforms for world-space floating UIs (not under screen-space canvas)
+            GameObject worldSpaceUIParent = new GameObject("--- WORLD SPACE UI ---");
+
+            GameObject worldSpaceEnemyContainer = new GameObject("WorldSpaceEnemyUIContainer");
+            worldSpaceEnemyContainer.transform.SetParent(worldSpaceUIParent.transform);
+
+            GameObject worldSpaceAllyContainer = new GameObject("WorldSpaceAllyIndicatorContainer");
+            worldSpaceAllyContainer.transform.SetParent(worldSpaceUIParent.transform);
+
             // === Main Canvas ===
             GameObject canvasObj = CreateMainCanvas("CombatCanvas");
 
@@ -1185,6 +1195,7 @@ namespace HNR.Editor
             numRect.anchorMin = new Vector2(0.5f, 0.6f);
             numRect.anchorMax = new Vector2(0.5f, 0.6f);
             numRect.sizeDelta = new Vector2(80, 60);
+            var apText = apNum.GetComponent<TMP_Text>();
 
             // AP Label
             GameObject apLabel = CreateText(counter, "APLabel", "AP", 18);
@@ -1192,6 +1203,13 @@ namespace HNR.Editor
             labelRect.anchorMin = new Vector2(0.5f, 0.3f);
             labelRect.anchorMax = new Vector2(0.5f, 0.3f);
             labelRect.sizeDelta = new Vector2(50, 25);
+
+            // Add APCounterDisplay component and wire references
+            var apCounter = counter.AddComponent<APCounterDisplay>();
+            var so = new SerializedObject(apCounter);
+            so.FindProperty("_apText").objectReferenceValue = apText;
+            so.FindProperty("_glowBackground").objectReferenceValue = bg;
+            so.ApplyModifiedPropertiesWithoutUndo();
 
             return counter;
         }
@@ -1217,6 +1235,13 @@ namespace HNR.Editor
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
             textRect.sizeDelta = Vector2.zero;
+
+            // Add ExecutionButton component and wire references
+            var execButton = btnObj.AddComponent<ExecutionButton>();
+            var so = new SerializedObject(execButton);
+            so.FindProperty("_buttonBackground").objectReferenceValue = bg;
+            so.FindProperty("_button").objectReferenceValue = btn;
+            so.ApplyModifiedPropertiesWithoutUndo();
 
             return btnObj;
         }
@@ -1512,14 +1537,45 @@ namespace HNR.Editor
             if (sysMenu != null)
                 SetPropertyIfExists(so, "_systemMenu", sysMenu);
 
-            // Wire enemy/ally UI containers
-            var enemyContainer = GameObject.Find("EnemyContainer");
-            var allyContainer = GameObject.Find("AllyIndicatorContainer");
+            // Wire enemy/ally world-space UI containers
+            var worldSpaceEnemyContainer = GameObject.Find("WorldSpaceEnemyUIContainer");
+            var worldSpaceAllyContainer = GameObject.Find("WorldSpaceAllyIndicatorContainer");
 
-            if (enemyContainer != null)
-                SetPropertyIfExists(so, "_enemyUIContainer", enemyContainer.transform);
-            if (allyContainer != null)
-                SetPropertyIfExists(so, "_allyIndicatorContainer", allyContainer.transform);
+            if (worldSpaceEnemyContainer != null)
+                SetPropertyIfExists(so, "_enemyUIContainer", worldSpaceEnemyContainer.transform);
+            else
+                Debug.LogWarning("[ProductionSceneSetupGenerator] WorldSpaceEnemyUIContainer not found - regenerate Combat scene");
+
+            if (worldSpaceAllyContainer != null)
+                SetPropertyIfExists(so, "_allyIndicatorContainer", worldSpaceAllyContainer.transform);
+            else
+                Debug.LogWarning("[ProductionSceneSetupGenerator] WorldSpaceAllyIndicatorContainer not found - regenerate Combat scene");
+
+            // Wire Combat UI prefabs
+            var enemyFloatingUIPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/Combat/EnemyFloatingUI.prefab");
+            var allyIndicatorPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/Combat/AllyIndicator.prefab");
+
+            if (enemyFloatingUIPrefab != null)
+            {
+                var floatingUI = enemyFloatingUIPrefab.GetComponent<EnemyFloatingUI>();
+                if (floatingUI != null)
+                    SetPropertyIfExists(so, "_enemyUIPrefab", floatingUI);
+            }
+            else
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] EnemyFloatingUI.prefab not found - run HNR > 2. Prefabs > UI > Combat UI (All) first");
+            }
+
+            if (allyIndicatorPrefab != null)
+            {
+                var indicator = allyIndicatorPrefab.GetComponent<AllyIndicator>();
+                if (indicator != null)
+                    SetPropertyIfExists(so, "_allyIndicatorPrefab", indicator);
+            }
+            else
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] AllyIndicator.prefab not found - run HNR > 2. Prefabs > UI > Combat UI (All) first");
+            }
 
             so.ApplyModifiedPropertiesWithoutUndo();
             Debug.Log("[ProductionSceneSetupGenerator] Wired CombatScreenCZN component references");
