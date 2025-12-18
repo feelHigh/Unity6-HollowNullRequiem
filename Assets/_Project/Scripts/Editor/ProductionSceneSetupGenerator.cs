@@ -14,8 +14,12 @@ using System.Collections.Generic;
 using HNR.Core;
 using HNR.Combat;
 using HNR.Cards;
+using HNR.Characters;
+using HNR.VFX;
+using HNR.Progression;
 using HNR.UI;
 using HNR.UI.Screens;
+using HNR.UI.Combat;
 using HNR.Map;
 
 namespace HNR.Editor
@@ -282,9 +286,21 @@ namespace HNR.Editor
             combatManagerObj.transform.SetParent(managersParent.transform);
             combatManagerObj.AddComponent<CombatManager>();
 
+            GameObject corruptionManagerObj = new GameObject("CorruptionManager");
+            corruptionManagerObj.transform.SetParent(managersParent.transform);
+            corruptionManagerObj.AddComponent<CorruptionManager>();
+
+            GameObject vfxPoolManagerObj = new GameObject("VFXPoolManager");
+            vfxPoolManagerObj.transform.SetParent(managersParent.transform);
+            var vfxPoolManager = vfxPoolManagerObj.AddComponent<VFXPoolManager>();
+
+            GameObject relicManagerObj = new GameObject("RelicManager");
+            relicManagerObj.transform.SetParent(managersParent.transform);
+            relicManagerObj.AddComponent<RelicManager>();
+
             GameObject combatBootstrapObj = new GameObject("CombatBootstrap");
             combatBootstrapObj.transform.SetParent(managersParent.transform);
-            combatBootstrapObj.AddComponent<CombatBootstrap>();
+            var combatBootstrap = combatBootstrapObj.AddComponent<CombatBootstrap>();
 
             // === Main Canvas ===
             GameObject canvasObj = CreateMainCanvas("CombatCanvas");
@@ -356,6 +372,24 @@ namespace HNR.Editor
             {
                 Debug.LogWarning("[ProductionSceneSetupGenerator] EnemyInstance.prefab not found - run HNR > Production > Create All Prefabs first");
             }
+
+            // === Wire VFXPoolManager with VFX prefabs ===
+            WireVFXPoolManager(vfxPoolManager);
+
+            // === Wire DamageNumberSpawner ===
+            var damageSpawner = damageSpawnerObj.GetComponent<DamageNumberSpawner>();
+            var damagePrefab = AssetDatabase.LoadAssetAtPath<DamageNumber>("Assets/_Project/Prefabs/UI/Effects/DamageNumber.prefab");
+            if (damageSpawner != null && damagePrefab != null)
+            {
+                SerializedObject dmgSO = new SerializedObject(damageSpawner);
+                dmgSO.FindProperty("_prefab").objectReferenceValue = damagePrefab;
+                dmgSO.FindProperty("_canvas").objectReferenceValue = canvasObj.GetComponent<Canvas>();
+                dmgSO.ApplyModifiedPropertiesWithoutUndo();
+                Debug.Log("[ProductionSceneSetupGenerator] Wired DamageNumberSpawner");
+            }
+
+            // === Wire CombatScreenCZN components ===
+            WireCombatScreenCZN(combatScreen);
 
             // NOTE: No opaque background for Combat scene - we need to see world-space enemies
             // Camera background color provides the backdrop instead
@@ -1380,6 +1414,123 @@ namespace HNR.Editor
             if (!Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
+            }
+        }
+
+        // ============================================
+        // Combat Scene Wiring Helpers
+        // ============================================
+
+        /// <summary>
+        /// Wires VFX prefabs to the VFXPoolManager.
+        /// </summary>
+        private static void WireVFXPoolManager(VFXPoolManager vfxPoolManager)
+        {
+            if (vfxPoolManager == null) return;
+
+            SerializedObject so = new SerializedObject(vfxPoolManager);
+            var configsProp = so.FindProperty("_poolConfigs");
+
+            // Define VFX pool configurations
+            var vfxConfigs = new[]
+            {
+                ("hit_flame", "Assets/_Project/Prefabs/VFX/hit_flame.prefab", 5, 10),
+                ("hit_shadow", "Assets/_Project/Prefabs/VFX/hit_shadow.prefab", 5, 10),
+                ("hit_nature", "Assets/_Project/Prefabs/VFX/hit_nature.prefab", 5, 10),
+                ("hit_arcane", "Assets/_Project/Prefabs/VFX/hit_arcane.prefab", 5, 10),
+                ("hit_light", "Assets/_Project/Prefabs/VFX/hit_light.prefab", 5, 10),
+                ("vfx_slash", "Assets/_Project/Prefabs/VFX/vfx_slash.prefab", 3, 5),
+                ("vfx_shield", "Assets/_Project/Prefabs/VFX/vfx_shield.prefab", 2, 3),
+                ("vfx_heal", "Assets/_Project/Prefabs/VFX/vfx_heal.prefab", 2, 3),
+                ("vfx_buff", "Assets/_Project/Prefabs/VFX/vfx_buff.prefab", 2, 5),
+                ("vfx_debuff", "Assets/_Project/Prefabs/VFX/vfx_debuff.prefab", 2, 5),
+                ("vfx_corruption", "Assets/_Project/Prefabs/VFX/vfx_corruption.prefab", 3, 5),
+                ("vfx_null_burst", "Assets/_Project/Prefabs/VFX/vfx_null_burst.prefab", 1, 2),
+                ("vfx_requiem_art", "Assets/_Project/Prefabs/VFX/vfx_requiem_art.prefab", 1, 2),
+                ("vfx_card_draw", "Assets/_Project/Prefabs/VFX/vfx_card_draw.prefab", 3, 5),
+                ("vfx_card_play", "Assets/_Project/Prefabs/VFX/vfx_card_play.prefab", 3, 5),
+            };
+
+            int validCount = 0;
+            foreach (var (id, path, preWarm, maxActive) in vfxConfigs)
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (prefab != null) validCount++;
+            }
+
+            configsProp.arraySize = validCount;
+            int index = 0;
+
+            foreach (var (id, path, preWarm, maxActive) in vfxConfigs)
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (prefab == null) continue;
+
+                var element = configsProp.GetArrayElementAtIndex(index);
+                element.FindPropertyRelative("EffectId").stringValue = id;
+                element.FindPropertyRelative("Prefab").objectReferenceValue = prefab;
+                element.FindPropertyRelative("PreWarmCount").intValue = preWarm;
+                element.FindPropertyRelative("MaxActive").intValue = maxActive;
+                index++;
+            }
+
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log($"[ProductionSceneSetupGenerator] Wired VFXPoolManager with {validCount} VFX prefabs");
+        }
+
+        /// <summary>
+        /// Wires CombatScreenCZN component references.
+        /// </summary>
+        private static void WireCombatScreenCZN(GameObject combatScreenObj)
+        {
+            if (combatScreenObj == null) return;
+
+            var screen = combatScreenObj.GetComponent<CombatScreenCZN>();
+            if (screen == null) return;
+
+            SerializedObject so = new SerializedObject(screen);
+
+            // Find and wire child components
+            var vitalityBar = combatScreenObj.GetComponentInChildren<SharedVitalityBarCZN>(true);
+            var partySidebar = combatScreenObj.GetComponentInChildren<PartyStatusSidebar>(true);
+            var cardFan = combatScreenObj.GetComponentInChildren<CardFanLayout>(true);
+            var apCounter = combatScreenObj.GetComponentInChildren<APCounterDisplay>(true);
+            var execButton = combatScreenObj.GetComponentInChildren<ExecutionButton>(true);
+            var sysMenu = combatScreenObj.GetComponentInChildren<SystemMenuBar>(true);
+
+            // Wire if found
+            if (vitalityBar != null)
+                SetPropertyIfExists(so, "_vitalityBar", vitalityBar);
+            if (partySidebar != null)
+                SetPropertyIfExists(so, "_partySidebar", partySidebar);
+            if (cardFan != null)
+                SetPropertyIfExists(so, "_cardFanLayout", cardFan);
+            if (apCounter != null)
+                SetPropertyIfExists(so, "_apCounter", apCounter);
+            if (execButton != null)
+                SetPropertyIfExists(so, "_executionButton", execButton);
+            if (sysMenu != null)
+                SetPropertyIfExists(so, "_systemMenu", sysMenu);
+
+            // Wire enemy/ally UI containers
+            var enemyContainer = GameObject.Find("EnemyContainer");
+            var allyContainer = GameObject.Find("AllyIndicatorContainer");
+
+            if (enemyContainer != null)
+                SetPropertyIfExists(so, "_enemyUIContainer", enemyContainer.transform);
+            if (allyContainer != null)
+                SetPropertyIfExists(so, "_allyIndicatorContainer", allyContainer.transform);
+
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log("[ProductionSceneSetupGenerator] Wired CombatScreenCZN component references");
+        }
+
+        private static void SetPropertyIfExists(SerializedObject so, string propertyName, Object value)
+        {
+            var prop = so.FindProperty(propertyName);
+            if (prop != null && value != null)
+            {
+                prop.objectReferenceValue = value;
             }
         }
     }
