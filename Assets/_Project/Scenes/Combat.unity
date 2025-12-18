@@ -130,6 +130,7 @@ GameObject:
   - component: {fileID: 8660795}
   - component: {fileID: 8660797}
   - component: {fileID: 8660796}
+  - component: {fileID: 8660798}
   m_Layer: 0
   m_Name: APCounter
   m_TagString: Untagged
@@ -196,6 +197,26 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8660794}
   m_CullTransparentMesh: 1
+--- !u!114 &8660798
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8660794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6293aef4dbf98d4b87f2ee5942282e8, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _apText: {fileID: 1316986310}
+  _glowBackground: {fileID: 0}
+  _energyParticles: {fileID: 0}
+  _pulseScale: 1.15
+  _pulseDuration: 0.3
+  _fullColor: {r: 0, g: 0.9, b: 1, a: 1}
+  _emptyColor: {r: 0.3, g: 0.3, b: 0.3, a: 1}
+  _insufficientColor: {r: 1, g: 0.3, b: 0.3, a: 1}
 --- !u!1 &16801479
 GameObject:
   m_ObjectHideFlags: 0
@@ -3084,11 +3105,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d9ac8c490d568e40973c807b951b31a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _prefab: {fileID: 0}
+  _prefab: {fileID: 4834388137260608306, guid: 8b27f6ba0ba41394694da5efc13b9f30, type: 3}
   _preWarmCount: 10
   _spawnOffset: {x: 0, y: 0.5, z: 0}
   _worldCamera: {fileID: 0}
-  _canvas: {fileID: 0}
+  _canvas: {fileID: 1829729461}
 --- !u!1 &1940033114
 GameObject:
   m_ObjectHideFlags: 0

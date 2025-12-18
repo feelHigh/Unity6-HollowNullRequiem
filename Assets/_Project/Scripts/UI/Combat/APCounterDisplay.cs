@@ -64,6 +64,7 @@ namespace HNR.UI.Combat
 
         private void OnAPChanged(APChangedEvent evt)
         {
+            Debug.Log($"[APCounterDisplay] Received APChangedEvent: {evt.CurrentAP}/{evt.MaxAP}");
             SetAP(evt.CurrentAP, evt.MaxAP);
         }
 
@@ -80,6 +81,11 @@ namespace HNR.UI.Combat
             {
                 _apText.text = current.ToString();
                 _apText.color = current > 0 ? _fullColor : _emptyColor;
+                Debug.Log($"[APCounterDisplay] Updated text to: {current}");
+            }
+            else
+            {
+                Debug.LogWarning("[APCounterDisplay] _apText is NULL - cannot update display!");
             }
 
             if (_glowBackground != null)

@@ -100,6 +100,18 @@ namespace HNR.Combat
         private void Awake()
         {
             ServiceLocator.Register(this);
+
+            // Register Card prefab with pool manager
+            if (_cardPrefab != null && ServiceLocator.TryGet<IPoolManager>(out var poolManager))
+            {
+                poolManager.RegisterPrefab(_cardPrefab);
+                poolManager.PreWarm<Card>(10); // Pre-warm 10 cards
+                Debug.Log("[HandManager] Registered Card prefab with pool");
+            }
+            else if (_cardPrefab == null)
+            {
+                Debug.LogWarning("[HandManager] _cardPrefab is not assigned! Cards will be instantiated without pooling.");
+            }
         }
 
         private void OnDestroy()

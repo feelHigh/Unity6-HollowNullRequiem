@@ -88,6 +88,26 @@ namespace HNR.Combat
 
             UpdateTargetingLine();
             CheckHoveredTarget();
+            CheckForTargetConfirmation();
+        }
+
+        /// <summary>
+        /// Check for mouse click to confirm target selection.
+        /// </summary>
+        private void CheckForTargetConfirmation()
+        {
+            // Left mouse button click confirms target
+            if (Input.GetMouseButtonDown(0) && _hoveredTarget != null)
+            {
+                Debug.Log($"[TargetingSystem] Click detected on {_hoveredTarget.Name}, confirming target");
+                ConfirmTarget();
+            }
+            // Right mouse button cancels targeting
+            else if (Input.GetMouseButtonDown(1))
+            {
+                Debug.Log("[TargetingSystem] Right-click detected, cancelling targeting");
+                CancelTargeting();
+            }
         }
 
         // ============================================
@@ -111,8 +131,10 @@ namespace HNR.Combat
             _validTargets = GetValidTargets(card.Data.TargetType);
 
             // Highlight all valid targets
+            Debug.Log($"[TargetingSystem] Highlighting {_validTargets.Count} valid targets");
             foreach (var target in _validTargets)
             {
+                Debug.Log($"[TargetingSystem] Calling ShowTargetHighlight(true) on {target.Name} (type: {target.GetType().Name})");
                 target.ShowTargetHighlight(true);
             }
 

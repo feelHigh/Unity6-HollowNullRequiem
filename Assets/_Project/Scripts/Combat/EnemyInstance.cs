@@ -180,6 +180,11 @@ namespace HNR.Combat
             if (_highlightRing != null)
             {
                 _highlightRing.SetActive(show);
+                Debug.Log($"[EnemyInstance] {Name} highlight ring {(show ? "SHOWN" : "hidden")}");
+            }
+            else
+            {
+                Debug.LogWarning($"[EnemyInstance] {Name} has no highlight ring reference!");
             }
         }
 

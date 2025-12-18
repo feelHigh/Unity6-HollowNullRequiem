@@ -44,6 +44,68 @@ namespace HNR.UI
         // Unity Lifecycle
         // ============================================
 
+        private void Awake()
+        {
+            // Try to load prefab if not assigned
+            if (_prefab == null)
+            {
+                TryLoadPrefabFallback();
+            }
+
+            // Register prefab with pool manager early (before any events fire)
+            if (_prefab != null && ServiceLocator.TryGet<IPoolManager>(out var poolManager))
+            {
+                poolManager.RegisterPrefab(_prefab);
+                poolManager.PreWarm<DamageNumber>(_preWarmCount);
+                Debug.Log($"[DamageNumberSpawner] Registered and pre-warmed {_preWarmCount} damage numbers");
+            }
+            else if (_prefab == null)
+            {
+                Debug.LogWarning("[DamageNumberSpawner] _prefab is not assigned and fallback failed! Damage numbers will not spawn.");
+            }
+        }
+
+        /// <summary>
+        /// Attempt to load the DamageNumber prefab via fallback methods.
+        /// </summary>
+        private void TryLoadPrefabFallback()
+        {
+            // Try Resources.Load first
+            _prefab = Resources.Load<DamageNumber>("Prefabs/UI/Effects/DamageNumber");
+            if (_prefab != null)
+            {
+                Debug.Log("[DamageNumberSpawner] Loaded prefab from Resources folder");
+                return;
+            }
+
+            // Try finding in scene (maybe it exists but just not referenced)
+            _prefab = FindAnyObjectByType<DamageNumber>(FindObjectsInactive.Include);
+            if (_prefab != null)
+            {
+                Debug.Log("[DamageNumberSpawner] Found existing DamageNumber in scene, using as template");
+                return;
+            }
+
+#if UNITY_EDITOR
+            // Editor-only fallback: try to load via AssetDatabase
+            var guids = UnityEditor.AssetDatabase.FindAssets("t:Prefab DamageNumber");
+            foreach (var guid in guids)
+            {
+                var path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+                if (path.Contains("DamageNumber.prefab"))
+                {
+                    var prefabGO = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                    _prefab = prefabGO?.GetComponent<DamageNumber>();
+                    if (_prefab != null)
+                    {
+                        Debug.Log($"[DamageNumberSpawner] Loaded prefab from AssetDatabase: {path}");
+                        return;
+                    }
+                }
+            }
+#endif
+        }
+
         private void Start()
         {
             // Get camera reference if not set
@@ -52,16 +114,27 @@ namespace HNR.UI
                 _worldCamera = Camera.main;
             }
 
-            // Register prefab with pool manager
-            if (_prefab != null && ServiceLocator.TryGet<IPoolManager>(out var poolManager))
+            // Find canvas if not assigned
+            if (_canvas == null)
             {
-                poolManager.RegisterPrefab(_prefab);
-                poolManager.PreWarm<DamageNumber>(_preWarmCount);
-                Debug.Log($"[DamageNumberSpawner] Pre-warmed {_preWarmCount} damage numbers");
+                _canvas = GetComponentInParent<Canvas>();
+                if (_canvas == null)
+                {
+                    _canvas = FindAnyObjectByType<Canvas>();
+                }
+                if (_canvas != null)
+                {
+                    Debug.Log($"[DamageNumberSpawner] Found canvas at runtime: {_canvas.name}");
+                }
+                else
+                {
+                    Debug.LogWarning("[DamageNumberSpawner] No canvas found! Damage numbers will not be visible.");
+                }
             }
 
             // Subscribe to events
             SubscribeToEvents();
+            Debug.Log("[DamageNumberSpawner] Subscribed to combat events");
         }
 
         private void OnDestroy()
@@ -90,6 +163,8 @@ namespace HNR.UI
         private void OnEnemyDamaged(EnemyDamagedEvent evt)
         {
             if (evt.Enemy == null) return;
+
+            Debug.Log($"[DamageNumberSpawner] OnEnemyDamaged: {evt.Enemy.Name} took {evt.Damage} damage (blocked: {evt.Blocked})");
 
             // Spawn damage number at enemy position
             Vector3 worldPos = evt.Enemy.Position + _spawnOffset;
@@ -144,21 +219,30 @@ namespace HNR.UI
         {
             if (value <= 0) return;
 
+            Debug.Log($"[DamageNumberSpawner] SpawnNumber: value={value}, type={type}, worldPos={worldPosition}");
+
             var number = GetNumber();
-            if (number == null) return;
+            if (number == null)
+            {
+                Debug.LogWarning("[DamageNumberSpawner] GetNumber returned null!");
+                return;
+            }
 
             // Convert world position to screen position
             if (_worldCamera != null)
             {
                 Vector3 screenPos = _worldCamera.WorldToScreenPoint(worldPosition);
                 number.transform.position = screenPos;
+                Debug.Log($"[DamageNumberSpawner] Converted to screen pos: {screenPos}");
             }
             else
             {
                 number.transform.position = worldPosition;
+                Debug.LogWarning("[DamageNumberSpawner] No camera - using world position directly");
             }
 
             number.Show(value, type, number.transform.position, isCritical);
+            Debug.Log($"[DamageNumberSpawner] DamageNumber shown at {number.transform.position}, parent={number.transform.parent?.name ?? "null"}");
         }
 
         /// <summary>
@@ -181,17 +265,22 @@ namespace HNR.UI
             if (ServiceLocator.TryGet<IPoolManager>(out var poolManager))
             {
                 number = poolManager.Get<DamageNumber>();
+                if (number != null)
+                {
+                    Debug.Log($"[DamageNumberSpawner] Got DamageNumber from pool");
+                }
             }
 
             // Fallback to instantiate
             if (number == null && _prefab != null)
             {
                 number = Instantiate(_prefab);
+                Debug.Log($"[DamageNumberSpawner] Instantiated new DamageNumber (pool returned null)");
             }
 
             if (number == null)
             {
-                Debug.LogWarning("[DamageNumberSpawner] Failed to get DamageNumber instance");
+                Debug.LogWarning($"[DamageNumberSpawner] Failed to get DamageNumber instance. Prefab={_prefab != null}, PoolManager={ServiceLocator.Has<IPoolManager>()}");
                 return null;
             }
 
@@ -199,6 +288,11 @@ namespace HNR.UI
             if (_canvas != null)
             {
                 number.transform.SetParent(_canvas.transform, false);
+                Debug.Log($"[DamageNumberSpawner] Parented to canvas: {_canvas.name}");
+            }
+            else
+            {
+                Debug.LogWarning("[DamageNumberSpawner] Canvas is null! DamageNumber will not be visible.");
             }
 
             return number;
