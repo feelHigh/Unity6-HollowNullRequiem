@@ -181,6 +181,9 @@ namespace HNR.UI
 
             // Return to pool when complete
             _sequence.OnComplete(ReturnToPool);
+
+            // Link to gameObject so it's killed when destroyed
+            _sequence.SetLink(gameObject);
         }
 
         private Color GetColor(DamageNumberType type)

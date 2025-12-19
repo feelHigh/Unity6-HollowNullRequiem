@@ -360,7 +360,7 @@ namespace HNR.UI.Combat
             if (_intentContainer == null) return;
 
             _intentContainer.localScale = Vector3.zero;
-            _intentContainer.DOScale(1f, _intentAppearDuration).SetEase(Ease.OutBack);
+            _intentContainer.DOScale(1f, _intentAppearDuration).SetEase(Ease.OutBack).SetLink(gameObject);
         }
 
         private void StartImminentPulse()
@@ -371,6 +371,7 @@ namespace HNR.UI.Combat
             _pulseSequence.Append(_intentDiamond.DOFade(0.5f, _pulseDuration));
             _pulseSequence.Append(_intentDiamond.DOFade(1f, _pulseDuration));
             _pulseSequence.SetLoops(-1);
+            _pulseSequence.SetLink(gameObject);
         }
 
         /// <summary>

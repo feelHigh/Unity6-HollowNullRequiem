@@ -281,7 +281,9 @@ namespace HNR.UI.Combat
             if (_glowOutline != null)
             {
                 _glowOutline.color = UIColors.GetAspectColor(cardData.SoulAspect);
-                _glowOutline.DOFade(0f, 0f);
+                var color = _glowOutline.color;
+                color.a = 0f;
+                _glowOutline.color = color;
             }
 
             // Selection highlight off
@@ -427,7 +429,7 @@ namespace HNR.UI.Combat
             // Show aspect-colored glow
             if (_glowOutline != null)
             {
-                _glowOutline.DOFade(_glowIntensity, _glowFadeDuration);
+                _glowOutline.DOFade(_glowIntensity, _glowFadeDuration).SetLink(gameObject);
             }
         }
 
@@ -440,7 +442,7 @@ namespace HNR.UI.Combat
             // Hide glow
             if (_glowOutline != null)
             {
-                _glowOutline.DOFade(0f, _glowFadeDuration);
+                _glowOutline.DOFade(0f, _glowFadeDuration).SetLink(gameObject);
             }
         }
 
@@ -534,9 +536,9 @@ namespace HNR.UI.Combat
 
         private void ReturnToOriginalPosition()
         {
-            _rectTransform.DOAnchorPos(_originalPosition, _returnDuration).SetEase(Ease.OutQuad);
-            _rectTransform.DOLocalRotateQuaternion(_originalRotation, _returnDuration);
-            transform.DOScale(_originalScale, _returnDuration);
+            _rectTransform.DOAnchorPos(_originalPosition, _returnDuration).SetEase(Ease.OutQuad).SetLink(gameObject);
+            _rectTransform.DOLocalRotateQuaternion(_originalRotation, _returnDuration).SetLink(gameObject);
+            transform.DOScale(_originalScale, _returnDuration).SetLink(gameObject);
 
             // Notify fan layout
             ServiceLocator.TryGet<CardFanLayout>(out var fanLayout);

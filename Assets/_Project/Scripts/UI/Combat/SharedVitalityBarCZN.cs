@@ -170,7 +170,8 @@ namespace HNR.UI.Combat
                 if (_shieldIcon != null)
                 {
                     _shieldIcon.transform.DOScale(1.2f, 0.1f)
-                        .OnComplete(() => _shieldIcon.transform.DOScale(1f, 0.1f));
+                        .OnComplete(() => _shieldIcon.transform.DOScale(1f, 0.1f).SetLink(gameObject))
+                        .SetLink(gameObject);
                 }
             }
         }
@@ -231,7 +232,7 @@ namespace HNR.UI.Combat
         /// </summary>
         public void TriggerDamageShake()
         {
-            transform.DOShakePosition(0.3f, _shakeIntensity);
+            transform.DOShakePosition(0.3f, _shakeIntensity).SetLink(gameObject);
         }
 
         /// <summary>

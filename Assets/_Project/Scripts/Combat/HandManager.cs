@@ -210,7 +210,7 @@ namespace HNR.Combat
             }
 
             card.transform.localScale = Vector3.one * 0.5f;
-            card.transform.DOScale(Vector3.one, _drawDuration).SetEase(Ease.OutBack);
+            card.transform.DOScale(Vector3.one, _drawDuration).SetEase(Ease.OutBack).SetLink(card.gameObject);
             RepositionCards();
         }
 
@@ -234,8 +234,8 @@ namespace HNR.Combat
                 var targetPos = new Vector3(x, y, 0);
                 var targetRot = Quaternion.Euler(0, 0, rotation);
 
-                card.transform.DOLocalMove(targetPos, _repositionDuration).SetEase(Ease.OutQuad);
-                card.transform.DOLocalRotateQuaternion(targetRot, _repositionDuration);
+                card.transform.DOLocalMove(targetPos, _repositionDuration).SetEase(Ease.OutQuad).SetLink(card.gameObject);
+                card.transform.DOLocalRotateQuaternion(targetRot, _repositionDuration).SetLink(card.gameObject);
                 card.SetSortOrder(i);
             }
         }
@@ -341,7 +341,7 @@ namespace HNR.Combat
 
             _selectedCard = card;
             card.SetSelected(true);
-            card.transform.DOLocalMoveY(card.transform.localPosition.y + _selectedYOffset, 0.15f);
+            card.transform.DOLocalMoveY(card.transform.localPosition.y + _selectedYOffset, 0.15f).SetLink(card.gameObject);
         }
 
         /// <summary>
@@ -365,7 +365,7 @@ namespace HNR.Combat
             if (_hoveredCard != null) return;
 
             _hoveredCard = card;
-            card.transform.DOScale(Vector3.one * _hoverScale, 0.1f);
+            card.transform.DOScale(Vector3.one * _hoverScale, 0.1f).SetLink(card.gameObject);
             card.SetSortOrder(100);
         }
 
@@ -374,7 +374,7 @@ namespace HNR.Combat
             if (_hoveredCard != card) return;
 
             _hoveredCard = null;
-            card.transform.DOScale(Vector3.one, 0.1f);
+            card.transform.DOScale(Vector3.one, 0.1f).SetLink(card.gameObject);
             RepositionCards();
         }
     }

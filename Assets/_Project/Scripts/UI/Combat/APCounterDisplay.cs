@@ -86,6 +86,7 @@ namespace HNR.UI.Combat
             _glowSequence.Append(_glowBackground.DOFade(0.7f, 1.5f).SetEase(Ease.InOutSine));
             _glowSequence.Append(_glowBackground.DOFade(0.9f, 1.5f).SetEase(Ease.InOutSine));
             _glowSequence.SetLoops(-1);
+            _glowSequence.SetLink(gameObject);
         }
 
         private void OnAPChanged(APChangedEvent evt)
@@ -138,8 +139,9 @@ namespace HNR.UI.Combat
             _apText.transform.DOScale(0.8f, _pulseDuration / 2)
                 .OnComplete(() => {
                     _apText.text = newValue.ToString();
-                    _apText.transform.DOScale(1f, _pulseDuration / 2);
-                });
+                    _apText.transform.DOScale(1f, _pulseDuration / 2).SetLink(gameObject);
+                })
+                .SetLink(gameObject);
 
             _currentAP = newValue;
             _apText.color = newValue > 0 ? _fullColor : _emptyColor;
@@ -153,14 +155,14 @@ namespace HNR.UI.Combat
             if (_apText == null) return;
 
             _apText.color = _insufficientColor;
-            _apText.transform.DOShakePosition(0.3f, 5f);
+            _apText.transform.DOShakePosition(0.3f, 5f).SetLink(gameObject);
 
             DOVirtual.DelayedCall(0.5f, () => {
                 if (_apText != null)
                 {
                     _apText.color = _currentAP > 0 ? _fullColor : _emptyColor;
                 }
-            });
+            }).SetLink(gameObject);
         }
 
         private void AnimatePulse()
@@ -168,7 +170,8 @@ namespace HNR.UI.Combat
             if (_apText == null) return;
 
             _apText.transform.DOScale(_pulseScale, _pulseDuration / 2)
-                .OnComplete(() => _apText.transform.DOScale(1f, _pulseDuration / 2));
+                .OnComplete(() => _apText.transform.DOScale(1f, _pulseDuration / 2).SetLink(gameObject))
+                .SetLink(gameObject);
         }
 
         private void UpdateParticles(int current)

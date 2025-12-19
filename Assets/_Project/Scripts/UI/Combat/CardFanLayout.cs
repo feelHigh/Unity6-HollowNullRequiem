@@ -185,7 +185,7 @@ namespace HNR.UI.Combat
                         LayoutCards();
                         AnimateCardDeal(card);
                     }
-                });
+                }).SetLink(gameObject);
             }
             else
             {
@@ -242,6 +242,7 @@ namespace HNR.UI.Combat
                     ReturnCardToPool(card);
                     OnCardRemoved?.Invoke(card);
                 });
+                seq.SetLink(card.gameObject);
             }
             else
             {
@@ -320,9 +321,9 @@ namespace HNR.UI.Combat
                 var rect = card.RectTransform;
                 if (rect != null)
                 {
-                    rect.DOAnchorPos(position, _repositionDuration).SetEase(Ease.OutQuad);
-                    rect.DOLocalRotate(new Vector3(0, 0, rotation), _repositionDuration).SetEase(Ease.OutQuad);
-                    card.transform.DOScale(1f, _repositionDuration);
+                    rect.DOAnchorPos(position, _repositionDuration).SetEase(Ease.OutQuad).SetLink(card.gameObject);
+                    rect.DOLocalRotate(new Vector3(0, 0, rotation), _repositionDuration).SetEase(Ease.OutQuad).SetLink(card.gameObject);
+                    card.transform.DOScale(1f, _repositionDuration).SetLink(card.gameObject);
                 }
 
                 // Set sibling index for proper layering (left cards behind right)
@@ -368,9 +369,9 @@ namespace HNR.UI.Combat
             var rect = card.RectTransform;
             if (rect != null)
             {
-                rect.DOAnchorPos(position, _dealDuration).SetEase(_dealEase);
-                rect.DOLocalRotate(new Vector3(0, 0, rotation), _dealDuration).SetEase(_dealEase);
-                card.transform.DOScale(1f, _dealDuration).SetEase(_dealEase);
+                rect.DOAnchorPos(position, _dealDuration).SetEase(_dealEase).SetLink(card.gameObject);
+                rect.DOLocalRotate(new Vector3(0, 0, rotation), _dealDuration).SetEase(_dealEase).SetLink(card.gameObject);
+                card.transform.DOScale(1f, _dealDuration).SetEase(_dealEase).SetLink(card.gameObject);
             }
 
             card.transform.SetSiblingIndex(index);
@@ -392,9 +393,9 @@ namespace HNR.UI.Combat
             if (rect != null && _cardBasePositions.TryGetValue(card, out var basePos))
             {
                 var hoverPos = new Vector2(basePos.x, basePos.y + _hoverLiftY);
-                rect.DOAnchorPos(hoverPos, _hoverDuration);
-                rect.DOLocalRotate(Vector3.zero, _hoverDuration);
-                card.transform.DOScale(_hoverScale, _hoverDuration);
+                rect.DOAnchorPos(hoverPos, _hoverDuration).SetLink(card.gameObject);
+                rect.DOLocalRotate(Vector3.zero, _hoverDuration).SetLink(card.gameObject);
+                card.transform.DOScale(_hoverScale, _hoverDuration).SetLink(card.gameObject);
             }
 
             // Bring to front
