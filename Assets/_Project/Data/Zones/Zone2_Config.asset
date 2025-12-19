@@ -34,7 +34,7 @@ MonoBehaviour:
   _eliteEncounters:
   - {fileID: 11400000, guid: 200b7d021c2e3be4caa2267e5d040917, type: 2}
   - {fileID: 11400000, guid: 5ea076431206f7a4f95d9131fb26af68, type: 2}
-  _bossEncounter: {fileID: 0}
+  _bossEncounter: {fileID: 11400000, guid: 885cd100096ec70438c457e4376914a6, type: 2}
   _echoEvents:
   - {fileID: 11400000, guid: f81789dbf591b0743a4c360044dfe242, type: 2}
   - {fileID: 11400000, guid: 76ca10ac67723514e99ebc1f38f9cb21, type: 2}
