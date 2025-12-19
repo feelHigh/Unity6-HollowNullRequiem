@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _enemyId: z2_fractured_knight
   _enemyName: Fractured Knight
-  _description: A fallen Warden whose armor has fused with corrupted crystal. Methodical
-    and dangerous, it builds strength before unleashing devastating combos.
+  _description: A skeletal knight, once a proud Warden, whose cracked armor has fused
+    with corrupted crystal. Methodical and dangerous, it builds strength before unleashing
+    devastating combos.
   _soulAspect: 0
   _isElite: 0
   _isBoss: 0
@@ -51,7 +52,7 @@ MonoBehaviour:
   _cardDropPool: []
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
-  _spriteScale: 12
+  _spriteScale: 1.2
   _visualPrefab: {fileID: 2448636815102683210, guid: b15d30e23b4b80248919ed604fd357ab, type: 3}
   _preferredAttackType: 0
   _attackSound: {fileID: 0}

@@ -5,6 +5,7 @@
 
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using DG.Tweening;
 using HNR.Core.Interfaces;
 using HNR.Map;
 using HNR.UI;
@@ -35,6 +36,9 @@ namespace HNR.Core.GameStates
         {
             Debug.Log("[RunState] Starting run navigation...");
 
+            // Kill all DOTween animations to prevent null reference errors from previous scene
+            DOTween.KillAll();
+
             // Subscribe to scene loaded event before loading
             SceneManager.sceneLoaded += OnNullRiftSceneLoaded;
 
@@ -59,19 +63,42 @@ namespace HNR.Core.GameStates
 
             Debug.Log("[RunState] NullRift scene loaded, initializing map...");
 
-            // Generate map if needed
+            // Get MapManager and RunManager
             var mapManager = ServiceLocator.Get<MapManager>();
+            var runManagerInterface = ServiceLocator.Get<IRunManager>();
+            var runManager = runManagerInterface as HNR.Progression.RunManager;
+
+            Debug.Log($"[RunState] MapManager found: {mapManager != null}, RunManager found: {runManager != null}");
+
             if (mapManager != null)
             {
+                Debug.Log($"[RunState] MapManager.HasActiveMap: {mapManager.HasActiveMap}");
+
                 if (!mapManager.HasActiveMap)
                 {
-                    // Get current zone from RunManager
-                    var runManager = ServiceLocator.Get<IRunManager>();
-                    int zone = runManager?.CurrentZone ?? 1;
-                    int seed = runManager?.RunSeed ?? -1;
+                    // Check for cached map state from RunManager (returning from combat)
+                    var cachedMapData = runManager?.GetCachedMapData();
+                    Debug.Log($"[RunState] Cached map data: {(cachedMapData != null ? $"Zone={cachedMapData.Zone}, CurrentNode={cachedMapData.CurrentNodeId}, Visited={cachedMapData.VisitedNodes.Count}, Accessible={cachedMapData.AccessibleNodeIds.Count}" : "NULL")}");
 
-                    mapManager.GenerateMap(zone, seed);
-                    Debug.Log($"[RunState] Generated map for zone {zone}");
+                    if (cachedMapData != null && !string.IsNullOrEmpty(cachedMapData.CurrentNodeId))
+                    {
+                        // Restore map state from cached data
+                        mapManager.RestoreMapState(cachedMapData);
+                        Debug.Log($"[RunState] Restored map from cached state: node {cachedMapData.CurrentNodeId}");
+                    }
+                    else
+                    {
+                        // Generate new map for fresh run
+                        int zone = runManager?.CurrentZone ?? 1;
+                        int seed = runManager?.RunSeed ?? -1;
+
+                        mapManager.GenerateMap(zone, seed);
+                        Debug.Log($"[RunState] Generated new map for zone {zone}, seed {seed}");
+                    }
+                }
+                else
+                {
+                    Debug.Log($"[RunState] Map already active, CurrentNode: {mapManager.CurrentNode?.NodeId}");
                 }
             }
             else

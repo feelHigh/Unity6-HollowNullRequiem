@@ -409,13 +409,67 @@ namespace HNR.Progression
 
         private MapSaveData CreateMapSaveData()
         {
-            // TODO: Get map data from MapManager when implemented
-            return new MapSaveData
+            var mapSaveData = new MapSaveData
             {
                 Zone = _currentZone,
                 Seed = _runSeed
             };
+
+            // Get actual map data from MapManager if available
+            if (ServiceLocator.TryGet<MapManager>(out var mapManager) && mapManager.HasActiveMap)
+            {
+                var mapData = mapManager.CurrentMap;
+                mapSaveData.CurrentNodeId = mapData.CurrentNodeId;
+
+                Debug.Log($"[RunManager] CreateMapSaveData: MapManager found, CurrentNodeId={mapData.CurrentNodeId}, TotalNodes={mapData.Nodes.Count}");
+
+                // Save visited nodes
+                foreach (var node in mapData.Nodes)
+                {
+                    if (node.State == NodeState.Visited || node.State == NodeState.Current)
+                    {
+                        mapSaveData.VisitedNodes.Add(new VisitedNode
+                        {
+                            NodeId = node.NodeId,
+                            Completed = node.State == NodeState.Visited,
+                            NodeType = node.Type.ToString()
+                        });
+                        Debug.Log($"[RunManager] Saving node: {node.NodeId}, State={node.State}, Completed={node.State == NodeState.Visited}");
+                    }
+
+                    if (node.State == NodeState.Available)
+                    {
+                        mapSaveData.AccessibleNodeIds.Add(node.NodeId);
+                    }
+                }
+
+                Debug.Log($"[RunManager] Saved map state: CurrentNode={mapSaveData.CurrentNodeId}, Visited={mapSaveData.VisitedNodes.Count}, Accessible={mapSaveData.AccessibleNodeIds.Count}");
+            }
+            else
+            {
+                Debug.LogWarning($"[RunManager] CreateMapSaveData: MapManager not available or no active map!");
+            }
+
+            return mapSaveData;
         }
+
+        /// <summary>
+        /// Gets the cached map save data for restoration.
+        /// </summary>
+        public MapSaveData GetCachedMapData() => _cachedMapData;
+
+        /// <summary>
+        /// Caches the current map state for cross-scene persistence.
+        /// Called before transitioning to combat.
+        /// </summary>
+        public void CacheMapState()
+        {
+            _cachedMapData = CreateMapSaveData();
+            Debug.Log($"[RunManager] Map state cached: {_cachedMapData.CurrentNodeId}");
+        }
+
+        // Cached map data for cross-scene persistence
+        private MapSaveData _cachedMapData;
 
         // ============================================
         // Save Data Restoration
@@ -462,13 +516,25 @@ namespace HNR.Progression
             // Restore progression
             _currentZone = saveData.Progression.CurrentZone;
 
-            // Restore void shards
-            var shopManager = ServiceLocator.Get<IShopManager>();
-            shopManager?.SetVoidShards(saveData.Progression.VoidShards);
+            // Restore void shards (if ShopManager is available)
+            if (ServiceLocator.TryGet<IShopManager>(out var shopManager))
+            {
+                shopManager.SetVoidShards(saveData.Progression.VoidShards);
+            }
+            else
+            {
+                Debug.Log("[RunManager] IShopManager not available during restore - void shards will be set when ShopManager initializes");
+            }
 
-            // Restore relics
-            var relicManager = ServiceLocator.Get<IRelicManager>();
-            relicManager?.LoadRelics(saveData.Progression.RelicIds);
+            // Restore relics (if RelicManager is available)
+            if (ServiceLocator.TryGet<IRelicManager>(out var relicManager))
+            {
+                relicManager.LoadRelics(saveData.Progression.RelicIds);
+            }
+            else
+            {
+                Debug.Log("[RunManager] IRelicManager not available during restore - relics will be loaded when RelicManager initializes");
+            }
 
             // Restore stats
             _stats = saveData.Stats;

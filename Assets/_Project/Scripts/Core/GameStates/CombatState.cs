@@ -5,8 +5,11 @@
 
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using DG.Tweening;
+using HNR.Core.Events;
 using HNR.Core.Interfaces;
 using HNR.Combat;
+using HNR.Progression;
 using HNR.VFX;
 
 namespace HNR.Core.GameStates
@@ -35,6 +38,12 @@ namespace HNR.Core.GameStates
         {
             Debug.Log("[CombatState] Entering combat...");
 
+            // Kill all DOTween animations to prevent null reference errors from previous scene
+            DOTween.KillAll();
+
+            // Subscribe to combat end event
+            EventBus.Subscribe<CombatEndedEvent>(OnCombatEnded);
+
             // Load Combat scene
             if (SceneManager.GetActiveScene().name != "Combat")
             {
@@ -42,6 +51,53 @@ namespace HNR.Core.GameStates
             }
 
             // TurnManager and CombatManager will initialize when scene loads
+        }
+
+        /// <summary>
+        /// Handle combat end - transition to appropriate state.
+        /// </summary>
+        private void OnCombatEnded(CombatEndedEvent evt)
+        {
+            Debug.Log($"[CombatState] Combat ended with victory={evt.Victory}, transitioning...");
+
+            if (evt.Victory)
+            {
+                // Mark the current map node as completed in cached map data
+                // (MapManager in NullRift scene was destroyed, so we update the cached data)
+                if (ServiceLocator.TryGet<IRunManager>(out var runManagerInterface))
+                {
+                    var runManager = runManagerInterface as HNR.Progression.RunManager;
+                    var cachedMapData = runManager?.GetCachedMapData();
+                    if (cachedMapData != null && !string.IsNullOrEmpty(cachedMapData.CurrentNodeId))
+                    {
+                        // Find the current node in visited nodes and mark as completed
+                        var currentNodeEntry = cachedMapData.VisitedNodes.Find(v => v.NodeId == cachedMapData.CurrentNodeId);
+                        if (currentNodeEntry != null)
+                        {
+                            currentNodeEntry.Completed = true;
+                        }
+                        else
+                        {
+                            // Add current node to visited list as completed
+                            cachedMapData.VisitedNodes.Add(new HNR.Progression.VisitedNode
+                            {
+                                NodeId = cachedMapData.CurrentNodeId,
+                                Completed = true,
+                                NodeType = "Combat"
+                            });
+                        }
+                        Debug.Log($"[CombatState] Marked node {cachedMapData.CurrentNodeId} as completed in cached data");
+                    }
+                }
+
+                // Return to map (NullRift)
+                _manager.ChangeState(GameState.Run);
+            }
+            else
+            {
+                // Go to results/game over
+                _manager.ChangeState(GameState.Results);
+            }
         }
 
         /// <summary>
@@ -58,6 +114,12 @@ namespace HNR.Core.GameStates
         public void Exit()
         {
             Debug.Log("[CombatState] Exiting combat...");
+
+            // Kill all DOTween animations to prevent null reference errors after scene unload
+            DOTween.KillAll();
+
+            // Unsubscribe from combat end event
+            EventBus.Unsubscribe<CombatEndedEvent>(OnCombatEnded);
 
             // Cleanup status effects
             if (ServiceLocator.TryGet<StatusEffectManager>(out var statusMgr))

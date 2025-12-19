@@ -257,8 +257,12 @@ namespace HNR.Editor
             ProductionSetupTool.CreateAllPrefabs();
 
             // Step 2: Link visual prefabs to data
-            EditorUtility.DisplayProgressBar("Production Finalization", "Linking visual prefabs...", 0.3f);
+            EditorUtility.DisplayProgressBar("Production Finalization", "Linking visual prefabs...", 0.25f);
             ProductionSetupTool.LinkAllVisualPrefabs();
+
+            // Step 2b: Wire enemy visuals with AnimatedCharacterVisual
+            EditorUtility.DisplayProgressBar("Production Finalization", "Wiring enemy visuals...", 0.35f);
+            EnemyVisualWiringTool.WireAllEnemyVisuals();
 
             // Step 3: Generate Audio & VFX configs
             EditorUtility.DisplayProgressBar("Production Finalization", "Generating Audio & VFX configs...", 0.5f);
@@ -310,10 +314,16 @@ namespace HNR.Editor
             ProductionSetupTool.SetupAndLinkRequiemVisuals();
         }
 
-        [MenuItem("HNR/3. Production/Setup Enemy Visuals (Add Component + Link)", priority = 54)]
+        [MenuItem("HNR/3. Production/Setup Enemy Visuals (HeroEditor)", priority = 54)]
         public static void SetupEnemyVisuals()
         {
             ProductionSetupTool.SetupAndLinkEnemyVisuals();
+        }
+
+        [MenuItem("HNR/3. Production/Verify Enemy Visuals", priority = 55)]
+        public static void VerifyEnemyVisuals()
+        {
+            ProductionSetupTool.VerifyEnemyVisuals();
         }
 
         // ============================================

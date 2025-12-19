@@ -220,6 +220,106 @@ namespace HNR.Map
         }
 
         /// <summary>
+        /// Restores map state from save data by regenerating map with same seed
+        /// and applying saved node states.
+        /// </summary>
+        /// <param name="mapSaveData">Saved map state to restore.</param>
+        public void RestoreMapState(HNR.Progression.MapSaveData mapSaveData)
+        {
+            if (mapSaveData == null)
+            {
+                Debug.LogWarning("[MapManager] Cannot restore null map save data");
+                return;
+            }
+
+            Debug.Log($"[MapManager] RestoreMapState called: Zone={mapSaveData.Zone}, Seed={mapSaveData.Seed}, CurrentNode={mapSaveData.CurrentNodeId}");
+
+            // Regenerate map with same seed
+            GenerateMap(mapSaveData.Zone, mapSaveData.Seed);
+
+            if (_currentMap == null)
+            {
+                Debug.LogError("[MapManager] Failed to regenerate map for restoration");
+                return;
+            }
+
+            Debug.Log($"[MapManager] Regenerated map with {_currentMap.Nodes.Count} nodes");
+
+            // Reset ALL nodes to Locked first (we'll restore proper states next)
+            foreach (var node in _currentMap.Nodes)
+            {
+                node.State = NodeState.Locked;
+            }
+
+            // Restore current node ID
+            if (!string.IsNullOrEmpty(mapSaveData.CurrentNodeId))
+            {
+                _currentMap.CurrentNodeId = mapSaveData.CurrentNodeId;
+                Debug.Log($"[MapManager] Set CurrentNodeId to: {mapSaveData.CurrentNodeId}");
+            }
+
+            // Restore visited node states
+            foreach (var visitedNode in mapSaveData.VisitedNodes)
+            {
+                var node = _currentMap.GetNode(visitedNode.NodeId);
+                if (node != null)
+                {
+                    node.State = visitedNode.Completed ? NodeState.Visited : NodeState.Current;
+                    Debug.Log($"[MapManager] Restored node {visitedNode.NodeId}: Completed={visitedNode.Completed}, State={node.State}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[MapManager] Node not found for restoration: {visitedNode.NodeId}");
+                }
+            }
+
+            // Get current node to determine which row the player is at
+            var currentNode = _currentMap.GetNode(_currentMap.CurrentNodeId);
+            int currentRow = currentNode?.Row ?? 0;
+
+            Debug.Log($"[MapManager] Current node after restore: {currentNode?.NodeId}, Row={currentRow}, State={currentNode?.State}, Connections={currentNode?.ConnectedNodeIds.Count ?? 0}");
+
+            // In a roguelike map, only nodes in rows AFTER the current row can be available
+            // Nodes in previous rows or the same row (but not visited) are permanently locked
+            foreach (var accessibleId in mapSaveData.AccessibleNodeIds)
+            {
+                var node = _currentMap.GetNode(accessibleId);
+                if (node != null && node.State == NodeState.Locked)
+                {
+                    // Only restore as Available if the node is in a row ahead of current position
+                    if (node.Row > currentRow)
+                    {
+                        node.State = NodeState.Available;
+                        Debug.Log($"[MapManager] Restored accessible node: {accessibleId} (row {node.Row})");
+                    }
+                    else
+                    {
+                        Debug.Log($"[MapManager] Skipped accessible node {accessibleId} (row {node.Row} <= current row {currentRow})");
+                    }
+                }
+            }
+
+            // Ensure forward nodes from current position are available (nodes connected from current node)
+            if (currentNode != null)
+            {
+                foreach (var connectedId in currentNode.ConnectedNodeIds)
+                {
+                    var connectedNode = _currentMap.GetNode(connectedId);
+                    if (connectedNode != null && connectedNode.State == NodeState.Locked && connectedNode.Row > currentRow)
+                    {
+                        connectedNode.State = NodeState.Available;
+                        Debug.Log($"[MapManager] Unlocked forward node from current: {connectedId}");
+                    }
+                }
+            }
+
+            // Re-publish event for UI update
+            EventBus.Publish(new MapGeneratedEvent(_currentMap));
+
+            Debug.Log($"[MapManager] Restored map state complete: Zone={mapSaveData.Zone}, CurrentNode={mapSaveData.CurrentNodeId}, Visited={mapSaveData.VisitedNodes.Count}");
+        }
+
+        /// <summary>
         /// Gets current map data for saving.
         /// </summary>
         public MapData GetMapStateForSave()

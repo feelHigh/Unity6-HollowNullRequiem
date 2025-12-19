@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _enemyId: z1_void_beast
   _enemyName: Void Beast
-  _description: A hulking creature born from the deepest shadows. It defends first,
-    then unleashes devastating attacks.
+  _description: A hulking zombie brute born from the deepest shadows, void cracks
+    splitting its corrupted flesh. It defends first, then unleashes devastating attacks.
   _soulAspect: 2
   _isElite: 0
   _isBoss: 0
@@ -46,7 +46,7 @@ MonoBehaviour:
   _cardDropPool: []
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
-  _spriteScale: 12
+  _spriteScale: 1.4
   _visualPrefab: {fileID: 5811725434214100759, guid: 242af1515665a7444af26fdba0ac2f74, type: 3}
   _preferredAttackType: 0
   _attackSound: {fileID: 0}

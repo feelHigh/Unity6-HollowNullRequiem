@@ -49,6 +49,111 @@ namespace HNR.UI.Combat
         private Transform _worldAnchor;
         private Sequence _pulseSequence;
         private Camera _mainCamera;
+        private static Sprite _whiteSprite;
+
+        private void Awake()
+        {
+            // Auto-wire references if not set
+            AutoWireReferences();
+
+            // Ensure Images can render (world-space canvas needs sprite)
+            EnsureImageRendering();
+        }
+
+        /// <summary>
+        /// Auto-wire child references if not assigned in Inspector.
+        /// </summary>
+        private void AutoWireReferences()
+        {
+            // Find HPBarContainer -> HPFill, HPBackground, HPText
+            var hpContainer = transform.Find("HPBarContainer");
+            if (hpContainer != null)
+            {
+                if (_hpBarFill == null)
+                {
+                    var fillTransform = hpContainer.Find("HPFill");
+                    _hpBarFill = fillTransform?.GetComponent<Image>();
+                }
+                if (_hpBarBackground == null)
+                {
+                    var bgTransform = hpContainer.Find("HPBackground");
+                    _hpBarBackground = bgTransform?.GetComponent<Image>();
+                }
+                if (_hpText == null)
+                {
+                    var textTransform = hpContainer.Find("HPText");
+                    _hpText = textTransform?.GetComponent<TMP_Text>();
+                }
+            }
+
+            // Find IntentContainer and children
+            if (_intentContainer == null)
+            {
+                var intentContainerTransform = transform.Find("IntentContainer");
+                _intentContainer = intentContainerTransform?.GetComponent<RectTransform>();
+            }
+            if (_intentContainer != null)
+            {
+                if (_intentDiamond == null)
+                {
+                    var diamondTransform = _intentContainer.Find("IntentDiamond");
+                    _intentDiamond = diamondTransform?.GetComponent<Image>();
+                }
+                if (_intentIcon == null)
+                {
+                    var iconTransform = _intentContainer.Find("IntentIcon");
+                    _intentIcon = iconTransform?.GetComponent<Image>();
+                }
+                if (_intentValue == null)
+                {
+                    var valueTransform = _intentContainer.Find("IntentValue");
+                    _intentValue = valueTransform?.GetComponent<TMP_Text>();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Ensures Image components can render without assigned sprites.
+        /// Creates a simple white sprite and configures Image types.
+        /// </summary>
+        private void EnsureImageRendering()
+        {
+            // Create white sprite once (static, shared across all instances)
+            if (_whiteSprite == null)
+            {
+                var whiteTex = new Texture2D(4, 4);
+                var pixels = new Color32[16];
+                for (int i = 0; i < 16; i++) pixels[i] = new Color32(255, 255, 255, 255);
+                whiteTex.SetPixels32(pixels);
+                whiteTex.Apply();
+                _whiteSprite = Sprite.Create(whiteTex, new Rect(0, 0, 4, 4), Vector2.one * 0.5f);
+                _whiteSprite.name = "WhiteSprite";
+            }
+
+            // Configure HP bar fill
+            if (_hpBarFill != null)
+            {
+                if (_hpBarFill.sprite == null)
+                {
+                    _hpBarFill.sprite = _whiteSprite;
+                }
+                _hpBarFill.type = Image.Type.Filled;
+                _hpBarFill.fillMethod = Image.FillMethod.Horizontal;
+                _hpBarFill.fillOrigin = 0; // Left origin
+            }
+
+            // Configure HP bar background
+            if (_hpBarBackground != null && _hpBarBackground.sprite == null)
+            {
+                _hpBarBackground.sprite = _whiteSprite;
+            }
+
+            // Configure intent diamond
+            if (_intentDiamond != null && _intentDiamond.sprite == null)
+            {
+                _intentDiamond.sprite = _whiteSprite;
+            }
+        }
 
         /// <summary>
         /// Initializes the floating UI for an enemy.
@@ -59,6 +164,8 @@ namespace HNR.UI.Combat
             _enemy = enemy;
             _worldAnchor = enemy.transform;
             _mainCamera = Camera.main;
+
+            Debug.Log($"[EnemyFloatingUI] Initialize for {enemy.Name}: _hpBarFill={(_hpBarFill != null ? "OK" : "NULL")}, _hpText={(_hpText != null ? "OK" : "NULL")}, childCount={transform.childCount}");
 
             UpdateHealth(enemy.CurrentHP, enemy.MaxHP);
 

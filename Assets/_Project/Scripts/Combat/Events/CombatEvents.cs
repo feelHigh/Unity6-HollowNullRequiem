@@ -3,6 +3,7 @@
 // Combat-specific events for EventBus
 // ============================================
 
+using UnityEngine;
 using HNR.Core.Events;
 using HNR.Characters;
 
@@ -46,11 +47,15 @@ namespace HNR.Combat
         /// <summary>The change in HP (negative = damage, positive = healing).</summary>
         public int Delta { get; }
 
-        public TeamHPChangedEvent(int currentHP, int maxHP, int delta = 0)
+        /// <summary>World position of the affected Requiem (for damage number spawning).</summary>
+        public Vector3? TargetPosition { get; }
+
+        public TeamHPChangedEvent(int currentHP, int maxHP, int delta = 0, Vector3? targetPosition = null)
         {
             CurrentHP = currentHP;
             MaxHP = maxHP;
             Delta = delta;
+            TargetPosition = targetPosition;
         }
     }
 

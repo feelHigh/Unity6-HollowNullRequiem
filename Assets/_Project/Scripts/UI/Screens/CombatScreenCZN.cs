@@ -4,6 +4,7 @@
 // ============================================
 
 using UnityEngine;
+using UnityEngine.UI;
 using HNR.Core;
 using HNR.Core.Events;
 using HNR.Core.Interfaces;
@@ -133,11 +134,19 @@ namespace HNR.UI.Screens
 
         private void InitializeUI()
         {
+            // Auto-find missing references
+            AutoFindMissingReferences();
+
             // Top HUD
             if (_vitalityBar != null)
             {
                 _vitalityBar.SetPartyPortraits(_context.Team.ToArray());
                 _vitalityBar.Initialize(_context.TeamHP, _context.TeamMaxHP, _context.TeamBlock);
+                Debug.Log($"[CombatScreenCZN] Vitality bar initialized with HP {_context.TeamHP}/{_context.TeamMaxHP}");
+            }
+            else
+            {
+                Debug.LogWarning("[CombatScreenCZN] _vitalityBar is null - HP bar will not update!");
             }
 
             // Left Sidebar
@@ -157,6 +166,74 @@ namespace HNR.UI.Screens
             SpawnAllyIndicators();
         }
 
+        /// <summary>
+        /// Auto-find UI component references if not assigned in Inspector.
+        /// </summary>
+        private void AutoFindMissingReferences()
+        {
+            // Find SharedVitalityBarCZN
+            if (_vitalityBar == null)
+            {
+                _vitalityBar = FindAnyObjectByType<SharedVitalityBarCZN>(FindObjectsInactive.Include);
+                if (_vitalityBar != null)
+                {
+                    Debug.Log($"[CombatScreenCZN] Auto-found SharedVitalityBarCZN: {_vitalityBar.name}");
+                }
+                else
+                {
+                    // Try to find the GameObject and add the component
+                    var vitalityBarGO = GameObject.Find("SharedVitalityBar");
+                    if (vitalityBarGO != null)
+                    {
+                        _vitalityBar = vitalityBarGO.AddComponent<SharedVitalityBarCZN>();
+                        AutoWireVitalityBar(_vitalityBar, vitalityBarGO);
+                        Debug.Log($"[CombatScreenCZN] Added SharedVitalityBarCZN component to {vitalityBarGO.name}");
+                    }
+                }
+            }
+
+            // Find PartyStatusSidebar
+            if (_partySidebar == null)
+            {
+                _partySidebar = FindAnyObjectByType<PartyStatusSidebar>(FindObjectsInactive.Include);
+                if (_partySidebar != null)
+                {
+                    Debug.Log($"[CombatScreenCZN] Auto-found PartyStatusSidebar: {_partySidebar.name}");
+                }
+            }
+
+            // Find APCounterDisplay
+            if (_apCounter == null)
+            {
+                _apCounter = FindAnyObjectByType<APCounterDisplay>(FindObjectsInactive.Include);
+                if (_apCounter != null)
+                {
+                    Debug.Log($"[CombatScreenCZN] Auto-found APCounterDisplay: {_apCounter.name}");
+                }
+            }
+
+            // Find CardFanLayout
+            if (_cardFanLayout == null)
+            {
+                _cardFanLayout = FindAnyObjectByType<CardFanLayout>(FindObjectsInactive.Include);
+                if (_cardFanLayout != null)
+                {
+                    Debug.Log($"[CombatScreenCZN] Auto-found CardFanLayout: {_cardFanLayout.name}");
+                }
+            }
+
+            // Find enemy UI container
+            if (_enemyUIContainer == null)
+            {
+                var container = GameObject.Find("EnemyUIContainer");
+                if (container != null)
+                {
+                    _enemyUIContainer = container.transform;
+                    Debug.Log($"[CombatScreenCZN] Auto-found EnemyUIContainer");
+                }
+            }
+        }
+
         // ============================================
         // World Space UI Management
         // ============================================
@@ -168,10 +245,28 @@ namespace HNR.UI.Screens
                 Debug.LogWarning("[CombatScreenCZN] Cannot spawn enemy UIs - _enemyUIContainer is null");
                 return;
             }
+
+            // Auto-load prefab if not assigned
             if (_enemyUIPrefab == null)
             {
-                Debug.LogWarning("[CombatScreenCZN] Cannot spawn enemy UIs - _enemyUIPrefab is null");
-                return;
+                _enemyUIPrefab = Resources.Load<EnemyFloatingUI>("Prefabs/UI/Combat/EnemyFloatingUI");
+#if UNITY_EDITOR
+                if (_enemyUIPrefab == null)
+                {
+                    var prefabGO = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/Combat/EnemyFloatingUI.prefab");
+                    if (prefabGO != null)
+                    {
+                        _enemyUIPrefab = prefabGO.GetComponent<EnemyFloatingUI>();
+                        Debug.Log($"[CombatScreenCZN] Loaded EnemyFloatingUI from AssetDatabase. Prefab childCount={prefabGO.transform.childCount}");
+                    }
+                }
+#endif
+                if (_enemyUIPrefab == null)
+                {
+                    Debug.LogError("[CombatScreenCZN] Cannot spawn enemy UIs - _enemyUIPrefab is null and auto-load failed. Run: HNR > 2. Prefabs > UI > Combat UI > EnemyFloatingUI Only");
+                    return;
+                }
+                Debug.Log($"[CombatScreenCZN] Auto-loaded EnemyFloatingUI prefab with {_enemyUIPrefab.transform.childCount} children");
             }
 
             // Clear existing
@@ -187,6 +282,7 @@ namespace HNR.UI.Screens
                 if (enemy == null || enemy.IsDead) continue;
 
                 var ui = Instantiate(_enemyUIPrefab, _enemyUIContainer);
+                Debug.Log($"[CombatScreenCZN] Instantiated EnemyFloatingUI for {enemy.Name}, childCount={ui.transform.childCount}, prefab childCount={_enemyUIPrefab.transform.childCount}");
                 ui.Initialize(enemy);
                 spawnedCount++;
             }
@@ -195,24 +291,26 @@ namespace HNR.UI.Screens
 
         private void SpawnAllyIndicators()
         {
-            // Reparent RequiemInstances to ally slots - their visual prefabs will render there
+            // Position RequiemInstances at ally slots WITHOUT reparenting
+            // IMPORTANT: We must NOT reparent RequiemInstances because they need to persist
+            // across scene transitions. They are children of RunManager (DontDestroyOnLoad).
             int positionedCount = 0;
             for (int i = 0; i < _context.Team.Count; i++)
             {
                 var requiem = _context.Team[i];
                 if (requiem == null) continue;
 
-                // Reparent RequiemInstance to ally slot
+                // Position at ally slot location (without changing parent)
                 if (_allySlots != null && i < _allySlots.Length && _allySlots[i] != null)
                 {
-                    requiem.transform.SetParent(_allySlots[i], false);
-                    requiem.transform.localPosition = Vector3.zero;
-                    requiem.transform.localRotation = Quaternion.identity;
+                    // Just set world position, keep parent as RunManager
+                    requiem.transform.position = _allySlots[i].position;
+                    requiem.transform.rotation = _allySlots[i].rotation;
 
                     // Ensure visual is facing right (toward enemies)
                     requiem.Visual?.SetFacing(true);
 
-                    Debug.Log($"[CombatScreenCZN] Reparented {requiem.Name} to slot {i}: {_allySlots[i].name}");
+                    Debug.Log($"[CombatScreenCZN] Positioned {requiem.Name} at slot {i}: {_allySlots[i].name}");
                 }
                 else
                 {
@@ -354,6 +452,93 @@ namespace HNR.UI.Screens
             if (_apCounter != null)
             {
                 _apCounter.SetAP(_context.CurrentAP, _context.MaxAP);
+            }
+        }
+
+        // ============================================
+        // Auto-Wiring Helpers
+        // ============================================
+
+        /// <summary>
+        /// Auto-wire SharedVitalityBarCZN child references using reflection.
+        /// </summary>
+        private void AutoWireVitalityBar(SharedVitalityBarCZN vitalityBar, GameObject go)
+        {
+            var type = typeof(SharedVitalityBarCZN);
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+
+            // Find HP Fill - look for "Fill" child inside "HPBar", or any child named "Fill"
+            Transform hpFillTransform = null;
+            var hpBarTransform = go.transform.Find("HPBar");
+            if (hpBarTransform != null)
+            {
+                hpFillTransform = hpBarTransform.Find("Fill");
+            }
+
+            // Fallback: search recursively for any "Fill" object
+            if (hpFillTransform == null)
+            {
+                foreach (Transform child in go.GetComponentsInChildren<Transform>(true))
+                {
+                    if (child.name == "Fill" || child.name.Contains("HPFill") || child.name.Contains("HealthFill"))
+                    {
+                        hpFillTransform = child;
+                        break;
+                    }
+                }
+            }
+
+            if (hpFillTransform != null)
+            {
+                var hpFillImage = hpFillTransform.GetComponent<Image>();
+                if (hpFillImage != null)
+                {
+                    // Ensure Image is set to Filled type for fillAmount to work
+                    hpFillImage.type = Image.Type.Filled;
+                    hpFillImage.fillMethod = Image.FillMethod.Horizontal;
+                    hpFillImage.fillOrigin = 0; // Left
+                    hpFillImage.fillAmount = 1f;
+
+                    type.GetField("_healthFill", flags)?.SetValue(vitalityBar, hpFillImage);
+                    Debug.Log($"[CombatScreenCZN] Auto-wired _healthFill to {hpFillTransform.name} (set to Filled type)");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[CombatScreenCZN] Could not find HP fill image for SharedVitalityBar");
+            }
+
+            // Find HP Text
+            var hpText = go.GetComponentInChildren<TMPro.TMP_Text>(true);
+            if (hpText != null)
+            {
+                type.GetField("_hpText", flags)?.SetValue(vitalityBar, hpText);
+                Debug.Log($"[CombatScreenCZN] Auto-wired _hpText to {hpText.name}");
+            }
+
+            // Find damage fill (secondary fill for linger effect) - use HPBar background as fallback
+            var damageFillTransform = go.transform.Find("DamageFill");
+            if (damageFillTransform == null && hpBarTransform != null)
+            {
+                // Use HPBar itself as damage fill background
+                var hpBarImage = hpBarTransform.GetComponent<Image>();
+                if (hpBarImage != null)
+                {
+                    hpBarImage.type = Image.Type.Filled;
+                    hpBarImage.fillMethod = Image.FillMethod.Horizontal;
+                    hpBarImage.fillOrigin = 0;
+                    type.GetField("_damageFill", flags)?.SetValue(vitalityBar, hpBarImage);
+                    Debug.Log($"[CombatScreenCZN] Auto-wired _damageFill to HPBar background");
+                }
+            }
+            else if (damageFillTransform != null)
+            {
+                var damageFillImage = damageFillTransform.GetComponent<Image>();
+                if (damageFillImage != null)
+                {
+                    type.GetField("_damageFill", flags)?.SetValue(vitalityBar, damageFillImage);
+                    Debug.Log($"[CombatScreenCZN] Auto-wired _damageFill");
+                }
             }
         }
     }

@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _enemyId: z2_null_specter
   _enemyName: Null Specter
-  _description: A ghostly manifestation of pure Hollow energy. It weakens its victims
-    before cursing their very souls, polluting their deck with useless cards.
+  _description: An ancient mummy wreathed in spectral null energy. It weakens its
+    victims before cursing their very souls, polluting their deck with useless cards.
   _soulAspect: 2
   _isElite: 0
   _isBoss: 0
@@ -51,9 +51,9 @@ MonoBehaviour:
   _cardDropPool: []
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
-  _spriteScale: 12
+  _spriteScale: 1
   _visualPrefab: {fileID: 5082457611253068602, guid: 3774dfef65a50af42a81aed5c0ef50e8, type: 3}
-  _preferredAttackType: 0
+  _preferredAttackType: 2
   _attackSound: {fileID: 0}
   _hitSound: {fileID: 0}
   _deathSound: {fileID: 0}

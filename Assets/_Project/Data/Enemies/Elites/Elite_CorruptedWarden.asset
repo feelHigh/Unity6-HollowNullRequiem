@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _enemyId: elite_corrupted_warden
   _enemyName: Corrupted Warden
-  _description: A fallen champion of the Bastion, now serving the Hollow. Summons
-    Hollow Shades to aid in battle. At 50% HP, enters a frenzied state with multi-hit
-    attacks.
+  _description: A massive skeletal champion in ornate corrupted armor, fallen defender
+    of the Bastion. Summons Hollow Shades to aid in battle. At 50% HP, enters a frenzied
+    state with multi-hit attacks.
   _soulAspect: 2
   _isElite: 1
   _isBoss: 0
@@ -47,7 +47,7 @@ MonoBehaviour:
   _cardDropPool: []
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
-  _spriteScale: 12
+  _spriteScale: 1.4
   _visualPrefab: {fileID: 8933112250153485561, guid: 73aaf58adc6e5934ab7924593fdd91a0, type: 3}
   _preferredAttackType: 0
   _attackSound: {fileID: 0}

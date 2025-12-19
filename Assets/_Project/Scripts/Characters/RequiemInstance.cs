@@ -93,7 +93,19 @@ namespace HNR.Characters
         public RequiemClass Class => _data?.Class ?? RequiemClass.Striker;
 
         /// <summary>Character visual component for animations.</summary>
-        public ICharacterVisual Visual => _visual;
+        public ICharacterVisual Visual
+        {
+            get
+            {
+                // Check if visual was destroyed (e.g., scene transition)
+                if (_visual is MonoBehaviour mb && mb == null)
+                {
+                    // Visual was destroyed, try to recreate it
+                    InitializeVisual();
+                }
+                return _visual;
+            }
+        }
 
         /// <summary>Whether this Requiem has used their Art this combat.</summary>
         public bool HasUsedArtThisCombat

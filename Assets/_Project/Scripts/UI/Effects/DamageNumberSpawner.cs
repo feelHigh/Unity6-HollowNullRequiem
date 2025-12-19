@@ -182,19 +182,35 @@ namespace HNR.UI
         {
             if (evt.Delta == 0) return;
 
-            // Get a position for team damage/heal numbers
-            // Use center-bottom of screen for team
-            Vector3 screenPos = new Vector3(Screen.width * 0.5f, Screen.height * 0.3f, 0);
-
-            if (evt.Delta > 0)
+            // Use Requiem position if available, otherwise fallback to screen center
+            if (evt.TargetPosition.HasValue)
             {
-                // Healing
-                SpawnNumberAtScreen(evt.Delta, DamageNumberType.Heal, screenPos);
+                Vector3 worldPos = evt.TargetPosition.Value + _spawnOffset;
+
+                if (evt.Delta > 0)
+                {
+                    // Healing at world position
+                    SpawnNumber(evt.Delta, DamageNumberType.Heal, worldPos);
+                }
+                else
+                {
+                    // Damage at world position
+                    SpawnNumber(-evt.Delta, DamageNumberType.Damage, worldPos);
+                }
             }
             else
             {
-                // Damage
-                SpawnNumberAtScreen(-evt.Delta, DamageNumberType.Damage, screenPos);
+                // Fallback: center-bottom of screen for team
+                Vector3 screenPos = new Vector3(Screen.width * 0.5f, Screen.height * 0.3f, 0);
+
+                if (evt.Delta > 0)
+                {
+                    SpawnNumberAtScreen(evt.Delta, DamageNumberType.Heal, screenPos);
+                }
+                else
+                {
+                    SpawnNumberAtScreen(-evt.Delta, DamageNumberType.Damage, screenPos);
+                }
             }
         }
 

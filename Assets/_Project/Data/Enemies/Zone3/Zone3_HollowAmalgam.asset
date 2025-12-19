@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _enemyId: z3_hollow_amalgam
   _enemyName: Hollow Amalgam
-  _description: A grotesque fusion of countless corrupted souls. It grows stronger
-    as your team's Corruption rises, punishing those who have embraced the Hollow's
-    taint.
+  _description: A grotesque stitched zombie fused from countless corrupted corpses,
+    multiple limbs flailing. It grows stronger as your team's Corruption rises, punishing
+    those who have embraced the Hollow's taint.
   _soulAspect: 0
   _isElite: 0
   _isBoss: 0
@@ -57,7 +57,7 @@ MonoBehaviour:
   _cardDropPool: []
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
-  _spriteScale: 12
+  _spriteScale: 1.5
   _visualPrefab: {fileID: 6396803405162726082, guid: bf91bede39945c74d997a0a5e7331490, type: 3}
   _preferredAttackType: 0
   _attackSound: {fileID: 0}

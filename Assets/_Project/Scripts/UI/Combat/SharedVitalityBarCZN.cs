@@ -104,6 +104,7 @@ namespace HNR.UI.Combat
 
         private void OnTeamHPChanged(TeamHPChangedEvent evt)
         {
+            Debug.Log($"[SharedVitalityBarCZN] TeamHPChangedEvent received: {evt.CurrentHP}/{evt.MaxHP} (delta: {evt.Delta})");
             UpdateHealth(evt.CurrentHP, evt.MaxHP, evt.Delta);
         }
 
@@ -121,6 +122,7 @@ namespace HNR.UI.Combat
         public void UpdateHealth(int current, int max, int delta = 0)
         {
             float newFill = max > 0 ? (float)current / max : 0;
+            Debug.Log($"[SharedVitalityBarCZN] UpdateHealth: {current}/{max}, newFill={newFill:F2}, _healthFill={(_healthFill != null ? "OK" : "NULL")}");
 
             // Damage taken - trigger linger effect
             if (newFill < _targetHealthFill)

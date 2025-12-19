@@ -142,6 +142,10 @@ namespace HNR.Combat
             if (remaining > 0)
             {
                 _currentHP = Mathf.Max(0, _currentHP - remaining);
+
+                // Play hit animation
+                _visual?.PlayHit();
+
                 EventBus.Publish(new EnemyDamagedEvent(this, remaining, blocked));
             }
 

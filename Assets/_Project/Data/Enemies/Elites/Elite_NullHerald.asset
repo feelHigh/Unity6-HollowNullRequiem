@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _enemyId: elite_null_herald
   _enemyName: Null Herald
-  _description: A prophet of the Hollow that spreads corruption through the team.
+  _description: A mummified prophet of the Hollow draped in ceremonial void robes.
     Its special attack inflicts +10 Corruption to all Requiems. At 50% HP, gains
     multi-hit attacks.
   _soulAspect: 0
@@ -47,9 +47,9 @@ MonoBehaviour:
   _cardDropPool: []
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
-  _spriteScale: 12
+  _spriteScale: 1.3
   _visualPrefab: {fileID: 842533529170260809, guid: 8e96951d69273b1499f7f270eb4d85d7, type: 3}
-  _preferredAttackType: 0
+  _preferredAttackType: 2
   _attackSound: {fileID: 0}
   _hitSound: {fileID: 0}
   _deathSound: {fileID: 0}

@@ -178,9 +178,25 @@ namespace HNR.Editor
         }
 
         /// <summary>
-        /// Setup visual prefabs with SimpleCharacterVisual component and link to data assets.
+        /// Setup enemy visual prefabs with AnimatedCharacterVisual component and link to data assets.
+        /// Delegates to EnemyVisualWiringTool for full HeroEditor integration.
         /// </summary>
         public static void SetupAndLinkEnemyVisuals()
+        {
+            // Delegate to the specialized tool that handles HeroEditor integration
+            EnemyVisualWiringTool.WireAllEnemyVisuals();
+        }
+
+        /// <summary>
+        /// Verify all enemy prefabs are properly configured.
+        /// </summary>
+        public static void VerifyEnemyVisuals()
+        {
+            EnemyVisualWiringTool.VerifyAllEnemyPrefabs();
+        }
+
+        // Legacy method kept for reference - no longer used
+        private static void SetupAndLinkEnemyVisualsLegacy()
         {
             string enemyPrefabFolder = $"{PREFABS_PATH}/Characters/Enemies";
             string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", new[] { enemyPrefabFolder });

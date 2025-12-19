@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _enemyId: z1_shadow_crawler
   _enemyName: Shadow Crawler
-  _description: A skittering creature that weakens its prey before striking. Its
-    venom saps the strength of those it touches.
+  _description: A shambling zombie that crawls on all fours, hunting prey in the
+    shadows. Its venomous bite saps the strength of those it touches.
   _soulAspect: 2
   _isElite: 0
   _isBoss: 0
@@ -46,9 +46,9 @@ MonoBehaviour:
   _cardDropPool: []
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
-  _spriteScale: 12
+  _spriteScale: 0.8
   _visualPrefab: {fileID: 2328503038315143946, guid: c10aad6641d62fc4f9eead87c8b345cf, type: 3}
-  _preferredAttackType: 0
+  _preferredAttackType: 1
   _attackSound: {fileID: 0}
   _hitSound: {fileID: 0}
   _deathSound: {fileID: 0}

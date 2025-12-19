@@ -44,6 +44,7 @@ namespace HNR.Map
         // ============================================
 
         private readonly List<PathConnection> _paths = new();
+        private string _currentNodeId;
 
         // ============================================
         // Public API
@@ -59,6 +60,8 @@ namespace HNR.Map
             ClearPaths();
 
             if (mapData == null || nodeUIs == null) return;
+
+            _currentNodeId = mapData.CurrentNodeId;
 
             foreach (var node in mapData.Nodes)
             {
@@ -81,6 +84,8 @@ namespace HNR.Map
         public void UpdatePathColors(MapData mapData)
         {
             if (mapData == null) return;
+
+            _currentNodeId = mapData.CurrentNodeId;
 
             foreach (var pathConnection in _paths)
             {
@@ -160,19 +165,28 @@ namespace HNR.Map
 
         private Color GetPathColor(MapNodeData from, MapNodeData to)
         {
-            // Both visited = traveled path
+            // Check if 'from' is the player's current position (by ID, not just state)
+            // This handles the case where player completed a node (state=Visited) but is still there
+            bool fromIsCurrentPosition = from.NodeId == _currentNodeId;
+
+            // Both visited = traveled path (player took this route)
             if (from.State == NodeState.Visited && to.State == NodeState.Visited)
                 return _visitedColor;
 
-            // From current or to available = active path
-            if (from.State == NodeState.Current || to.State == NodeState.Available)
+            // Path to current position from visited = traveled path
+            if (from.State == NodeState.Visited && to.State == NodeState.Current)
+                return _visitedColor;
+
+            // Path from current position (state=Current) to available = active path
+            if (from.State == NodeState.Current && to.State == NodeState.Available)
                 return _availableColor;
 
-            // From visited to available = potential next path
-            if (from.State == NodeState.Visited && to.State == NodeState.Available)
+            // Path from current position (state=Visited but player is here) to available = active path
+            // This handles the case after clearing a node - player is still there but state is Visited
+            if (fromIsCurrentPosition && to.State == NodeState.Available)
                 return _availableColor;
 
-            // Default = locked
+            // Default = locked (includes paths from other nodes to available nodes)
             return _lockedColor;
         }
 

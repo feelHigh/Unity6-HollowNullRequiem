@@ -7,17 +7,24 @@ using UnityEngine;
 using HNR.Core;
 using HNR.Core.Events;
 using HNR.Characters;
+using HNR.Characters.Visuals;
 
 namespace HNR.Combat
 {
     /// <summary>
     /// Enemies execute their telegraphed intents.
-    /// Processes all enemy actions then checks for defeat.
+    /// Processes enemy actions with animation delays so player can see them.
     /// </summary>
     public class EnemyPhase : ICombatPhase
     {
         private int _currentEnemyIndex;
         private bool _phaseComplete;
+        private bool _waitingForAnimation;
+        private float _animationTimer;
+
+        // Timing constants
+        private const float ATTACK_ANIMATION_DELAY = 0.6f;
+        private const float POST_ATTACK_DELAY = 0.3f;
 
         public CombatPhase PhaseType => CombatPhase.EnemyPhase;
 
@@ -30,23 +37,43 @@ namespace HNR.Combat
 
             _currentEnemyIndex = 0;
             _phaseComplete = false;
+            _waitingForAnimation = false;
+            _animationTimer = 0f;
         }
 
         public void Update(CombatContext context)
         {
             if (_phaseComplete) return;
 
-            // Process each enemy's action
+            // Wait for animation to complete
+            if (_waitingForAnimation)
+            {
+                _animationTimer -= Time.deltaTime;
+                if (_animationTimer > 0f)
+                {
+                    return;
+                }
+                _waitingForAnimation = false;
+                _currentEnemyIndex++;
+            }
+
+            // Process next enemy action
             while (_currentEnemyIndex < context.Enemies.Count)
             {
                 var enemy = context.Enemies[_currentEnemyIndex];
                 if (!enemy.IsDead)
                 {
                     ExecuteEnemyAction(enemy, context);
+
+                    // Wait for animation before processing next enemy
+                    _waitingForAnimation = true;
+                    _animationTimer = ATTACK_ANIMATION_DELAY + POST_ATTACK_DELAY;
+                    return;
                 }
                 _currentEnemyIndex++;
             }
 
+            // All enemies processed
             _phaseComplete = true;
 
             // Check for defeat before transitioning
@@ -74,15 +101,24 @@ namespace HNR.Combat
 
             Debug.Log($"[EnemyPhase] {enemy.Name} executes: {intent.IntentType}");
 
+            // Get enemy's preferred attack type for animations
+            var attackType = enemy.Data?.PreferredAttackType ?? AttackType.Slash;
+
             switch (intent.IntentType)
             {
                 case IntentType.Attack:
+                    // Play attack animation
+                    enemy.Visual?.PlayAttack(attackType);
+
                     int damage = intent.Value > 0 ? intent.Value : (enemy.Data?.GetScaledDamage(1) ?? 5);
                     DealDamageToTeam(damage, context);
                     EventBus.Publish(new EnemyIntentExecutedEvent(enemy, intent));
                     break;
 
                 case IntentType.AttackMultiple:
+                    // Play attack animation
+                    enemy.Visual?.PlayAttack(attackType);
+
                     int hitDamage = intent.Value > 0 ? intent.Value : (enemy.Data?.GetScaledDamage(1) ?? 5);
                     int hits = intent.SecondaryValue > 0 ? intent.SecondaryValue : 1;
                     for (int i = 0; i < hits; i++)
@@ -93,6 +129,9 @@ namespace HNR.Combat
                     break;
 
                 case IntentType.Defend:
+                    // Play block/defend animation
+                    enemy.Visual?.PlayBlock();
+
                     int block = intent.Value > 0 ? intent.Value : (enemy.Data?.BaseBlock ?? 5);
                     enemy.GainBlock(block);
                     Debug.Log($"[EnemyPhase] {enemy.Name} gains {block} block");
@@ -100,6 +139,9 @@ namespace HNR.Combat
                     break;
 
                 case IntentType.Buff:
+                    // Play skill animation for buff
+                    enemy.Visual?.PlaySkill();
+
                     // Apply Strength buff to self
                     var buffStatusMgr = ServiceLocator.Get<StatusEffectManager>();
                     int buffStacks = intent.Value > 0 ? intent.Value : 2;
@@ -109,6 +151,9 @@ namespace HNR.Combat
                     break;
 
                 case IntentType.Debuff:
+                    // Play skill animation for debuff
+                    enemy.Visual?.PlaySkill();
+
                     // Apply Weakness to random team member
                     var debuffStatusMgr = ServiceLocator.Get<StatusEffectManager>();
                     if (context.Team != null && context.Team.Count > 0)
@@ -123,6 +168,9 @@ namespace HNR.Combat
                     break;
 
                 case IntentType.Corrupt:
+                    // Play skill animation for corruption
+                    enemy.Visual?.PlaySkill();
+
                     // Apply corruption to all team members
                     int corruptionAmount = intent.Value > 0 ? intent.Value : 5;
                     foreach (var requiem in context.Team)
@@ -158,7 +206,22 @@ namespace HNR.Combat
             if (remaining > 0)
             {
                 context.TeamHP -= remaining;
-                EventBus.Publish(new TeamHPChangedEvent(context.TeamHP, context.TeamMaxHP, -remaining));
+
+                // Play hit animation on a random Requiem
+                if (context.Team != null && context.Team.Count > 0)
+                {
+                    int targetIndex = Random.Range(0, context.Team.Count);
+                    var hitRequiem = context.Team[targetIndex];
+                    hitRequiem?.Visual?.PlayHit();
+
+                    // Include position in event for damage number spawning
+                    EventBus.Publish(new TeamHPChangedEvent(context.TeamHP, context.TeamMaxHP, -remaining, hitRequiem?.Position));
+                }
+                else
+                {
+                    EventBus.Publish(new TeamHPChangedEvent(context.TeamHP, context.TeamMaxHP, -remaining));
+                }
+
                 Debug.Log($"[EnemyPhase] Team takes {remaining} damage ({blocked} blocked). HP: {context.TeamHP}/{context.TeamMaxHP}");
             }
             else

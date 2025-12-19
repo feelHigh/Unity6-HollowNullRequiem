@@ -69,11 +69,13 @@ namespace HNR.Combat
         private void OnEnable()
         {
             EventBus.Subscribe<EndTurnRequestedEvent>(OnEndTurnRequested);
+            EventBus.Subscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
         }
 
         private void OnDisable()
         {
             EventBus.Unsubscribe<EndTurnRequestedEvent>(OnEndTurnRequested);
+            EventBus.Unsubscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
         }
 
         private void OnDestroy()
@@ -85,6 +87,29 @@ namespace HNR.Combat
         {
             Debug.Log("[TurnManager] EndTurnRequestedEvent received");
             EndPlayerTurn();
+        }
+
+        private void OnEnemyDefeated(EnemyDefeatedEvent evt)
+        {
+            // Check if all enemies are defeated for immediate victory
+            if (!_combatActive || _context.CombatEnded) return;
+
+            bool allDefeated = true;
+            foreach (var enemy in _context.Enemies)
+            {
+                if (!enemy.IsDead)
+                {
+                    allDefeated = false;
+                    break;
+                }
+            }
+
+            if (allDefeated)
+            {
+                Debug.Log("[TurnManager] All enemies defeated - triggering immediate victory!");
+                _context.PlayerVictory = true;
+                TransitionToPhase(CombatPhase.Victory);
+            }
         }
 
         private void Update()

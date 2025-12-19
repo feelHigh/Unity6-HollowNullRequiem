@@ -263,6 +263,26 @@ namespace HNR.Map
                 return;
             }
 
+            // Cache map state before transitioning to combat
+            // Note: RunManager is registered as IRunManager, so get by interface and cast
+            if (ServiceLocator.TryGet<IRunManager>(out var runManagerInterface))
+            {
+                var runManager = runManagerInterface as HNR.Progression.RunManager;
+                if (runManager != null)
+                {
+                    runManager.CacheMapState();
+                    Debug.Log($"[MapScreen] Map state cached before combat. CurrentNode: {_mapManager?.CurrentNode?.NodeId}");
+                }
+                else
+                {
+                    Debug.LogWarning("[MapScreen] RunManager cast failed - map state not cached!");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[MapScreen] RunManager not found - map state not cached!");
+            }
+
             // Set pending combat data for CombatBootstrap
             int zone = _mapManager?.CurrentZone ?? 1;
             CombatBootstrap.SetPendingCombat(node.Encounter, zone);

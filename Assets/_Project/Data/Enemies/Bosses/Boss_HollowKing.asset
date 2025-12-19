@@ -14,22 +14,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _enemyId: boss_hollow_king
   _enemyName: The Hollow King
-  _description: 'The first true lord of the Hollow, once a noble king who sought
-    to control the corruption. Now he IS the corruption.
+  _description: 'A towering skeletal king in corrupted royal armor, crown fused to
+    his skull. The first true lord of the Hollow who sought to control the corruption.
+    Now he IS the corruption.
 
 
-    PHASE 1 (100-70%):
-    Awakening - Predictable attacks with Strength buildup.
+    PHASE 1 (100-70%): Awakening - Predictable attacks
+    with Strength buildup.
 
-    PHASE 2 (70-30%):
-    Corruption Surge - Mass corruption, multi-hits, applies Vulnerability.
+    PHASE 2 (70-30%): Corruption Surge - Mass corruption,
+    multi-hits, applies Vulnerability.
 
-    PHASE
-    3 (<30%): Desperate Onslaught - Enraged +50% damage, relentless multi-attacks.
+    PHASE 3 (<30%): Desperate Onslaught -
+    Enraged +50% damage, relentless multi-attacks.
 
 
-    ARENA:
-    +5 Corruption to team each turn.'
+    ARENA: +5 Corruption to
+    team each turn.'
   _soulAspect: 2
   _isElite: 0
   _isBoss: 1
@@ -65,7 +66,7 @@ MonoBehaviour:
   _cardDropPool: []
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
-  _spriteScale: 12
+  _spriteScale: 1.6
   _visualPrefab: {fileID: 2382928303475647343, guid: 84014540d69b1bc4788bd5d2b07c3b61, type: 3}
   _preferredAttackType: 0
   _attackSound: {fileID: 0}

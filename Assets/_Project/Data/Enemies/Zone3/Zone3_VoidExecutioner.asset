@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _enemyId: z3_void_executioner
   _enemyName: Void Executioner
-  _description: An ancient enforcer of the Hollow's will. It methodically builds
-    its defenses before delivering a killing blow to weakened prey. Those below 20%
-    HP face instant death.
+  _description: A towering skeletal executioner wielding a massive axe, ancient enforcer
+    of the Hollow's will. It methodically builds defenses before delivering a killing
+    blow. Those below 20% HP face instant death.
   _soulAspect: 2
   _isElite: 0
   _isBoss: 0
@@ -52,7 +52,7 @@ MonoBehaviour:
   _cardDropPool: []
   _sprite: {fileID: 0}
   _animator: {fileID: 0}
-  _spriteScale: 12
+  _spriteScale: 1.3
   _visualPrefab: {fileID: 71637770537087249, guid: d6c3618e704e6bb4fb3a49b5f1aea20f, type: 3}
   _preferredAttackType: 0
   _attackSound: {fileID: 0}

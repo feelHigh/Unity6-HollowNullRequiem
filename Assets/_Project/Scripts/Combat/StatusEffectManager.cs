@@ -193,11 +193,19 @@ namespace HNR.Combat
         public void TickAllEffects()
         {
             var toRemove = new List<(ICombatTarget target, StatusEffect effect)>();
+            var tickEvents = new List<(ICombatTarget target, StatusType type, int value)>();
 
-            foreach (var kvp in _statusEffects)
+            // Create a snapshot of keys to avoid "collection modified" error
+            var targetsCopy = new List<ICombatTarget>(_statusEffects.Keys);
+
+            foreach (var target in targetsCopy)
             {
-                var target = kvp.Key;
-                foreach (var effect in kvp.Value)
+                if (!_statusEffects.TryGetValue(target, out var effects)) continue;
+
+                // Create a copy of effects list to iterate safely
+                var effectsCopy = new List<StatusEffect>(effects);
+
+                foreach (var effect in effectsCopy)
                 {
                     // Apply per-turn effects
                     int tickValue = ApplyPerTurnEffect(target, effect);
@@ -212,15 +220,29 @@ namespace HNR.Combat
                         }
                     }
 
-                    EventBus.Publish(new StatusTickedEvent(target, effect.Type, tickValue));
+                    // Queue events to publish after iteration
+                    tickEvents.Add((target, effect.Type, tickValue));
                 }
             }
 
             // Remove expired effects
             foreach (var (target, effect) in toRemove)
             {
-                _statusEffects[target].Remove(effect);
-                Debug.Log($"[StatusEffectManager] {effect.Type} expired on {target.Name}");
+                if (_statusEffects.TryGetValue(target, out var effects))
+                {
+                    effects.Remove(effect);
+                    Debug.Log($"[StatusEffectManager] {effect.Type} expired on {target.Name}");
+                }
+            }
+
+            // Publish events after all modifications are complete
+            foreach (var (target, type, value) in tickEvents)
+            {
+                EventBus.Publish(new StatusTickedEvent(target, type, value));
+            }
+
+            foreach (var (target, effect) in toRemove)
+            {
                 EventBus.Publish(new StatusRemovedEvent(target, effect.Type));
             }
         }

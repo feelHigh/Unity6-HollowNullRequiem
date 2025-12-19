@@ -43,7 +43,15 @@ namespace HNR.Progression
         private void Awake()
         {
             ServiceLocator.Register<IRelicManager>(this);
+
+            // DontDestroyOnLoad only works for root GameObjects
+            // If we're a child, move to root first
+            if (transform.parent != null)
+            {
+                transform.SetParent(null);
+            }
             DontDestroyOnLoad(gameObject);
+
             CacheAllRelics();
         }
 
