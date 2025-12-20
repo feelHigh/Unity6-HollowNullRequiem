@@ -104,24 +104,39 @@ namespace HNR.Progression
 
         private void CacheResources()
         {
-            // Cache all cards
-            var allCards = Resources.LoadAll<CardDataSO>("Data/Cards");
-            foreach (var card in allCards)
+            // Suppress warnings during resource loading to avoid HeroEditor noise
+            #if UNITY_EDITOR
+            var previousLogType = Debug.unityLogger.filterLogType;
+            Debug.unityLogger.filterLogType = LogType.Exception;
+            #endif
+
+            try
             {
-                if (card != null && !string.IsNullOrEmpty(card.CardId))
+                // Cache all cards
+                var allCards = Resources.LoadAll<CardDataSO>("Data/Cards");
+                foreach (var card in allCards)
                 {
-                    _cardCache[card.CardId] = card;
+                    if (card != null && !string.IsNullOrEmpty(card.CardId))
+                    {
+                        _cardCache[card.CardId] = card;
+                    }
+                }
+
+                // Cache all requiems
+                var allRequiems = Resources.LoadAll<RequiemDataSO>("Data/Characters/Requiems");
+                foreach (var requiem in allRequiems)
+                {
+                    if (requiem != null && !string.IsNullOrEmpty(requiem.RequiemId))
+                    {
+                        _requiemCache[requiem.RequiemId] = requiem;
+                    }
                 }
             }
-
-            // Cache all requiems
-            var allRequiems = Resources.LoadAll<RequiemDataSO>("Data/Characters/Requiems");
-            foreach (var requiem in allRequiems)
+            finally
             {
-                if (requiem != null && !string.IsNullOrEmpty(requiem.RequiemId))
-                {
-                    _requiemCache[requiem.RequiemId] = requiem;
-                }
+                #if UNITY_EDITOR
+                Debug.unityLogger.filterLogType = previousLogType;
+                #endif
             }
 
             Debug.Log($"[RunManager] Cached {_cardCache.Count} cards, {_requiemCache.Count} requiems");

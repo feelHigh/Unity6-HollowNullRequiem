@@ -217,13 +217,22 @@ namespace HNR.Editor
 
             // Create 4 nav buttons
             string[] buttonNames = { "Bastion", "Requiems", "Inventory", "Settings" };
+            var navButtons = new NavDockButton[buttonNames.Length];
             for (int i = 0; i < buttonNames.Length; i++)
             {
-                CreateNavButton(buttonContainer, buttonNames[i], i);
+                navButtons[i] = CreateNavButton(buttonContainer, buttonNames[i], i);
             }
 
-            // Add GlobalNavDock component
+            // Add GlobalNavDock component and wire buttons array
             var dock = dockRoot.AddComponent<GlobalNavDock>();
+            var dockSO = new SerializedObject(dock);
+            var buttonsProperty = dockSO.FindProperty("_buttons");
+            buttonsProperty.arraySize = navButtons.Length;
+            for (int i = 0; i < navButtons.Length; i++)
+            {
+                buttonsProperty.GetArrayElementAtIndex(i).objectReferenceValue = navButtons[i];
+            }
+            dockSO.ApplyModifiedPropertiesWithoutUndo();
 
             // Save prefab
             string path = $"{PREFAB_PATH}/GlobalNavDock.prefab";
@@ -334,7 +343,7 @@ namespace HNR.Editor
             rect.offsetMax = Vector2.zero;
         }
 
-        private static void CreateNavButton(GameObject parent, string name, int index)
+        private static NavDockButton CreateNavButton(GameObject parent, string name, int index)
         {
             var button = new GameObject($"NavButton_{name}");
             button.transform.SetParent(parent.transform, false);
@@ -386,8 +395,22 @@ namespace HNR.Editor
             StretchFill(badgeText);
             badgeText.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
 
-            // Add NavDockButton component
-            button.AddComponent<NavDockButton>();
+            // Add NavDockButton component and wire references
+            var navButton = button.AddComponent<NavDockButton>();
+
+            // Wire up the serialized fields using SerializedObject
+            var so = new SerializedObject(navButton);
+            so.FindProperty("_destination").enumValueIndex = index;
+            so.FindProperty("_label").stringValue = name;
+            so.FindProperty("_button").objectReferenceValue = btn;
+            so.FindProperty("_icon").objectReferenceValue = icon.GetComponent<Image>();
+            so.FindProperty("_glowRing").objectReferenceValue = glow.GetComponent<Image>();
+            so.FindProperty("_labelText").objectReferenceValue = label.GetComponent<TextMeshProUGUI>();
+            so.FindProperty("_notificationBadge").objectReferenceValue = badge;
+            so.FindProperty("_notificationCount").objectReferenceValue = badgeText.GetComponent<TextMeshProUGUI>();
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            return navButton;
         }
     }
 }
