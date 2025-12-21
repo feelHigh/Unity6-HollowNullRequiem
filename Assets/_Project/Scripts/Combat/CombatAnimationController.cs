@@ -10,6 +10,8 @@ using HNR.Characters;
 using HNR.Characters.Visuals;
 using HNR.Cards;
 
+#pragma warning disable CS0414 // Field is assigned but never used (reserved for future Inspector configuration)
+
 namespace HNR.Combat
 {
     /// <summary>

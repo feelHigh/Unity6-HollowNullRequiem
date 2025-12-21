@@ -326,6 +326,41 @@ namespace HNR.Editor
             ProductionSetupTool.VerifyEnemyVisuals();
         }
 
+        [MenuItem("HNR/3. Production/Wire UI Refactor Elements (All)", priority = 56)]
+        public static void WireUIRefactorElements()
+        {
+            UIRefactorWiringTool.WireAllUIRefactorElements();
+        }
+
+        [MenuItem("HNR/3. Production/Wire UI Refactor/Combat Scene (Block Indicator)", priority = 57)]
+        public static void WireCombatUIElements()
+        {
+            int wired = UIRefactorWiringTool.WireCombatSceneElements();
+            EditorUtility.DisplayDialog("Combat Scene Wiring",
+                $"Wired {wired} elements in Combat scene.\n\n" +
+                "Check SharedVitalityBarCZN for block indicator.",
+                "OK");
+        }
+
+        [MenuItem("HNR/3. Production/Wire UI Refactor/NullRift Scene (Zone Header, Shop)", priority = 58)]
+        public static void WireNullRiftUIElements()
+        {
+            int wired = UIRefactorWiringTool.WireNullRiftSceneElements();
+            EditorUtility.DisplayDialog("NullRift Scene Wiring",
+                $"Wired {wired} elements in NullRift scene.\n\n" +
+                "Check MapScreen zone header and ShopScreen service buttons.",
+                "OK");
+        }
+
+        [MenuItem("HNR/3. Production/Wire UI Refactor/Create TreasureScreen Prefab", priority = 59)]
+        public static void CreateTreasureScreenPrefab()
+        {
+            int created = UIRefactorWiringTool.CreateTreasureScreenPrefab();
+            EditorUtility.DisplayDialog("TreasureScreen Prefab",
+                created > 0 ? "TreasureScreen prefab created successfully!" : "TreasureScreen prefab already exists.",
+                "OK");
+        }
+
         // ============================================
         // 4. Audio & VFX (priority 70-79)
         // ============================================

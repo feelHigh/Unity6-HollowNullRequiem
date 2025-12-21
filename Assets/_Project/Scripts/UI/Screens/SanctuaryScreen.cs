@@ -327,7 +327,7 @@ namespace HNR.UI
                     canvasGroup = _cardSelectionPanel.AddComponent<CanvasGroup>();
                 }
                 canvasGroup.alpha = 0f;
-                canvasGroup.DOFade(1f, _fadeInDuration);
+                canvasGroup.DOFade(1f, _fadeInDuration).SetLink(_cardSelectionPanel);
             }
 
             LoadUpgradableCards();
@@ -478,7 +478,7 @@ namespace HNR.UI
                         : new Color(0.15f, 0.15f, 0.2f);
                 }
 
-                slot.transform.DOScale(i == index ? 1.1f : 1f, 0.2f);
+                slot.transform.DOScale(i == index ? 1.1f : 1f, 0.2f).SetLink(slot);
             }
 
             // Enable confirm button
@@ -528,7 +528,7 @@ namespace HNR.UI
             DOVirtual.DelayedCall(0.5f, () =>
             {
                 NavigateToMap();
-            });
+            }).SetLink(gameObject);
         }
 
         private void NavigateToMap()
@@ -552,7 +552,7 @@ namespace HNR.UI
                     canvasGroup = _titleText.gameObject.AddComponent<CanvasGroup>();
                 }
                 canvasGroup.alpha = 0f;
-                canvasGroup.DOFade(1f, _fadeInDuration);
+                canvasGroup.DOFade(1f, _fadeInDuration).SetLink(gameObject);
             }
 
             // Description fade in with delay
@@ -564,7 +564,7 @@ namespace HNR.UI
                     canvasGroup = _descriptionText.gameObject.AddComponent<CanvasGroup>();
                 }
                 canvasGroup.alpha = 0f;
-                canvasGroup.DOFade(1f, _fadeInDuration).SetDelay(_fadeInDuration * 0.5f);
+                canvasGroup.DOFade(1f, _fadeInDuration).SetDelay(_fadeInDuration * 0.5f).SetLink(gameObject);
             }
 
             // Stagger choice buttons
@@ -577,7 +577,8 @@ namespace HNR.UI
                 button.transform.localScale = Vector3.one * 0.8f;
                 button.transform.DOScale(1f, _fadeInDuration)
                     .SetDelay(_fadeInDuration + i * _choiceStaggerDelay)
-                    .SetEase(Ease.OutBack);
+                    .SetEase(Ease.OutBack)
+                    .SetLink(button.gameObject);
 
                 var canvasGroup = button.GetComponent<CanvasGroup>();
                 if (canvasGroup == null)
@@ -586,7 +587,8 @@ namespace HNR.UI
                 }
                 canvasGroup.alpha = 0f;
                 canvasGroup.DOFade(1f, _fadeInDuration)
-                    .SetDelay(_fadeInDuration + i * _choiceStaggerDelay);
+                    .SetDelay(_fadeInDuration + i * _choiceStaggerDelay)
+                    .SetLink(button.gameObject);
             }
         }
 

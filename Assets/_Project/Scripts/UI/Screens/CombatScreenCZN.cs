@@ -10,6 +10,7 @@ using HNR.Core.Events;
 using HNR.Core.Interfaces;
 using HNR.Combat;
 using HNR.Characters;
+using HNR.Cards;
 using HNR.UI.Combat;
 
 namespace HNR.UI.Screens
@@ -406,13 +407,82 @@ namespace HNR.UI.Screens
 
         private void OnCombatEnded(CombatEndedEvent evt)
         {
-            // Combat result handling
-            // Victory/Defeat screens would be shown via UIManager
+            Debug.Log($"[CombatScreenCZN] Combat ended - Victory: {evt.Victory}");
+
+            // Get enemy name and rewards from context
+            string enemyName = "Enemy";
+            int voidShards = 0;
+            int soulEssence = 0;
+
+            if (ServiceLocator.TryGet<TurnManager>(out var turnManager) && turnManager.Context != null)
+            {
+                var context = turnManager.Context;
+                if (context.Enemies != null && context.Enemies.Count > 0)
+                {
+                    enemyName = context.Enemies[0].Name;
+                    foreach (var enemy in context.Enemies)
+                    {
+                        if (enemy.Data != null)
+                        {
+                            voidShards += enemy.Data.VoidShardReward;
+                        }
+                    }
+                }
+            }
+
+            // Generate random card rewards for victory
+            System.Collections.Generic.List<CardDataSO> cardRewards = null;
+            if (evt.Victory)
+            {
+                cardRewards = GenerateCardRewards(3);
+            }
+
+            // Show ResultsScreen and configure it
             if (ServiceLocator.TryGet<IUIManager>(out var uiManager))
             {
-                // Screen navigation handled by game state system
-                Debug.Log($"[CombatScreenCZN] Combat ended - Victory: {evt.Victory}");
+                uiManager.ShowScreen<ResultsScreen>();
+
+                // Get the screen after showing it
+                if (uiManager is UIManager uiMgr)
+                {
+                    var resultsScreen = uiMgr.GetScreen<ResultsScreen>();
+                    if (resultsScreen != null)
+                    {
+                        resultsScreen.SetResults(evt.Victory, enemyName, voidShards, soulEssence, cardRewards);
+                    }
+                }
             }
+        }
+
+        /// <summary>
+        /// Generates random card rewards from available cards.
+        /// </summary>
+        private System.Collections.Generic.List<CardDataSO> GenerateCardRewards(int count)
+        {
+            var rewards = new System.Collections.Generic.List<CardDataSO>();
+            var allCards = Resources.LoadAll<CardDataSO>("Data/Cards");
+
+            if (allCards == null || allCards.Length == 0)
+            {
+                allCards = Resources.LoadAll<CardDataSO>("");
+            }
+
+            if (allCards != null && allCards.Length > 0)
+            {
+                var shuffled = new System.Collections.Generic.List<CardDataSO>(allCards);
+                for (int i = shuffled.Count - 1; i > 0; i--)
+                {
+                    int j = Random.Range(0, i + 1);
+                    (shuffled[i], shuffled[j]) = (shuffled[j], shuffled[i]);
+                }
+
+                for (int i = 0; i < Mathf.Min(count, shuffled.Count); i++)
+                {
+                    rewards.Add(shuffled[i]);
+                }
+            }
+
+            return rewards;
         }
 
         // ============================================

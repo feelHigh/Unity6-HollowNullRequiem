@@ -38,6 +38,7 @@ namespace HNR.Editor
             // Add world space Canvas
             var canvas = root.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
+            canvas.sortingLayerName = "UI"; // Ensure UI renders above sprites
             canvas.sortingOrder = 100;
 
             var canvasScaler = root.AddComponent<CanvasScaler>();
@@ -164,7 +165,7 @@ namespace HNR.Editor
 
             // Wire up references via SerializedObject
             var so = new SerializedObject(enemyFloatingUI);
-            so.FindProperty("_offset").vector3Value = new Vector3(0, 2f, 0);
+            so.FindProperty("_offset").vector3Value = new Vector3(0, 3f, 0);
             so.FindProperty("_hpBarFill").objectReferenceValue = hpFillImage;
             so.FindProperty("_hpBarBackground").objectReferenceValue = hpBgImage;
             so.FindProperty("_hpText").objectReferenceValue = hpText;

@@ -405,7 +405,7 @@ namespace HNR.UI
                 }
 
                 // Scale animation
-                slot.transform.DOScale(i == index ? 1.1f : 1f, 0.2f);
+                slot.transform.DOScale(i == index ? 1.1f : 1f, 0.2f).SetLink(slot);
             }
 
             // Enable continue button
@@ -426,7 +426,7 @@ namespace HNR.UI
                 {
                     image.color = new Color(0.15f, 0.15f, 0.2f);
                 }
-                slot.transform.DOScale(0.9f, 0.2f);
+                slot.transform.DOScale(0.9f, 0.2f).SetLink(slot);
             }
 
             EnableContinueButton();
@@ -439,7 +439,7 @@ namespace HNR.UI
                 _continueButton.interactable = true;
 
                 // Pulse animation to draw attention
-                _continueButton.transform.DOPunchScale(Vector3.one * 0.1f, 0.3f, 5);
+                _continueButton.transform.DOPunchScale(Vector3.one * 0.1f, 0.3f, 5).SetLink(gameObject);
             }
         }
 
@@ -531,7 +531,8 @@ namespace HNR.UI
             {
                 _resultTitleText.transform.localScale = Vector3.one * _titleScaleFrom;
                 _resultTitleText.transform.DOScale(1f, _fadeInDuration * 1.5f)
-                    .SetEase(Ease.OutBack);
+                    .SetEase(Ease.OutBack)
+                    .SetLink(gameObject);
 
                 var canvasGroup = _resultTitleText.GetComponent<CanvasGroup>();
                 if (canvasGroup == null)
@@ -539,7 +540,7 @@ namespace HNR.UI
                     canvasGroup = _resultTitleText.gameObject.AddComponent<CanvasGroup>();
                 }
                 canvasGroup.alpha = 0f;
-                canvasGroup.DOFade(1f, _fadeInDuration);
+                canvasGroup.DOFade(1f, _fadeInDuration).SetLink(gameObject);
             }
 
             // Summary fade in
@@ -551,7 +552,7 @@ namespace HNR.UI
                     canvasGroup = _summaryText.gameObject.AddComponent<CanvasGroup>();
                 }
                 canvasGroup.alpha = 0f;
-                canvasGroup.DOFade(1f, _fadeInDuration).SetDelay(_fadeInDuration * 0.5f);
+                canvasGroup.DOFade(1f, _fadeInDuration).SetDelay(_fadeInDuration * 0.5f).SetLink(gameObject);
             }
 
             // Victory glow pulse
@@ -559,7 +560,8 @@ namespace HNR.UI
             {
                 _victoryGlow.alpha = 0f;
                 _victoryGlow.DOFade(0.5f, _fadeInDuration * 2f)
-                    .SetLoops(-1, LoopType.Yoyo);
+                    .SetLoops(-1, LoopType.Yoyo)
+                    .SetLink(gameObject);
             }
 
             // Card slots stagger animation
@@ -571,7 +573,8 @@ namespace HNR.UI
                 slot.transform.localScale = Vector3.zero;
                 slot.transform.DOScale(1f, _fadeInDuration)
                     .SetDelay(_fadeInDuration + i * _cardStaggerDelay)
-                    .SetEase(Ease.OutBack);
+                    .SetEase(Ease.OutBack)
+                    .SetLink(slot);
             }
 
             // Enable continue after card animations finish
@@ -584,7 +587,7 @@ namespace HNR.UI
                 {
                     if (_continueButton != null)
                         _continueButton.interactable = true;
-                });
+                }).SetLink(gameObject);
             }
         }
 

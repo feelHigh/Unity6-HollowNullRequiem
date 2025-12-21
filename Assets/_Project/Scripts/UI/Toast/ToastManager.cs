@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using HNR.Core;
 
+#pragma warning disable CS0414 // Field is assigned but never used (reserved for future Inspector configuration)
+
 namespace HNR.UI.Toast
 {
     /// <summary>

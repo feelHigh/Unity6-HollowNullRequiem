@@ -3,12 +3,15 @@
 // World-space UI for enemies with HP and intent
 // ============================================
 
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
+using HNR.Core;
 using HNR.Core.Events;
 using HNR.Combat;
+using HNR.Characters;
 
 namespace HNR.UI.Combat
 {
@@ -19,7 +22,7 @@ namespace HNR.UI.Combat
     public class EnemyFloatingUI : MonoBehaviour
     {
         [Header("Anchoring")]
-        [SerializeField] private Vector3 _offset = new(0, 2f, 0);
+        [SerializeField] private Vector3 _offset = new(0, 3f, 0);
 
         [Header("Health Bar")]
         [SerializeField] private Image _hpBarFill;
@@ -45,14 +48,28 @@ namespace HNR.UI.Combat
         [SerializeField] private float _intentAppearDuration = 0.3f;
         [SerializeField] private float _pulseDuration = 0.5f;
 
+        [Header("Status Effects")]
+        [SerializeField] private RectTransform _statusContainer;
+        [SerializeField] private float _statusIconSize = 16f;
+        [SerializeField] private float _statusIconSpacing = 2f;
+
         private EnemyInstance _enemy;
         private Transform _worldAnchor;
         private Sequence _pulseSequence;
         private Camera _mainCamera;
         private static Sprite _whiteSprite;
+        private Dictionary<StatusType, GameObject> _statusIcons = new();
 
         private void Awake()
         {
+            // Ensure Canvas is on UI sorting layer for proper depth
+            var canvas = GetComponent<Canvas>();
+            if (canvas != null)
+            {
+                canvas.sortingLayerName = "UI";
+                canvas.sortingOrder = 100;
+            }
+
             // Auto-wire references if not set
             AutoWireReferences();
 
@@ -179,6 +196,14 @@ namespace HNR.UI.Combat
             EventBus.Subscribe<EnemyDamagedEvent>(OnEnemyDamaged);
             EventBus.Subscribe<EnemyIntentChangedEvent>(OnIntentChanged);
             EventBus.Subscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
+            EventBus.Subscribe<StatusAppliedEvent>(OnStatusApplied);
+            EventBus.Subscribe<StatusRemovedEvent>(OnStatusRemoved);
+
+            // Create status container if not set
+            CreateStatusContainerIfNeeded();
+
+            // Initialize status icons for any pre-existing effects
+            RefreshStatusIcons();
         }
 
         private void OnDestroy()
@@ -186,15 +211,24 @@ namespace HNR.UI.Combat
             EventBus.Unsubscribe<EnemyDamagedEvent>(OnEnemyDamaged);
             EventBus.Unsubscribe<EnemyIntentChangedEvent>(OnIntentChanged);
             EventBus.Unsubscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
+            EventBus.Unsubscribe<StatusAppliedEvent>(OnStatusApplied);
+            EventBus.Unsubscribe<StatusRemovedEvent>(OnStatusRemoved);
             _pulseSequence?.Kill();
         }
 
         private void LateUpdate()
         {
-            // Follow enemy position
+            // Follow enemy position with slight Z offset toward camera for proper depth
             if (_worldAnchor != null)
             {
-                transform.position = _worldAnchor.position + _offset;
+                Vector3 cameraOffset = Vector3.zero;
+                if (_mainCamera != null)
+                {
+                    // Move slightly toward camera to render in front of enemy sprite
+                    cameraOffset = (_mainCamera.transform.position - _worldAnchor.position).normalized * 0.5f;
+                    cameraOffset.y = 0; // Only offset XZ, keep Y from _offset
+                }
+                transform.position = _worldAnchor.position + _offset + cameraOffset;
             }
 
             // Billboard to camera
@@ -395,6 +429,166 @@ namespace HNR.UI.Combat
             {
                 _intentContainer.gameObject.SetActive(true);
             }
+        }
+
+        // ============================================
+        // Status Effect Methods
+        // ============================================
+
+        private void CreateStatusContainerIfNeeded()
+        {
+            if (_statusContainer != null) return;
+
+            // Create status container below HP bar
+            var containerObj = new GameObject("StatusContainer");
+            containerObj.transform.SetParent(transform, false);
+
+            _statusContainer = containerObj.AddComponent<RectTransform>();
+            _statusContainer.anchorMin = new Vector2(0, 0);
+            _statusContainer.anchorMax = new Vector2(1, 0.35f);
+            _statusContainer.offsetMin = new Vector2(5, 0);
+            _statusContainer.offsetMax = new Vector2(-5, 0);
+
+            var layout = containerObj.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = _statusIconSpacing;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+        }
+
+        private void OnStatusApplied(StatusAppliedEvent evt)
+        {
+            if (!ReferenceEquals(evt.Target, _enemy)) return;
+
+            AddOrUpdateStatusIcon(evt.StatusType, evt.Stacks);
+        }
+
+        private void OnStatusRemoved(StatusRemovedEvent evt)
+        {
+            if (!ReferenceEquals(evt.Target, _enemy)) return;
+
+            RemoveStatusIcon(evt.StatusType);
+        }
+
+        private void RefreshStatusIcons()
+        {
+            if (_enemy == null) return;
+
+            // Clear existing icons
+            foreach (var iconObj in _statusIcons.Values)
+            {
+                if (iconObj != null) Destroy(iconObj);
+            }
+            _statusIcons.Clear();
+
+            // Get current status effects from StatusEffectManager
+            if (ServiceLocator.TryGet<StatusEffectManager>(out var statusManager))
+            {
+                var effects = statusManager.GetAllStatuses(_enemy);
+                foreach (var effect in effects)
+                {
+                    AddOrUpdateStatusIcon(effect.Type, effect.Stacks);
+                }
+            }
+        }
+
+        private void AddOrUpdateStatusIcon(StatusType statusType, int stacks)
+        {
+            if (_statusContainer == null) return;
+
+            if (_statusIcons.TryGetValue(statusType, out var existingIcon))
+            {
+                // Update existing icon
+                var stackText = existingIcon.GetComponentInChildren<TMP_Text>();
+                if (stackText != null)
+                {
+                    stackText.text = stacks > 1 ? stacks.ToString() : "";
+                }
+
+                // Pulse animation
+                existingIcon.transform.DOScale(1.2f, 0.1f)
+                    .OnComplete(() => existingIcon.transform.DOScale(1f, 0.1f).SetLink(existingIcon))
+                    .SetLink(existingIcon);
+            }
+            else
+            {
+                // Create new icon
+                var iconObj = CreateStatusIconObject(statusType, stacks);
+                _statusIcons[statusType] = iconObj;
+
+                // Pop-in animation
+                iconObj.transform.localScale = Vector3.zero;
+                iconObj.transform.DOScale(1f, 0.2f).SetEase(Ease.OutBack).SetLink(iconObj);
+            }
+        }
+
+        private void RemoveStatusIcon(StatusType statusType)
+        {
+            if (_statusIcons.TryGetValue(statusType, out var iconObj))
+            {
+                // Fade out and destroy
+                if (iconObj != null)
+                {
+                    iconObj.transform.DOScale(0f, 0.15f)
+                        .OnComplete(() => Destroy(iconObj))
+                        .SetLink(iconObj);
+                }
+                _statusIcons.Remove(statusType);
+            }
+        }
+
+        private GameObject CreateStatusIconObject(StatusType statusType, int stacks)
+        {
+            var iconObj = new GameObject($"Status_{statusType}");
+            iconObj.transform.SetParent(_statusContainer, false);
+
+            var rect = iconObj.AddComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(_statusIconSize, _statusIconSize);
+
+            var layoutElement = iconObj.AddComponent<LayoutElement>();
+            layoutElement.preferredWidth = _statusIconSize;
+            layoutElement.preferredHeight = _statusIconSize;
+
+            // Background
+            var bgImage = iconObj.AddComponent<Image>();
+            bgImage.color = GetStatusColor(statusType);
+            bgImage.sprite = _whiteSprite;
+
+            // Stack text
+            if (stacks > 1)
+            {
+                var textObj = new GameObject("Stacks");
+                textObj.transform.SetParent(iconObj.transform, false);
+
+                var textRect = textObj.AddComponent<RectTransform>();
+                textRect.anchorMin = Vector2.zero;
+                textRect.anchorMax = Vector2.one;
+                textRect.sizeDelta = Vector2.zero;
+
+                var tmp = textObj.AddComponent<TextMeshProUGUI>();
+                tmp.text = stacks.ToString();
+                tmp.fontSize = _statusIconSize * 0.6f;
+                tmp.fontStyle = FontStyles.Bold;
+                tmp.alignment = TextAlignmentOptions.Center;
+                tmp.color = Color.white;
+            }
+
+            return iconObj;
+        }
+
+        private Color GetStatusColor(StatusType statusType)
+        {
+            return statusType switch
+            {
+                StatusType.Poison => new Color(0.4f, 0.8f, 0.2f),      // Green
+                StatusType.Burn => new Color(1f, 0.5f, 0.2f),          // Orange
+                StatusType.Weakness => new Color(0.8f, 0.3f, 0.3f),    // Red
+                StatusType.Vulnerability => new Color(1f, 0.8f, 0.2f), // Yellow
+                StatusType.Strength => new Color(1f, 0.2f, 0.2f),      // Bright Red
+                StatusType.Regeneration => new Color(0.2f, 0.9f, 0.4f),// Bright Green
+                StatusType.Protected => new Color(0.4f, 0.7f, 1f),     // Light Blue
+                _ => new Color(0.5f, 0.5f, 0.5f)                       // Gray
+            };
         }
     }
 }

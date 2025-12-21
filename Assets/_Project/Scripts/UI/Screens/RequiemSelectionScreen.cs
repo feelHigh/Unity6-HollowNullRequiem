@@ -260,7 +260,7 @@ namespace HNR.UI
                 text.fontSize = 20;
                 text.alignment = TextAlignmentOptions.Center;
                 text.color = Color.white;
-                text.enableWordWrapping = true;
+                text.textWrappingMode = TextWrappingModes.Normal;
                 text.overflowMode = TextOverflowModes.Overflow;
                 text.raycastTarget = false; // Let clicks pass through to button
 

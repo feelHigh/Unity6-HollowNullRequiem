@@ -5,11 +5,14 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 using HNR.Core;
 using HNR.Core.Events;
 using HNR.Core.Interfaces;
 using HNR.Combat;
 using HNR.UI;
+using HNR.UI.Screens;
 
 namespace HNR.Map
 {
@@ -37,6 +40,25 @@ namespace HNR.Map
         [SerializeField, Tooltip("Scroll rect for map panning")]
         private RectTransform _mapContent;
 
+        [Header("Zone Header")]
+        [SerializeField, Tooltip("Zone title text (NULL RIFT)")]
+        private TMP_Text _zoneTitle;
+
+        [SerializeField, Tooltip("Zone subtitle (Zone X • Zone Name)")]
+        private TMP_Text _zoneSubtitle;
+
+        [SerializeField, Tooltip("Team HP display text")]
+        private TMP_Text _hpText;
+
+        [SerializeField, Tooltip("HP icon")]
+        private Image _hpIcon;
+
+        [SerializeField, Tooltip("Currency display text")]
+        private TMP_Text _currencyText;
+
+        [SerializeField, Tooltip("Currency icon")]
+        private Image _currencyIcon;
+
         // ============================================
         // Runtime State
         // ============================================
@@ -59,6 +81,11 @@ namespace HNR.Map
             EventBus.Subscribe<MapGeneratedEvent>(OnMapGenerated);
             EventBus.Subscribe<PlayerMovedToNodeEvent>(OnPlayerMoved);
             EventBus.Subscribe<NodeCompletedEvent>(OnNodeCompleted);
+            EventBus.Subscribe<TeamHPChangedEvent>(OnTeamHPChanged);
+            EventBus.Subscribe<VoidShardsChangedEvent>(OnVoidShardsChanged);
+
+            // Update zone header
+            UpdateZoneHeader();
 
             // Render existing map if available
             if (_mapManager?.CurrentMap != null)
@@ -84,6 +111,8 @@ namespace HNR.Map
             EventBus.Unsubscribe<MapGeneratedEvent>(OnMapGenerated);
             EventBus.Unsubscribe<PlayerMovedToNodeEvent>(OnPlayerMoved);
             EventBus.Unsubscribe<NodeCompletedEvent>(OnNodeCompleted);
+            EventBus.Unsubscribe<TeamHPChangedEvent>(OnTeamHPChanged);
+            EventBus.Unsubscribe<VoidShardsChangedEvent>(OnVoidShardsChanged);
         }
 
         // ============================================
@@ -110,6 +139,16 @@ namespace HNR.Map
             {
                 Debug.Log("[MapScreen] Zone complete - boss defeated");
             }
+        }
+
+        private void OnTeamHPChanged(TeamHPChangedEvent evt)
+        {
+            UpdateHPDisplay(evt.CurrentHP, evt.MaxHP);
+        }
+
+        private void OnVoidShardsChanged(VoidShardsChangedEvent evt)
+        {
+            UpdateCurrencyDisplay(evt.NewValue);
         }
 
         // ============================================
@@ -309,11 +348,25 @@ namespace HNR.Map
                 return;
             }
 
-            // TODO: Implement EchoEventManager integration
-            Debug.Log($"[MapScreen] Echo event: {node.EchoEvent.EventTitle}");
+            // Start the event via EchoEventManager
+            var echoManager = ServiceLocator.Get<EchoEventManager>();
+            if (echoManager != null)
+            {
+                echoManager.StartEvent(node.EchoEvent);
+            }
 
-            // For now, auto-complete the node
-            _mapManager?.CompleteCurrentNode();
+            // Navigate to EchoEventScreen
+            var uiManager = ServiceLocator.Get<IUIManager>();
+            if (uiManager != null)
+            {
+                Debug.Log($"[MapScreen] Showing Echo event: {node.EchoEvent.EventTitle}");
+                uiManager.ShowScreen<EchoEventScreen>();
+            }
+            else
+            {
+                Debug.LogWarning("[MapScreen] UIManager not available for echo event transition");
+                _mapManager?.CompleteCurrentNode();
+            }
         }
 
         private void ShowShop()
@@ -341,16 +394,34 @@ namespace HNR.Map
 
         private void ShowSanctuary()
         {
-            // TODO: Implement sanctuary screen transition
-            Debug.Log("[MapScreen] Sanctuary not implemented yet");
-            _mapManager?.CompleteCurrentNode();
+            // Navigate to SanctuaryScreen
+            var uiManager = ServiceLocator.Get<IUIManager>();
+            if (uiManager != null)
+            {
+                Debug.Log("[MapScreen] Showing Sanctuary screen");
+                uiManager.ShowScreen<SanctuaryScreen>();
+            }
+            else
+            {
+                Debug.LogWarning("[MapScreen] UIManager not available for sanctuary transition");
+                _mapManager?.CompleteCurrentNode();
+            }
         }
 
         private void ShowTreasure()
         {
-            // TODO: Implement treasure reward popup
-            Debug.Log("[MapScreen] Treasure not implemented yet");
-            _mapManager?.CompleteCurrentNode();
+            // Navigate to TreasureScreen for reward selection
+            var uiManager = ServiceLocator.Get<IUIManager>();
+            if (uiManager != null)
+            {
+                Debug.Log("[MapScreen] Showing Treasure screen");
+                uiManager.ShowScreen<TreasureScreen>();
+            }
+            else
+            {
+                Debug.LogWarning("[MapScreen] UIManager not available for treasure transition");
+                _mapManager?.CompleteCurrentNode();
+            }
         }
 
         // ============================================
@@ -374,6 +445,66 @@ namespace HNR.Map
         public void FocusCurrentNode()
         {
             CenterOnCurrentNode();
+        }
+
+        // ============================================
+        // Zone Header
+        // ============================================
+
+        private void UpdateZoneHeader()
+        {
+            // Update zone title
+            if (_zoneTitle != null)
+            {
+                _zoneTitle.text = "NULL RIFT";
+            }
+
+            // Update zone subtitle
+            if (_zoneSubtitle != null)
+            {
+                int zone = _mapManager?.CurrentZone ?? 1;
+                string zoneName = GetZoneName(zone);
+                _zoneSubtitle.text = $"Zone {zone} • {zoneName}";
+            }
+
+            // Get HP from RunManager
+            if (ServiceLocator.TryGet<IRunManager>(out var runManager))
+            {
+                UpdateHPDisplay(runManager.TeamCurrentHP, runManager.TeamMaxHP);
+            }
+
+            // Get currency from ShopManager
+            if (ServiceLocator.TryGet<IShopManager>(out var shopManager))
+            {
+                UpdateCurrencyDisplay(shopManager.VoidShards);
+            }
+        }
+
+        private void UpdateHPDisplay(int current, int max)
+        {
+            if (_hpText != null)
+            {
+                _hpText.text = $"{current}/{max}";
+            }
+        }
+
+        private void UpdateCurrencyDisplay(int amount)
+        {
+            if (_currencyText != null)
+            {
+                _currencyText.text = amount.ToString();
+            }
+        }
+
+        private string GetZoneName(int zone)
+        {
+            return zone switch
+            {
+                1 => "The Outer Reaches",
+                2 => "The Hollow Depths",
+                3 => "The Null Core",
+                _ => "Unknown Zone"
+            };
         }
     }
 }

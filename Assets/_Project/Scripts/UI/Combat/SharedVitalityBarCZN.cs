@@ -53,6 +53,7 @@ namespace HNR.UI.Combat
         [SerializeField] private Color _healthColor;
         [SerializeField] private Color _damageColor;
         [SerializeField] private Color _healColor;
+        [SerializeField] private Color _blockColor = new Color(0.2f, 0.6f, 0.86f, 1f); // #3498DB cyan
 
         private float _targetHealthFill;
         private Coroutine _damageLingerCoroutine;
@@ -63,9 +64,57 @@ namespace HNR.UI.Combat
             _damageColor = UIColors.CorruptionGlow;
             _healColor = UIColors.NatureAspect;
 
+            // Auto-wire references if not set in Inspector
+            AutoWireReferences();
+
             if (_healthFill != null) _healthFill.color = _healthColor;
             if (_damageFill != null) _damageFill.color = _damageColor;
             if (_healPreview != null) _healPreview.color = _healColor;
+            if (_shieldIcon != null) _shieldIcon.color = _blockColor;
+            if (_blockText != null) _blockText.color = _blockColor;
+        }
+
+        private void AutoWireReferences()
+        {
+            // Auto-wire health bar elements
+            if (_healthFill == null)
+            {
+                var healthFillT = transform.Find("HPBarContainer/HealthFill");
+                _healthFill = healthFillT?.GetComponent<Image>();
+            }
+            if (_damageFill == null)
+            {
+                var damageFillT = transform.Find("HPBarContainer/DamageFill");
+                _damageFill = damageFillT?.GetComponent<Image>();
+            }
+            if (_hpText == null)
+            {
+                var hpTextT = transform.Find("HPBarContainer/HPText");
+                _hpText = hpTextT?.GetComponent<TMP_Text>();
+            }
+
+            // Auto-wire block indicator elements
+            if (_blockContainer == null)
+            {
+                var blockT = transform.Find("BlockContainer");
+                _blockContainer = blockT?.gameObject;
+            }
+            if (_shieldIcon == null)
+            {
+                var shieldT = transform.Find("BlockContainer/ShieldIcon");
+                _shieldIcon = shieldT?.GetComponent<Image>();
+            }
+            if (_blockText == null)
+            {
+                var blockTextT = transform.Find("BlockContainer/BlockText");
+                _blockText = blockTextT?.GetComponent<TMP_Text>();
+            }
+
+            // Log wiring status
+            Debug.Log($"[SharedVitalityBarCZN] Auto-wired: _healthFill={(_healthFill != null ? "OK" : "NULL")}, " +
+                      $"_blockContainer={(_blockContainer != null ? "OK" : "NULL")}, " +
+                      $"_shieldIcon={(_shieldIcon != null ? "OK" : "NULL")}, " +
+                      $"_blockText={(_blockText != null ? "OK" : "NULL")}");
         }
 
         private void Start()
@@ -110,6 +159,7 @@ namespace HNR.UI.Combat
 
         private void OnBlockChanged(BlockChangedEvent evt)
         {
+            Debug.Log($"[SharedVitalityBarCZN] BlockChangedEvent received: block={evt.Block}, _blockContainer={(_blockContainer != null ? "OK" : "NULL")}");
             UpdateBlock(evt.Block);
         }
 

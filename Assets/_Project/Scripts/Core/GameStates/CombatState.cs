@@ -54,11 +54,11 @@ namespace HNR.Core.GameStates
         }
 
         /// <summary>
-        /// Handle combat end - transition to appropriate state.
+        /// Handle combat end - mark node complete but let ResultsScreen handle navigation.
         /// </summary>
         private void OnCombatEnded(CombatEndedEvent evt)
         {
-            Debug.Log($"[CombatState] Combat ended with victory={evt.Victory}, transitioning...");
+            Debug.Log($"[CombatState] Combat ended with victory={evt.Victory}");
 
             if (evt.Victory)
             {
@@ -90,12 +90,14 @@ namespace HNR.Core.GameStates
                     }
                 }
 
-                // Return to map (NullRift)
-                _manager.ChangeState(GameState.Run);
+                // NOTE: Don't transition here - let ResultsScreen handle navigation
+                // after user selects reward and clicks Continue.
+                // CombatScreenCZN.OnCombatEnded() shows ResultsScreen which calls
+                // GameManager.ChangeState(GameState.Run) when user clicks Continue.
             }
             else
             {
-                // Go to results/game over
+                // Go to results/game over immediately for defeat
                 _manager.ChangeState(GameState.Results);
             }
         }

@@ -44,6 +44,28 @@ namespace HNR.UI
         [SerializeField, Tooltip("Button to leave the shop")]
         private Button _leaveButton;
 
+        [Header("Shop Services")]
+        [SerializeField, Tooltip("Button to remove a card from deck (costs shards)")]
+        private Button _removeCardButton;
+
+        [SerializeField, Tooltip("Remove card cost text")]
+        private TMP_Text _removeCardCostText;
+
+        [SerializeField, Tooltip("Button to purify corruption (costs shards)")]
+        private Button _purifyButton;
+
+        [SerializeField, Tooltip("Purify cost text")]
+        private TMP_Text _purifyCostText;
+
+        [SerializeField, Tooltip("Cost to remove a card")]
+        private int _removeCardCost = 75;
+
+        [SerializeField, Tooltip("Cost to purify corruption")]
+        private int _purifyCost = 50;
+
+        [SerializeField, Tooltip("Amount of corruption removed by purify")]
+        private int _purifyAmount = 30;
+
         [Header("Item Details Panel")]
         [SerializeField, Tooltip("Panel showing selected item details")]
         private GameObject _detailsPanel;
@@ -107,6 +129,7 @@ namespace HNR.UI
             RefreshRelicDisplay();
             CreateItemSlots();
             ClearSelection();
+            RefreshServiceButtons();
 
             Debug.Log("[ShopScreen] Shop screen opened");
         }
@@ -142,6 +165,18 @@ namespace HNR.UI
                 _purchaseButton.onClick.RemoveAllListeners();
                 _purchaseButton.onClick.AddListener(OnPurchaseClicked);
             }
+
+            if (_removeCardButton != null)
+            {
+                _removeCardButton.onClick.RemoveAllListeners();
+                _removeCardButton.onClick.AddListener(OnRemoveCardClicked);
+            }
+
+            if (_purifyButton != null)
+            {
+                _purifyButton.onClick.RemoveAllListeners();
+                _purifyButton.onClick.AddListener(OnPurifyClicked);
+            }
         }
 
         // ============================================
@@ -153,6 +188,7 @@ namespace HNR.UI
             RefreshVoidShards();
             RefreshItemSlots();
             RefreshDetailsPanel();
+            RefreshServiceButtons();
         }
 
         private void OnItemPurchased(ShopItemPurchasedEvent evt)
@@ -412,6 +448,71 @@ namespace HNR.UI
             }
         }
 
+        private void OnRemoveCardClicked()
+        {
+            if (_shopManager == null) return;
+
+            int shards = _shopManager.VoidShards;
+            if (shards < _removeCardCost)
+            {
+                Debug.Log("[ShopScreen] Not enough shards to remove card");
+                return;
+            }
+
+            // TODO: Show card selection UI for removal
+            // For now, publish event for systems to handle
+            _shopManager.SpendVoidShards(_removeCardCost);
+            EventBus.Publish(new ShopRemoveCardRequestedEvent());
+            Debug.Log($"[ShopScreen] Remove card service used ({_removeCardCost} shards)");
+        }
+
+        private void OnPurifyClicked()
+        {
+            if (_shopManager == null) return;
+
+            int shards = _shopManager.VoidShards;
+            if (shards < _purifyCost)
+            {
+                Debug.Log("[ShopScreen] Not enough shards to purify");
+                return;
+            }
+
+            _shopManager.SpendVoidShards(_purifyCost);
+            EventBus.Publish(new ShopPurifyRequestedEvent(_purifyAmount));
+            Debug.Log($"[ShopScreen] Purify service used ({_purifyCost} shards, -{_purifyAmount} corruption)");
+        }
+
+        // ============================================
+        // Service Buttons
+        // ============================================
+
+        private void RefreshServiceButtons()
+        {
+            int shards = _shopManager?.VoidShards ?? 0;
+
+            // Remove Card button
+            if (_removeCardButton != null)
+            {
+                _removeCardButton.interactable = shards >= _removeCardCost;
+            }
+            if (_removeCardCostText != null)
+            {
+                _removeCardCostText.text = $"Remove Card ({_removeCardCost})";
+                _removeCardCostText.color = shards >= _removeCardCost ? _affordableColor : _unaffordableColor;
+            }
+
+            // Purify button
+            if (_purifyButton != null)
+            {
+                _purifyButton.interactable = shards >= _purifyCost;
+            }
+            if (_purifyCostText != null)
+            {
+                _purifyCostText.text = $"Purify -{_purifyAmount} ({_purifyCost})";
+                _purifyCostText.color = shards >= _purifyCost ? _affordableColor : _unaffordableColor;
+            }
+        }
+
         // ============================================
         // Public Methods
         // ============================================
@@ -425,6 +526,31 @@ namespace HNR.UI
             RefreshRelicDisplay();
             RefreshItemSlots();
             RefreshDetailsPanel();
+            RefreshServiceButtons();
+        }
+    }
+
+    // ============================================
+    // Supporting Events
+    // ============================================
+
+    /// <summary>
+    /// Event fired when player requests to remove a card at the shop.
+    /// </summary>
+    public class ShopRemoveCardRequestedEvent : GameEvent
+    {
+    }
+
+    /// <summary>
+    /// Event fired when player purchases purify service at the shop.
+    /// </summary>
+    public class ShopPurifyRequestedEvent : GameEvent
+    {
+        public int PurifyAmount { get; }
+
+        public ShopPurifyRequestedEvent(int purifyAmount)
+        {
+            PurifyAmount = purifyAmount;
         }
     }
 }

@@ -114,8 +114,8 @@ namespace HNR.UI
             // Set color
             _text.color = isCritical ? _criticalColor : GetColor(type);
 
-            // Set font size for criticals
-            _text.fontSize = isCritical ? 28 : 22;
+            // Set font size for criticals (base 32, critical 38)
+            _text.fontSize = isCritical ? 38 : 32;
 
             // Reset state
             _canvasGroup.alpha = 1f;
@@ -141,7 +141,7 @@ namespace HNR.UI
             };
 
             _text.color = isCritical ? _criticalColor : GetColor(type);
-            _text.fontSize = isCritical ? 28 : 22;
+            _text.fontSize = isCritical ? 38 : 32;
 
             _canvasGroup.alpha = 1f;
             transform.localScale = Vector3.one;

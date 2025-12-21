@@ -68,15 +68,15 @@ namespace HNR.Map
         [SerializeField, Tooltip("Color when node is visited")]
         private Color _visitedColor = new Color(0.5f, 0.5f, 0.5f, 1f);
 
-        [Header("Node Type Colors")]
-        [SerializeField] private Color _startColor = new Color(0.3f, 0.8f, 0.3f, 1f);      // Green
-        [SerializeField] private Color _combatColor = new Color(0.9f, 0.3f, 0.3f, 1f);     // Red
-        [SerializeField] private Color _eliteColor = new Color(0.8f, 0.2f, 0.6f, 1f);      // Magenta
-        [SerializeField] private Color _shopColor = new Color(1f, 0.84f, 0f, 1f);          // Gold
-        [SerializeField] private Color _echoColor = new Color(0.4f, 0.6f, 0.9f, 1f);       // Blue
-        [SerializeField] private Color _sanctuaryColor = new Color(0.5f, 0.9f, 0.5f, 1f);  // Light Green
-        [SerializeField] private Color _treasureColor = new Color(1f, 0.6f, 0.1f, 1f);     // Orange
-        [SerializeField] private Color _bossColor = new Color(0.6f, 0.1f, 0.1f, 1f);       // Dark Red
+        [Header("Node Type Colors (CZN Mockup)")]
+        [SerializeField] private Color _startColor = new Color(0f, 0.83f, 0.89f, 1f);      // Cyan #00D4E4
+        [SerializeField] private Color _combatColor = new Color(0.77f, 0.12f, 0.23f, 1f);  // Red #C41E3A
+        [SerializeField] private Color _eliteColor = new Color(1f, 0.27f, 0.27f, 1f);      // Glow Red #FF4444
+        [SerializeField] private Color _shopColor = new Color(0.83f, 0.69f, 0.22f, 1f);    // Gold #D4AF37
+        [SerializeField] private Color _echoColor = new Color(0.42f, 0.25f, 0.63f, 1f);    // Violet #6B3FA0
+        [SerializeField] private Color _sanctuaryColor = new Color(0.18f, 0.8f, 0.44f, 1f);// Green #2ECC71
+        [SerializeField] private Color _treasureColor = new Color(0.83f, 0.69f, 0.22f, 1f);// Gold #D4AF37
+        [SerializeField] private Color _bossColor = new Color(1f, 0.27f, 0.27f, 1f);       // Glow Red #FF4444
 
         // ============================================
         // Runtime State

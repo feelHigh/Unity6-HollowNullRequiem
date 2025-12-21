@@ -223,6 +223,12 @@ namespace HNR.Editor
             // === ShopScreen (overlay) ===
             GameObject shopScreen = CreateShopScreen(overlayContainer);
 
+            // === SanctuaryScreen (overlay) ===
+            GameObject sanctuaryScreen = CreateSanctuaryScreen(overlayContainer);
+
+            // === TreasureScreen (overlay) ===
+            GameObject treasureScreen = CreateTreasureScreen(overlayContainer);
+
             // === Background ===
             CreateBackground(canvasObj, new Color(0.03f, 0.01f, 0.08f));
 
@@ -320,6 +326,10 @@ namespace HNR.Editor
 
             // === CombatScreenCZN ===
             GameObject combatScreen = CreateCombatScreenCZN(screenContainer);
+
+            // === ResultsScreen (Victory/Defeat) ===
+            GameObject resultsScreen = CreateResultsScreen(screenContainer);
+            resultsScreen.SetActive(false); // Hidden by default
 
             // === Hand Container ===
             GameObject handContainer = CreateHandContainer(canvasObj);
@@ -841,23 +851,26 @@ namespace HNR.Editor
 
             var mapScreen = screenObj.AddComponent<MapScreen>();
 
+            // ============================================
+            // ZONE HEADER (CZN Layout)
+            // ============================================
+            GameObject zoneHeader = CreateZoneHeaderCZN(screenObj);
+
             // === Map Container ===
             GameObject mapContainer = new GameObject("MapContainer");
             mapContainer.transform.SetParent(screenObj.transform, false);
             RectTransform mapRect = mapContainer.AddComponent<RectTransform>();
-            mapRect.anchorMin = new Vector2(0.1f, 0.1f);
-            mapRect.anchorMax = new Vector2(0.9f, 0.9f);
+            mapRect.anchorMin = new Vector2(0, 0.08f);
+            mapRect.anchorMax = new Vector2(1, 0.84f);
             mapRect.sizeDelta = Vector2.zero;
 
             Image mapBg = mapContainer.AddComponent<Image>();
-            mapBg.color = new Color(0.1f, 0.05f, 0.15f, 0.5f);
+            mapBg.color = new Color(0.07f, 0.04f, 0.1f, 0.8f);
 
-            // === Zone Title ===
-            GameObject zoneTitleObj = CreateText(screenObj, "ZoneTitle", "ZONE 1: THE FRACTURED DEPTHS", 32);
-            RectTransform zoneRect = zoneTitleObj.GetComponent<RectTransform>();
-            zoneRect.anchorMin = new Vector2(0.5f, 0.95f);
-            zoneRect.anchorMax = new Vector2(0.5f, 0.95f);
-            zoneRect.sizeDelta = new Vector2(600, 50);
+            // ============================================
+            // NODE TYPE LEGEND (Bottom Footer)
+            // ============================================
+            GameObject legend = CreateMapLegendCZN(screenObj);
 
             // === Node Container ===
             GameObject nodeContainer = new GameObject("NodeContainer");
@@ -910,9 +923,25 @@ namespace HNR.Editor
             {
                 Debug.LogWarning("[ProductionSceneSetupGenerator] MapNodeUI prefab not found at Assets/_Project/Prefabs/UI/Map/MapNodeUI.prefab");
             }
+
+            // Wire zone header references
+            var zoneTitle = zoneHeader.transform.Find("TitleContainer/ZoneTitle")?.GetComponent<TMP_Text>();
+            var zoneSubtitle = zoneHeader.transform.Find("TitleContainer/ZoneSubtitle")?.GetComponent<TMP_Text>();
+            var hpText = zoneHeader.transform.Find("StatsContainer/HPContainer/HPText")?.GetComponent<TMP_Text>();
+            var hpIcon = zoneHeader.transform.Find("StatsContainer/HPContainer/HPIcon")?.GetComponent<Image>();
+            var currencyText = zoneHeader.transform.Find("StatsContainer/CurrencyContainer/CurrencyText")?.GetComponent<TMP_Text>();
+            var currencyIcon = zoneHeader.transform.Find("StatsContainer/CurrencyContainer/CurrencyIcon")?.GetComponent<Image>();
+
+            if (zoneTitle != null) so.FindProperty("_zoneTitle").objectReferenceValue = zoneTitle;
+            if (zoneSubtitle != null) so.FindProperty("_zoneSubtitle").objectReferenceValue = zoneSubtitle;
+            if (hpText != null) so.FindProperty("_hpText").objectReferenceValue = hpText;
+            if (hpIcon != null) so.FindProperty("_hpIcon").objectReferenceValue = hpIcon;
+            if (currencyText != null) so.FindProperty("_currencyText").objectReferenceValue = currencyText;
+            if (currencyIcon != null) so.FindProperty("_currencyIcon").objectReferenceValue = currencyIcon;
+
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            Debug.Log("[ProductionSceneSetupGenerator] Created MapPathRenderer with path connections");
+            Debug.Log("[ProductionSceneSetupGenerator] Created MapScreen with CZN zone header");
 
             return screenObj;
         }
@@ -1029,6 +1058,314 @@ namespace HNR.Editor
             return screenObj;
         }
 
+        private static GameObject CreateSanctuaryScreen(GameObject parent)
+        {
+            GameObject screenObj = new GameObject("SanctuaryScreen");
+            screenObj.transform.SetParent(parent.transform, false);
+
+            RectTransform rect = screenObj.AddComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.sizeDelta = Vector2.zero;
+
+            screenObj.AddComponent<SanctuaryScreen>();
+            screenObj.SetActive(false);
+
+            // Background
+            Image bg = screenObj.AddComponent<Image>();
+            bg.color = new Color(0.05f, 0.08f, 0.06f, 0.98f); // Greenish dark
+
+            // Title
+            GameObject titleObj = CreateText(screenObj, "Title", "SANCTUARY", 32);
+            RectTransform titleRect = titleObj.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0.5f, 0.88f);
+            titleRect.anchorMax = new Vector2(0.5f, 0.88f);
+            titleRect.sizeDelta = new Vector2(300, 50);
+            titleObj.GetComponent<TMP_Text>().color = new Color(0.18f, 0.8f, 0.44f); // Health green
+
+            // Description
+            GameObject descObj = CreateText(screenObj, "Description", "A moment of respite in the Null Rift...", 16);
+            RectTransform descRect = descObj.GetComponent<RectTransform>();
+            descRect.anchorMin = new Vector2(0.5f, 0.78f);
+            descRect.anchorMax = new Vector2(0.5f, 0.78f);
+            descRect.sizeDelta = new Vector2(500, 40);
+            descObj.GetComponent<TMP_Text>().color = new Color(0.7f, 0.7f, 0.7f);
+
+            // Choice buttons container
+            GameObject choicesContainer = new GameObject("ChoicesContainer");
+            choicesContainer.transform.SetParent(screenObj.transform, false);
+            RectTransform choicesRect = choicesContainer.AddComponent<RectTransform>();
+            choicesRect.anchorMin = new Vector2(0.15f, 0.25f);
+            choicesRect.anchorMax = new Vector2(0.85f, 0.7f);
+            choicesRect.sizeDelta = Vector2.zero;
+
+            HorizontalLayoutGroup choicesLayout = choicesContainer.AddComponent<HorizontalLayoutGroup>();
+            choicesLayout.spacing = 30;
+            choicesLayout.childAlignment = TextAnchor.MiddleCenter;
+            choicesLayout.childForceExpandWidth = true;
+            choicesLayout.childForceExpandHeight = true;
+
+            // Rest button (green)
+            CreateSanctuaryChoice(choicesContainer, "RestButton", "REST", "Heal 30% HP", new Color(0.18f, 0.8f, 0.44f));
+
+            // Purify button (cyan)
+            CreateSanctuaryChoice(choicesContainer, "PurifyButton", "PURIFY", "Remove -30 Corruption", new Color(0f, 0.83f, 0.89f));
+
+            // Upgrade button (gold)
+            CreateSanctuaryChoice(choicesContainer, "UpgradeButton", "UPGRADE", "Upgrade a card", new Color(0.83f, 0.69f, 0.22f));
+
+            // Skip button
+            GameObject skipBtn = CreateMenuButton(screenObj, "SkipButton", "LEAVE");
+            RectTransform skipRect = skipBtn.GetComponent<RectTransform>();
+            skipRect.anchorMin = new Vector2(0.5f, 0.1f);
+            skipRect.anchorMax = new Vector2(0.5f, 0.1f);
+            skipRect.sizeDelta = new Vector2(150, 40);
+
+            return screenObj;
+        }
+
+        private static void CreateSanctuaryChoice(GameObject parent, string name, string title, string desc, Color color)
+        {
+            GameObject choice = new GameObject(name);
+            choice.transform.SetParent(parent.transform, false);
+
+            Image choiceBg = choice.AddComponent<Image>();
+            choiceBg.color = new Color(color.r * 0.2f, color.g * 0.2f, color.b * 0.2f, 0.8f);
+
+            Button btn = choice.AddComponent<Button>();
+            btn.targetGraphic = choiceBg;
+
+            VerticalLayoutGroup layout = choice.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 10;
+            layout.padding = new RectOffset(15, 15, 20, 20);
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            // Icon placeholder
+            GameObject icon = new GameObject("Icon");
+            icon.transform.SetParent(choice.transform, false);
+            RectTransform iconRect = icon.AddComponent<RectTransform>();
+            iconRect.sizeDelta = new Vector2(60, 60);
+            Image iconImg = icon.AddComponent<Image>();
+            iconImg.color = color;
+            var iconLayout = icon.AddComponent<LayoutElement>();
+            iconLayout.preferredHeight = 60;
+
+            // Title
+            GameObject titleObj = CreateText(choice, "Title", title, 18);
+            titleObj.GetComponent<TMP_Text>().color = color;
+            titleObj.GetComponent<TMP_Text>().fontStyle = TMPro.FontStyles.Bold;
+
+            // Description
+            GameObject descObj = CreateText(choice, "Desc", desc, 12);
+            descObj.GetComponent<TMP_Text>().color = new Color(0.7f, 0.7f, 0.7f);
+        }
+
+        private static GameObject CreateTreasureScreen(GameObject parent)
+        {
+            GameObject screenObj = new GameObject("TreasureScreen");
+            screenObj.transform.SetParent(parent.transform, false);
+
+            RectTransform rect = screenObj.AddComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.sizeDelta = Vector2.zero;
+
+            screenObj.AddComponent<TreasureScreen>();
+            screenObj.SetActive(false);
+
+            // Background with gold tint
+            Image bg = screenObj.AddComponent<Image>();
+            bg.color = new Color(0.1f, 0.08f, 0.05f, 0.98f);
+
+            // Title
+            GameObject titleObj = CreateText(screenObj, "TitleText", "TREASURE", 32);
+            RectTransform titleRect = titleObj.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0.5f, 0.88f);
+            titleRect.anchorMax = new Vector2(0.5f, 0.88f);
+            titleRect.sizeDelta = new Vector2(300, 50);
+            titleObj.GetComponent<TMP_Text>().color = new Color(0.83f, 0.69f, 0.22f); // Soul gold
+            titleObj.GetComponent<TMP_Text>().fontStyle = TMPro.FontStyles.Bold;
+
+            // Subtitle
+            GameObject subtitleObj = CreateText(screenObj, "SubtitleText", "Choose a card reward:", 16);
+            RectTransform subtitleRect = subtitleObj.GetComponent<RectTransform>();
+            subtitleRect.anchorMin = new Vector2(0.5f, 0.8f);
+            subtitleRect.anchorMax = new Vector2(0.5f, 0.8f);
+            subtitleRect.sizeDelta = new Vector2(400, 30);
+
+            // Card reward container
+            GameObject cardContainer = new GameObject("CardRewardContainer");
+            cardContainer.transform.SetParent(screenObj.transform, false);
+            RectTransform cardRect = cardContainer.AddComponent<RectTransform>();
+            cardRect.anchorMin = new Vector2(0.1f, 0.35f);
+            cardRect.anchorMax = new Vector2(0.9f, 0.75f);
+            cardRect.sizeDelta = Vector2.zero;
+
+            HorizontalLayoutGroup cardLayout = cardContainer.AddComponent<HorizontalLayoutGroup>();
+            cardLayout.spacing = 30;
+            cardLayout.childAlignment = TextAnchor.MiddleCenter;
+            cardLayout.childForceExpandWidth = false;
+            cardLayout.childForceExpandHeight = true;
+
+            // Skip button
+            GameObject skipBtn = CreateMenuButton(screenObj, "SkipRewardButton", "SKIP REWARD");
+            RectTransform skipRect = skipBtn.GetComponent<RectTransform>();
+            skipRect.anchorMin = new Vector2(0.5f, 0.22f);
+            skipRect.anchorMax = new Vector2(0.5f, 0.22f);
+            skipRect.sizeDelta = new Vector2(180, 45);
+
+            // Continue button
+            GameObject continueBtn = CreateMenuButton(screenObj, "ContinueButton", "CONTINUE");
+            RectTransform continueRect = continueBtn.GetComponent<RectTransform>();
+            continueRect.anchorMin = new Vector2(0.5f, 0.1f);
+            continueRect.anchorMax = new Vector2(0.5f, 0.1f);
+            continueRect.sizeDelta = new Vector2(180, 45);
+            continueBtn.GetComponent<Button>().interactable = false;
+
+            // Wire TreasureScreen references
+            var treasureScreen = screenObj.GetComponent<TreasureScreen>();
+            SerializedObject so = new SerializedObject(treasureScreen);
+            so.FindProperty("_titleText").objectReferenceValue = titleObj.GetComponent<TMP_Text>();
+            so.FindProperty("_subtitleText").objectReferenceValue = subtitleObj.GetComponent<TMP_Text>();
+            so.FindProperty("_cardRewardContainer").objectReferenceValue = cardContainer.transform;
+            so.FindProperty("_skipRewardButton").objectReferenceValue = skipBtn.GetComponent<Button>();
+            so.FindProperty("_continueButton").objectReferenceValue = continueBtn.GetComponent<Button>();
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            return screenObj;
+        }
+
+        /// <summary>
+        /// Creates the ResultsScreen for victory/defeat display.
+        /// </summary>
+        private static GameObject CreateResultsScreen(GameObject parent)
+        {
+            GameObject screenObj = new GameObject("ResultsScreen");
+            screenObj.transform.SetParent(parent.transform, false);
+
+            RectTransform rect = screenObj.AddComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.sizeDelta = Vector2.zero;
+
+            screenObj.AddComponent<ResultsScreen>();
+
+            // Background
+            Image bg = screenObj.AddComponent<Image>();
+            bg.color = new Color(0.05f, 0.03f, 0.08f, 0.98f);
+
+            // Victory glow overlay
+            GameObject victoryGlow = new GameObject("VictoryGlow");
+            victoryGlow.transform.SetParent(screenObj.transform, false);
+            RectTransform glowRect = victoryGlow.AddComponent<RectTransform>();
+            glowRect.anchorMin = Vector2.zero;
+            glowRect.anchorMax = Vector2.one;
+            glowRect.sizeDelta = Vector2.zero;
+            Image glowImg = victoryGlow.AddComponent<Image>();
+            glowImg.color = new Color(0.83f, 0.69f, 0.22f, 0.15f); // Gold glow
+            CanvasGroup victoryGlowCG = victoryGlow.AddComponent<CanvasGroup>();
+
+            // Defeat overlay
+            GameObject defeatOverlay = new GameObject("DefeatOverlay");
+            defeatOverlay.transform.SetParent(screenObj.transform, false);
+            RectTransform defeatRect = defeatOverlay.AddComponent<RectTransform>();
+            defeatRect.anchorMin = Vector2.zero;
+            defeatRect.anchorMax = Vector2.one;
+            defeatRect.sizeDelta = Vector2.zero;
+            Image defeatImg = defeatOverlay.AddComponent<Image>();
+            defeatImg.color = new Color(0.3f, 0.05f, 0.05f, 0.3f); // Red overlay
+            CanvasGroup defeatOverlayCG = defeatOverlay.AddComponent<CanvasGroup>();
+            defeatOverlay.SetActive(false);
+
+            // Result title (VICTORY/DEFEAT)
+            GameObject titleObj = CreateText(screenObj, "ResultTitleText", "VICTORY", 36);
+            RectTransform titleRect = titleObj.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0.5f, 0.85f);
+            titleRect.anchorMax = new Vector2(0.5f, 0.85f);
+            titleRect.sizeDelta = new Vector2(400, 60);
+            var titleTmp = titleObj.GetComponent<TMP_Text>();
+            titleTmp.color = new Color(0.83f, 0.69f, 0.22f); // Soul gold
+            titleTmp.fontStyle = TMPro.FontStyles.Bold;
+
+            // Summary text
+            GameObject summaryObj = CreateText(screenObj, "SummaryText", "Enemy Defeated", 16);
+            RectTransform summaryRect = summaryObj.GetComponent<RectTransform>();
+            summaryRect.anchorMin = new Vector2(0.5f, 0.78f);
+            summaryRect.anchorMax = new Vector2(0.5f, 0.78f);
+            summaryRect.sizeDelta = new Vector2(500, 30);
+
+            // Card reward title
+            GameObject cardTitleObj = CreateText(screenObj, "CardRewardTitle", "Choose a card reward:", 18);
+            RectTransform cardTitleRect = cardTitleObj.GetComponent<RectTransform>();
+            cardTitleRect.anchorMin = new Vector2(0.5f, 0.72f);
+            cardTitleRect.anchorMax = new Vector2(0.5f, 0.72f);
+            cardTitleRect.sizeDelta = new Vector2(400, 30);
+
+            // Card reward container
+            GameObject cardContainer = new GameObject("CardRewardContainer");
+            cardContainer.transform.SetParent(screenObj.transform, false);
+            RectTransform cardRect = cardContainer.AddComponent<RectTransform>();
+            cardRect.anchorMin = new Vector2(0.1f, 0.35f);
+            cardRect.anchorMax = new Vector2(0.9f, 0.68f);
+            cardRect.sizeDelta = Vector2.zero;
+
+            HorizontalLayoutGroup cardLayout = cardContainer.AddComponent<HorizontalLayoutGroup>();
+            cardLayout.spacing = 30;
+            cardLayout.childAlignment = TextAnchor.MiddleCenter;
+            cardLayout.childForceExpandWidth = false;
+            cardLayout.childForceExpandHeight = true;
+
+            // Skip button
+            GameObject skipBtn = CreateMenuButton(screenObj, "SkipRewardButton", "SKIP REWARD");
+            RectTransform skipRect = skipBtn.GetComponent<RectTransform>();
+            skipRect.anchorMin = new Vector2(0.35f, 0.22f);
+            skipRect.anchorMax = new Vector2(0.35f, 0.22f);
+            skipRect.sizeDelta = new Vector2(160, 40);
+
+            // Continue button (victory)
+            GameObject continueBtn = CreateMenuButton(screenObj, "ContinueButton", "CONTINUE");
+            RectTransform continueRect = continueBtn.GetComponent<RectTransform>();
+            continueRect.anchorMin = new Vector2(0.65f, 0.22f);
+            continueRect.anchorMax = new Vector2(0.65f, 0.22f);
+            continueRect.sizeDelta = new Vector2(160, 40);
+            continueBtn.GetComponent<Button>().interactable = false;
+
+            // Retry button (defeat)
+            GameObject retryBtn = CreateMenuButton(screenObj, "RetryButton", "RETRY");
+            RectTransform retryRect = retryBtn.GetComponent<RectTransform>();
+            retryRect.anchorMin = new Vector2(0.35f, 0.12f);
+            retryRect.anchorMax = new Vector2(0.35f, 0.12f);
+            retryRect.sizeDelta = new Vector2(160, 40);
+            retryBtn.SetActive(false);
+
+            // Abandon button (defeat)
+            GameObject abandonBtn = CreateMenuButton(screenObj, "AbandonButton", "ABANDON RUN");
+            RectTransform abandonRect = abandonBtn.GetComponent<RectTransform>();
+            abandonRect.anchorMin = new Vector2(0.65f, 0.12f);
+            abandonRect.anchorMax = new Vector2(0.65f, 0.12f);
+            abandonRect.sizeDelta = new Vector2(160, 40);
+            abandonBtn.SetActive(false);
+
+            // Wire ResultsScreen references
+            var resultsScreen = screenObj.GetComponent<ResultsScreen>();
+            SerializedObject so = new SerializedObject(resultsScreen);
+            so.FindProperty("_resultTitleText").objectReferenceValue = titleTmp;
+            so.FindProperty("_summaryText").objectReferenceValue = summaryObj.GetComponent<TMP_Text>();
+            so.FindProperty("_victoryGlow").objectReferenceValue = victoryGlowCG;
+            so.FindProperty("_defeatOverlay").objectReferenceValue = defeatOverlayCG;
+            so.FindProperty("_cardRewardTitle").objectReferenceValue = cardTitleObj.GetComponent<TMP_Text>();
+            so.FindProperty("_cardRewardContainer").objectReferenceValue = cardContainer.transform;
+            so.FindProperty("_skipRewardButton").objectReferenceValue = skipBtn.GetComponent<Button>();
+            so.FindProperty("_continueButton").objectReferenceValue = continueBtn.GetComponent<Button>();
+            so.FindProperty("_retryButton").objectReferenceValue = retryBtn.GetComponent<Button>();
+            so.FindProperty("_abandonButton").objectReferenceValue = abandonBtn.GetComponent<Button>();
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            return screenObj;
+        }
+
         // ============================================
         // Screen Creation - Combat
         // ============================================
@@ -1045,39 +1382,106 @@ namespace HNR.Editor
 
             var combatScreen = screenObj.AddComponent<CombatScreenCZN>();
 
-            // === Top Section - Shared Vitality Bar ===
-            GameObject vitalityBar = CreateSharedVitalityBar(screenObj);
+            // ============================================
+            // TOP HUD (48px) - Vitality Bar + System Menu
+            // ============================================
+            GameObject topHUD = new GameObject("TopHUD");
+            topHUD.transform.SetParent(screenObj.transform, false);
+            RectTransform topHUDRect = topHUD.AddComponent<RectTransform>();
+            topHUDRect.anchorMin = new Vector2(0, 0.87f);
+            topHUDRect.anchorMax = new Vector2(1, 1);
+            topHUDRect.sizeDelta = Vector2.zero;
+            Image topHUDBg = topHUD.AddComponent<Image>();
+            topHUDBg.color = new Color(0f, 0f, 0f, 0.85f);
 
-            // === Left Section - Party Status Sidebar ===
-            GameObject partySidebar = CreatePartySidebar(screenObj);
+            // Shared Vitality Bar (left side of top HUD)
+            GameObject vitalityBar = CreateSharedVitalityBarCZN(topHUD);
 
-            // === Right Section - AP Counter ===
-            GameObject apCounter = CreateAPCounter(screenObj);
+            // System Menu Bar (right side of top HUD)
+            GameObject sysMenuBar = CreateSystemMenuBar(topHUD);
 
-            // === Bottom Section - Execution Button ===
-            GameObject executionBtn = CreateExecutionButton(screenObj);
+            // ============================================
+            // LEFT SIDEBAR (80px) - Party Status
+            // ============================================
+            GameObject partySidebar = CreatePartySidebarCZN(screenObj);
 
-            // === Enemy Area ===
-            GameObject enemyArea = new GameObject("EnemyArea");
-            enemyArea.transform.SetParent(screenObj.transform, false);
-            RectTransform enemyRect = enemyArea.AddComponent<RectTransform>();
-            enemyRect.anchorMin = new Vector2(0.2f, 0.5f);
-            enemyRect.anchorMax = new Vector2(0.85f, 0.85f);
-            enemyRect.sizeDelta = Vector2.zero;
+            // ============================================
+            // CENTER - Enemy Zone + Battle Area
+            // ============================================
+            GameObject centerArea = new GameObject("CenterArea");
+            centerArea.transform.SetParent(screenObj.transform, false);
+            RectTransform centerRect = centerArea.AddComponent<RectTransform>();
+            centerRect.anchorMin = new Vector2(0.1f, 0.35f);
+            centerRect.anchorMax = new Vector2(0.92f, 0.87f);
+            centerRect.sizeDelta = Vector2.zero;
 
-            // === Turn Indicator ===
-            GameObject turnObj = CreateText(screenObj, "TurnText", "Turn 1", 28);
-            RectTransform turnRect = turnObj.GetComponent<RectTransform>();
-            turnRect.anchorMin = new Vector2(0.5f, 0.95f);
-            turnRect.anchorMax = new Vector2(0.5f, 0.95f);
-            turnRect.sizeDelta = new Vector2(150, 40);
+            // Enemy Zone (top half of center)
+            GameObject enemyZone = new GameObject("EnemyZone");
+            enemyZone.transform.SetParent(centerArea.transform, false);
+            RectTransform enemyZoneRect = enemyZone.AddComponent<RectTransform>();
+            enemyZoneRect.anchorMin = new Vector2(0.1f, 0.4f);
+            enemyZoneRect.anchorMax = new Vector2(0.9f, 1f);
+            enemyZoneRect.sizeDelta = Vector2.zero;
 
-            // === Phase Indicator ===
-            GameObject phaseObj = CreateText(screenObj, "PhaseText", "PLAYER PHASE", 20);
-            RectTransform phaseRect = phaseObj.GetComponent<RectTransform>();
-            phaseRect.anchorMin = new Vector2(0.5f, 0.9f);
-            phaseRect.anchorMax = new Vector2(0.5f, 0.9f);
-            phaseRect.sizeDelta = new Vector2(200, 30);
+            HorizontalLayoutGroup enemyLayout = enemyZone.AddComponent<HorizontalLayoutGroup>();
+            enemyLayout.spacing = 40f;
+            enemyLayout.childAlignment = TextAnchor.MiddleCenter;
+            enemyLayout.childForceExpandWidth = false;
+            enemyLayout.childForceExpandHeight = false;
+
+            // Ally Indicators Zone (bottom of center)
+            GameObject allyZone = new GameObject("AllyIndicatorZone");
+            allyZone.transform.SetParent(centerArea.transform, false);
+            RectTransform allyZoneRect = allyZone.AddComponent<RectTransform>();
+            allyZoneRect.anchorMin = new Vector2(0.3f, 0.1f);
+            allyZoneRect.anchorMax = new Vector2(0.7f, 0.35f);
+            allyZoneRect.sizeDelta = Vector2.zero;
+
+            HorizontalLayoutGroup allyLayout = allyZone.AddComponent<HorizontalLayoutGroup>();
+            allyLayout.spacing = 20f;
+            allyLayout.childAlignment = TextAnchor.MiddleCenter;
+            allyLayout.childForceExpandWidth = false;
+            allyLayout.childForceExpandHeight = false;
+
+            // Turn/Zone Info (bottom center)
+            GameObject turnInfoContainer = new GameObject("TurnInfoContainer");
+            turnInfoContainer.transform.SetParent(centerArea.transform, false);
+            RectTransform turnInfoContainerRect = turnInfoContainer.AddComponent<RectTransform>();
+            turnInfoContainerRect.anchorMin = new Vector2(0.5f, 0);
+            turnInfoContainerRect.anchorMax = new Vector2(0.5f, 0.1f);
+            turnInfoContainerRect.sizeDelta = new Vector2(150, 24);
+            Image turnInfoBg = turnInfoContainer.AddComponent<Image>();
+            turnInfoBg.color = new Color(0f, 0f, 0f, 0.5f);
+
+            GameObject turnInfo = CreateText(turnInfoContainer, "TurnInfo", "Turn 1 • Zone 1", 12);
+            RectTransform turnInfoRect = turnInfo.GetComponent<RectTransform>();
+            turnInfoRect.anchorMin = Vector2.zero;
+            turnInfoRect.anchorMax = Vector2.one;
+            turnInfoRect.sizeDelta = Vector2.zero;
+            turnInfoContainer.transform.SetAsFirstSibling();
+
+            // ============================================
+            // RIGHT SIDEBAR (60px) - Deck Info
+            // ============================================
+            GameObject rightSidebar = CreateDeckInfoSidebar(screenObj);
+
+            // ============================================
+            // BOTTOM COMMAND CENTER (120px)
+            // ============================================
+            GameObject bottomHUD = new GameObject("BottomCommandCenter");
+            bottomHUD.transform.SetParent(screenObj.transform, false);
+            RectTransform bottomRect = bottomHUD.AddComponent<RectTransform>();
+            bottomRect.anchorMin = new Vector2(0, 0);
+            bottomRect.anchorMax = new Vector2(1, 0.35f);
+            bottomRect.sizeDelta = Vector2.zero;
+            Image bottomBg = bottomHUD.AddComponent<Image>();
+            bottomBg.color = new Color(0f, 0f, 0f, 0.8f);
+
+            // AP Counter (top center of bottom area)
+            GameObject apCounter = CreateAPCounterCZN(bottomHUD);
+
+            // Execution Button (right side)
+            GameObject executionBtn = CreateExecutionButtonCZN(bottomHUD);
 
             // Wire references
             SerializedObject screenSO = new SerializedObject(combatScreen);
@@ -1615,6 +2019,625 @@ namespace HNR.Editor
 
             so.ApplyModifiedPropertiesWithoutUndo();
             Debug.Log("[ProductionSceneSetupGenerator] Wired CombatScreenCZN component references");
+        }
+
+        // ============================================
+        // CZN Layout Helper Methods
+        // ============================================
+
+        /// <summary>
+        /// Creates the CZN-style shared vitality bar with embedded party portraits.
+        /// </summary>
+        private static GameObject CreateSharedVitalityBarCZN(GameObject parent)
+        {
+            GameObject barObj = new GameObject("SharedVitalityBarCZN");
+            barObj.transform.SetParent(parent.transform, false);
+
+            RectTransform rect = barObj.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0, 0.5f);
+            rect.anchorMax = new Vector2(0.6f, 0.5f);
+            rect.pivot = new Vector2(0, 0.5f);
+            rect.anchoredPosition = new Vector2(12, 0);
+            rect.sizeDelta = new Vector2(0, 32);
+
+            var layout = barObj.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 8f;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+            layout.padding = new RectOffset(8, 8, 4, 4);
+
+            // Party portraits container (overlapping circles)
+            GameObject portraitsContainer = new GameObject("PartyPortraits");
+            portraitsContainer.transform.SetParent(barObj.transform, false);
+            var portraitsLayout = portraitsContainer.AddComponent<HorizontalLayoutGroup>();
+            portraitsLayout.spacing = -8f; // Negative for overlap
+            portraitsLayout.childAlignment = TextAnchor.MiddleCenter;
+
+            for (int i = 0; i < 3; i++)
+            {
+                GameObject portrait = new GameObject($"Portrait_{i}");
+                portrait.transform.SetParent(portraitsContainer.transform, false);
+                RectTransform pRect = portrait.AddComponent<RectTransform>();
+                pRect.sizeDelta = new Vector2(28, 28);
+                Image pImg = portrait.AddComponent<Image>();
+                pImg.color = new Color(0.3f + i * 0.15f, 0.2f, 0.4f - i * 0.1f);
+                var pLayout = portrait.AddComponent<LayoutElement>();
+                pLayout.preferredWidth = 28;
+                pLayout.preferredHeight = 28;
+            }
+
+            // HP Bar container
+            GameObject hpBarContainer = new GameObject("HPBarContainer");
+            hpBarContainer.transform.SetParent(barObj.transform, false);
+            var hpLayout = hpBarContainer.AddComponent<LayoutElement>();
+            hpLayout.preferredWidth = 200;
+            hpLayout.preferredHeight = 24;
+            hpLayout.flexibleWidth = 1;
+
+            RectTransform hpContainerRect = hpBarContainer.AddComponent<RectTransform>();
+
+            // HP Bar background
+            Image hpBg = hpBarContainer.AddComponent<Image>();
+            hpBg.color = new Color(0, 0, 0, 0.7f);
+
+            // HP Fill
+            GameObject hpFill = new GameObject("HealthFill");
+            hpFill.transform.SetParent(hpBarContainer.transform, false);
+            RectTransform fillRect = hpFill.AddComponent<RectTransform>();
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = new Vector2(0.8f, 1); // 80% fill example
+            fillRect.sizeDelta = Vector2.zero;
+            Image fillImg = hpFill.AddComponent<Image>();
+            fillImg.color = new Color(0.18f, 0.8f, 0.44f); // Health green #2ECC71
+
+            // Damage linger fill (behind health)
+            GameObject damageFill = new GameObject("DamageFill");
+            damageFill.transform.SetParent(hpBarContainer.transform, false);
+            damageFill.transform.SetAsFirstSibling();
+            RectTransform dmgRect = damageFill.AddComponent<RectTransform>();
+            dmgRect.anchorMin = Vector2.zero;
+            dmgRect.anchorMax = new Vector2(0.85f, 1);
+            dmgRect.sizeDelta = Vector2.zero;
+            Image dmgImg = damageFill.AddComponent<Image>();
+            dmgImg.color = new Color(1f, 0.27f, 0.27f); // Corruption glow #FF4444
+
+            // HP Text
+            GameObject hpText = CreateText(hpBarContainer, "HPText", "150 / 150", 11);
+            RectTransform hpTextRect = hpText.GetComponent<RectTransform>();
+            hpTextRect.anchorMin = Vector2.zero;
+            hpTextRect.anchorMax = Vector2.one;
+            hpTextRect.sizeDelta = Vector2.zero;
+            var hpTmp = hpText.GetComponent<TextMeshProUGUI>();
+            hpTmp.fontStyle = TMPro.FontStyles.Bold;
+
+            // Block indicator container
+            GameObject blockContainer = new GameObject("BlockContainer");
+            blockContainer.transform.SetParent(barObj.transform, false);
+            var blockLayout = blockContainer.AddComponent<HorizontalLayoutGroup>();
+            blockLayout.spacing = 4f;
+            blockLayout.childAlignment = TextAnchor.MiddleCenter;
+            blockLayout.padding = new RectOffset(8, 8, 0, 0);
+
+            var blockLayoutElement = blockContainer.AddComponent<LayoutElement>();
+            blockLayoutElement.preferredWidth = 50;
+
+            // Shield icon
+            GameObject shieldIcon = new GameObject("ShieldIcon");
+            shieldIcon.transform.SetParent(blockContainer.transform, false);
+            RectTransform shieldRect = shieldIcon.AddComponent<RectTransform>();
+            shieldRect.sizeDelta = new Vector2(16, 16);
+            Image shieldImg = shieldIcon.AddComponent<Image>();
+            shieldImg.color = new Color(0.2f, 0.6f, 0.86f); // Block blue #3498DB
+
+            // Block text
+            GameObject blockText = CreateText(blockContainer, "BlockText", "12", 12);
+            blockText.GetComponent<TextMeshProUGUI>().color = new Color(0.2f, 0.6f, 0.86f);
+            blockText.GetComponent<TextMeshProUGUI>().fontStyle = TMPro.FontStyles.Bold;
+
+            // Add SharedVitalityBarCZN component
+            var vitalityComponent = barObj.AddComponent<SharedVitalityBarCZN>();
+            SerializedObject so = new SerializedObject(vitalityComponent);
+            so.FindProperty("_healthFill").objectReferenceValue = fillImg;
+            so.FindProperty("_damageFill").objectReferenceValue = dmgImg;
+            so.FindProperty("_hpText").objectReferenceValue = hpTmp;
+            so.FindProperty("_blockContainer").objectReferenceValue = blockContainer;
+            so.FindProperty("_shieldIcon").objectReferenceValue = shieldImg;
+            so.FindProperty("_blockText").objectReferenceValue = blockText.GetComponent<TMP_Text>();
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            blockContainer.SetActive(false); // Hidden by default
+
+            return barObj;
+        }
+
+        /// <summary>
+        /// Creates the system menu bar with speed/auto/settings buttons.
+        /// </summary>
+        private static GameObject CreateSystemMenuBar(GameObject parent)
+        {
+            GameObject menuBar = new GameObject("SystemMenuBar");
+            menuBar.transform.SetParent(parent.transform, false);
+
+            RectTransform rect = menuBar.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(1, 0.5f);
+            rect.anchorMax = new Vector2(1, 0.5f);
+            rect.pivot = new Vector2(1, 0.5f);
+            rect.anchoredPosition = new Vector2(-12, 0);
+            rect.sizeDelta = new Vector2(150, 28);
+
+            var layout = menuBar.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 8f;
+            layout.childAlignment = TextAnchor.MiddleRight;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+            layout.reverseArrangement = true;
+
+            // Settings button
+            CreateSystemMenuButton(menuBar, "SettingsBtn", "⚙", new Color(0.1f, 0.08f, 0.15f));
+
+            // Auto button
+            CreateSystemMenuButton(menuBar, "AutoBtn", "▶", new Color(0.1f, 0.08f, 0.15f));
+
+            // Speed button
+            GameObject speedBtn = CreateSystemMenuButton(menuBar, "SpeedBtn", "1.5x", new Color(0.1f, 0.08f, 0.15f));
+
+            return menuBar;
+        }
+
+        private static GameObject CreateSystemMenuButton(GameObject parent, string name, string label, Color bgColor)
+        {
+            GameObject btn = new GameObject(name);
+            btn.transform.SetParent(parent.transform, false);
+
+            RectTransform rect = btn.AddComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(28, 28);
+
+            Image bg = btn.AddComponent<Image>();
+            bg.color = bgColor;
+
+            Button button = btn.AddComponent<Button>();
+            button.targetGraphic = bg;
+
+            var layoutElement = btn.AddComponent<LayoutElement>();
+            layoutElement.preferredWidth = 28;
+            layoutElement.preferredHeight = 28;
+
+            GameObject text = CreateText(btn, "Label", label, 10);
+            RectTransform textRect = text.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.sizeDelta = Vector2.zero;
+            text.GetComponent<TextMeshProUGUI>().color = new Color(0f, 0.83f, 0.89f); // Soul cyan
+
+            return btn;
+        }
+
+        /// <summary>
+        /// Creates the CZN-style party status sidebar.
+        /// </summary>
+        private static GameObject CreatePartySidebarCZN(GameObject parent)
+        {
+            GameObject sidebar = new GameObject("PartySidebar");
+            sidebar.transform.SetParent(parent.transform, false);
+
+            RectTransform rect = sidebar.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0, 0.35f);
+            rect.anchorMax = new Vector2(0.1f, 0.87f);
+            rect.sizeDelta = Vector2.zero;
+
+            Image bg = sidebar.AddComponent<Image>();
+            bg.color = new Color(0, 0, 0, 0.5f);
+
+            VerticalLayoutGroup layout = sidebar.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 4f;
+            layout.padding = new RectOffset(6, 6, 8, 8);
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            // Create 3 party member slots
+            for (int i = 0; i < 3; i++)
+            {
+                CreatePartyMemberSlotCZN(sidebar, i);
+            }
+
+            // Add PartyStatusSidebar component if exists
+            sidebar.AddComponent<PartyStatusSidebar>();
+
+            return sidebar;
+        }
+
+        private static GameObject CreatePartyMemberSlotCZN(GameObject parent, int index)
+        {
+            GameObject slot = new GameObject($"PartySlot_{index}");
+            slot.transform.SetParent(parent.transform, false);
+
+            var layoutElement = slot.AddComponent<LayoutElement>();
+            layoutElement.preferredHeight = 80;
+            layoutElement.flexibleHeight = 1;
+
+            VerticalLayoutGroup layout = slot.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 2f;
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+            layout.padding = new RectOffset(4, 4, 4, 4);
+
+            Image slotBg = slot.AddComponent<Image>();
+            slotBg.color = new Color(0.2f, 0.15f, 0.25f, 0.6f);
+
+            // Hexagonal portrait frame
+            GameObject portrait = new GameObject("Portrait");
+            portrait.transform.SetParent(slot.transform, false);
+            RectTransform portraitRect = portrait.AddComponent<RectTransform>();
+            portraitRect.sizeDelta = new Vector2(44, 50);
+            Image portraitImg = portrait.AddComponent<Image>();
+            portraitImg.color = new Color(0.3f, 0.25f, 0.35f);
+            var portraitLayout = portrait.AddComponent<LayoutElement>();
+            portraitLayout.preferredWidth = 44;
+            portraitLayout.preferredHeight = 50;
+
+            // Name label
+            GameObject nameLabel = CreateText(slot, "Name", $"Requiem {index + 1}", 8);
+            nameLabel.GetComponent<TextMeshProUGUI>().fontStyle = TMPro.FontStyles.Bold;
+
+            // SE Gauge
+            GameObject seGauge = new GameObject("SEGauge");
+            seGauge.transform.SetParent(slot.transform, false);
+            RectTransform seRect = seGauge.AddComponent<RectTransform>();
+            seRect.sizeDelta = new Vector2(0, 6);
+            var seLayoutElement = seGauge.AddComponent<LayoutElement>();
+            seLayoutElement.preferredHeight = 6;
+
+            Image seBg = seGauge.AddComponent<Image>();
+            seBg.color = new Color(0, 0, 0, 0.6f);
+
+            GameObject seFill = new GameObject("SEFill");
+            seFill.transform.SetParent(seGauge.transform, false);
+            RectTransform seFillRect = seFill.AddComponent<RectTransform>();
+            seFillRect.anchorMin = Vector2.zero;
+            seFillRect.anchorMax = new Vector2(0.6f, 1);
+            seFillRect.sizeDelta = Vector2.zero;
+            Image seFillImg = seFill.AddComponent<Image>();
+            seFillImg.color = new Color(0.83f, 0.69f, 0.22f); // Soul gold #D4AF37
+
+            // SE Label
+            GameObject seLabel = CreateText(slot, "SELabel", "SE 24/40", 7);
+            seLabel.GetComponent<TextMeshProUGUI>().color = new Color(0.83f, 0.69f, 0.22f);
+
+            return slot;
+        }
+
+        /// <summary>
+        /// Creates the deck info sidebar (draw/discard counts).
+        /// </summary>
+        private static GameObject CreateDeckInfoSidebar(GameObject parent)
+        {
+            GameObject sidebar = new GameObject("DeckInfoSidebar");
+            sidebar.transform.SetParent(parent.transform, false);
+
+            RectTransform rect = sidebar.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.92f, 0.35f);
+            rect.anchorMax = new Vector2(1f, 0.87f);
+            rect.sizeDelta = Vector2.zero;
+
+            VerticalLayoutGroup layout = sidebar.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 12f;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+            layout.padding = new RectOffset(8, 8, 20, 20);
+
+            // Draw pile
+            CreateDeckPileDisplay(sidebar, "DrawPile", "📚", "23", "Draw", new Color(0f, 0.83f, 0.89f));
+
+            // Discard pile
+            CreateDeckPileDisplay(sidebar, "DiscardPile", "🔄", "0", "Discard", new Color(0.63f, 0.63f, 0.63f));
+
+            return sidebar;
+        }
+
+        private static void CreateDeckPileDisplay(GameObject parent, string name, string icon, string count, string label, Color color)
+        {
+            GameObject pile = new GameObject(name);
+            pile.transform.SetParent(parent.transform, false);
+
+            VerticalLayoutGroup layout = pile.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 2f;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            // Icon
+            GameObject iconObj = CreateText(pile, "Icon", icon, 18);
+
+            // Count
+            GameObject countObj = CreateText(pile, "Count", count, 14);
+            countObj.GetComponent<TextMeshProUGUI>().color = color;
+            countObj.GetComponent<TextMeshProUGUI>().fontStyle = TMPro.FontStyles.Bold;
+
+            // Label
+            GameObject labelObj = CreateText(pile, "Label", label, 8);
+            labelObj.GetComponent<TextMeshProUGUI>().color = new Color(0.63f, 0.63f, 0.63f);
+        }
+
+        /// <summary>
+        /// Creates the CZN-style AP counter display.
+        /// </summary>
+        private static GameObject CreateAPCounterCZN(GameObject parent)
+        {
+            GameObject counter = new GameObject("APCounter");
+            counter.transform.SetParent(parent.transform, false);
+
+            RectTransform rect = counter.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.7f);
+            rect.anchorMax = new Vector2(0.5f, 1f);
+            rect.sizeDelta = new Vector2(60, 50);
+
+            // Glow background
+            GameObject glow = new GameObject("Glow");
+            glow.transform.SetParent(counter.transform, false);
+            RectTransform glowRect = glow.AddComponent<RectTransform>();
+            glowRect.anchorMin = Vector2.zero;
+            glowRect.anchorMax = Vector2.one;
+            glowRect.sizeDelta = new Vector2(20, 20);
+            Image glowImg = glow.AddComponent<Image>();
+            glowImg.color = new Color(0f, 0.83f, 0.89f, 0.3f); // Soul cyan glow
+
+            // AP Number
+            GameObject apNum = CreateText(counter, "APNumber", "3", 36);
+            RectTransform numRect = apNum.GetComponent<RectTransform>();
+            numRect.anchorMin = new Vector2(0.5f, 0.55f);
+            numRect.anchorMax = new Vector2(0.5f, 0.55f);
+            numRect.sizeDelta = new Vector2(50, 40);
+            var apText = apNum.GetComponent<TMP_Text>();
+            apText.color = new Color(0f, 0.83f, 0.89f); // Soul cyan
+            apText.fontStyle = TMPro.FontStyles.Bold;
+
+            // AP Label
+            GameObject apLabel = CreateText(counter, "APLabel", "AP", 10);
+            RectTransform labelRect = apLabel.GetComponent<RectTransform>();
+            labelRect.anchorMin = new Vector2(0.5f, 0.25f);
+            labelRect.anchorMax = new Vector2(0.5f, 0.25f);
+            labelRect.sizeDelta = new Vector2(30, 15);
+            apLabel.GetComponent<TextMeshProUGUI>().color = new Color(0.63f, 0.63f, 0.63f);
+
+            // Add APCounterDisplay component and wire references
+            var apCounter = counter.AddComponent<APCounterDisplay>();
+            var so = new SerializedObject(apCounter);
+            so.FindProperty("_apText").objectReferenceValue = apText;
+            so.FindProperty("_glowBackground").objectReferenceValue = glowImg;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            return counter;
+        }
+
+        /// <summary>
+        /// Creates the CZN-style zone header for MapScreen.
+        /// </summary>
+        private static GameObject CreateZoneHeaderCZN(GameObject parent)
+        {
+            GameObject header = new GameObject("ZoneHeader");
+            header.transform.SetParent(parent.transform, false);
+
+            RectTransform headerRect = header.AddComponent<RectTransform>();
+            headerRect.anchorMin = new Vector2(0, 0.84f);
+            headerRect.anchorMax = new Vector2(1, 1);
+            headerRect.sizeDelta = Vector2.zero;
+
+            Image headerBg = header.AddComponent<Image>();
+            headerBg.color = new Color(0.07f, 0.07f, 0.13f, 0.95f); // Abyss blue
+
+            HorizontalLayoutGroup layout = header.AddComponent<HorizontalLayoutGroup>();
+            layout.padding = new RectOffset(16, 16, 8, 8);
+            layout.spacing = 8;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = true;
+
+            // Back button area
+            GameObject backBtn = new GameObject("BackButton");
+            backBtn.transform.SetParent(header.transform, false);
+            Image backImg = backBtn.AddComponent<Image>();
+            backImg.color = new Color(0.15f, 0.12f, 0.2f);
+            Button backButton = backBtn.AddComponent<Button>();
+            backButton.targetGraphic = backImg;
+            var backLayout = backBtn.AddComponent<LayoutElement>();
+            backLayout.preferredWidth = 32;
+            backLayout.preferredHeight = 32;
+
+            GameObject backIcon = CreateText(backBtn, "Icon", "<", 18);
+            RectTransform backIconRect = backIcon.GetComponent<RectTransform>();
+            backIconRect.anchorMin = Vector2.zero;
+            backIconRect.anchorMax = Vector2.one;
+            backIconRect.sizeDelta = Vector2.zero;
+            backIcon.GetComponent<TMP_Text>().color = new Color(0.63f, 0.63f, 0.63f);
+
+            // Title container (left side)
+            GameObject titleContainer = new GameObject("TitleContainer");
+            titleContainer.transform.SetParent(header.transform, false);
+            VerticalLayoutGroup titleLayout = titleContainer.AddComponent<VerticalLayoutGroup>();
+            titleLayout.childAlignment = TextAnchor.MiddleLeft;
+            titleLayout.childForceExpandWidth = false;
+            titleLayout.childForceExpandHeight = false;
+            titleLayout.spacing = 0;
+            var titleLayoutElement = titleContainer.AddComponent<LayoutElement>();
+            titleLayoutElement.flexibleWidth = 1;
+
+            // Zone Title
+            GameObject zoneTitle = CreateText(titleContainer, "ZoneTitle", "NULL RIFT", 14);
+            zoneTitle.GetComponent<TMP_Text>().fontStyle = TMPro.FontStyles.Bold;
+            zoneTitle.GetComponent<TMP_Text>().color = new Color(0.9f, 0.9f, 0.95f);
+
+            // Zone Subtitle
+            GameObject zoneSubtitle = CreateText(titleContainer, "ZoneSubtitle", "Zone 1 • The Outer Reaches", 10);
+            zoneSubtitle.GetComponent<TMP_Text>().color = new Color(0.42f, 0.25f, 0.63f); // Hollow violet
+
+            // Stats container (right side)
+            GameObject statsContainer = new GameObject("StatsContainer");
+            statsContainer.transform.SetParent(header.transform, false);
+            HorizontalLayoutGroup statsLayout = statsContainer.AddComponent<HorizontalLayoutGroup>();
+            statsLayout.spacing = 16;
+            statsLayout.childAlignment = TextAnchor.MiddleRight;
+            statsLayout.childForceExpandWidth = false;
+            statsLayout.childForceExpandHeight = false;
+
+            // HP Container
+            GameObject hpContainer = new GameObject("HPContainer");
+            hpContainer.transform.SetParent(statsContainer.transform, false);
+            HorizontalLayoutGroup hpLayout = hpContainer.AddComponent<HorizontalLayoutGroup>();
+            hpLayout.spacing = 4;
+            hpLayout.childAlignment = TextAnchor.MiddleCenter;
+
+            GameObject hpIcon = new GameObject("HPIcon");
+            hpIcon.transform.SetParent(hpContainer.transform, false);
+            RectTransform hpIconRect = hpIcon.AddComponent<RectTransform>();
+            hpIconRect.sizeDelta = new Vector2(16, 16);
+            Image hpIconImg = hpIcon.AddComponent<Image>();
+            hpIconImg.color = new Color(0.18f, 0.8f, 0.44f); // Health green
+            var hpIconLayout = hpIcon.AddComponent<LayoutElement>();
+            hpIconLayout.preferredWidth = 16;
+            hpIconLayout.preferredHeight = 16;
+
+            GameObject hpText = CreateText(hpContainer, "HPText", "210/210", 12);
+            hpText.GetComponent<TMP_Text>().fontStyle = TMPro.FontStyles.Bold;
+
+            // Currency Container
+            GameObject currencyContainer = new GameObject("CurrencyContainer");
+            currencyContainer.transform.SetParent(statsContainer.transform, false);
+            HorizontalLayoutGroup currencyLayout = currencyContainer.AddComponent<HorizontalLayoutGroup>();
+            currencyLayout.spacing = 4;
+            currencyLayout.childAlignment = TextAnchor.MiddleCenter;
+
+            GameObject currencyIcon = new GameObject("CurrencyIcon");
+            currencyIcon.transform.SetParent(currencyContainer.transform, false);
+            RectTransform currIconRect = currencyIcon.AddComponent<RectTransform>();
+            currIconRect.sizeDelta = new Vector2(16, 16);
+            Image currIconImg = currencyIcon.AddComponent<Image>();
+            currIconImg.color = new Color(0f, 0.83f, 0.89f); // Soul cyan
+            var currIconLayout = currencyIcon.AddComponent<LayoutElement>();
+            currIconLayout.preferredWidth = 16;
+            currIconLayout.preferredHeight = 16;
+
+            GameObject currencyText = CreateText(currencyContainer, "CurrencyText", "45", 12);
+            currencyText.GetComponent<TMP_Text>().fontStyle = TMPro.FontStyles.Bold;
+
+            return header;
+        }
+
+        /// <summary>
+        /// Creates the node type legend for the map footer.
+        /// </summary>
+        private static GameObject CreateMapLegendCZN(GameObject parent)
+        {
+            GameObject legend = new GameObject("MapLegend");
+            legend.transform.SetParent(parent.transform, false);
+
+            RectTransform legendRect = legend.AddComponent<RectTransform>();
+            legendRect.anchorMin = new Vector2(0, 0);
+            legendRect.anchorMax = new Vector2(1, 0.08f);
+            legendRect.sizeDelta = Vector2.zero;
+
+            Image legendBg = legend.AddComponent<Image>();
+            legendBg.color = new Color(0.07f, 0.07f, 0.13f, 0.95f);
+
+            HorizontalLayoutGroup layout = legend.AddComponent<HorizontalLayoutGroup>();
+            layout.padding = new RectOffset(12, 12, 4, 4);
+            layout.spacing = 16;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = true;
+
+            // Node type legend items
+            var nodeTypes = new (string icon, string label, Color color)[]
+            {
+                ("⚔️", "Combat", new Color(0.77f, 0.12f, 0.23f)),
+                ("💀", "Elite", new Color(1f, 0.27f, 0.27f)),
+                ("🛒", "Shop", new Color(0.83f, 0.69f, 0.22f)),
+                ("❓", "Echo", new Color(0.42f, 0.25f, 0.63f)),
+                ("🕯️", "Sanctuary", new Color(0.18f, 0.8f, 0.44f)),
+                ("💎", "Treasure", new Color(0.83f, 0.69f, 0.22f)),
+                ("👹", "Boss", new Color(1f, 0.27f, 0.27f)),
+            };
+
+            foreach (var (icon, label, color) in nodeTypes)
+            {
+                CreateLegendItem(legend, icon, label, color);
+            }
+
+            return legend;
+        }
+
+        private static void CreateLegendItem(GameObject parent, string icon, string label, Color color)
+        {
+            GameObject item = new GameObject($"Legend_{label}");
+            item.transform.SetParent(parent.transform, false);
+
+            HorizontalLayoutGroup layout = item.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 3;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+
+            GameObject iconObj = CreateText(item, "Icon", icon, 12);
+            GameObject labelObj = CreateText(item, "Label", label, 8);
+            labelObj.GetComponent<TMP_Text>().color = new Color(0.63f, 0.63f, 0.63f);
+        }
+
+        /// <summary>
+        /// Creates the CZN-style circular execution (end turn) button.
+        /// </summary>
+        private static GameObject CreateExecutionButtonCZN(GameObject parent)
+        {
+            GameObject btnObj = new GameObject("ExecutionButton");
+            btnObj.transform.SetParent(parent.transform, false);
+
+            RectTransform rect = btnObj.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.9f, 0.3f);
+            rect.anchorMax = new Vector2(0.95f, 0.8f);
+            rect.sizeDelta = Vector2.zero;
+
+            // Glow ring
+            GameObject glowRing = new GameObject("GlowRing");
+            glowRing.transform.SetParent(btnObj.transform, false);
+            RectTransform glowRect = glowRing.AddComponent<RectTransform>();
+            glowRect.anchorMin = Vector2.zero;
+            glowRect.anchorMax = Vector2.one;
+            glowRect.sizeDelta = new Vector2(10, 10);
+            Image glowImg = glowRing.AddComponent<Image>();
+            glowImg.color = new Color(0f, 0.83f, 0.89f, 0.4f); // Cyan glow
+
+            // Main button circle
+            GameObject circle = new GameObject("Circle");
+            circle.transform.SetParent(btnObj.transform, false);
+            RectTransform circleRect = circle.AddComponent<RectTransform>();
+            circleRect.anchorMin = new Vector2(0.1f, 0.1f);
+            circleRect.anchorMax = new Vector2(0.9f, 0.9f);
+            circleRect.sizeDelta = Vector2.zero;
+
+            Image bg = circle.AddComponent<Image>();
+            bg.color = new Color(0f, 0.83f, 0.89f); // Soul cyan
+
+            Button btn = circle.AddComponent<Button>();
+            btn.targetGraphic = bg;
+
+            // Checkmark icon
+            GameObject checkObj = CreateText(circle, "Check", "✓", 28);
+            RectTransform checkRect = checkObj.GetComponent<RectTransform>();
+            checkRect.anchorMin = Vector2.zero;
+            checkRect.anchorMax = Vector2.one;
+            checkRect.sizeDelta = Vector2.zero;
+            checkObj.GetComponent<TextMeshProUGUI>().color = new Color(0.04f, 0.04f, 0.04f); // Void black
+
+            // Add ExecutionButton component and wire references
+            var execButton = btnObj.AddComponent<ExecutionButton>();
+            var so = new SerializedObject(execButton);
+            so.FindProperty("_buttonBackground").objectReferenceValue = bg;
+            so.FindProperty("_button").objectReferenceValue = btn;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            return btnObj;
         }
 
         private static void SetPropertyIfExists(SerializedObject so, string propertyName, Object value)
