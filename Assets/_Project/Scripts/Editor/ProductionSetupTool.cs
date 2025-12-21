@@ -470,50 +470,52 @@ namespace HNR.Editor
 
             EnsureDirectoryExists(prefabPath);
 
-            // Create node root
+            // Create node root (42x42 per CZN mockup spec)
             GameObject nodeObj = new GameObject("MapNodeUI");
 
             RectTransform rect = nodeObj.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(60, 60);
+            rect.sizeDelta = new Vector2(42, 42);
 
             // Add MapNodeUI component
             var nodeUI = nodeObj.AddComponent<MapNodeUI>();
 
-            // Node background (circular)
+            // Node background (hexagonal shape - assign hex sprite in Inspector)
+            // For now using default Image - replace with hexagonal sprite asset
             Image nodeBg = nodeObj.AddComponent<Image>();
             nodeBg.color = new Color(0.2f, 0.15f, 0.25f);
+            // TODO: Assign hexagonal sprite: nodeBg.sprite = hexagonSprite;
 
-            // Icon container
+            // Icon container (scaled for 42x42 node)
             GameObject iconObj = new GameObject("Icon");
             iconObj.transform.SetParent(nodeObj.transform, false);
             RectTransform iconRect = iconObj.AddComponent<RectTransform>();
-            iconRect.anchorMin = new Vector2(0.15f, 0.15f);
-            iconRect.anchorMax = new Vector2(0.85f, 0.85f);
+            iconRect.anchorMin = new Vector2(0.2f, 0.2f);
+            iconRect.anchorMax = new Vector2(0.8f, 0.8f);
             iconRect.sizeDelta = Vector2.zero;
             Image iconImg = iconObj.AddComponent<Image>();
             iconImg.color = Color.white;
             iconImg.raycastTarget = false;
 
-            // Highlight ring (hidden by default)
+            // Highlight ring (hidden by default, scaled for 42x42)
             GameObject ring = new GameObject("HighlightRing");
             ring.transform.SetParent(nodeObj.transform, false);
             ring.transform.SetAsFirstSibling();
             RectTransform ringRect = ring.AddComponent<RectTransform>();
             ringRect.anchorMin = Vector2.zero;
             ringRect.anchorMax = Vector2.one;
-            ringRect.sizeDelta = new Vector2(10, 10);
+            ringRect.sizeDelta = new Vector2(6, 6); // Smaller ring for 42x42
             Image ringImg = ring.AddComponent<Image>();
             ringImg.color = new Color(0.9f, 0.7f, 0.2f);
             ringImg.raycastTarget = false;
             ring.SetActive(false);
 
-            // Current indicator (hidden by default)
+            // Current indicator (hidden by default, scaled for 42x42)
             GameObject currentInd = new GameObject("CurrentIndicator");
             currentInd.transform.SetParent(nodeObj.transform, false);
             RectTransform currentRect = currentInd.AddComponent<RectTransform>();
-            currentRect.anchorMin = new Vector2(0.5f, -0.2f);
-            currentRect.anchorMax = new Vector2(0.5f, -0.2f);
-            currentRect.sizeDelta = new Vector2(20, 20);
+            currentRect.anchorMin = new Vector2(0.5f, -0.25f);
+            currentRect.anchorMax = new Vector2(0.5f, -0.25f);
+            currentRect.sizeDelta = new Vector2(14, 14); // Smaller indicator for 42x42
             Image currentImg = currentInd.AddComponent<Image>();
             currentImg.color = new Color(1f, 0.84f, 0f); // Gold
             currentImg.raycastTarget = false;

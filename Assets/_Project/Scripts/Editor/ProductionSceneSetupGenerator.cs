@@ -970,34 +970,131 @@ namespace HNR.Editor
             Image panelBg = panel.AddComponent<Image>();
             panelBg.color = new Color(0.1f, 0.08f, 0.15f, 0.95f);
 
-            // === Event Title ===
-            GameObject titleObj = CreateText(panel, "EventTitle", "ECHO OF THE VOID", 36);
-            RectTransform titleRect = titleObj.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0.5f, 0.9f);
-            titleRect.anchorMax = new Vector2(0.5f, 0.9f);
-            titleRect.sizeDelta = new Vector2(500, 50);
+            // === Illustration Panel (Left 200px per CZN mockup) ===
+            GameObject illustrationPanel = new GameObject("IllustrationPanel");
+            illustrationPanel.transform.SetParent(panel.transform, false);
+            RectTransform illustRect = illustrationPanel.AddComponent<RectTransform>();
+            illustRect.anchorMin = new Vector2(0, 0.1f);
+            illustRect.anchorMax = new Vector2(0, 0.9f);
+            illustRect.pivot = new Vector2(0, 0.5f);
+            illustRect.anchoredPosition = new Vector2(20, 0);
+            illustRect.sizeDelta = new Vector2(200, 0);
 
-            // === Event Description ===
-            GameObject descObj = CreateText(panel, "EventDescription", "Event description text goes here...", 20);
+            Image illustBg = illustrationPanel.AddComponent<Image>();
+            illustBg.color = new Color(0.15f, 0.12f, 0.2f, 0.9f);
+
+            // Illustration icon placeholder
+            GameObject illustIcon = new GameObject("IllustrationIcon");
+            illustIcon.transform.SetParent(illustrationPanel.transform, false);
+            RectTransform iconRect = illustIcon.AddComponent<RectTransform>();
+            iconRect.anchorMin = new Vector2(0.1f, 0.2f);
+            iconRect.anchorMax = new Vector2(0.9f, 0.8f);
+            iconRect.sizeDelta = Vector2.zero;
+            Image bgImage = illustIcon.AddComponent<Image>();
+            bgImage.color = new Color(0.42f, 0.25f, 0.63f); // Hollow Violet for echo events
+
+            // === Content Panel (Right side) ===
+            GameObject contentPanel = new GameObject("ContentPanel");
+            contentPanel.transform.SetParent(panel.transform, false);
+            RectTransform contentRect = contentPanel.AddComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0, 0);
+            contentRect.anchorMax = new Vector2(1, 1);
+            contentRect.offsetMin = new Vector2(240, 20); // Leave space for illustration
+            contentRect.offsetMax = new Vector2(-20, -20);
+
+            // === Event Title (Soul Gold per CZN mockup) ===
+            GameObject titleObj = CreateText(contentPanel, "EventTitle", "ECHO OF THE VOID", 28);
+            RectTransform titleRect = titleObj.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0, 0.88f);
+            titleRect.anchorMax = new Vector2(1, 0.98f);
+            titleRect.sizeDelta = Vector2.zero;
+            var titleTmp = titleObj.GetComponent<TextMeshProUGUI>();
+            titleTmp.color = new Color(0.83f, 0.69f, 0.22f); // Soul Gold #D4AF37
+            titleTmp.fontStyle = TMPro.FontStyles.Bold;
+            titleTmp.characterSpacing = 4f; // Letter spacing per mockup
+            titleTmp.alignment = TextAlignmentOptions.Left;
+
+            // === Event Description / Narrative ===
+            GameObject descObj = CreateText(contentPanel, "NarrativeText", "Event narrative text goes here...", 18);
             RectTransform descRect = descObj.GetComponent<RectTransform>();
-            descRect.anchorMin = new Vector2(0.1f, 0.4f);
-            descRect.anchorMax = new Vector2(0.9f, 0.8f);
+            descRect.anchorMin = new Vector2(0, 0.45f);
+            descRect.anchorMax = new Vector2(1, 0.85f);
             descRect.sizeDelta = Vector2.zero;
-            descObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.TopLeft;
+            var narrativeTmp = descObj.GetComponent<TextMeshProUGUI>();
+            narrativeTmp.alignment = TextAlignmentOptions.TopLeft;
+            narrativeTmp.color = new Color(0.85f, 0.85f, 0.85f);
 
             // === Choice Container ===
             GameObject choiceContainer = new GameObject("ChoiceContainer");
-            choiceContainer.transform.SetParent(panel.transform, false);
+            choiceContainer.transform.SetParent(contentPanel.transform, false);
             RectTransform choiceRect = choiceContainer.AddComponent<RectTransform>();
-            choiceRect.anchorMin = new Vector2(0.1f, 0.05f);
-            choiceRect.anchorMax = new Vector2(0.9f, 0.35f);
+            choiceRect.anchorMin = new Vector2(0, 0.05f);
+            choiceRect.anchorMax = new Vector2(1, 0.42f);
             choiceRect.sizeDelta = Vector2.zero;
 
             VerticalLayoutGroup choiceLayout = choiceContainer.AddComponent<VerticalLayoutGroup>();
-            choiceLayout.spacing = 10f;
-            choiceLayout.childAlignment = TextAnchor.UpperCenter;
+            choiceLayout.spacing = 8f;
+            choiceLayout.childAlignment = TextAnchor.UpperLeft;
             choiceLayout.childForceExpandWidth = true;
             choiceLayout.childForceExpandHeight = false;
+            choiceLayout.padding = new RectOffset(0, 0, 5, 5);
+
+            // === Outcome Panel (hidden by default) ===
+            GameObject outcomePanel = new GameObject("OutcomePanel");
+            outcomePanel.transform.SetParent(panel.transform, false);
+            RectTransform outcomeRect = outcomePanel.AddComponent<RectTransform>();
+            outcomeRect.anchorMin = new Vector2(0.1f, 0.1f);
+            outcomeRect.anchorMax = new Vector2(0.9f, 0.9f);
+            outcomeRect.sizeDelta = Vector2.zero;
+
+            Image outcomeBg = outcomePanel.AddComponent<Image>();
+            outcomeBg.color = new Color(0.08f, 0.06f, 0.12f, 0.98f);
+
+            GameObject outcomeText = CreateText(outcomePanel, "OutcomeText", "Outcome text...", 20);
+            RectTransform outcomeTextRect = outcomeText.GetComponent<RectTransform>();
+            outcomeTextRect.anchorMin = new Vector2(0.1f, 0.3f);
+            outcomeTextRect.anchorMax = new Vector2(0.9f, 0.8f);
+            outcomeTextRect.sizeDelta = Vector2.zero;
+            var outcomeTmp = outcomeText.GetComponent<TextMeshProUGUI>();
+            outcomeTmp.alignment = TextAlignmentOptions.Center;
+
+            // Continue button in outcome panel
+            GameObject continueBtn = new GameObject("ContinueButton");
+            continueBtn.transform.SetParent(outcomePanel.transform, false);
+            RectTransform continueBtnRect = continueBtn.AddComponent<RectTransform>();
+            continueBtnRect.anchorMin = new Vector2(0.5f, 0.15f);
+            continueBtnRect.anchorMax = new Vector2(0.5f, 0.15f);
+            continueBtnRect.sizeDelta = new Vector2(140, 45);
+
+            Image continueBtnImg = continueBtn.AddComponent<Image>();
+            continueBtnImg.color = new Color(0.18f, 0.8f, 0.44f); // Green for continue
+
+            Button continueBtnComponent = continueBtn.AddComponent<Button>();
+            continueBtnComponent.targetGraphic = continueBtnImg;
+
+            GameObject continueBtnText = CreateText(continueBtn, "Text", "CONTINUE", 16);
+            RectTransform continueBtnTextRect = continueBtnText.GetComponent<RectTransform>();
+            continueBtnTextRect.anchorMin = Vector2.zero;
+            continueBtnTextRect.anchorMax = Vector2.one;
+            continueBtnTextRect.sizeDelta = Vector2.zero;
+            continueBtnText.GetComponent<TextMeshProUGUI>().fontStyle = TMPro.FontStyles.Bold;
+
+            outcomePanel.SetActive(false);
+
+            // === Wire EchoEventScreen references ===
+            var echoScreen = screenObj.GetComponent<EchoEventScreen>();
+            if (echoScreen != null)
+            {
+                SerializedObject so = new SerializedObject(echoScreen);
+                so.FindProperty("_titleText").objectReferenceValue = titleTmp;
+                so.FindProperty("_narrativeText").objectReferenceValue = narrativeTmp;
+                so.FindProperty("_backgroundImage").objectReferenceValue = bgImage;
+                so.FindProperty("_choiceContainer").objectReferenceValue = choiceContainer.transform;
+                so.FindProperty("_outcomePanel").objectReferenceValue = outcomePanel;
+                so.FindProperty("_outcomeText").objectReferenceValue = outcomeTmp;
+                so.FindProperty("_continueButton").objectReferenceValue = continueBtnComponent;
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
 
             return screenObj;
         }
