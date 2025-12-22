@@ -63,11 +63,12 @@ namespace HNR.UI.Combat
         private void Awake()
         {
             // Ensure Canvas is on UI sorting layer for proper depth
+            // High sorting order ensures HP bar renders in front of boss visuals
             var canvas = GetComponent<Canvas>();
             if (canvas != null)
             {
                 canvas.sortingLayerName = "UI";
-                canvas.sortingOrder = 100;
+                canvas.sortingOrder = 200;
             }
 
             // Auto-wire references if not set
@@ -218,14 +219,15 @@ namespace HNR.UI.Combat
 
         private void LateUpdate()
         {
-            // Follow enemy position with slight Z offset toward camera for proper depth
+            // Follow enemy position with Z offset toward camera for proper depth
             if (_worldAnchor != null)
             {
                 Vector3 cameraOffset = Vector3.zero;
                 if (_mainCamera != null)
                 {
-                    // Move slightly toward camera to render in front of enemy sprite
-                    cameraOffset = (_mainCamera.transform.position - _worldAnchor.position).normalized * 0.5f;
+                    // Move toward camera along camera's forward axis only (no horizontal shift)
+                    // This keeps the HP bar centered above the enemy while ensuring proper depth
+                    cameraOffset = -_mainCamera.transform.forward * 1.5f;
                     cameraOffset.y = 0; // Only offset XZ, keep Y from _offset
                 }
                 transform.position = _worldAnchor.position + _offset + cameraOffset;
