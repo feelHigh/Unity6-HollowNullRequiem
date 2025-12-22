@@ -6,6 +6,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using HNR.Core;
+using HNR.Core.Interfaces;
 using HNR.Cards;
 
 namespace HNR.Combat
@@ -26,17 +27,32 @@ namespace HNR.Combat
             context.TeamBlock = 0;
             context.IsPlayerTurn = true;
 
-            // Collect all cards from team's starting decks
+            // Collect all cards from RunManager's deck (includes starting cards + rewards)
             var teamCards = new List<CardDataSO>();
-            foreach (var requiem in context.Team)
+
+            // First, try to get cards from RunManager (contains starting cards + any acquired cards)
+            if (ServiceLocator.TryGet<IRunManager>(out var runManager) && runManager.Deck != null && runManager.Deck.Count > 0)
             {
-                if (requiem.Data != null && requiem.Data.StartingCards != null)
+                foreach (var card in runManager.Deck)
                 {
-                    foreach (var card in requiem.Data.StartingCards)
+                    teamCards.Add(card);
+                }
+                Debug.Log($"[SetupPhase] Loaded {teamCards.Count} cards from RunManager.Deck");
+            }
+            else
+            {
+                // Fallback: Collect from team's starting decks (only if RunManager has no deck)
+                foreach (var requiem in context.Team)
+                {
+                    if (requiem.Data != null && requiem.Data.StartingCards != null)
                     {
-                        teamCards.Add(card);
+                        foreach (var card in requiem.Data.StartingCards)
+                        {
+                            teamCards.Add(card);
+                        }
                     }
                 }
+                Debug.Log($"[SetupPhase] Fallback: Loaded {teamCards.Count} cards from StartingCards");
             }
 
             // Initialize deck with collected cards

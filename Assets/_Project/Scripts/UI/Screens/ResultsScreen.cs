@@ -614,16 +614,6 @@ namespace HNR.UI
         void SetCard(CardDataSO card);
     }
 
-    /// <summary>
-    /// Event fired when a card is added to the deck.
-    /// </summary>
-    public class CardAddedToDeckEvent : GameEvent
-    {
-        public CardDataSO Card { get; }
-
-        public CardAddedToDeckEvent(CardDataSO card)
-        {
-            Card = card;
-        }
-    }
+    // NOTE: CardAddedToDeckEvent is defined in HNR.Core.Events.ShopEvents.cs
+    // Do not duplicate event definitions - use the centralized one
 }

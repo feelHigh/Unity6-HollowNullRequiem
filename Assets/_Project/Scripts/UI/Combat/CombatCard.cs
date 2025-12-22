@@ -597,6 +597,12 @@ namespace HNR.UI.Combat
             {
                 _targetingLine.gameObject.SetActive(false);
             }
+
+            // Reset unplayable overlay
+            if (_unplayableOverlay != null)
+            {
+                _unplayableOverlay.alpha = 0f;
+            }
         }
 
         public void OnReturnToPool()

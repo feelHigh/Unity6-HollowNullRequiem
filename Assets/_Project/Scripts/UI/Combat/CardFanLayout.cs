@@ -182,14 +182,16 @@ namespace HNR.UI.Combat
                 {
                     if (card != null && _cards.Contains(card))
                     {
-                        LayoutCards();
+                        // Skip the new card in LayoutCards - AnimateCardDeal will handle it
+                        LayoutCards(card);
                         AnimateCardDeal(card);
                     }
                 }).SetLink(gameObject);
             }
             else
             {
-                LayoutCards();
+                // Skip the new card in LayoutCards - AnimateCardDeal will handle it
+                LayoutCards(card);
                 AnimateCardDeal(card);
             }
 
@@ -295,7 +297,8 @@ namespace HNR.UI.Combat
         /// <summary>
         /// Recalculate and animate all card positions.
         /// </summary>
-        public void LayoutCards()
+        /// <param name="skipCard">Optional card to skip (e.g., card being dealt that AnimateCardDeal will handle)</param>
+        public void LayoutCards(CombatCard skipCard = null)
         {
             int count = _cards.Count;
             if (count == 0) return;
@@ -309,7 +312,8 @@ namespace HNR.UI.Combat
                 var card = _cards[i];
 
                 // Skip hovered/selected/dragging cards (they have special positioning)
-                if (card == _hoveredCard || card == _selectedCard || card.IsDragging) continue;
+                // Also skip the card being dealt (AnimateCardDeal handles it)
+                if (card == _hoveredCard || card == _selectedCard || card.IsDragging || card == skipCard) continue;
 
                 float angle = startAngle + (angleStep * i);
                 var (position, rotation) = CalculateCardTransform(angle);

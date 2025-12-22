@@ -75,6 +75,14 @@ namespace HNR.UI.Screens
         private Transform[] _allySlots;
 
         // ============================================
+        // Card Pooling
+        // ============================================
+
+        [Header("Card Pooling")]
+        [SerializeField, Tooltip("CombatCard prefab for instantiation")]
+        private CombatCard _combatCardPrefab;
+
+        // ============================================
         // Runtime State
         // ============================================
 
@@ -89,6 +97,18 @@ namespace HNR.UI.Screens
         {
             _showGlobalHeader = false;
             _showGlobalNav = false;
+
+            // Register CombatCard prefab with pool manager
+            if (_combatCardPrefab != null && ServiceLocator.TryGet<IPoolManager>(out var poolManager))
+            {
+                poolManager.RegisterPrefab(_combatCardPrefab);
+                poolManager.PreWarm<CombatCard>(10); // Pre-warm 10 cards
+                Debug.Log("[CombatScreenCZN] Registered CombatCard prefab with pool");
+            }
+            else if (_combatCardPrefab == null)
+            {
+                Debug.LogWarning("[CombatScreenCZN] _combatCardPrefab is not assigned! Cards will not display properly.");
+            }
         }
 
         // ============================================
@@ -385,6 +405,7 @@ namespace HNR.UI.Screens
 
         private void SubscribeToEvents()
         {
+            EventBus.Subscribe<TurnStartedEvent>(OnTurnStarted);
             EventBus.Subscribe<CardDrawnEvent>(OnCardDrawn);
             EventBus.Subscribe<CardPlayedEvent>(OnCardPlayed);
             EventBus.Subscribe<CardDiscardedEvent>(OnCardDiscarded);
@@ -394,6 +415,7 @@ namespace HNR.UI.Screens
 
         private void UnsubscribeFromEvents()
         {
+            EventBus.Unsubscribe<TurnStartedEvent>(OnTurnStarted);
             EventBus.Unsubscribe<CardDrawnEvent>(OnCardDrawn);
             EventBus.Unsubscribe<CardPlayedEvent>(OnCardPlayed);
             EventBus.Unsubscribe<CardDiscardedEvent>(OnCardDiscarded);
@@ -405,20 +427,41 @@ namespace HNR.UI.Screens
         // Event Handlers
         // ============================================
 
+        private void OnTurnStarted(TurnStartedEvent evt)
+        {
+            // Reset card draw index at the start of each turn for proper stagger animation
+            _cardDrawIndex = 0;
+            Debug.Log($"[CombatScreenCZN] Turn {evt.TurnNumber} started - reset _cardDrawIndex to 0");
+        }
+
         private void OnCardDrawn(CardDrawnEvent evt)
         {
             if (_cardFanLayout == null || evt.Card == null) return;
 
-            // Get card from pool
+            CombatCard card = null;
+
+            // Try to get card from pool first
             if (ServiceLocator.TryGet<IPoolManager>(out var poolManager))
             {
-                var card = poolManager.Get<CombatCard>();
-                if (card != null)
-                {
-                    card.Initialize(evt.Card);
-                    _cardFanLayout.AddCard(card, _cardDrawIndex * 0.1f);
-                    _cardDrawIndex++;
-                }
+                card = poolManager.Get<CombatCard>();
+            }
+
+            // Fallback to direct instantiation if pool didn't return a card
+            if (card == null && _combatCardPrefab != null)
+            {
+                card = Object.Instantiate(_combatCardPrefab);
+                Debug.Log("[CombatScreenCZN] Instantiated CombatCard (pool unavailable)");
+            }
+
+            if (card != null)
+            {
+                card.Initialize(evt.Card);
+                _cardFanLayout.AddCard(card, _cardDrawIndex * 0.1f);
+                _cardDrawIndex++;
+            }
+            else
+            {
+                Debug.LogError("[CombatScreenCZN] Failed to create CombatCard - prefab not assigned and pool unavailable");
             }
         }
 
