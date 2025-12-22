@@ -126,6 +126,24 @@ namespace HNR.UI.Screens
                 _systemMenu.ResetOnCombatEnd();
             }
 
+            // Clear all cards and hide containers when hiding the combat screen
+            var cardFan = _cardFanLayout;
+            if (cardFan == null)
+            {
+                ServiceLocator.TryGet<CardFanLayout>(out cardFan);
+            }
+            if (cardFan != null)
+            {
+                cardFan.ClearHandImmediate();
+                cardFan.gameObject.SetActive(false);
+            }
+
+            if (ServiceLocator.TryGet<HandManager>(out var handManager))
+            {
+                handManager.ClearHand();
+                handManager.gameObject.SetActive(false);
+            }
+
             ClearWorldSpaceUI();
         }
 
@@ -160,6 +178,21 @@ namespace HNR.UI.Screens
             if (_apCounter != null)
             {
                 _apCounter.SetAP(_context.CurrentAP, _context.MaxAP);
+            }
+
+            // Re-enable card containers (they may have been hidden in previous combat)
+            var cardFan = _cardFanLayout;
+            if (cardFan == null)
+            {
+                ServiceLocator.TryGet<CardFanLayout>(out cardFan);
+            }
+            if (cardFan != null)
+            {
+                cardFan.gameObject.SetActive(true);
+            }
+            if (ServiceLocator.TryGet<HandManager>(out var handManager))
+            {
+                handManager.gameObject.SetActive(true);
             }
 
             // World Space
@@ -408,6 +441,34 @@ namespace HNR.UI.Screens
         private void OnCombatEnded(CombatEndedEvent evt)
         {
             Debug.Log($"[CombatScreenCZN] Combat ended - Victory: {evt.Victory}");
+
+            // Clear cards from both display systems so they don't overlap results screen
+            // Try cached reference first, then fallback to ServiceLocator
+            var cardFan = _cardFanLayout;
+            if (cardFan == null)
+            {
+                ServiceLocator.TryGet<CardFanLayout>(out cardFan);
+            }
+            if (cardFan != null)
+            {
+                cardFan.ClearHandImmediate();
+                // Also hide the CardFanLayout container itself
+                cardFan.gameObject.SetActive(false);
+                Debug.Log("[CombatScreenCZN] Cleared and hid CardFanLayout on combat end");
+            }
+            else
+            {
+                Debug.LogWarning("[CombatScreenCZN] CardFanLayout not found - cards may still be visible!");
+            }
+
+            // Also clear HandManager (legacy card display system)
+            if (ServiceLocator.TryGet<HandManager>(out var handManager))
+            {
+                handManager.ClearHand();
+                // Also hide the HandManager container itself
+                handManager.gameObject.SetActive(false);
+                Debug.Log("[CombatScreenCZN] Cleared and hid HandManager on combat end");
+            }
 
             // Get enemy name and rewards from context
             string enemyName = "Enemy";
