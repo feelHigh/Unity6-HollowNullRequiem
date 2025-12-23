@@ -13,6 +13,7 @@ using HNR.Core.Interfaces;
 using HNR.Combat;
 using HNR.UI;
 using HNR.UI.Screens;
+using HNR.UI.Components;
 
 namespace HNR.Map
 {
@@ -59,6 +60,10 @@ namespace HNR.Map
         [SerializeField, Tooltip("Currency icon")]
         private Image _currencyIcon;
 
+        [Header("Navigation")]
+        [SerializeField, Tooltip("Back button to abandon run")]
+        private Button _backButton;
+
         // ============================================
         // Runtime State
         // ============================================
@@ -84,6 +89,12 @@ namespace HNR.Map
             EventBus.Subscribe<TeamHPChangedEvent>(OnTeamHPChanged);
             EventBus.Subscribe<VoidShardsChangedEvent>(OnVoidShardsChanged);
 
+            // Setup back button
+            if (_backButton != null)
+            {
+                _backButton.onClick.AddListener(OnBackButtonClicked);
+            }
+
             // Update zone header
             UpdateZoneHeader();
 
@@ -98,12 +109,23 @@ namespace HNR.Map
         {
             base.OnHide();
             UnsubscribeFromEvents();
+
+            // Remove back button listener
+            if (_backButton != null)
+            {
+                _backButton.onClick.RemoveListener(OnBackButtonClicked);
+            }
         }
 
         private void OnDestroy()
         {
             // Ensure we unsubscribe when destroyed (scene change)
             UnsubscribeFromEvents();
+
+            if (_backButton != null)
+            {
+                _backButton.onClick.RemoveListener(OnBackButtonClicked);
+            }
         }
 
         private void UnsubscribeFromEvents()
@@ -113,6 +135,37 @@ namespace HNR.Map
             EventBus.Unsubscribe<NodeCompletedEvent>(OnNodeCompleted);
             EventBus.Unsubscribe<TeamHPChangedEvent>(OnTeamHPChanged);
             EventBus.Unsubscribe<VoidShardsChangedEvent>(OnVoidShardsChanged);
+        }
+
+        private void OnBackButtonClicked()
+        {
+            ConfirmationDialog.Show(
+                "Abandon Run?",
+                "Are you sure you want to abandon the current run? All progress will be lost.",
+                onConfirm: () =>
+                {
+                    // End run without victory
+                    if (ServiceLocator.TryGet<IRunManager>(out var runManager))
+                    {
+                        runManager.EndRun(false);
+                    }
+
+                    // Delete saved run
+                    if (ServiceLocator.TryGet<ISaveManager>(out var saveManager))
+                    {
+                        saveManager.DeleteRun();
+                    }
+
+                    // Navigate to Bastion
+                    if (ServiceLocator.TryGet<IGameManager>(out var gameManager))
+                    {
+                        gameManager.ChangeState(GameState.Bastion);
+                    }
+                },
+                onCancel: null,
+                confirmText: "Abandon",
+                cancelText: "Continue Run"
+            );
         }
 
         // ============================================

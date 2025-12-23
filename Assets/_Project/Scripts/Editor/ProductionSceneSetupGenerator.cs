@@ -20,6 +20,7 @@ using HNR.Progression;
 using HNR.UI;
 using HNR.UI.Screens;
 using HNR.UI.Combat;
+using HNR.UI.Components;
 using HNR.Map;
 
 namespace HNR.Editor
@@ -229,6 +230,9 @@ namespace HNR.Editor
             // === TreasureScreen (overlay) ===
             GameObject treasureScreen = CreateTreasureScreen(overlayContainer);
 
+            // === ConfirmationDialog (overlay) ===
+            GameObject confirmationDialog = CreateConfirmationDialog(overlayContainer);
+
             // === Background ===
             CreateBackground(canvasObj, new Color(0.03f, 0.01f, 0.08f));
 
@@ -424,6 +428,16 @@ namespace HNR.Editor
 
             // === Wire CombatScreenCZN components ===
             WireCombatScreenCZN(combatScreen);
+
+            // === Overlay Container (for modals/dialogs) ===
+            GameObject overlayContainer = CreateUIContainer(canvasObj, "OverlayContainer");
+            overlayContainer.transform.SetAsLastSibling(); // Ensure overlays render on top
+
+            // === PauseMenuOverlay ===
+            GameObject pauseMenuOverlay = CreatePauseMenuOverlay(overlayContainer);
+
+            // === ConfirmationDialog ===
+            GameObject confirmationDialog = CreateConfirmationDialog(overlayContainer);
 
             // NOTE: No opaque background for Combat scene - we need to see world-space enemies
             // Camera background color provides the backdrop instead
@@ -938,6 +952,10 @@ namespace HNR.Editor
             if (hpIcon != null) so.FindProperty("_hpIcon").objectReferenceValue = hpIcon;
             if (currencyText != null) so.FindProperty("_currencyText").objectReferenceValue = currencyText;
             if (currencyIcon != null) so.FindProperty("_currencyIcon").objectReferenceValue = currencyIcon;
+
+            // Wire back button
+            var backButton = zoneHeader.transform.Find("BackButton")?.GetComponent<Button>();
+            if (backButton != null) so.FindProperty("_backButton").objectReferenceValue = backButton;
 
             so.ApplyModifiedPropertiesWithoutUndo();
 
@@ -1540,22 +1558,7 @@ namespace HNR.Editor
             allyLayout.childForceExpandWidth = false;
             allyLayout.childForceExpandHeight = false;
 
-            // Turn/Zone Info (bottom center)
-            GameObject turnInfoContainer = new GameObject("TurnInfoContainer");
-            turnInfoContainer.transform.SetParent(centerArea.transform, false);
-            RectTransform turnInfoContainerRect = turnInfoContainer.AddComponent<RectTransform>();
-            turnInfoContainerRect.anchorMin = new Vector2(0.5f, 0);
-            turnInfoContainerRect.anchorMax = new Vector2(0.5f, 0.1f);
-            turnInfoContainerRect.sizeDelta = new Vector2(150, 24);
-            Image turnInfoBg = turnInfoContainer.AddComponent<Image>();
-            turnInfoBg.color = new Color(0f, 0f, 0f, 0.5f);
-
-            GameObject turnInfo = CreateText(turnInfoContainer, "TurnInfo", "Turn 1 • Zone 1", 12);
-            RectTransform turnInfoRect = turnInfo.GetComponent<RectTransform>();
-            turnInfoRect.anchorMin = Vector2.zero;
-            turnInfoRect.anchorMax = Vector2.one;
-            turnInfoRect.sizeDelta = Vector2.zero;
-            turnInfoContainer.transform.SetAsFirstSibling();
+            // TurnInfoContainer removed per UI refactor - turn info now in SharedVitalityBar
 
             // ============================================
             // RIGHT SIDEBAR (60px) - Deck Info
@@ -2164,12 +2167,12 @@ namespace HNR.Editor
                 pLayout.preferredHeight = 28;
             }
 
-            // HP Bar container
+            // HP Bar container - wide bar per CZN layout
             GameObject hpBarContainer = new GameObject("HPBarContainer");
             hpBarContainer.transform.SetParent(barObj.transform, false);
             var hpLayout = hpBarContainer.AddComponent<LayoutElement>();
-            hpLayout.preferredWidth = 200;
-            hpLayout.preferredHeight = 24;
+            hpLayout.preferredWidth = 600;
+            hpLayout.preferredHeight = 40;
             hpLayout.flexibleWidth = 1;
 
             RectTransform hpContainerRect = hpBarContainer.AddComponent<RectTransform>();
@@ -2427,15 +2430,33 @@ namespace HNR.Editor
             layout.padding = new RectOffset(8, 8, 20, 20);
 
             // Draw pile
-            CreateDeckPileDisplay(sidebar, "DrawPile", "📚", "23", "Draw", new Color(0f, 0.83f, 0.89f));
+            var drawPile = CreateDeckPileDisplay(sidebar, "DrawPile", "📚", "23", "Draw", new Color(0f, 0.83f, 0.89f));
 
             // Discard pile
-            CreateDeckPileDisplay(sidebar, "DiscardPile", "🔄", "0", "Discard", new Color(0.63f, 0.63f, 0.63f));
+            var discardPile = CreateDeckPileDisplay(sidebar, "DiscardPile", "🔄", "0", "Discard", new Color(0.63f, 0.63f, 0.63f));
+
+            // Add DeckInfoSidebar component and wire references
+            var deckInfoComponent = sidebar.AddComponent<DeckInfoSidebar>();
+            var so = new SerializedObject(deckInfoComponent);
+
+            // Wire draw pile references
+            var drawCountText = drawPile.transform.Find("Count")?.GetComponent<TMP_Text>();
+            var drawLabelText = drawPile.transform.Find("Label")?.GetComponent<TMP_Text>();
+            if (drawCountText != null) so.FindProperty("_drawPileText").objectReferenceValue = drawCountText;
+            if (drawLabelText != null) so.FindProperty("_drawPileLabel").objectReferenceValue = drawLabelText;
+
+            // Wire discard pile references
+            var discardCountText = discardPile.transform.Find("Count")?.GetComponent<TMP_Text>();
+            var discardLabelText = discardPile.transform.Find("Label")?.GetComponent<TMP_Text>();
+            if (discardCountText != null) so.FindProperty("_discardPileText").objectReferenceValue = discardCountText;
+            if (discardLabelText != null) so.FindProperty("_discardPileLabel").objectReferenceValue = discardLabelText;
+
+            so.ApplyModifiedPropertiesWithoutUndo();
 
             return sidebar;
         }
 
-        private static void CreateDeckPileDisplay(GameObject parent, string name, string icon, string count, string label, Color color)
+        private static GameObject CreateDeckPileDisplay(GameObject parent, string name, string icon, string count, string label, Color color)
         {
             GameObject pile = new GameObject(name);
             pile.transform.SetParent(parent.transform, false);
@@ -2457,6 +2478,8 @@ namespace HNR.Editor
             // Label
             GameObject labelObj = CreateText(pile, "Label", label, 8);
             labelObj.GetComponent<TextMeshProUGUI>().color = new Color(0.63f, 0.63f, 0.63f);
+
+            return pile;
         }
 
         /// <summary>
@@ -2467,10 +2490,13 @@ namespace HNR.Editor
             GameObject counter = new GameObject("APCounter");
             counter.transform.SetParent(parent.transform, false);
 
+            // Positioned at bottom-middle, above cards - square 70x70 per UI refactor
             RectTransform rect = counter.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.7f);
-            rect.anchorMax = new Vector2(0.5f, 1f);
-            rect.sizeDelta = new Vector2(60, 50);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(0, 40); // Slightly above center
+            rect.sizeDelta = new Vector2(70, 70);
 
             // Glow background
             GameObject glow = new GameObject("Glow");
@@ -2563,12 +2589,12 @@ namespace HNR.Editor
             titleLayoutElement.flexibleWidth = 1;
 
             // Zone Title
-            GameObject zoneTitle = CreateText(titleContainer, "ZoneTitle", "NULL RIFT", 14);
+            GameObject zoneTitle = CreateText(titleContainer, "ZoneTitle", "NULL RIFT", 24);
             zoneTitle.GetComponent<TMP_Text>().fontStyle = TMPro.FontStyles.Bold;
             zoneTitle.GetComponent<TMP_Text>().color = new Color(0.9f, 0.9f, 0.95f);
 
             // Zone Subtitle
-            GameObject zoneSubtitle = CreateText(titleContainer, "ZoneSubtitle", "Zone 1 • The Outer Reaches", 10);
+            GameObject zoneSubtitle = CreateText(titleContainer, "ZoneSubtitle", "Zone 1 • The Outer Reaches", 16);
             zoneSubtitle.GetComponent<TMP_Text>().color = new Color(0.42f, 0.25f, 0.63f); // Hollow violet
 
             // Stats container (right side)
@@ -2690,10 +2716,13 @@ namespace HNR.Editor
             GameObject btnObj = new GameObject("ExecutionButton");
             btnObj.transform.SetParent(parent.transform, false);
 
+            // Square 70x70 button, positioned right side per UI refactor
             RectTransform rect = btnObj.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.9f, 0.3f);
-            rect.anchorMax = new Vector2(0.95f, 0.8f);
-            rect.sizeDelta = Vector2.zero;
+            rect.anchorMin = new Vector2(1f, 0.5f);
+            rect.anchorMax = new Vector2(1f, 0.5f);
+            rect.pivot = new Vector2(1f, 0.5f);
+            rect.anchoredPosition = new Vector2(-20, 40); // 20px from right edge, slightly above center
+            rect.sizeDelta = new Vector2(70, 70);
 
             // Glow ring
             GameObject glowRing = new GameObject("GlowRing");
@@ -2744,6 +2773,192 @@ namespace HNR.Editor
             {
                 prop.objectReferenceValue = value;
             }
+        }
+
+        /// <summary>
+        /// Creates the pause menu overlay for Combat scene.
+        /// </summary>
+        private static GameObject CreatePauseMenuOverlay(GameObject parent)
+        {
+            GameObject overlay = new GameObject("PauseMenuOverlay");
+            overlay.transform.SetParent(parent.transform, false);
+
+            RectTransform overlayRect = overlay.AddComponent<RectTransform>();
+            overlayRect.anchorMin = Vector2.zero;
+            overlayRect.anchorMax = Vector2.one;
+            overlayRect.sizeDelta = Vector2.zero;
+
+            CanvasGroup canvasGroup = overlay.AddComponent<CanvasGroup>();
+            canvasGroup.alpha = 0f;
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
+
+            // Dark background
+            Image bgImage = overlay.AddComponent<Image>();
+            bgImage.color = new Color(0f, 0f, 0f, 0.8f);
+
+            // Menu panel (centered)
+            GameObject menuPanel = new GameObject("MenuPanel");
+            menuPanel.transform.SetParent(overlay.transform, false);
+            RectTransform menuRect = menuPanel.AddComponent<RectTransform>();
+            menuRect.anchorMin = new Vector2(0.5f, 0.5f);
+            menuRect.anchorMax = new Vector2(0.5f, 0.5f);
+            menuRect.sizeDelta = new Vector2(300, 280);
+
+            Image menuBg = menuPanel.AddComponent<Image>();
+            menuBg.color = new Color(0.1f, 0.08f, 0.15f, 0.98f);
+
+            VerticalLayoutGroup menuLayout = menuPanel.AddComponent<VerticalLayoutGroup>();
+            menuLayout.padding = new RectOffset(20, 20, 20, 20);
+            menuLayout.spacing = 16f;
+            menuLayout.childAlignment = TextAnchor.UpperCenter;
+            menuLayout.childForceExpandWidth = true;
+            menuLayout.childForceExpandHeight = false;
+
+            // Title
+            GameObject title = CreateText(menuPanel, "Title", "PAUSED", 28);
+            title.GetComponent<TMP_Text>().fontStyle = TMPro.FontStyles.Bold;
+            title.GetComponent<TMP_Text>().color = new Color(0f, 0.83f, 0.89f); // Soul cyan
+
+            // Resume button
+            GameObject resumeBtn = CreateMenuButton(menuPanel, "ResumeButton", "Resume");
+
+            // Settings button
+            GameObject settingsBtn = CreateMenuButton(menuPanel, "SettingsButton", "Settings");
+
+            // Abandon button
+            GameObject abandonBtn = CreateMenuButton(menuPanel, "AbandonButton", "Abandon Run");
+            abandonBtn.GetComponent<Image>().color = new Color(1f, 0.27f, 0.27f, 0.8f); // Corruption red
+
+            // Add PauseMenuOverlay component and wire references
+            var pauseMenu = overlay.AddComponent<PauseMenuOverlay>();
+            var so = new SerializedObject(pauseMenu);
+            so.FindProperty("_overlay").objectReferenceValue = canvasGroup;
+            so.FindProperty("_backgroundPanel").objectReferenceValue = bgImage;
+            so.FindProperty("_menuPanel").objectReferenceValue = menuRect;
+            so.FindProperty("_titleText").objectReferenceValue = title.GetComponent<TMP_Text>();
+            so.FindProperty("_resumeButton").objectReferenceValue = resumeBtn.GetComponent<Button>();
+            so.FindProperty("_settingsButton").objectReferenceValue = settingsBtn.GetComponent<Button>();
+            so.FindProperty("_abandonButton").objectReferenceValue = abandonBtn.GetComponent<Button>();
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            overlay.SetActive(false);
+            return overlay;
+        }
+
+        /// <summary>
+        /// Creates the confirmation dialog for Combat and NullRift scenes.
+        /// </summary>
+        private static GameObject CreateConfirmationDialog(GameObject parent)
+        {
+            GameObject overlay = new GameObject("ConfirmationDialog");
+            overlay.transform.SetParent(parent.transform, false);
+
+            RectTransform overlayRect = overlay.AddComponent<RectTransform>();
+            overlayRect.anchorMin = Vector2.zero;
+            overlayRect.anchorMax = Vector2.one;
+            overlayRect.sizeDelta = Vector2.zero;
+
+            CanvasGroup canvasGroup = overlay.AddComponent<CanvasGroup>();
+            canvasGroup.alpha = 0f;
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
+
+            // Dark background
+            Image bgImage = overlay.AddComponent<Image>();
+            bgImage.color = new Color(0f, 0f, 0f, 0.8f);
+
+            // Dialog panel (centered)
+            GameObject dialogPanel = new GameObject("DialogPanel");
+            dialogPanel.transform.SetParent(overlay.transform, false);
+            RectTransform dialogRect = dialogPanel.AddComponent<RectTransform>();
+            dialogRect.anchorMin = new Vector2(0.5f, 0.5f);
+            dialogRect.anchorMax = new Vector2(0.5f, 0.5f);
+            dialogRect.sizeDelta = new Vector2(400, 200);
+
+            Image dialogBg = dialogPanel.AddComponent<Image>();
+            dialogBg.color = new Color(0.1f, 0.08f, 0.15f, 0.98f);
+
+            VerticalLayoutGroup dialogLayout = dialogPanel.AddComponent<VerticalLayoutGroup>();
+            dialogLayout.padding = new RectOffset(20, 20, 16, 16);
+            dialogLayout.spacing = 12f;
+            dialogLayout.childAlignment = TextAnchor.UpperCenter;
+            dialogLayout.childForceExpandWidth = true;
+            dialogLayout.childForceExpandHeight = false;
+
+            // Title
+            GameObject title = CreateText(dialogPanel, "Title", "Confirm", 22);
+            title.GetComponent<TMP_Text>().fontStyle = TMPro.FontStyles.Bold;
+            title.GetComponent<TMP_Text>().color = new Color(0f, 0.83f, 0.89f); // Soul cyan
+
+            // Message
+            GameObject message = CreateText(dialogPanel, "Message", "Are you sure?", 14);
+            message.GetComponent<TMP_Text>().alignment = TextAlignmentOptions.Center;
+            var messageLayout = message.AddComponent<LayoutElement>();
+            messageLayout.preferredHeight = 50;
+            messageLayout.flexibleHeight = 1;
+
+            // Button container
+            GameObject buttonContainer = new GameObject("ButtonContainer");
+            buttonContainer.transform.SetParent(dialogPanel.transform, false);
+            HorizontalLayoutGroup btnLayout = buttonContainer.AddComponent<HorizontalLayoutGroup>();
+            btnLayout.spacing = 16f;
+            btnLayout.childAlignment = TextAnchor.MiddleCenter;
+            btnLayout.childForceExpandWidth = true;
+            btnLayout.childForceExpandHeight = false;
+            var btnContainerLayout = buttonContainer.AddComponent<LayoutElement>();
+            btnContainerLayout.preferredHeight = 40;
+
+            // Cancel button
+            GameObject cancelBtn = new GameObject("CancelButton");
+            cancelBtn.transform.SetParent(buttonContainer.transform, false);
+            Image cancelBg = cancelBtn.AddComponent<Image>();
+            cancelBg.color = new Color(0.15f, 0.12f, 0.2f, 0.9f);
+            Button cancelButton = cancelBtn.AddComponent<Button>();
+            cancelButton.targetGraphic = cancelBg;
+            var cancelLayout = cancelBtn.AddComponent<LayoutElement>();
+            cancelLayout.flexibleWidth = 1;
+
+            GameObject cancelLabel = CreateText(cancelBtn, "Label", "Cancel", 16);
+            RectTransform cancelLabelRect = cancelLabel.GetComponent<RectTransform>();
+            cancelLabelRect.anchorMin = Vector2.zero;
+            cancelLabelRect.anchorMax = Vector2.one;
+            cancelLabelRect.sizeDelta = Vector2.zero;
+            cancelLabel.GetComponent<TMP_Text>().color = new Color(0f, 0.83f, 0.89f); // Soul cyan
+
+            // Confirm button
+            GameObject confirmBtn = new GameObject("ConfirmButton");
+            confirmBtn.transform.SetParent(buttonContainer.transform, false);
+            Image confirmBg = confirmBtn.AddComponent<Image>();
+            confirmBg.color = new Color(1f, 0.27f, 0.27f, 0.9f); // Corruption red
+            Button confirmButton = confirmBtn.AddComponent<Button>();
+            confirmButton.targetGraphic = confirmBg;
+            var confirmLayout = confirmBtn.AddComponent<LayoutElement>();
+            confirmLayout.flexibleWidth = 1;
+
+            GameObject confirmLabel = CreateText(confirmBtn, "Label", "Confirm", 16);
+            RectTransform confirmLabelRect = confirmLabel.GetComponent<RectTransform>();
+            confirmLabelRect.anchorMin = Vector2.zero;
+            confirmLabelRect.anchorMax = Vector2.one;
+            confirmLabelRect.sizeDelta = Vector2.zero;
+            confirmLabel.GetComponent<TMP_Text>().fontStyle = TMPro.FontStyles.Bold;
+
+            // Add ConfirmationDialog component and wire references
+            var dialog = overlay.AddComponent<ConfirmationDialog>();
+            var so = new SerializedObject(dialog);
+            so.FindProperty("_overlay").objectReferenceValue = canvasGroup;
+            so.FindProperty("_backgroundPanel").objectReferenceValue = bgImage;
+            so.FindProperty("_dialogPanel").objectReferenceValue = dialogRect;
+            so.FindProperty("_titleText").objectReferenceValue = title.GetComponent<TMP_Text>();
+            so.FindProperty("_messageText").objectReferenceValue = message.GetComponent<TMP_Text>();
+            so.FindProperty("_confirmButton").objectReferenceValue = confirmButton;
+            so.FindProperty("_confirmButtonText").objectReferenceValue = confirmLabel.GetComponent<TMP_Text>();
+            so.FindProperty("_cancelButton").objectReferenceValue = cancelButton;
+            so.FindProperty("_cancelButtonText").objectReferenceValue = cancelLabel.GetComponent<TMP_Text>();
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            overlay.SetActive(false);
+            return overlay;
         }
     }
 }

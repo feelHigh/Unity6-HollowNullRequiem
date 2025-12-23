@@ -6,6 +6,7 @@
 using UnityEngine;
 using HNR.Core;
 using HNR.Core.Events;
+using HNR.Core.Interfaces;
 
 namespace HNR.Map
 {
@@ -189,6 +190,13 @@ namespace HNR.Map
             EventBus.Publish(new NodeCompletedEvent(current));
 
             Debug.Log($"[MapManager] Completed node {current.NodeId} ({current.Type})");
+
+            // Immediate save after node completion to prevent data loss
+            if (ServiceLocator.TryGet<IRunManager>(out var runManager) && runManager.IsRunActive)
+            {
+                runManager.SaveRun();
+                Debug.Log("[MapManager] Run saved after node completion");
+            }
 
             // Check for zone completion
             if (current.Type == NodeType.Boss)

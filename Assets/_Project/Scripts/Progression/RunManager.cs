@@ -98,6 +98,26 @@ namespace HNR.Progression
             UnsubscribeFromEvents();
         }
 
+        private void OnApplicationPause(bool pauseStatus)
+        {
+            // Save when app goes to background (mobile)
+            if (pauseStatus && _isRunActive)
+            {
+                SaveRun();
+                Debug.Log("[RunManager] Run saved on application pause");
+            }
+        }
+
+        private void OnApplicationQuit()
+        {
+            // Save before app closes
+            if (_isRunActive)
+            {
+                SaveRun();
+                Debug.Log("[RunManager] Run saved on application quit");
+            }
+        }
+
         // ============================================
         // Initialization
         // ============================================

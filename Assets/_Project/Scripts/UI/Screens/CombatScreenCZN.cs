@@ -11,6 +11,7 @@ using HNR.Core.Interfaces;
 using HNR.Combat;
 using HNR.Characters;
 using HNR.Cards;
+using HNR.UI;
 using HNR.UI.Combat;
 
 namespace HNR.UI.Screens
@@ -411,6 +412,8 @@ namespace HNR.UI.Screens
             EventBus.Subscribe<CardDiscardedEvent>(OnCardDiscarded);
             EventBus.Subscribe<CombatEndedEvent>(OnCombatEnded);
             EventBus.Subscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
+            EventBus.Subscribe<OpenPauseMenuRequestEvent>(OnOpenPauseMenu);
+            EventBus.Subscribe<OpenSettingsRequestEvent>(OnOpenSettings);
         }
 
         private void UnsubscribeFromEvents()
@@ -421,6 +424,8 @@ namespace HNR.UI.Screens
             EventBus.Unsubscribe<CardDiscardedEvent>(OnCardDiscarded);
             EventBus.Unsubscribe<CombatEndedEvent>(OnCombatEnded);
             EventBus.Unsubscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
+            EventBus.Unsubscribe<OpenPauseMenuRequestEvent>(OnOpenPauseMenu);
+            EventBus.Unsubscribe<OpenSettingsRequestEvent>(OnOpenSettings);
         }
 
         // ============================================
@@ -479,6 +484,33 @@ namespace HNR.UI.Screens
         private void OnEnemyDefeated(EnemyDefeatedEvent evt)
         {
             // Enemy UI handles its own cleanup via event subscription
+        }
+
+        private void OnOpenPauseMenu(OpenPauseMenuRequestEvent evt)
+        {
+            // Show pause menu overlay
+            if (PauseMenuOverlay.Instance != null)
+            {
+                PauseMenuOverlay.Instance.Show();
+            }
+            else
+            {
+                Debug.LogWarning("[CombatScreenCZN] PauseMenuOverlay not found in scene");
+            }
+        }
+
+        private void OnOpenSettings(OpenSettingsRequestEvent evt)
+        {
+            // Find and show settings screen directly (it's a MonoBehaviour, not ScreenBase)
+            var settingsScreen = FindFirstObjectByType<SettingsScreen>(FindObjectsInactive.Include);
+            if (settingsScreen != null)
+            {
+                settingsScreen.gameObject.SetActive(true);
+            }
+            else
+            {
+                Debug.LogWarning("[CombatScreenCZN] SettingsScreen not found in scene");
+            }
         }
 
         private void OnCombatEnded(CombatEndedEvent evt)
