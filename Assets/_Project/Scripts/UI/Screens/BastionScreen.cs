@@ -346,10 +346,12 @@ namespace HNR.UI
 
         private void OnTeamSlotClicked(RequiemDataSO requiem)
         {
-            // Show Requiem details or navigate to detail view
-            Debug.Log($"[BastionScreen] Team slot clicked: {requiem?.RequiemName ?? "null"}");
+            if (requiem == null) return;
 
-            // TODO: Show Requiem detail popup or navigate to RequiemDetailScreen
+            Debug.Log($"[BastionScreen] Team slot clicked: {requiem.RequiemName}");
+
+            // Publish event for detail screen or popup to handle
+            EventBus.Publish(new RequiemDetailRequestedEvent(requiem));
         }
 
         // ============================================
@@ -390,9 +392,8 @@ namespace HNR.UI
         {
             Debug.Log("[BastionScreen] View Deck clicked");
 
-            // TODO: Navigate to deck viewer screen
-            // var uiManager = ServiceLocator.Get<IUIManager>();
-            // uiManager?.ShowScreen<DeckViewerScreen>();
+            // Publish event for deck viewer to handle
+            EventBus.Publish(new DeckViewRequestedEvent());
         }
 
         private void OnContinueRunClicked()

@@ -246,8 +246,10 @@ namespace HNR.Progression
                     break;
 
                 case ShopItemType.Consumable:
-                    // TODO: Implement consumable system
-                    Debug.Log("[ShopManager] Consumable purchased");
+                    // Consumables are single-use items stored in run state
+                    // Publish event for RunManager/InventoryManager to handle
+                    EventBus.Publish(new ConsumablePurchasedEvent(item));
+                    Debug.Log($"[ShopManager] Consumable purchased: {item.DisplayName}");
                     break;
             }
         }

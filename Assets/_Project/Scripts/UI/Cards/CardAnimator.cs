@@ -6,6 +6,8 @@
 using System;
 using UnityEngine;
 using DG.Tweening;
+using HNR.Core;
+using HNR.VFX;
 
 namespace HNR.UI
 {
@@ -239,7 +241,15 @@ namespace HNR.UI
             var seq = DOTween.Sequence();
             seq.Append(_rectTransform.DOScale(0f, 0.3f).SetEase(Ease.InBack));
             seq.Join(_canvasGroup.DOFade(0f, 0.3f));
-            // TODO: Trigger exhaust VFX particle effect here
+
+            // Trigger exhaust VFX at midpoint of animation
+            seq.InsertCallback(0.15f, () =>
+            {
+                if (ServiceLocator.TryGet<VFXPoolManager>(out var vfxPool))
+                {
+                    vfxPool.Spawn("vfx_corruption", transform.position);
+                }
+            });
 
             return seq;
         }

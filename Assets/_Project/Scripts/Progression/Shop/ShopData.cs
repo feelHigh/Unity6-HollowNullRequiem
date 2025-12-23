@@ -124,7 +124,7 @@ namespace HNR.Progression
         public string Description => _type switch
         {
             ShopItemType.Card => _cardData?.GetFormattedDescription() ?? "",
-            ShopItemType.Relic => "", // TODO: Add when RelicDataSO has Description
+            ShopItemType.Relic => _relicData?.GetFormattedDescription() ?? "",
             ShopItemType.Consumable => "Single-use item",
             ShopItemType.CardRemove => "Remove a card from your deck permanently.",
             ShopItemType.Purification => "Reduce corruption on one Requiem by 25.",

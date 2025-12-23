@@ -129,12 +129,7 @@ namespace HNR.Core.GameStates
         private void HideMainMenuScreen()
         {
             Debug.Log("[MainMenuState] Hiding MainMenuScreen...");
-
-            // TODO: Hide main menu via UIManager
-            // if (ServiceLocator.TryGet<IUIManager>(out var uiManager))
-            // {
-            //     uiManager.HideScreen<MainMenuScreen>();
-            // }
+            // Screen hiding handled by UIManager during ShowScreen transition
         }
 
         /// <summary>
@@ -142,13 +137,11 @@ namespace HNR.Core.GameStates
         /// </summary>
         private void PlayMenuMusic()
         {
-            Debug.Log("[MainMenuState] Playing menu music...");
-
-            // TODO: Play music via AudioManager
-            // if (ServiceLocator.TryGet<IAudioManager>(out var audioManager))
-            // {
-            //     audioManager.PlayMusic("MainMenuTheme");
-            // }
+            if (ServiceLocator.TryGet<IAudioManager>(out var audioManager))
+            {
+                audioManager.PlayMusic("music_main_menu");
+                Debug.Log("[MainMenuState] Playing menu music");
+            }
         }
 
         /// <summary>
@@ -156,13 +149,11 @@ namespace HNR.Core.GameStates
         /// </summary>
         private void StopMenuMusic()
         {
-            Debug.Log("[MainMenuState] Stopping menu music...");
-
-            // TODO: Stop music via AudioManager
-            // if (ServiceLocator.TryGet<IAudioManager>(out var audioManager))
-            // {
-            //     audioManager.StopMusic();
-            // }
+            if (ServiceLocator.TryGet<IAudioManager>(out var audioManager))
+            {
+                audioManager.StopMusic();
+                Debug.Log("[MainMenuState] Stopped menu music");
+            }
         }
     }
 }

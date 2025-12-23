@@ -79,79 +79,68 @@ namespace HNR.Core.GameStates
         // ============================================
 
         /// <summary>
-        /// Initialize the SaveManager service.
+        /// Verify the SaveManager service is registered.
+        /// SaveManager is a MonoBehaviour that self-registers in Awake().
         /// </summary>
         private void InitializeSaveManager()
         {
-            Debug.Log("[BootState] Initializing SaveManager...");
-
-            // TODO: Implement SaveManager
-            // var saveManager = new SaveManager();
-            // ServiceLocator.Register<ISaveManager>(saveManager);
-            // saveManager.Initialize();
-
-            // Check for existing saved run
-            // if (saveManager.HasSavedRun)
-            // {
-            //     Debug.Log("[BootState] Found saved run data.");
-            // }
+            if (ServiceLocator.Has<ISaveManager>())
+            {
+                var saveManager = ServiceLocator.Get<ISaveManager>();
+                Debug.Log($"[BootState] SaveManager ready. Has saved run: {saveManager.HasSavedRun}");
+            }
+            else
+            {
+                Debug.LogWarning("[BootState] SaveManager not registered - ensure it exists in Boot scene");
+            }
         }
 
         /// <summary>
-        /// Initialize the AudioManager service.
+        /// Verify the AudioManager service is registered.
+        /// AudioManager is a MonoBehaviour that self-registers in Awake().
         /// </summary>
         private void InitializeAudioManager()
         {
-            Debug.Log("[BootState] Initializing AudioManager...");
-
-            // TODO: Implement AudioManager
-            // var audioGO = new GameObject("[AudioManager]");
-            // Object.DontDestroyOnLoad(audioGO);
-            // var audioManager = audioGO.AddComponent<AudioManager>();
-            // ServiceLocator.Register<IAudioManager>(audioManager);
-
-            // Load volume settings from SaveManager
-            // var settings = ServiceLocator.Get<ISaveManager>().LoadSettings();
-            // audioManager.MusicVolume = settings.MusicVolume;
-            // audioManager.SFXVolume = settings.SFXVolume;
+            if (ServiceLocator.Has<IAudioManager>())
+            {
+                Debug.Log("[BootState] AudioManager ready");
+            }
+            else
+            {
+                Debug.LogWarning("[BootState] AudioManager not registered - ensure it exists in Boot scene");
+            }
         }
 
         /// <summary>
-        /// Initialize the PoolManager service.
+        /// Verify the PoolManager service is registered.
+        /// PoolManager is a MonoBehaviour that self-registers in Awake().
         /// </summary>
         private void InitializePoolManager()
         {
-            Debug.Log("[BootState] Initializing PoolManager...");
-
-            // TODO: Implement PoolManager
-            // var poolGO = new GameObject("[PoolManager]");
-            // Object.DontDestroyOnLoad(poolGO);
-            // var poolManager = poolGO.AddComponent<PoolManager>();
-            // ServiceLocator.Register<IPoolManager>(poolManager);
-
-            // Pre-warm commonly used pools
-            // poolManager.PreWarm<CardVisual>(20);
-            // poolManager.PreWarm<DamageNumber>(10);
+            if (ServiceLocator.Has<IPoolManager>())
+            {
+                Debug.Log("[BootState] PoolManager ready");
+            }
+            else
+            {
+                Debug.LogWarning("[BootState] PoolManager not registered - ensure it exists in Boot scene");
+            }
         }
 
         /// <summary>
-        /// Initialize the UIManager service.
+        /// Verify the UIManager service is registered.
+        /// UIManager is a MonoBehaviour that self-registers in Awake().
         /// </summary>
         private void InitializeUIManager()
         {
-            Debug.Log("[BootState] Initializing UIManager...");
-
-            // TODO: Implement UIManager
-            // UIManager may already exist in scene, find it
-            // var uiManager = Object.FindAnyObjectByType<UIManager>();
-            // if (uiManager != null)
-            // {
-            //     ServiceLocator.Register<IUIManager>(uiManager);
-            // }
-            // else
-            // {
-            //     Debug.LogWarning("[BootState] UIManager not found in scene!");
-            // }
+            if (ServiceLocator.Has<IUIManager>())
+            {
+                Debug.Log("[BootState] UIManager ready");
+            }
+            else
+            {
+                Debug.LogWarning("[BootState] UIManager not registered - ensure it exists in Boot scene");
+            }
         }
     }
 }

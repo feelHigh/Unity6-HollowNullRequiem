@@ -459,8 +459,8 @@ namespace HNR.UI
                 return;
             }
 
-            // TODO: Show card selection UI for removal
-            // For now, publish event for systems to handle
+            // Spend shards and publish event for RunManager/DeckViewer to handle
+            // The subscriber should show deck selection UI and publish CardRemovedFromDeckEvent
             _shopManager.SpendVoidShards(_removeCardCost);
             EventBus.Publish(new ShopRemoveCardRequestedEvent());
             Debug.Log($"[ShopScreen] Remove card service used ({_removeCardCost} shards)");

@@ -350,4 +350,30 @@ namespace HNR.Core.Events
     // - ShopOpenedEvent, ShopClosedEvent, ShopItemPurchasedEvent
     // - CardAddedToDeckEvent, CardRemovedFromDeckEvent
     // - RelicAcquiredEvent
+
+    // ============================================
+    // UI NAVIGATION EVENTS
+    // ============================================
+
+    /// <summary>
+    /// Published when user requests to view Requiem details.
+    /// </summary>
+    public class RequiemDetailRequestedEvent : GameEvent
+    {
+        /// <summary>The Requiem to display details for.</summary>
+        public RequiemDataSO Requiem { get; }
+
+        public RequiemDetailRequestedEvent(RequiemDataSO requiem)
+        {
+            Requiem = requiem;
+        }
+    }
+
+    /// <summary>
+    /// Published when user requests to view their deck.
+    /// </summary>
+    public class DeckViewRequestedEvent : GameEvent
+    {
+        public DeckViewRequestedEvent() { }
+    }
 }

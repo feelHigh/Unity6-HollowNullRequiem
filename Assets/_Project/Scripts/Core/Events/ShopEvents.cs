@@ -164,4 +164,23 @@ namespace HNR.Core.Events
             Relic = relic;
         }
     }
+
+    // ============================================
+    // CONSUMABLE EVENTS
+    // ============================================
+
+    /// <summary>
+    /// Published when a consumable is purchased from the shop.
+    /// RunManager/InventoryManager should handle adding to inventory.
+    /// </summary>
+    public class ConsumablePurchasedEvent : GameEvent
+    {
+        /// <summary>The shop item containing consumable data.</summary>
+        public ShopItem Item { get; }
+
+        public ConsumablePurchasedEvent(ShopItem item)
+        {
+            Item = item;
+        }
+    }
 }

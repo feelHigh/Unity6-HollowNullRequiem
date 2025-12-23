@@ -234,9 +234,16 @@ namespace HNR.UI
         {
             Debug.Log("[MainMenuScreen] Settings clicked");
 
-            // TODO: Show settings screen/overlay
-            // var uiManager = ServiceLocator.Get<IUIManager>();
-            // uiManager?.PushOverlay<SettingsScreen>();
+            // Find and show settings screen
+            var settingsScreen = FindAnyObjectByType<SettingsScreen>(FindObjectsInactive.Include);
+            if (settingsScreen != null)
+            {
+                settingsScreen.Show();
+            }
+            else
+            {
+                Debug.LogWarning("[MainMenuScreen] SettingsScreen not found in scene");
+            }
         }
 
         private void OnQuitClicked()

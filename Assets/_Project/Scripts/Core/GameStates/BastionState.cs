@@ -138,13 +138,11 @@ namespace HNR.Core.GameStates
         /// </summary>
         private void PlayBastionMusic()
         {
-            Debug.Log("[BastionState] Playing Bastion music...");
-
-            // TODO: Play music via AudioManager
-            // if (ServiceLocator.TryGet<IAudioManager>(out var audioManager))
-            // {
-            //     audioManager.PlayMusic("BastionTheme");
-            // }
+            if (ServiceLocator.TryGet<IAudioManager>(out var audioManager))
+            {
+                audioManager.PlayMusic("music_bastion");
+                Debug.Log("[BastionState] Playing Bastion music");
+            }
         }
 
         /// <summary>
@@ -152,13 +150,11 @@ namespace HNR.Core.GameStates
         /// </summary>
         private void StopBastionMusic()
         {
-            Debug.Log("[BastionState] Stopping Bastion music...");
-
-            // TODO: Stop music via AudioManager
-            // if (ServiceLocator.TryGet<IAudioManager>(out var audioManager))
-            // {
-            //     audioManager.StopMusic();
-            // }
+            if (ServiceLocator.TryGet<IAudioManager>(out var audioManager))
+            {
+                audioManager.StopMusic();
+                Debug.Log("[BastionState] Stopped Bastion music");
+            }
         }
     }
 }
