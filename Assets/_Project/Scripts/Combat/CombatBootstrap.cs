@@ -3,6 +3,7 @@
 // Initializes combat when the Combat scene loads
 // ============================================
 
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using HNR.Core;
@@ -136,10 +137,39 @@ namespace HNR.Combat
 
             // Convert IReadOnlyList to List for TurnManager
             var teamList = new List<RequiemInstance>(runManager.Team);
-            turnManager.StartCombat(teamList, enemies);
 
-            // Show combat UI
+            // Start combat initialization coroutine to ensure proper timing
+            StartCoroutine(StartCombatAfterUIReady(turnManager, teamList, enemies, encounter));
+        }
+
+        /// <summary>
+        /// Coroutine that waits for UI to be ready before starting combat.
+        /// This ensures CombatScreenCZN subscribes to events before cards are drawn.
+        /// </summary>
+        private IEnumerator StartCombatAfterUIReady(TurnManager turnManager, List<RequiemInstance> teamList, List<EnemyInstance> enemies, EncounterDataSO encounter)
+        {
+            // Show combat UI first
             ShowCombatScreen();
+
+            // Wait for UIManager transition to complete (OnShow gets called during transition)
+            // UIManager uses FadeOut -> OnShow -> FadeIn, so we wait until transition is done
+            if (ServiceLocator.TryGet<IUIManager>(out var uiManager) && uiManager is UIManager uiMgr)
+            {
+                while (uiMgr.IsTransitioning)
+                {
+                    yield return null;
+                }
+            }
+            else
+            {
+                // Fallback: wait a frame to ensure OnShow has been called
+                yield return null;
+            }
+
+            Debug.Log("[CombatBootstrap] UI ready, starting combat...");
+
+            // Now start combat - DrawPhase will publish CardDrawnEvent which CombatScreenCZN will receive
+            turnManager.StartCombat(teamList, enemies);
 
             // Clear pending data
             ClearPendingCombat();

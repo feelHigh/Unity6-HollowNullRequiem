@@ -475,9 +475,12 @@ namespace HNR.Combat
         {
             if (count <= 0 || _context.DeckManager == null)
             {
+                Debug.LogWarning($"[TurnManager] DrawCardsSequential early exit: count={count}, DeckManager={(_context.DeckManager != null ? "OK" : "NULL")}");
                 onComplete?.Invoke();
                 yield break;
             }
+
+            Debug.Log($"[TurnManager] Starting sequential draw of {count} cards. Draw pile: {_context.DeckManager.DrawPileCount}, Discard: {_context.DeckManager.DiscardPileCount}");
 
             _reshuffleOccurred = false;
             int cardsDrawn = 0;
@@ -487,6 +490,8 @@ namespace HNR.Combat
                 // Reset reshuffle flag before draw
                 _reshuffleOccurred = false;
 
+                Debug.Log($"[TurnManager] Drawing card {i + 1}/{count}...");
+
                 // Draw the card - this publishes CardDrawnEvent
                 // CombatScreenCZN.OnCardDrawn() handles adding to CardFanLayout
                 var card = _context.DeckManager.Draw();
@@ -494,6 +499,7 @@ namespace HNR.Combat
                 if (card != null)
                 {
                     cardsDrawn++;
+                    Debug.Log($"[TurnManager] Drew card {cardsDrawn}/{count}: {card.Data?.CardName}");
 
                     // If reshuffle happened during Draw(), add extra delay for visual feedback
                     if (_reshuffleOccurred)
@@ -511,12 +517,12 @@ namespace HNR.Combat
                 else
                 {
                     // No more cards available
-                    Debug.Log($"[TurnManager] No more cards to draw after {cardsDrawn} cards");
+                    Debug.LogWarning($"[TurnManager] Draw returned null at iteration {i+1}. Cards drawn so far: {cardsDrawn}. Draw pile: {_context.DeckManager.DrawPileCount}, Discard: {_context.DeckManager.DiscardPileCount}");
                     break;
                 }
             }
 
-            Debug.Log($"[TurnManager] Sequential draw complete: {cardsDrawn} cards");
+            Debug.Log($"[TurnManager] Sequential draw complete: {cardsDrawn}/{count} cards drawn");
             _drawCoroutine = null;
             onComplete?.Invoke();
         }

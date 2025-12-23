@@ -177,26 +177,11 @@ namespace HNR.UI.Screens
             // Auto-find missing references
             AutoFindMissingReferences();
 
-            // Top HUD
-            if (_vitalityBar != null)
-            {
-                _vitalityBar.SetPartyPortraits(_context.Team.ToArray());
-                _vitalityBar.Initialize(_context.TeamHP, _context.TeamMaxHP, _context.TeamBlock);
-                Debug.Log($"[CombatScreenCZN] Vitality bar initialized with HP {_context.TeamHP}/{_context.TeamMaxHP}");
-            }
-            else
-            {
-                Debug.LogWarning("[CombatScreenCZN] _vitalityBar is null - HP bar will not update!");
-            }
+            // Note: Team-dependent UI (vitality bar, party sidebar, enemy UIs, ally positions)
+            // is initialized in OnCombatStarted() after StartCombat() populates the context
 
-            // Left Sidebar
-            if (_partySidebar != null)
-            {
-                _partySidebar.Initialize(_context.Team.ToArray());
-            }
-
-            // Bottom Command Center
-            if (_apCounter != null)
+            // Bottom Command Center - AP counter can be initialized early
+            if (_apCounter != null && _context != null)
             {
                 _apCounter.SetAP(_context.CurrentAP, _context.MaxAP);
             }
@@ -216,9 +201,7 @@ namespace HNR.UI.Screens
                 handManager.gameObject.SetActive(true);
             }
 
-            // World Space
-            SpawnEnemyUIs();
-            SpawnAllyIndicators();
+            Debug.Log("[CombatScreenCZN] InitializeUI complete - waiting for CombatStartedEvent for team/enemy setup");
         }
 
         /// <summary>
@@ -406,6 +389,7 @@ namespace HNR.UI.Screens
 
         private void SubscribeToEvents()
         {
+            EventBus.Subscribe<CombatStartedEvent>(OnCombatStarted);
             EventBus.Subscribe<TurnStartedEvent>(OnTurnStarted);
             EventBus.Subscribe<CardDrawnEvent>(OnCardDrawn);
             EventBus.Subscribe<CardPlayedEvent>(OnCardPlayed);
@@ -414,10 +398,13 @@ namespace HNR.UI.Screens
             EventBus.Subscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
             EventBus.Subscribe<OpenPauseMenuRequestEvent>(OnOpenPauseMenu);
             EventBus.Subscribe<OpenSettingsRequestEvent>(OnOpenSettings);
+
+            Debug.Log($"[CombatScreenCZN] Subscribed to events. CardFanLayout: {(_cardFanLayout != null ? _cardFanLayout.name : "NULL")}");
         }
 
         private void UnsubscribeFromEvents()
         {
+            EventBus.Unsubscribe<CombatStartedEvent>(OnCombatStarted);
             EventBus.Unsubscribe<TurnStartedEvent>(OnTurnStarted);
             EventBus.Unsubscribe<CardDrawnEvent>(OnCardDrawn);
             EventBus.Unsubscribe<CardPlayedEvent>(OnCardPlayed);
@@ -432,42 +419,118 @@ namespace HNR.UI.Screens
         // Event Handlers
         // ============================================
 
+        private void OnCombatStarted(CombatStartedEvent evt)
+        {
+            Debug.Log("[CombatScreenCZN] CombatStartedEvent received - initializing combat UI");
+
+            // Update context reference now that combat has started
+            if (ServiceLocator.TryGet<TurnManager>(out var turnManager))
+            {
+                _context = turnManager.Context;
+            }
+
+            if (_context == null)
+            {
+                Debug.LogWarning("[CombatScreenCZN] No combat context in OnCombatStarted");
+                return;
+            }
+
+            // Now that Team and Enemies are populated, initialize the world space UI
+            if (_vitalityBar != null)
+            {
+                _vitalityBar.SetPartyPortraits(_context.Team.ToArray());
+                _vitalityBar.Initialize(_context.TeamHP, _context.TeamMaxHP, _context.TeamBlock);
+            }
+
+            if (_partySidebar != null)
+            {
+                _partySidebar.Initialize(_context.Team.ToArray());
+            }
+
+            SpawnEnemyUIs();
+            SpawnAllyIndicators();
+
+            Debug.Log($"[CombatScreenCZN] Combat UI initialized: {_context.Team.Count} allies, {_context.Enemies.Count} enemies");
+        }
+
         private void OnTurnStarted(TurnStartedEvent evt)
         {
             // Reset card draw index at the start of each turn for proper stagger animation
             _cardDrawIndex = 0;
-            Debug.Log($"[CombatScreenCZN] Turn {evt.TurnNumber} started - reset _cardDrawIndex to 0");
+
+            // Ensure CardFanLayout is found (may not have been available during OnShow)
+            if (_cardFanLayout == null)
+            {
+                _cardFanLayout = FindAnyObjectByType<CardFanLayout>(FindObjectsInactive.Include);
+                if (_cardFanLayout == null)
+                {
+                    ServiceLocator.TryGet<CardFanLayout>(out _cardFanLayout);
+                }
+                if (_cardFanLayout != null)
+                {
+                    Debug.Log($"[CombatScreenCZN] Late-found CardFanLayout: {_cardFanLayout.name}");
+                }
+            }
+
+            Debug.Log($"[CombatScreenCZN] Turn {evt.TurnNumber} started - CardFanLayout: {(_cardFanLayout != null ? "OK" : "NULL")}");
         }
 
         private void OnCardDrawn(CardDrawnEvent evt)
         {
-            if (_cardFanLayout == null || evt.Card == null) return;
-
-            CombatCard card = null;
-
-            // Try to get card from pool first
-            if (ServiceLocator.TryGet<IPoolManager>(out var poolManager))
+            if (evt.Card == null)
             {
-                card = poolManager.Get<CombatCard>();
+                Debug.LogWarning("[CombatScreenCZN] OnCardDrawn received null card");
+                return;
             }
 
-            // Fallback to direct instantiation if pool didn't return a card
-            if (card == null && _combatCardPrefab != null)
+            // Try CardFanLayout first
+            var fanLayout = _cardFanLayout;
+            if (fanLayout == null)
             {
-                card = Object.Instantiate(_combatCardPrefab);
-                Debug.Log("[CombatScreenCZN] Instantiated CombatCard (pool unavailable)");
+                ServiceLocator.TryGet<CardFanLayout>(out fanLayout);
             }
 
-            if (card != null)
+            if (fanLayout != null)
             {
-                card.Initialize(evt.Card);
-                // No delay here - TurnManager.DrawCardsSequential handles timing
-                _cardFanLayout.AddCard(card);
-                _cardDrawIndex++;
+                CombatCard card = null;
+
+                // Try to get card from pool first
+                if (ServiceLocator.TryGet<IPoolManager>(out var poolManager))
+                {
+                    card = poolManager.Get<CombatCard>();
+                }
+
+                // Fallback to direct instantiation if pool didn't return a card
+                if (card == null && _combatCardPrefab != null)
+                {
+                    card = Object.Instantiate(_combatCardPrefab);
+                    Debug.Log("[CombatScreenCZN] Instantiated CombatCard (pool unavailable)");
+                }
+
+                if (card != null)
+                {
+                    card.Initialize(evt.Card);
+                    fanLayout.AddCard(card);
+                    _cardDrawIndex++;
+                    Debug.Log($"[CombatScreenCZN] Card #{_cardDrawIndex} added: {evt.Card.Data?.CardName}, FanLayout count: {fanLayout.CardCount}");
+                }
+                else
+                {
+                    Debug.LogError("[CombatScreenCZN] Failed to create CombatCard - prefab not assigned and pool unavailable");
+                }
             }
             else
             {
-                Debug.LogError("[CombatScreenCZN] Failed to create CombatCard - prefab not assigned and pool unavailable");
+                // Fallback to HandManager if CardFanLayout not available
+                if (ServiceLocator.TryGet<HandManager>(out var handManager))
+                {
+                    handManager.AddCard(evt.Card);
+                    Debug.Log($"[CombatScreenCZN] Fallback: Added card to HandManager: {evt.Card.Data?.CardName}");
+                }
+                else
+                {
+                    Debug.LogError("[CombatScreenCZN] Neither CardFanLayout nor HandManager available for card display!");
+                }
             }
         }
 
