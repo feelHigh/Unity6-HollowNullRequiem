@@ -215,6 +215,20 @@ namespace HNR.Core.Events
         }
     }
 
+    /// <summary>
+    /// Published when the discard pile is reshuffled into the draw pile.
+    /// </summary>
+    public class DeckReshuffledEvent : GameEvent
+    {
+        /// <summary>Number of cards reshuffled.</summary>
+        public int CardCount { get; }
+
+        public DeckReshuffledEvent(int cardCount)
+        {
+            CardCount = cardCount;
+        }
+    }
+
     // ============================================
     // DAMAGE/HEALING EVENTS
     // ============================================

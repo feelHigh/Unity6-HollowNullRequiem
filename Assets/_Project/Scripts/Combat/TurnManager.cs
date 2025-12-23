@@ -3,6 +3,8 @@
 // Orchestrates combat phases and turn flow
 // ============================================
 
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using HNR.Core;
@@ -30,6 +32,13 @@ namespace HNR.Combat
         [SerializeField, Tooltip("Cards drawn at start of each turn")]
         private int _cardsPerTurn = 5;
 
+        [Header("Card Draw Animation")]
+        [SerializeField, Tooltip("Delay between drawing each card")]
+        private float _cardDrawDelay = 0.15f;
+
+        [SerializeField, Tooltip("Additional delay when deck reshuffles mid-draw")]
+        private float _reshuffleDelay = 0.4f;
+
         // ============================================
         // Runtime State
         // ============================================
@@ -38,6 +47,8 @@ namespace HNR.Combat
         private ICombatPhase _currentPhase;
         private CombatContext _context;
         private bool _combatActive;
+        private bool _reshuffleOccurred;
+        private Coroutine _drawCoroutine;
 
         // ============================================
         // Properties
@@ -70,12 +81,20 @@ namespace HNR.Combat
         {
             EventBus.Subscribe<EndTurnRequestedEvent>(OnEndTurnRequested);
             EventBus.Subscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
+            EventBus.Subscribe<DeckReshuffledEvent>(OnDeckReshuffled);
         }
 
         private void OnDisable()
         {
             EventBus.Unsubscribe<EndTurnRequestedEvent>(OnEndTurnRequested);
             EventBus.Unsubscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
+            EventBus.Unsubscribe<DeckReshuffledEvent>(OnDeckReshuffled);
+        }
+
+        private void OnDeckReshuffled(DeckReshuffledEvent evt)
+        {
+            _reshuffleOccurred = true;
+            Debug.Log($"[TurnManager] Deck reshuffled - {evt.CardCount} cards");
         }
 
         private void OnDestroy()
@@ -406,7 +425,8 @@ namespace HNR.Combat
         // ============================================
 
         /// <summary>
-        /// Draw cards from the deck.
+        /// Draw cards from the deck (immediate, no animation delay).
+        /// Use DrawCardsSequential for animated drawing.
         /// </summary>
         /// <param name="count">Number of cards to draw</param>
         public void DrawCards(int count)
@@ -430,6 +450,80 @@ namespace HNR.Combat
 
             Debug.Log($"[TurnManager] Drew {count} cards");
         }
+
+        /// <summary>
+        /// Draw cards sequentially with animation delays.
+        /// Handles reshuffle mid-draw gracefully with additional delay.
+        /// </summary>
+        /// <param name="count">Number of cards to draw</param>
+        /// <param name="onComplete">Callback when drawing is complete</param>
+        public void DrawCardsSequential(int count, Action onComplete = null)
+        {
+            if (_drawCoroutine != null)
+            {
+                StopCoroutine(_drawCoroutine);
+            }
+            _drawCoroutine = StartCoroutine(DrawCardsSequentialCoroutine(count, onComplete));
+        }
+
+        /// <summary>
+        /// Coroutine that draws cards one at a time with delays.
+        /// </summary>
+        private IEnumerator DrawCardsSequentialCoroutine(int count, Action onComplete)
+        {
+            if (count <= 0 || _context.DeckManager == null)
+            {
+                onComplete?.Invoke();
+                yield break;
+            }
+
+            _reshuffleOccurred = false;
+            int cardsDrawn = 0;
+
+            for (int i = 0; i < count; i++)
+            {
+                // Check if reshuffle occurred before this draw
+                bool wasReshuffled = _reshuffleOccurred;
+                _reshuffleOccurred = false;
+
+                // Draw the card
+                var card = _context.DeckManager.Draw();
+
+                // If reshuffle happened during Draw(), add extra delay
+                if (_reshuffleOccurred)
+                {
+                    Debug.Log("[TurnManager] Reshuffle detected - adding delay before continuing draw");
+                    yield return new WaitForSeconds(_reshuffleDelay);
+                }
+
+                if (card != null && _context.HandManager != null)
+                {
+                    _context.HandManager.AddCard(card);
+                    cardsDrawn++;
+
+                    // Wait between card draws (except after last card)
+                    if (i < count - 1)
+                    {
+                        yield return new WaitForSeconds(_cardDrawDelay);
+                    }
+                }
+                else
+                {
+                    // No more cards available
+                    Debug.Log($"[TurnManager] No more cards to draw after {cardsDrawn} cards");
+                    break;
+                }
+            }
+
+            Debug.Log($"[TurnManager] Sequential draw complete: {cardsDrawn} cards");
+            _drawCoroutine = null;
+            onComplete?.Invoke();
+        }
+
+        /// <summary>
+        /// Check if card drawing is in progress.
+        /// </summary>
+        public bool IsDrawingCards => _drawCoroutine != null;
 
         // ============================================
         // Soul Essence

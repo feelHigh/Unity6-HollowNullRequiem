@@ -204,10 +204,14 @@ namespace HNR.Combat
         /// </summary>
         private void ReshuffleDiscardIntoDraw()
         {
-            Debug.Log($"[DeckManager] Reshuffling {_discardPile.Count} cards into draw pile");
+            int reshuffleCount = _discardPile.Count;
+            Debug.Log($"[DeckManager] Reshuffling {reshuffleCount} cards into draw pile");
             _drawPile.AddRange(_discardPile);
             _discardPile.Clear();
             Shuffle(_drawPile);
+
+            // Publish reshuffle event for UI/animation handling
+            EventBus.Publish(new DeckReshuffledEvent(reshuffleCount));
         }
 
         /// <summary>
