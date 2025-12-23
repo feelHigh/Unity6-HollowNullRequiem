@@ -569,9 +569,26 @@ namespace HNR.UI.Combat
             _isPlayable = true;
             _currentTarget = null;
 
+            // Ensure components are cached (Awake may not have run if object was inactive)
+            if (_rectTransform == null)
+                _rectTransform = GetComponent<RectTransform>();
+            if (_canvasGroup == null)
+                _canvasGroup = GetComponent<CanvasGroup>();
+            if (_canvas == null)
+                _canvas = GetComponentInParent<Canvas>();
+
+            // Kill any running tweens from previous use
+            DOTween.Kill(transform);
+            if (_rectTransform != null) DOTween.Kill(_rectTransform);
+
             // Reset transform
             transform.localScale = Vector3.one;
-            _rectTransform.localRotation = Quaternion.identity;
+            transform.localPosition = Vector3.zero;
+            if (_rectTransform != null)
+            {
+                _rectTransform.localRotation = Quaternion.identity;
+                _rectTransform.anchoredPosition = Vector2.zero;
+            }
 
             // Reset visuals
             if (_canvasGroup != null)
@@ -582,7 +599,7 @@ namespace HNR.UI.Combat
 
             if (_glowOutline != null)
             {
-                _glowOutline.DOKill();
+                DOTween.Kill(_glowOutline);
                 var color = _glowOutline.color;
                 color.a = 0f;
                 _glowOutline.color = color;

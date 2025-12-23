@@ -461,7 +461,8 @@ namespace HNR.UI.Screens
             if (card != null)
             {
                 card.Initialize(evt.Card);
-                _cardFanLayout.AddCard(card, _cardDrawIndex * 0.1f);
+                // No delay here - TurnManager.DrawCardsSequential handles timing
+                _cardFanLayout.AddCard(card);
                 _cardDrawIndex++;
             }
             else

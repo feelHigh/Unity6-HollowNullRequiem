@@ -310,6 +310,7 @@ namespace HNR.UI.Combat
             for (int i = 0; i < count; i++)
             {
                 var card = _cards[i];
+                if (card == null) continue;
 
                 // Skip hovered/selected/dragging cards (they have special positioning)
                 // Also skip the card being dealt (AnimateCardDeal handles it)
@@ -325,6 +326,10 @@ namespace HNR.UI.Combat
                 var rect = card.RectTransform;
                 if (rect != null)
                 {
+                    // Kill existing tweens to prevent conflicts
+                    DOTween.Kill(rect);
+                    DOTween.Kill(card.transform);
+
                     rect.DOAnchorPos(position, _repositionDuration).SetEase(Ease.OutQuad).SetLink(card.gameObject);
                     rect.DOLocalRotate(new Vector3(0, 0, rotation), _repositionDuration).SetEase(Ease.OutQuad).SetLink(card.gameObject);
                     card.transform.DOScale(1f, _repositionDuration).SetLink(card.gameObject);
@@ -362,6 +367,8 @@ namespace HNR.UI.Combat
         private void AnimateCardDeal(CombatCard card)
         {
             int index = _cards.IndexOf(card);
+            if (index < 0) return;
+
             int count = _cards.Count;
 
             float angleStep = count > 1 ? _fanAngle / (count - 1) : 0;
@@ -373,9 +380,20 @@ namespace HNR.UI.Combat
             var rect = card.RectTransform;
             if (rect != null)
             {
+                // Kill any existing tweens on this card
+                DOTween.Kill(rect);
+                DOTween.Kill(card.transform);
+
                 rect.DOAnchorPos(position, _dealDuration).SetEase(_dealEase).SetLink(card.gameObject);
                 rect.DOLocalRotate(new Vector3(0, 0, rotation), _dealDuration).SetEase(_dealEase).SetLink(card.gameObject);
                 card.transform.DOScale(1f, _dealDuration).SetEase(_dealEase).SetLink(card.gameObject);
+            }
+            else
+            {
+                // Fallback: set position directly if RectTransform unavailable
+                card.transform.localPosition = new Vector3(position.x, position.y, 0);
+                card.transform.localScale = Vector3.one;
+                Debug.LogWarning($"[CardFanLayout] RectTransform null for card at index {index}");
             }
 
             card.transform.SetSiblingIndex(index);

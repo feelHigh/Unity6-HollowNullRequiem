@@ -468,6 +468,8 @@ namespace HNR.Combat
 
         /// <summary>
         /// Coroutine that draws cards one at a time with delays.
+        /// DeckManager.Draw() publishes CardDrawnEvent which CombatScreenCZN
+        /// listens to for adding cards to CardFanLayout.
         /// </summary>
         private IEnumerator DrawCardsSequentialCoroutine(int count, Action onComplete)
         {
@@ -482,24 +484,23 @@ namespace HNR.Combat
 
             for (int i = 0; i < count; i++)
             {
-                // Check if reshuffle occurred before this draw
-                bool wasReshuffled = _reshuffleOccurred;
+                // Reset reshuffle flag before draw
                 _reshuffleOccurred = false;
 
-                // Draw the card
+                // Draw the card - this publishes CardDrawnEvent
+                // CombatScreenCZN.OnCardDrawn() handles adding to CardFanLayout
                 var card = _context.DeckManager.Draw();
 
-                // If reshuffle happened during Draw(), add extra delay
-                if (_reshuffleOccurred)
+                if (card != null)
                 {
-                    Debug.Log("[TurnManager] Reshuffle detected - adding delay before continuing draw");
-                    yield return new WaitForSeconds(_reshuffleDelay);
-                }
-
-                if (card != null && _context.HandManager != null)
-                {
-                    _context.HandManager.AddCard(card);
                     cardsDrawn++;
+
+                    // If reshuffle happened during Draw(), add extra delay for visual feedback
+                    if (_reshuffleOccurred)
+                    {
+                        Debug.Log("[TurnManager] Reshuffle detected - adding delay before continuing draw");
+                        yield return new WaitForSeconds(_reshuffleDelay);
+                    }
 
                     // Wait between card draws (except after last card)
                     if (i < count - 1)
