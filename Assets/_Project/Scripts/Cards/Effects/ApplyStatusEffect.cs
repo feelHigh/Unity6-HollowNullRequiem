@@ -91,7 +91,7 @@ namespace HNR.Cards
 
             if (statusManager != null)
             {
-                // TODO: Add RemoveEffect method to StatusEffectManager
+                statusManager.RemoveStatus(context.Target, _statusType);
                 Debug.Log($"[RemoveStatusEffect] Removed {_statusType} from {context.Target.Name}");
             }
 

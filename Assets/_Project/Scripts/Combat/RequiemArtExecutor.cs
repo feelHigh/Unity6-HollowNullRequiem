@@ -123,6 +123,7 @@ namespace HNR.Combat
             {
                 Card = null, // Not a card
                 Source = requiem.Data,
+                SourceInstance = requiem,
                 TurnManager = _turnManager,
                 CombatContext = _turnManager?.Context,
                 DeckManager = _turnManager?.Context?.DeckManager

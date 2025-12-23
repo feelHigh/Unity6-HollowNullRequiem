@@ -150,10 +150,19 @@ namespace HNR.Cards
             var turnManager = ServiceLocator.TryGet<TurnManager>(out var tm) ? tm : null;
             var deckManager = ServiceLocator.TryGet<DeckManager>(out var dm) ? dm : null;
 
+            // Find the RequiemInstance that matches the card owner
+            HNR.Characters.RequiemInstance sourceInstance = null;
+            var team = turnManager?.Context?.Team;
+            if (team != null && card.Data.Owner != null)
+            {
+                sourceInstance = team.Find(r => r.Data == card.Data.Owner);
+            }
+
             return new EffectContext
             {
                 Card = card,
                 Source = card.Data.Owner,
+                SourceInstance = sourceInstance,
                 Target = target,
                 TurnManager = turnManager,
                 CombatContext = turnManager?.Context,

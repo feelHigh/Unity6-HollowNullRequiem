@@ -58,9 +58,8 @@ namespace HNR.Cards
             // Deal damage
             context.Target.TakeDamage(damage);
 
-            // Publish event (using null for source since we don't have ICombatant yet)
-            // TODO: Properly implement ICombatant on RequiemInstance
-            EventBus.Publish(new DamageDealtEvent(null, null, damage, 0, false));
+            // Publish damage event with source instance and target
+            EventBus.Publish(new DamageDealtEvent(context.SourceInstance, context.Target, damage, 0, false));
 
             Debug.Log($"[DamageEffect] Dealt {damage} damage to {context.Target.Name}");
         }
@@ -112,8 +111,8 @@ namespace HNR.Cards
                 context.Target.TakeDamage(damagePerHit);
                 totalDamage += damagePerHit;
 
-                // Publish event for each hit
-                EventBus.Publish(new DamageDealtEvent(null, null, damagePerHit, 0, false));
+                // Publish damage event for each hit
+                EventBus.Publish(new DamageDealtEvent(context.SourceInstance, context.Target, damagePerHit, 0, false));
             }
 
             Debug.Log($"[DamageMultipleEffect] Dealt {damagePerHit}x{hitCount} = {totalDamage} total damage to {context.Target.Name}");

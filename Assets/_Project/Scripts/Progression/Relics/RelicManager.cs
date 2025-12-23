@@ -9,6 +9,7 @@ using UnityEngine;
 using HNR.Core;
 using HNR.Core.Events;
 using HNR.Core.Interfaces;
+using HNR.Combat;
 
 namespace HNR.Progression
 {
@@ -109,6 +110,7 @@ namespace HNR.Progression
             EventBus.Subscribe<CardPlayedEvent>(OnCardPlayed);
             EventBus.Subscribe<DamageDealtEvent>(OnDamageDealt);
             EventBus.Subscribe<NullStateEnteredEvent>(OnNullStateEntered);
+            EventBus.Subscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
 
             _isSubscribed = true;
             Debug.Log("[RelicManager] Subscribed to events");
@@ -124,6 +126,7 @@ namespace HNR.Progression
             EventBus.Unsubscribe<CardPlayedEvent>(OnCardPlayed);
             EventBus.Unsubscribe<DamageDealtEvent>(OnDamageDealt);
             EventBus.Unsubscribe<NullStateEnteredEvent>(OnNullStateEntered);
+            EventBus.Unsubscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
 
             _isSubscribed = false;
         }
@@ -158,9 +161,13 @@ namespace HNR.Progression
         private void OnDamageDealt(DamageDealtEvent evt)
         {
             TriggerRelics(RelicTrigger.OnDamageDealt, evt);
+        }
 
-            // Check for kill trigger
-            // TODO: Check if target died from this damage
+        private void OnEnemyDefeated(EnemyDefeatedEvent evt)
+        {
+            // Trigger OnKill relics when enemy is defeated
+            TriggerRelics(RelicTrigger.OnKill, evt);
+            Debug.Log($"[RelicManager] Enemy {evt.Enemy?.Name ?? "Unknown"} defeated - triggering OnKill relics");
         }
 
         private void OnNullStateEntered(NullStateEnteredEvent evt)

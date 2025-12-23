@@ -27,8 +27,11 @@ namespace HNR.Cards
         /// <summary>The card instance being played.</summary>
         public CardInstance Card { get; set; }
 
-        /// <summary>The Requiem that owns this card (can be null for neutral cards).</summary>
+        /// <summary>The Requiem data that owns this card (can be null for neutral cards).</summary>
         public RequiemDataSO Source { get; set; }
+
+        /// <summary>The Requiem instance that played this card (for event publishing).</summary>
+        public RequiemInstance SourceInstance { get; set; }
 
         // ============================================
         // Targeting

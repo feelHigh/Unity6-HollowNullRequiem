@@ -39,8 +39,7 @@ namespace HNR.Cards
                 EventBus.Publish(new BlockChangedEvent(context.CombatContext.TeamBlock, previousBlock));
             }
 
-            // Publish block gained event (using null for target since it's team-wide)
-            // TODO: Properly implement ICombatant for team
+            // Publish block gained event (null target indicates team-wide block)
             EventBus.Publish(new BlockGainedEvent(null, block));
 
             Debug.Log($"[BlockEffect] Gained {block} block");
