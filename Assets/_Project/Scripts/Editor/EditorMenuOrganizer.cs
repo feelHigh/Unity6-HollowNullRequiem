@@ -16,11 +16,10 @@ namespace HNR.Editor
     /// Menu Structure:
     /// HNR/
     /// ├── 1. Data Assets/     (priority 10-29) - Content generation
-    /// ├── 2. Prefabs/         (priority 30-49) - UI and visual prefabs
-    /// ├── 3. Production/      (priority 50-69) - Production setup
-    /// ├── 4. Audio & VFX/     (priority 70-79) - Audio/VFX configuration
-    /// ├── 5. Scenes/          (priority 100-139) - Production scenes
-    /// └── 6. Utilities/       (priority 200+) - Verification and utilities
+    /// ├── 2. Prefabs/         (priority 30-49) - UI, Character, and VFX prefabs
+    /// ├── 3. Audio/           (priority 70-79) - Audio configuration
+    /// ├── 4. Scenes/          (priority 100-139) - Scene setup and UI wiring
+    /// └── 5. Utilities/       (priority 200+) - Verification, fixes, finalization
     /// </summary>
     public static class EditorMenuOrganizer
     {
@@ -236,11 +235,129 @@ namespace HNR.Editor
             CharacterVisualPrefabGenerator.AssignPrefabsToDataAssets();
         }
 
+        [MenuItem("HNR/2. Prefabs/Characters/Setup Requiem Visuals", priority = 44)]
+        public static void SetupRequiemVisuals()
+        {
+            ProductionSetupTool.SetupAndLinkRequiemVisuals();
+        }
+
+        [MenuItem("HNR/2. Prefabs/Characters/Setup Enemy Visuals (HeroEditor)", priority = 45)]
+        public static void SetupEnemyVisuals()
+        {
+            ProductionSetupTool.SetupAndLinkEnemyVisuals();
+        }
+
+        [MenuItem("HNR/2. Prefabs/VFX/Generate VFX Prefabs", priority = 46)]
+        public static void GenerateVFXPrefabs()
+        {
+            AudioVFXConfigGenerator.GenerateVFXPrefabs();
+        }
+
+        [MenuItem("HNR/2. Prefabs/VFX/Create VFXPoolManager Config", priority = 47)]
+        public static void CreateVFXPoolManagerConfig()
+        {
+            AudioVFXConfigGenerator.CreateVFXPoolManagerConfig();
+        }
+
+        [MenuItem("HNR/2. Prefabs/Create All Prefabs", priority = 48)]
+        public static void CreateAllProductionPrefabs()
+        {
+            ProductionSetupTool.CreateAllPrefabs();
+        }
+
+        [MenuItem("HNR/2. Prefabs/Link Visual Prefabs to Data", priority = 49)]
+        public static void LinkVisualPrefabsToData()
+        {
+            ProductionSetupTool.LinkAllVisualPrefabs();
+        }
+
         // ============================================
-        // 3. Production Setup (priority 50-69)
+        // 3. Audio (priority 70-79)
         // ============================================
 
-        [MenuItem("HNR/3. Production/Complete Production Finalization", priority = 49)]
+        [MenuItem("HNR/3. Audio/Generate Audio Config", priority = 70)]
+        public static void GenerateAudioConfig()
+        {
+            AudioVFXConfigGenerator.GenerateAudioConfig();
+        }
+
+        // ============================================
+        // 4. Scenes (priority 100-139)
+        // ============================================
+
+        [MenuItem("HNR/4. Scenes/Setup All Scenes", priority = 100)]
+        public static void SetupAllProductionScenes()
+        {
+            ProductionSceneSetupGenerator.SetupAllScenes();
+        }
+
+        [MenuItem("HNR/4. Scenes/1. Setup Boot Scene", priority = 110)]
+        public static void SetupBootScene()
+        {
+            ProductionSceneSetupGenerator.SetupBootScene();
+        }
+
+        [MenuItem("HNR/4. Scenes/2. Setup MainMenu Scene", priority = 111)]
+        public static void SetupMainMenuScene()
+        {
+            ProductionSceneSetupGenerator.SetupMainMenuScene();
+        }
+
+        [MenuItem("HNR/4. Scenes/3. Setup Bastion Scene", priority = 112)]
+        public static void SetupBastionScene()
+        {
+            ProductionSceneSetupGenerator.SetupBastionScene();
+        }
+
+        [MenuItem("HNR/4. Scenes/4. Setup NullRift Scene", priority = 113)]
+        public static void SetupNullRiftScene()
+        {
+            ProductionSceneSetupGenerator.SetupNullRiftScene();
+        }
+
+        [MenuItem("HNR/4. Scenes/5. Setup Combat Scene", priority = 114)]
+        public static void SetupCombatScene()
+        {
+            ProductionSceneSetupGenerator.SetupCombatScene();
+        }
+
+        [MenuItem("HNR/4. Scenes/Wire UI/Wire All UI Elements", priority = 120)]
+        public static void WireUIRefactorElements()
+        {
+            UIRefactorWiringTool.WireAllUIRefactorElements();
+        }
+
+        [MenuItem("HNR/4. Scenes/Wire UI/Combat Scene (Block Indicator)", priority = 121)]
+        public static void WireCombatUIElements()
+        {
+            int wired = UIRefactorWiringTool.WireCombatSceneElements();
+            EditorUtility.DisplayDialog("Combat Scene Wiring",
+                $"Wired {wired} elements in Combat scene.\n\n" +
+                "Check SharedVitalityBarCZN for block indicator.",
+                "OK");
+        }
+
+        [MenuItem("HNR/4. Scenes/Wire UI/NullRift Scene (Zone Header, Shop)", priority = 122)]
+        public static void WireNullRiftUIElements()
+        {
+            int wired = UIRefactorWiringTool.WireNullRiftSceneElements();
+            EditorUtility.DisplayDialog("NullRift Scene Wiring",
+                $"Wired {wired} elements in NullRift scene.\n\n" +
+                "Check MapScreen zone header and ShopScreen service buttons.",
+                "OK");
+        }
+
+        [MenuItem("HNR/4. Scenes/Configure Build Settings", priority = 130)]
+        public static void ConfigureBuildSettings()
+        {
+            ProductionSceneSetupGenerator.ConfigureBuildSettings();
+        }
+
+        // ============================================
+        // 5. Utilities (priority 200+)
+        // ============================================
+
+        [MenuItem("HNR/5. Utilities/Complete Production Finalization", priority = 200)]
         public static void CompleteProductionFinalization()
         {
             if (!EditorUtility.DisplayDialog("Complete Production Finalization",
@@ -296,162 +413,25 @@ namespace HNR.Editor
                 "OK");
         }
 
-        [MenuItem("HNR/3. Production/Run Full Setup", priority = 50)]
+        [MenuItem("HNR/5. Utilities/Run Full Setup", priority = 201)]
         public static void RunFullProductionSetup()
         {
             ProductionSetupTool.RunFullSetup();
         }
 
-        [MenuItem("HNR/3. Production/Create All Prefabs", priority = 51)]
-        public static void CreateAllProductionPrefabs()
-        {
-            ProductionSetupTool.CreateAllPrefabs();
-        }
-
-        [MenuItem("HNR/3. Production/Link Visual Prefabs to Data", priority = 52)]
-        public static void LinkVisualPrefabsToData()
-        {
-            ProductionSetupTool.LinkAllVisualPrefabs();
-        }
-
-        [MenuItem("HNR/3. Production/Setup Requiem Visuals (Add Component + Link)", priority = 53)]
-        public static void SetupRequiemVisuals()
-        {
-            ProductionSetupTool.SetupAndLinkRequiemVisuals();
-        }
-
-        [MenuItem("HNR/3. Production/Setup Enemy Visuals (HeroEditor)", priority = 54)]
-        public static void SetupEnemyVisuals()
-        {
-            ProductionSetupTool.SetupAndLinkEnemyVisuals();
-        }
-
-        [MenuItem("HNR/3. Production/Verify Enemy Visuals", priority = 55)]
-        public static void VerifyEnemyVisuals()
-        {
-            ProductionSetupTool.VerifyEnemyVisuals();
-        }
-
-        [MenuItem("HNR/3. Production/Wire UI Refactor Elements (All)", priority = 56)]
-        public static void WireUIRefactorElements()
-        {
-            UIRefactorWiringTool.WireAllUIRefactorElements();
-        }
-
-        [MenuItem("HNR/3. Production/Wire UI Refactor/Combat Scene (Block Indicator)", priority = 57)]
-        public static void WireCombatUIElements()
-        {
-            int wired = UIRefactorWiringTool.WireCombatSceneElements();
-            EditorUtility.DisplayDialog("Combat Scene Wiring",
-                $"Wired {wired} elements in Combat scene.\n\n" +
-                "Check SharedVitalityBarCZN for block indicator.",
-                "OK");
-        }
-
-        [MenuItem("HNR/3. Production/Wire UI Refactor/NullRift Scene (Zone Header, Shop)", priority = 58)]
-        public static void WireNullRiftUIElements()
-        {
-            int wired = UIRefactorWiringTool.WireNullRiftSceneElements();
-            EditorUtility.DisplayDialog("NullRift Scene Wiring",
-                $"Wired {wired} elements in NullRift scene.\n\n" +
-                "Check MapScreen zone header and ShopScreen service buttons.",
-                "OK");
-        }
-
-        [MenuItem("HNR/3. Production/Wire UI Refactor/Create TreasureScreen Prefab", priority = 59)]
-        public static void CreateTreasureScreenPrefab()
-        {
-            int created = UIRefactorWiringTool.CreateTreasureScreenPrefab();
-            EditorUtility.DisplayDialog("TreasureScreen Prefab",
-                created > 0 ? "TreasureScreen prefab created successfully!" : "TreasureScreen prefab already exists.",
-                "OK");
-        }
-
-        // ============================================
-        // 4. Audio & VFX (priority 70-79)
-        // ============================================
-
-        [MenuItem("HNR/4. Audio & VFX/Generate All Configs", priority = 70)]
-        public static void GenerateAllAudioVFXConfigs()
-        {
-            AudioVFXConfigGenerator.GenerateAllConfigs();
-        }
-
-        [MenuItem("HNR/4. Audio & VFX/Generate Audio Config", priority = 71)]
-        public static void GenerateAudioConfig()
-        {
-            AudioVFXConfigGenerator.GenerateAudioConfig();
-        }
-
-        [MenuItem("HNR/4. Audio & VFX/Generate VFX Prefabs", priority = 72)]
-        public static void GenerateVFXPrefabs()
-        {
-            AudioVFXConfigGenerator.GenerateVFXPrefabs();
-        }
-
-        [MenuItem("HNR/4. Audio & VFX/Create VFXPoolManager Config", priority = 73)]
-        public static void CreateVFXPoolManagerConfig()
-        {
-            AudioVFXConfigGenerator.CreateVFXPoolManagerConfig();
-        }
-
-        // ============================================
-        // 5. Scenes (priority 100-139)
-        // ============================================
-
-        [MenuItem("HNR/5. Scenes/Setup All Scenes", priority = 100)]
-        public static void SetupAllProductionScenes()
-        {
-            ProductionSceneSetupGenerator.SetupAllScenes();
-        }
-
-        [MenuItem("HNR/5. Scenes/1. Setup Boot Scene", priority = 110)]
-        public static void SetupBootScene()
-        {
-            ProductionSceneSetupGenerator.SetupBootScene();
-        }
-
-        [MenuItem("HNR/5. Scenes/2. Setup MainMenu Scene", priority = 111)]
-        public static void SetupMainMenuScene()
-        {
-            ProductionSceneSetupGenerator.SetupMainMenuScene();
-        }
-
-        [MenuItem("HNR/5. Scenes/3. Setup Bastion Scene", priority = 112)]
-        public static void SetupBastionScene()
-        {
-            ProductionSceneSetupGenerator.SetupBastionScene();
-        }
-
-        [MenuItem("HNR/5. Scenes/4. Setup NullRift Scene", priority = 113)]
-        public static void SetupNullRiftScene()
-        {
-            ProductionSceneSetupGenerator.SetupNullRiftScene();
-        }
-
-        [MenuItem("HNR/5. Scenes/5. Setup Combat Scene", priority = 114)]
-        public static void SetupCombatScene()
-        {
-            ProductionSceneSetupGenerator.SetupCombatScene();
-        }
-
-        [MenuItem("HNR/5. Scenes/Configure Build Settings", priority = 130)]
-        public static void ConfigureBuildSettings()
-        {
-            ProductionSceneSetupGenerator.ConfigureBuildSettings();
-        }
-
-        // ============================================
-        // 6. Utilities (priority 200+)
-        // ============================================
-
-        [MenuItem("HNR/6. Utilities/Verify Relic Assets", priority = 200)]
+        [MenuItem("HNR/5. Utilities/Verify Relic Assets", priority = 202)]
         public static void VerifyRelicAssets()
         {
             RelicAssetGenerator.VerifyRelicAssets();
         }
 
-        [MenuItem("HNR/6. Utilities/Fix Enemy Visual Prefabs", priority = 202)]
+        [MenuItem("HNR/5. Utilities/Verify Enemy Visuals", priority = 203)]
+        public static void VerifyEnemyVisuals()
+        {
+            ProductionSetupTool.VerifyEnemyVisuals();
+        }
+
+        [MenuItem("HNR/5. Utilities/Fix Enemy Visual Prefabs", priority = 204)]
         public static void FixEnemyVisualPrefabs()
         {
             string prefabsPath = "Assets/_Project/Prefabs/Characters/Enemies";
@@ -540,7 +520,7 @@ namespace HNR.Editor
             Debug.Log($"[EditorMenuOrganizer] Fixed {fixedCount} EnemyDataSO sprite scales to 12x");
         }
 
-        [MenuItem("HNR/6. Utilities/Fix Combat Scene Background", priority = 204)]
+        [MenuItem("HNR/5. Utilities/Fix Combat Scene Background", priority = 205)]
         public static void FixCombatSceneBackground()
         {
             // Find Background object in current scene and disable it
@@ -566,7 +546,7 @@ namespace HNR.Editor
                 UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
         }
 
-        [MenuItem("HNR/6. Utilities/Fix EnemyInstance Prefab Wiring", priority = 205)]
+        [MenuItem("HNR/5. Utilities/Fix EnemyInstance Prefab Wiring", priority = 206)]
         public static void FixEnemyInstancePrefab()
         {
             string prefabPath = "Assets/_Project/Prefabs/Combat/EnemyInstance.prefab";
@@ -628,7 +608,7 @@ namespace HNR.Editor
             Debug.Log("[EditorMenuOrganizer] EnemyInstance prefab wiring fixed successfully!");
         }
 
-        [MenuItem("HNR/6. Utilities/Show Menu Organization", priority = 201)]
+        [MenuItem("HNR/5. Utilities/Show Menu Organization", priority = 210)]
         public static void ShowMenuOrganization()
         {
             Debug.Log(@"
@@ -644,35 +624,75 @@ HNR/
 │   ├── Relics
 │   └── Production/ (Zone Data, Zone Configs, Zone 2&3 Encounters)
 │
-├── 2. Prefabs/             (30-49)  - UI and visual prefabs
+├── 2. Prefabs/             (30-49)  - UI, Character, and VFX prefabs
 │   ├── UI/ (Card, DamageNumber, EnemySlotUI, Meta-Game, Combat UI)
-│   └── Characters/ (Visual Prefabs, Create Empty, Link to Data)
-│
-├── 3. Production/          (50-69)  - Production setup
-│   ├── Run Full Setup
+│   ├── Characters/ (Visual Prefabs, Setup Requiem/Enemy Visuals, Link to Data)
+│   ├── VFX/ (Generate VFX Prefabs, VFXPoolManager Config)
 │   ├── Create All Prefabs
 │   └── Link Visual Prefabs to Data
 │
-├── 4. Audio & VFX/         (70-79)  - Audio/VFX configuration
-│   ├── Generate All Configs
-│   ├── Generate Audio Config
-│   ├── Generate VFX Prefabs
-│   └── Create VFXPoolManager Config
+├── 3. Audio/               (70-79)  - Audio configuration
+│   └── Generate Audio Config
 │
-├── 5. Scenes/              (100-139) - Production scenes
+├── 4. Scenes/              (100-139) - Scene setup and UI wiring
 │   ├── Setup All Scenes
 │   ├── 1-5. Setup Individual Scenes
+│   ├── Wire UI/ (All, Combat, NullRift)
 │   └── Configure Build Settings
 │
-└── 6. Utilities/           (200+)   - Verification tools
+└── 5. Utilities/           (200+)   - Verification, fixes, finalization
+    ├── Complete Production Finalization
+    ├── Run Full Setup
     ├── Verify Relic Assets
-    └── Show Menu Organization
+    ├── Verify Enemy Visuals
+    ├── Fix Enemy Visual Prefabs
+    ├── Fix Combat Scene Background
+    ├── Fix EnemyInstance Prefab Wiring
+    ├── Show Menu Organization
+    ├── Wire Card Prefab References
+    └── Missing Scripts/ (Find, Remove)
 
 Build/ (separate menu)
 ├── Android/ (Development, Release, AAB)
 ├── Version/ (Increment, Show Current)
 └── Builds Folder/ (Open, Clean, Validate)
 ");
+        }
+
+        [MenuItem("HNR/5. Utilities/Wire Card Prefab References", priority = 211)]
+        public static void WireCardPrefabReferences()
+        {
+            CardPrefabWiringTool.WireCardPrefabReferences();
+        }
+
+        [MenuItem("HNR/5. Utilities/Missing Scripts/Find in HeroEditor", priority = 220)]
+        public static void FindMissingScriptsInHeroEditor()
+        {
+            MissingScriptCleaner.FindMissingScriptsInHeroEditor();
+        }
+
+        [MenuItem("HNR/5. Utilities/Missing Scripts/Find in Project", priority = 221)]
+        public static void FindMissingScriptsInProject()
+        {
+            MissingScriptCleaner.FindMissingScriptsInProject();
+        }
+
+        [MenuItem("HNR/5. Utilities/Missing Scripts/Find All", priority = 222)]
+        public static void FindMissingScriptsAll()
+        {
+            MissingScriptCleaner.FindMissingScriptsAll();
+        }
+
+        [MenuItem("HNR/5. Utilities/Missing Scripts/Remove from HeroEditor", priority = 223)]
+        public static void RemoveMissingScriptsFromHeroEditor()
+        {
+            MissingScriptCleaner.RemoveMissingScriptsFromHeroEditor();
+        }
+
+        [MenuItem("HNR/5. Utilities/Missing Scripts/Remove from Project", priority = 224)]
+        public static void RemoveMissingScriptsFromProject()
+        {
+            MissingScriptCleaner.RemoveMissingScriptsFromProject();
         }
     }
 }

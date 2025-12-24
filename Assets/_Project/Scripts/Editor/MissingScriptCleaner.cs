@@ -9,31 +9,26 @@ namespace HNR.Editor
     /// </summary>
     public static class MissingScriptCleaner
     {
-        [MenuItem("HNR/6. Utilities/Find Missing Scripts in HeroEditor", priority = 210)]
         public static void FindMissingScriptsInHeroEditor()
         {
             FindMissingScriptsInFolder("Assets/ThirdParty/HeroEditor");
         }
 
-        [MenuItem("HNR/6. Utilities/Find Missing Scripts in Project", priority = 211)]
         public static void FindMissingScriptsInProject()
         {
             FindMissingScriptsInFolder("Assets/_Project");
         }
 
-        [MenuItem("HNR/6. Utilities/Find Missing Scripts (All)", priority = 212)]
         public static void FindMissingScriptsAll()
         {
             FindMissingScriptsInFolder("Assets");
         }
 
-        [MenuItem("HNR/6. Utilities/Remove Missing Scripts from HeroEditor", priority = 213)]
         public static void RemoveMissingScriptsFromHeroEditor()
         {
             RemoveMissingScriptsFromFolder("Assets/ThirdParty/HeroEditor");
         }
 
-        [MenuItem("HNR/6. Utilities/Remove Missing Scripts from Project", priority = 214)]
         public static void RemoveMissingScriptsFromProject()
         {
             RemoveMissingScriptsFromFolder("Assets/_Project");

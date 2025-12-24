@@ -24,7 +24,6 @@ namespace HNR.Editor
         private const string CARD_PREFAB_PATH = "Assets/_Project/Prefabs/Cards/Card.prefab";
         private const string NULLRIFT_SCENE_PATH = "Assets/_Project/Scenes/NullRift.unity";
 
-        [MenuItem("HNR/Utilities/Wire Card Prefab References", false, 210)]
         public static void WireCardPrefabReferences()
         {
             // Load Card prefab
