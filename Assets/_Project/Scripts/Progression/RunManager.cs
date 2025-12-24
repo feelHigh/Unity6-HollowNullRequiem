@@ -254,8 +254,8 @@ namespace HNR.Progression
             _runSeed = (int)System.DateTime.Now.Ticks;
             Random.InitState(_runSeed);
 
-            // Clear previous run state
-            _team.Clear();
+            // Clear previous run state - destroy old RequiemInstance GameObjects
+            CleanupTeam();
             _deck.Clear();
             _upgradedCardIds.Clear();
             _stats = new StatsSaveData();
@@ -316,12 +316,32 @@ namespace HNR.Progression
                 saveManager.DeleteRun();
             }
 
+            // Clean up RequiemInstance GameObjects
+            CleanupTeam();
+
             _isRunActive = false;
 
             // Publish event
             EventBus.Publish(new RunEndedEvent(victory, _currentZone, _stats.EnemiesDefeated));
 
             Debug.Log($"[RunManager] Run ended - Victory: {victory}, Zone: {_currentZone}, Time: {_stats.PlayTime:F1}s");
+        }
+
+        /// <summary>
+        /// Destroys all RequiemInstance GameObjects and clears the team list.
+        /// Called when ending a run or before starting a new one.
+        /// </summary>
+        private void CleanupTeam()
+        {
+            foreach (var requiem in _team)
+            {
+                if (requiem != null && requiem.gameObject != null)
+                {
+                    Destroy(requiem.gameObject);
+                }
+            }
+            _team.Clear();
+            Debug.Log("[RunManager] Team cleaned up - RequiemInstance GameObjects destroyed");
         }
 
         private void UpdateMetaProgression(bool victory)
@@ -515,8 +535,8 @@ namespace HNR.Progression
             _runSeed = saveData.RunSeed;
             Random.InitState(_runSeed);
 
-            // Restore team
-            _team.Clear();
+            // Restore team - clean up any existing RequiemInstance GameObjects first
+            CleanupTeam();
             _teamCurrentHP = saveData.Team.TeamCurrentHP;
             _teamMaxHP = saveData.Team.TeamMaxHP;
 
