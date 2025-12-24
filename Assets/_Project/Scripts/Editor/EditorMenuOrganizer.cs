@@ -151,7 +151,7 @@ namespace HNR.Editor
             CardPrefabGenerator.GenerateCardPrefab();
         }
 
-        [MenuItem("HNR/2. Prefabs/UI/CombatCard Prefab (CZN)", priority = 30)]
+        [MenuItem("HNR/2. Prefabs/UI/CombatCard Prefab", priority = 30)]
         public static void GenerateCombatCardPrefab()
         {
             CombatCardPrefabGenerator.GenerateCombatCardPrefab();

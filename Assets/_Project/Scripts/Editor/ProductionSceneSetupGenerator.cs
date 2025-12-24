@@ -1486,9 +1486,9 @@ namespace HNR.Editor
             contentRect.sizeDelta = new Vector2(0, 0);
 
             GridLayoutGroup grid = upgradeCardContainer.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(100, 140);
-            grid.spacing = new Vector2(15, 15);
-            grid.padding = new RectOffset(20, 20, 20, 20);
+            grid.cellSize = new Vector2(200, 280); // Match Card.prefab native size for proper scaling
+            grid.spacing = new Vector2(20, 20);
+            grid.padding = new RectOffset(30, 30, 20, 20);
             grid.childAlignment = TextAnchor.UpperCenter;
 
             ContentSizeFitter fitter = upgradeCardContainer.AddComponent<ContentSizeFitter>();
@@ -1532,7 +1532,7 @@ namespace HNR.Editor
             so.FindProperty("_cancelUpgradeButton").objectReferenceValue = cancelUpgradeBtn.GetComponent<Button>();
 
             // Wire Card prefab for proper card display (implements ICardDisplay)
-            var cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/Combat/Card.prefab");
+            var cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Cards/Card.prefab");
             if (cardPrefab != null)
             {
                 var cardSlotProp = so.FindProperty("_cardSlotPrefab");
@@ -1548,7 +1548,7 @@ namespace HNR.Editor
             }
             else
             {
-                Debug.LogWarning("[ProductionSceneSetupGenerator] Card.prefab not found at Assets/_Project/Prefabs/UI/Combat/Card.prefab");
+                Debug.LogWarning("[ProductionSceneSetupGenerator] Card.prefab not found at Assets/_Project/Prefabs/Cards/Card.prefab - run HNR > 2. Prefabs > UI > Card Prefab first");
             }
 
             so.ApplyModifiedPropertiesWithoutUndo();
@@ -1672,7 +1672,7 @@ namespace HNR.Editor
             so.FindProperty("_continueButton").objectReferenceValue = continueBtn.GetComponent<Button>();
 
             // Wire Card prefab for proper card display (implements ICardDisplay)
-            var cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/Combat/Card.prefab");
+            var cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Cards/Card.prefab");
             if (cardPrefab != null)
             {
                 var cardSlotProp = so.FindProperty("_cardRewardSlotPrefab");
@@ -1688,7 +1688,7 @@ namespace HNR.Editor
             }
             else
             {
-                Debug.LogWarning("[ProductionSceneSetupGenerator] Card.prefab not found for TreasureScreen");
+                Debug.LogWarning("[ProductionSceneSetupGenerator] Card.prefab not found for TreasureScreen - run HNR > 2. Prefabs > UI > Card Prefab first");
             }
 
             so.ApplyModifiedPropertiesWithoutUndo();
@@ -1823,7 +1823,7 @@ namespace HNR.Editor
             so.FindProperty("_abandonButton").objectReferenceValue = abandonBtn.GetComponent<Button>();
 
             // Wire Card prefab for proper card display (implements ICardDisplay)
-            var cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/Combat/Card.prefab");
+            var cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Cards/Card.prefab");
             if (cardPrefab != null)
             {
                 var cardSlotProp = so.FindProperty("_cardRewardSlotPrefab");
@@ -1839,7 +1839,7 @@ namespace HNR.Editor
             }
             else
             {
-                Debug.LogWarning("[ProductionSceneSetupGenerator] Card.prefab not found for ResultsScreen");
+                Debug.LogWarning("[ProductionSceneSetupGenerator] Card.prefab not found for ResultsScreen - run HNR > 2. Prefabs > UI > Card Prefab first");
             }
 
             so.ApplyModifiedPropertiesWithoutUndo();
