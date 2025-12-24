@@ -249,6 +249,16 @@ namespace HNR.Editor
             nodeEventSo.FindProperty("_deckViewerModal").objectReferenceValue = deckViewerModal.GetComponent<DeckViewerModal>();
             nodeEventSo.ApplyModifiedPropertiesWithoutUndo();
 
+            // Wire DeckViewerModal to EchoEventScreen for card upgrade selection
+            var echoEventScreen = echoScreen.GetComponent<EchoEventScreen>();
+            if (echoEventScreen != null)
+            {
+                var echoEventSo = new SerializedObject(echoEventScreen);
+                echoEventSo.FindProperty("_deckViewerModal").objectReferenceValue = deckViewerModal.GetComponent<DeckViewerModal>();
+                echoEventSo.ApplyModifiedPropertiesWithoutUndo();
+                Debug.Log("[ProductionSceneSetupGenerator] Wired DeckViewerModal to EchoEventScreen");
+            }
+
             // === Background ===
             CreateBackground(canvasObj, new Color(0.03f, 0.01f, 0.08f));
 
@@ -1113,20 +1123,39 @@ namespace HNR.Editor
             Image outcomeBg = outcomePanel.AddComponent<Image>();
             outcomeBg.color = new Color(0.08f, 0.06f, 0.12f, 0.98f);
 
+            // OutcomeText - positioned at top of outcome panel
             GameObject outcomeText = CreateText(outcomePanel, "OutcomeText", "Outcome text...", 20);
             RectTransform outcomeTextRect = outcomeText.GetComponent<RectTransform>();
-            outcomeTextRect.anchorMin = new Vector2(0.1f, 0.3f);
-            outcomeTextRect.anchorMax = new Vector2(0.9f, 0.8f);
+            outcomeTextRect.anchorMin = new Vector2(0.1f, 0.65f);
+            outcomeTextRect.anchorMax = new Vector2(0.9f, 0.90f);
             outcomeTextRect.sizeDelta = Vector2.zero;
             var outcomeTmp = outcomeText.GetComponent<TextMeshProUGUI>();
             outcomeTmp.alignment = TextAlignmentOptions.Center;
 
-            // Continue button in outcome panel
+            // OutcomeCardContainer - displays card received from event choice
+            GameObject outcomeCardContainer = new GameObject("OutcomeCardContainer");
+            outcomeCardContainer.transform.SetParent(outcomePanel.transform, false);
+            RectTransform cardContainerRect = outcomeCardContainer.AddComponent<RectTransform>();
+            cardContainerRect.anchorMin = new Vector2(0.5f, 0.25f);
+            cardContainerRect.anchorMax = new Vector2(0.5f, 0.60f);
+            cardContainerRect.pivot = new Vector2(0.5f, 0.5f);
+            cardContainerRect.sizeDelta = new Vector2(220, 0); // Width for card, height stretches with anchors
+
+            // Add HorizontalLayoutGroup for potential multiple cards
+            var cardContainerLayout = outcomeCardContainer.AddComponent<HorizontalLayoutGroup>();
+            cardContainerLayout.childAlignment = TextAnchor.MiddleCenter;
+            cardContainerLayout.spacing = 10f;
+            cardContainerLayout.childControlWidth = false;
+            cardContainerLayout.childControlHeight = false;
+            cardContainerLayout.childForceExpandWidth = false;
+            cardContainerLayout.childForceExpandHeight = false;
+
+            // Continue button in outcome panel - positioned at bottom
             GameObject continueBtn = new GameObject("ContinueButton");
             continueBtn.transform.SetParent(outcomePanel.transform, false);
             RectTransform continueBtnRect = continueBtn.AddComponent<RectTransform>();
-            continueBtnRect.anchorMin = new Vector2(0.5f, 0.15f);
-            continueBtnRect.anchorMax = new Vector2(0.5f, 0.15f);
+            continueBtnRect.anchorMin = new Vector2(0.5f, 0.08f);
+            continueBtnRect.anchorMax = new Vector2(0.5f, 0.08f);
             continueBtnRect.sizeDelta = new Vector2(140, 45);
 
             Image continueBtnImg = continueBtn.AddComponent<Image>();
@@ -1185,6 +1214,20 @@ namespace HNR.Editor
                 so.FindProperty("_outcomeText").objectReferenceValue = outcomeTmp;
                 so.FindProperty("_continueButton").objectReferenceValue = continueBtnComponent;
                 so.FindProperty("_skipButton").objectReferenceValue = skipBtnComponent;
+                so.FindProperty("_outcomeCardContainer").objectReferenceValue = outcomeCardContainer.transform;
+
+                // Wire Card prefab for outcome display
+                var cardPrefab = AssetDatabase.LoadAssetAtPath<Cards.Card>("Assets/_Project/Prefabs/Cards/Card.prefab");
+                if (cardPrefab != null)
+                {
+                    so.FindProperty("_cardPrefab").objectReferenceValue = cardPrefab;
+                    Debug.Log("[ProductionSceneSetupGenerator] Wired Card.prefab to EchoEventScreen._cardPrefab");
+                }
+                else
+                {
+                    Debug.LogWarning("[ProductionSceneSetupGenerator] Card.prefab not found for EchoEventScreen - run HNR > 2. Prefabs > UI > Card Prefab first");
+                }
+
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
 
@@ -3490,12 +3533,12 @@ namespace HNR.Editor
             cardContainerRect.sizeDelta = new Vector2(0, 300);
 
             GridLayoutGroup grid = cardContainer.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(90, 120);
-            grid.spacing = new Vector2(10, 10);
+            grid.cellSize = new Vector2(200, 280); // Match Card.prefab native size (same as Sanctuary)
+            grid.spacing = new Vector2(20, 20);
             grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
             grid.startAxis = GridLayoutGroup.Axis.Horizontal;
             grid.childAlignment = TextAnchor.UpperCenter;
-            grid.padding = new RectOffset(10, 10, 10, 10);
+            grid.padding = new RectOffset(30, 30, 20, 20);
 
             ContentSizeFitter fitter = cardContainer.AddComponent<ContentSizeFitter>();
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
@@ -3579,6 +3622,19 @@ namespace HNR.Editor
             so.FindProperty("_normalSlotColor").colorValue = new Color(0.15f, 0.15f, 0.2f);
             so.FindProperty("_selectedSlotColor").colorValue = new Color(0.2f, 0.35f, 0.5f);
             so.FindProperty("_hoverSlotColor").colorValue = new Color(0.2f, 0.25f, 0.3f);
+
+            // Wire Card.prefab for proper card display (matching Sanctuary upgrade window)
+            var cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Cards/Card.prefab");
+            if (cardPrefab != null)
+            {
+                so.FindProperty("_cardSlotPrefab").objectReferenceValue = cardPrefab;
+                Debug.Log("[ProductionSceneSetupGenerator] Wired Card.prefab to DeckViewerModal._cardSlotPrefab");
+            }
+            else
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] Card.prefab not found for DeckViewerModal - run HNR > 2. Prefabs > UI > Card Prefab first");
+            }
+
             so.ApplyModifiedPropertiesWithoutUndo();
 
             Debug.Log("[ProductionSceneSetupGenerator] Created DeckViewerModal");

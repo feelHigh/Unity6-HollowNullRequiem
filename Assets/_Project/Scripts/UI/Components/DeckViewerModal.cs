@@ -267,14 +267,12 @@ namespace HNR.UI.Components
             {
                 if (card == null) continue;
 
-                // For upgrade mode, only show cards that can be upgraded
+                // For upgrade mode, only show cards that aren't already upgraded
+                // (Consistent with SanctuaryScreen behavior)
                 if (_currentMode == ViewMode.UpgradeCard)
                 {
                     // Skip already upgraded cards
                     if (runManager.IsCardUpgraded(card.CardId))
-                        continue;
-                    // Skip cards without upgraded version
-                    if (card.UpgradedVersion == null)
                         continue;
                 }
 
@@ -322,12 +320,22 @@ namespace HNR.UI.Components
 
             _spawnedSlots.Add(slot);
 
-            // Setup button click
-            var button = slot.GetComponent<Button>();
-            if (button != null)
+            // Try Card's native click event first (for Card prefab - matching Sanctuary behavior)
+            var cardComponent = slot.GetComponent<Card>();
+            if (cardComponent != null)
             {
                 int capturedIndex = index;
-                button.onClick.AddListener(() => OnCardSlotClicked(capturedIndex));
+                cardComponent.OnCardClicked += (clickedCard) => OnCardSlotClicked(capturedIndex);
+            }
+            else
+            {
+                // Fallback to Button (for legacy slots)
+                var button = slot.GetComponent<Button>();
+                if (button != null)
+                {
+                    int capturedIndex = index;
+                    button.onClick.AddListener(() => OnCardSlotClicked(capturedIndex));
+                }
             }
 
             // Set card data if component exists
@@ -340,9 +348,9 @@ namespace HNR.UI.Components
             var slot = new GameObject($"CardSlot_{card?.CardName ?? "Unknown"}");
             slot.transform.SetParent(_cardContainer, false);
 
-            // Add rect transform
+            // Add rect transform - match Card.prefab native size
             var rect = slot.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(90, 120);
+            rect.sizeDelta = new Vector2(200, 280);
 
             // Add background image
             var image = slot.AddComponent<Image>();
@@ -365,7 +373,7 @@ namespace HNR.UI.Components
 
             var text = textObj.AddComponent<TextMeshProUGUI>();
             text.text = card?.CardName ?? "Unknown";
-            text.fontSize = 11;
+            text.fontSize = 18; // Larger font for bigger card
             text.alignment = TextAlignmentOptions.Center;
             text.color = Color.white;
             text.textWrappingMode = TMPro.TextWrappingModes.Normal;
@@ -378,8 +386,8 @@ namespace HNR.UI.Components
             costRect.anchorMin = new Vector2(0, 1);
             costRect.anchorMax = new Vector2(0, 1);
             costRect.pivot = new Vector2(0, 1);
-            costRect.anchoredPosition = new Vector2(5, -5);
-            costRect.sizeDelta = new Vector2(20, 20);
+            costRect.anchoredPosition = new Vector2(8, -8);
+            costRect.sizeDelta = new Vector2(40, 40); // Larger cost badge
 
             var costBg = costObj.AddComponent<Image>();
             costBg.color = new Color(0.2f, 0.4f, 0.8f);
@@ -394,7 +402,7 @@ namespace HNR.UI.Components
 
             var costText = costTextObj.AddComponent<TextMeshProUGUI>();
             costText.text = card?.APCost.ToString() ?? "?";
-            costText.fontSize = 12;
+            costText.fontSize = 24; // Larger font for bigger badge
             costText.alignment = TextAlignmentOptions.Center;
             costText.color = Color.white;
             costText.fontStyle = FontStyles.Bold;
