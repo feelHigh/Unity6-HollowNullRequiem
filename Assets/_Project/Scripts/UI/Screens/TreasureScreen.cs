@@ -228,12 +228,23 @@ namespace HNR.UI.Screens
                 {
                     _spawnedCardSlots.Add(slot);
 
+                    // Try Button first (for legacy placeholder slots)
                     var button = slot.GetComponent<Button>();
                     if (button != null)
                     {
                         int index = i;
                         button.onClick.RemoveAllListeners();
                         button.onClick.AddListener(() => OnCardRewardSelected(index));
+                    }
+                    else
+                    {
+                        // Use Card's native click event (for Card prefab)
+                        var cardComponent = slot.GetComponent<Card>();
+                        if (cardComponent != null)
+                        {
+                            int index = i;
+                            cardComponent.OnCardClicked += (clickedCard) => OnCardRewardSelected(index);
+                        }
                     }
 
                     var cardDisplay = slot.GetComponent<ICardDisplay>();

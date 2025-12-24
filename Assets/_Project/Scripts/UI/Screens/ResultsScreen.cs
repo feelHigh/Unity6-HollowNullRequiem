@@ -318,13 +318,23 @@ namespace HNR.UI
                 {
                     _spawnedCardSlots.Add(slot);
 
-                    // Wire up card slot
+                    // Wire up card slot - try Button first (for legacy placeholder slots)
                     var button = slot.GetComponent<Button>();
                     if (button != null)
                     {
                         int index = i;
                         button.onClick.RemoveAllListeners();
                         button.onClick.AddListener(() => OnCardRewardSelected(index));
+                    }
+                    else
+                    {
+                        // Use Card's native click event (for Card prefab)
+                        var cardComponent = slot.GetComponent<Card>();
+                        if (cardComponent != null)
+                        {
+                            int index = i;
+                            cardComponent.OnCardClicked += (clickedCard) => OnCardRewardSelected(index);
+                        }
                     }
 
                     // Try to set card data if component exists
@@ -499,11 +509,18 @@ namespace HNR.UI
 
         private void ApplyRewards()
         {
-            // Publish currency change events
+            // Add Void Shards via ShopManager (publishes VoidShardsChangedEvent for UI updates)
             if (_voidShardsReward > 0)
             {
-                EventBus.Publish(new CurrencyChangedEvent(
-                    CurrencyType.VoidShards, 0, _voidShardsReward));
+                if (ServiceLocator.TryGet<IShopManager>(out var shopManager))
+                {
+                    shopManager.AddVoidShards(_voidShardsReward);
+                    Debug.Log($"[ResultsScreen] Added {_voidShardsReward} Void Shards via ShopManager");
+                }
+                else
+                {
+                    Debug.LogWarning("[ResultsScreen] ShopManager not available - could not add Void Shards");
+                }
             }
 
             // Soul Essence is typically added per-Requiem during combat

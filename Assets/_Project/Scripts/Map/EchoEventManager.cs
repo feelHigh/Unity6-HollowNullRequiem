@@ -51,6 +51,12 @@ namespace HNR.Map
         /// <summary>Whether an event is currently active.</summary>
         public bool IsEventActive => _currentEvent != null;
 
+        /// <summary>
+        /// The last card added to deck from an outcome (for UI display).
+        /// Set by AddCard/AddRandomCard, cleared when starting a new event.
+        /// </summary>
+        public CardDataSO LastOutcomeCard { get; private set; }
+
         // ============================================
         // Unity Lifecycle
         // ============================================
@@ -139,6 +145,9 @@ namespace HNR.Map
         /// <param name="eventData">Event to start, or null for random.</param>
         public void StartEvent(EchoEventDataSO eventData)
         {
+            // Clear previous outcome card
+            LastOutcomeCard = null;
+
             if (eventData == null)
             {
                 eventData = GetRandomEvent();
@@ -183,6 +192,41 @@ namespace HNR.Map
             // Publish event
             EventBus.Publish(new EchoChoiceSelectedEvent(_selectedChoice));
             Debug.Log($"[EchoEventManager] Selected: {_selectedChoice.ChoiceText}");
+        }
+
+        /// <summary>
+        /// Selects a choice and executes outcomes, skipping UpgradeCard outcomes.
+        /// Used when card upgrade was already handled by UI modal.
+        /// </summary>
+        /// <param name="choiceIndex">Index of the choice to select.</param>
+        public void SelectChoiceWithoutUpgrade(int choiceIndex)
+        {
+            if (_currentEvent == null)
+            {
+                Debug.LogWarning("[EchoEventManager] No active event");
+                return;
+            }
+
+            if (choiceIndex < 0 || choiceIndex >= _currentEvent.Choices.Count)
+            {
+                Debug.LogWarning($"[EchoEventManager] Invalid choice index: {choiceIndex}");
+                return;
+            }
+
+            _selectedChoice = _currentEvent.Choices[choiceIndex];
+
+            // Execute outcomes except UpgradeCard (already handled by UI)
+            foreach (var outcome in _selectedChoice.Outcomes)
+            {
+                if (outcome.Type != EchoOutcomeType.UpgradeCard)
+                {
+                    ExecuteOutcome(outcome);
+                }
+            }
+
+            // Publish event
+            EventBus.Publish(new EchoChoiceSelectedEvent(_selectedChoice));
+            Debug.Log($"[EchoEventManager] Selected (upgrade skipped): {_selectedChoice.ChoiceText}");
         }
 
         /// <summary>
@@ -404,6 +448,7 @@ namespace HNR.Map
                 if (ServiceLocator.TryGet<IRunManager>(out var runManager))
                 {
                     runManager.AddCardToDeck(card);
+                    LastOutcomeCard = card; // Track for UI display
                     Debug.Log($"[EchoEvent] Added card to deck: {card.CardName}");
                 }
                 else
@@ -523,6 +568,7 @@ namespace HNR.Map
 
             var randomCard = availableCards[Random.Range(0, availableCards.Count)];
             runManager.AddCardToDeck(randomCard);
+            LastOutcomeCard = randomCard; // Track for UI display
             Debug.Log($"[EchoEvent] Added random card: {randomCard.CardName}");
         }
 

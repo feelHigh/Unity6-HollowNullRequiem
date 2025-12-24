@@ -53,6 +53,16 @@ namespace HNR.Progression
         {
             ServiceLocator.Register<IShopManager>(this);
             DontDestroyOnLoad(gameObject);
+
+            // Load config from Resources if not assigned
+            if (_config == null)
+            {
+                _config = Resources.Load<ShopConfigSO>("Data/Config/ShopConfig");
+                if (_config != null)
+                {
+                    Debug.Log("[ShopManager] Loaded ShopConfig from Resources");
+                }
+            }
         }
 
         private void OnDestroy()

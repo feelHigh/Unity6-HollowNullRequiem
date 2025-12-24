@@ -52,6 +52,9 @@ namespace HNR.UI
         [SerializeField, Tooltip("Upgrade button (enhance a card)")]
         private Button _upgradeButton;
 
+        [SerializeField, Tooltip("Leave button (skip without making a choice)")]
+        private Button _leaveButton;
+
         // ============================================
         // Choice Info Labels
         // ============================================
@@ -88,6 +91,9 @@ namespace HNR.UI
 
         [SerializeField, Tooltip("Card slot prefab for upgrade selection")]
         private GameObject _cardSlotPrefab;
+
+        [SerializeField, Tooltip("Card prefab for upgrade display (fallback if cardSlotPrefab is null)")]
+        private Card _cardPrefab;
 
         [SerializeField, Tooltip("Confirm upgrade button")]
         private Button _confirmUpgradeButton;
@@ -178,6 +184,12 @@ namespace HNR.UI
                 _upgradeButton.onClick.AddListener(OnUpgradeClicked);
             }
 
+            if (_leaveButton != null)
+            {
+                _leaveButton.onClick.RemoveAllListeners();
+                _leaveButton.onClick.AddListener(OnLeaveClicked);
+            }
+
             if (_confirmUpgradeButton != null)
             {
                 _confirmUpgradeButton.onClick.RemoveAllListeners();
@@ -256,6 +268,15 @@ namespace HNR.UI
             ShowCardSelectionPanel();
         }
 
+        private void OnLeaveClicked()
+        {
+            if (_choiceMade) return;
+            _choiceMade = true;
+
+            Debug.Log("[SanctuaryScreen] Leave chosen - skipping sanctuary");
+            CompleteAndReturn();
+        }
+
         // ============================================
         // Rest Effect
         // ============================================
@@ -329,6 +350,9 @@ namespace HNR.UI
                 }
                 canvasGroup.alpha = 0f;
                 canvasGroup.DOFade(1f, _fadeInDuration).SetLink(_cardSelectionPanel);
+
+                // Fix Mask/Viewport issue: Replace Mask with RectMask2D for proper clipping
+                FixViewportMask();
             }
 
             LoadUpgradableCards();
@@ -340,6 +364,47 @@ namespace HNR.UI
             {
                 _confirmUpgradeButton.interactable = false;
             }
+        }
+
+        /// <summary>
+        /// Fix the viewport mask to ensure cards are visible.
+        /// Unity's Mask component requires an Image with proper alpha to work.
+        /// RectMask2D is more reliable for scrollable content.
+        /// </summary>
+        private void FixViewportMask()
+        {
+            if (_upgradeCardContainer == null) return;
+
+            // Find the viewport (parent of the card container)
+            var viewport = _upgradeCardContainer.parent;
+            if (viewport == null) return;
+
+            // Check if there's a problematic Mask component
+            var mask = viewport.GetComponent<Mask>();
+            if (mask != null)
+            {
+                Debug.Log("[SanctuaryScreen] Found Mask on viewport, replacing with RectMask2D for better visibility");
+
+                // Remove the old Mask component
+                Destroy(mask);
+
+                // Add RectMask2D which clips to RectTransform bounds without needing an Image sprite
+                if (viewport.GetComponent<RectMask2D>() == null)
+                {
+                    viewport.gameObject.AddComponent<RectMask2D>();
+                }
+
+                // The Image on viewport is no longer needed for masking, but keep it for layout
+                var viewportImage = viewport.GetComponent<Image>();
+                if (viewportImage != null)
+                {
+                    // Make it fully transparent so it doesn't show but doesn't interfere
+                    viewportImage.color = Color.clear;
+                    viewportImage.raycastTarget = false;
+                }
+            }
+
+            Debug.Log($"[SanctuaryScreen] Viewport mask fixed. Viewport: {viewport.name}");
         }
 
         private void HideCardSelectionPanel()
@@ -358,60 +423,185 @@ namespace HNR.UI
 
             // Get cards from current deck that can be upgraded
             var runManager = ServiceLocator.Get<IRunManager>();
-            var deck = runManager?.Deck;
 
-            if (deck != null && runManager != null)
+            if (runManager == null)
             {
-                foreach (var card in deck)
+                Debug.LogWarning("[SanctuaryScreen] RunManager not available");
+                return;
+            }
+
+            if (!runManager.IsRunActive)
+            {
+                Debug.LogWarning("[SanctuaryScreen] No active run");
+                return;
+            }
+
+            var deck = runManager.Deck;
+            Debug.Log($"[SanctuaryScreen] Run active: {runManager.IsRunActive}, Team size: {runManager.Team?.Count ?? 0}, Deck size: {deck?.Count ?? 0}");
+
+            if (deck == null || deck.Count == 0)
+            {
+                Debug.LogWarning("[SanctuaryScreen] Deck is empty or null. Check that RequiemDataSO assets have StartingCards assigned.");
+                Debug.Log("[SanctuaryScreen] Run HNR > 1. Data Assets > Requiems > [Each Requiem] to regenerate Requiem assets with cards.");
+                return;
+            }
+
+            foreach (var card in deck)
+            {
+                // Only show cards that aren't already upgraded
+                if (card != null && !runManager.IsCardUpgraded(card.CardId))
                 {
-                    // Only show cards that aren't already upgraded
-                    if (card != null && !runManager.IsCardUpgraded(card.CardId))
-                    {
-                        _upgradableCards.Add(card);
-                    }
+                    _upgradableCards.Add(card);
                 }
             }
 
-            Debug.Log($"[SanctuaryScreen] Found {_upgradableCards.Count} upgradable cards");
+            Debug.Log($"[SanctuaryScreen] Found {_upgradableCards.Count} upgradable cards out of {deck.Count} total cards");
         }
 
         private void SpawnUpgradeCardSlots()
         {
             ClearUpgradeCardSlots();
 
-            if (_upgradeCardContainer == null) return;
+            if (_upgradeCardContainer == null)
+            {
+                Debug.LogError("[SanctuaryScreen] _upgradeCardContainer is null!");
+                return;
+            }
+
+            Debug.Log($"[SanctuaryScreen] Spawning cards in container: {_upgradeCardContainer.name}, parent: {_upgradeCardContainer.parent?.name}");
+
+            // Show message if no upgradable cards
+            if (_upgradableCards.Count == 0)
+            {
+                var emptySlot = CreateEmptyStateSlot();
+                if (emptySlot != null)
+                {
+                    _spawnedCardSlots.Add(emptySlot);
+                }
+                return;
+            }
 
             for (int i = 0; i < _upgradableCards.Count; i++)
             {
                 var card = _upgradableCards[i];
                 GameObject slot = null;
 
+                // Use Card prefab for consistent visual display
                 if (_cardSlotPrefab != null)
                 {
                     slot = Instantiate(_cardSlotPrefab, _upgradeCardContainer);
                 }
+                else if (_cardPrefab != null)
+                {
+                    // Use Card prefab (unified card design)
+                    var cardInstance = Instantiate(_cardPrefab, _upgradeCardContainer);
+                    slot = cardInstance.gameObject;
+                }
                 else
                 {
-                    slot = CreatePlaceholderCardSlot(card);
+                    // Ultimate fallback - create minimal slot without problematic border
+                    slot = CreateMinimalCardSlot(card);
                 }
 
                 if (slot != null)
                 {
                     _spawnedCardSlots.Add(slot);
 
-                    var button = slot.GetComponent<Button>();
-                    if (button != null)
+                    // Try Card's native click event first (for Card prefab)
+                    var cardComponent = slot.GetComponent<Card>();
+                    if (cardComponent != null)
                     {
                         int index = i;
-                        button.onClick.RemoveAllListeners();
-                        button.onClick.AddListener(() => OnUpgradeCardSelected(index));
+                        cardComponent.OnCardClicked += (clickedCard) => OnUpgradeCardSelected(index);
+                    }
+                    else
+                    {
+                        // Fallback to Button (for legacy slots)
+                        var button = slot.GetComponent<Button>();
+                        if (button != null)
+                        {
+                            int index = i;
+                            button.onClick.RemoveAllListeners();
+                            button.onClick.AddListener(() => OnUpgradeCardSelected(index));
+                        }
                     }
 
                     // Set card display if component exists
                     var cardDisplay = slot.GetComponent<ICardDisplay>();
                     cardDisplay?.SetCard(card);
+
+                    Debug.Log($"[SanctuaryScreen] Created card slot {i}: {card?.CardName} at {slot.transform.position}");
                 }
             }
+
+            // Force layout rebuild after adding all cards
+            if (_upgradeCardContainer is RectTransform containerRect)
+            {
+                Canvas.ForceUpdateCanvases();
+                UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(containerRect);
+                Debug.Log($"[SanctuaryScreen] Forced layout rebuild. Container size: {containerRect.rect.size}");
+            }
+        }
+
+        /// <summary>
+        /// Creates a minimal card slot without the problematic colored border.
+        /// Used as ultimate fallback when no prefab is available.
+        /// </summary>
+        private GameObject CreateMinimalCardSlot(CardDataSO card)
+        {
+            var slot = new GameObject($"CardSlot_{card?.CardName ?? "Unknown"}");
+            slot.transform.SetParent(_upgradeCardContainer, false);
+
+            var rect = slot.AddComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(140, 196); // Card aspect ratio
+
+            // Neutral background (no colored border)
+            var bgImage = slot.AddComponent<Image>();
+            bgImage.color = new Color(0.15f, 0.15f, 0.2f, 1f); // Neutral dark
+            bgImage.raycastTarget = true;
+
+            var button = slot.AddComponent<Button>();
+            button.targetGraphic = bgImage;
+
+            // Cost text (top left)
+            var costObj = new GameObject("CostText");
+            costObj.transform.SetParent(slot.transform, false);
+            var costRect = costObj.AddComponent<RectTransform>();
+            costRect.anchorMin = new Vector2(0, 1);
+            costRect.anchorMax = new Vector2(0, 1);
+            costRect.pivot = new Vector2(0, 1);
+            costRect.anchoredPosition = new Vector2(8, -8);
+            costRect.sizeDelta = new Vector2(30, 30);
+            var costText = costObj.AddComponent<TextMeshProUGUI>();
+            SetupTMPText(costText, card?.APCost.ToString() ?? "?", 18, FontStyles.Bold, TextAlignmentOptions.Center);
+            costText.color = new Color(0.5f, 0.85f, 1f);
+
+            // Name text (center)
+            var nameObj = new GameObject("NameText");
+            nameObj.transform.SetParent(slot.transform, false);
+            var nameRect = nameObj.AddComponent<RectTransform>();
+            nameRect.anchorMin = new Vector2(0, 0.4f);
+            nameRect.anchorMax = new Vector2(1, 0.6f);
+            nameRect.offsetMin = new Vector2(8, 0);
+            nameRect.offsetMax = new Vector2(-8, 0);
+            var nameText = nameObj.AddComponent<TextMeshProUGUI>();
+            SetupTMPText(nameText, card?.CardName ?? "Unknown", 14, FontStyles.Bold, TextAlignmentOptions.Center);
+            nameText.color = Color.white;
+
+            // Description text (bottom)
+            var descObj = new GameObject("DescText");
+            descObj.transform.SetParent(slot.transform, false);
+            var descRect = descObj.AddComponent<RectTransform>();
+            descRect.anchorMin = new Vector2(0, 0);
+            descRect.anchorMax = new Vector2(1, 0.35f);
+            descRect.offsetMin = new Vector2(8, 8);
+            descRect.offsetMax = new Vector2(-8, 0);
+            var descText = descObj.AddComponent<TextMeshProUGUI>();
+            SetupTMPText(descText, card?.GetFormattedDescription() ?? "", 10, FontStyles.Normal, TextAlignmentOptions.Center);
+            descText.color = new Color(0.8f, 0.8f, 0.8f);
+            descText.textWrappingMode = TextWrappingModes.Normal;
+
+            return slot;
         }
 
         private GameObject CreatePlaceholderCardSlot(CardDataSO card)
@@ -419,17 +609,240 @@ namespace HNR.UI
             var slot = new GameObject($"UpgradeSlot_{card?.CardName ?? "Unknown"}");
             slot.transform.SetParent(_upgradeCardContainer, false);
 
+            // GridLayoutGroup will control size, but set initial size
             var rect = slot.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(80, 110);
+            rect.sizeDelta = new Vector2(100, 140);
 
-            var image = slot.AddComponent<Image>();
-            image.color = new Color(0.15f, 0.15f, 0.2f);
+            // Ensure CanvasRenderer exists for UI rendering
+            if (slot.GetComponent<CanvasRenderer>() == null)
+            {
+                slot.AddComponent<CanvasRenderer>();
+            }
+
+            // Card background - use BRIGHT visible colors
+            var bgImage = slot.AddComponent<Image>();
+            bgImage.color = GetCardBackgroundColorBright(card?.CardType ?? CardType.Skill);
+            bgImage.raycastTarget = true;
+
+            // Create a border child for the frame effect (more reliable than Outline)
+            CreateCardBorder(slot.transform, card?.CardType ?? CardType.Skill);
 
             var button = slot.AddComponent<Button>();
-            button.targetGraphic = image;
+            button.targetGraphic = bgImage;
 
-            // Card name text
-            var textObj = new GameObject("CardName");
+            // Configure button colors - use actual color values not tints
+            var colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1f, 1f, 0.8f); // Slight yellow highlight
+            colors.pressedColor = new Color(0.8f, 0.8f, 0.8f);
+            colors.selectedColor = new Color(0.9f, 1f, 0.9f); // Slight green for selected
+            colors.disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            button.colors = colors;
+
+            // Cost orb (top left)
+            CreateCostOrb(slot.transform, card?.APCost ?? 0);
+
+            // Card name (top center)
+            CreateCardNameText(slot.transform, card?.CardName ?? "Unknown");
+
+            // Card type indicator (middle)
+            CreateCardTypeText(slot.transform, card?.CardType ?? CardType.Skill);
+
+            // Card description (bottom)
+            CreateCardDescription(slot.transform, card?.GetFormattedDescription() ?? "");
+
+            Debug.Log($"[SanctuaryScreen] Created card visual: {card?.CardName}, BG color: {bgImage.color}");
+
+            return slot;
+        }
+
+        private void CreateCardBorder(Transform parent, CardType type)
+        {
+            var borderObj = new GameObject("Border");
+            borderObj.transform.SetParent(parent, false);
+
+            var borderRect = borderObj.AddComponent<RectTransform>();
+            borderRect.anchorMin = Vector2.zero;
+            borderRect.anchorMax = Vector2.one;
+            borderRect.sizeDelta = Vector2.zero;
+            borderRect.offsetMin = new Vector2(-3, -3);
+            borderRect.offsetMax = new Vector2(3, 3);
+
+            // Put border behind parent by setting sibling index
+            borderObj.transform.SetAsFirstSibling();
+
+            var borderImage = borderObj.AddComponent<Image>();
+            borderImage.color = GetCardFrameColor(type);
+            borderImage.raycastTarget = false;
+        }
+
+        private Color GetCardBackgroundColorBright(CardType type)
+        {
+            // Use much brighter, more visible colors
+            return type switch
+            {
+                CardType.Strike => new Color(0.4f, 0.15f, 0.15f), // Visible dark red
+                CardType.Guard => new Color(0.15f, 0.25f, 0.45f),  // Visible dark blue
+                CardType.Skill => new Color(0.15f, 0.35f, 0.2f),   // Visible dark green
+                CardType.Power => new Color(0.35f, 0.15f, 0.4f),   // Visible dark purple
+                _ => new Color(0.3f, 0.3f, 0.35f)                   // Visible gray
+            };
+        }
+
+        private void CreateCostOrb(Transform parent, int cost)
+        {
+            var orbObj = new GameObject("CostOrb");
+            orbObj.transform.SetParent(parent, false);
+
+            var orbRect = orbObj.AddComponent<RectTransform>();
+            orbRect.anchorMin = new Vector2(0, 1);
+            orbRect.anchorMax = new Vector2(0, 1);
+            orbRect.pivot = new Vector2(0, 1);
+            orbRect.anchoredPosition = new Vector2(4, -4);
+            orbRect.sizeDelta = new Vector2(26, 26);
+
+            var orbImage = orbObj.AddComponent<Image>();
+            orbImage.color = new Color(0.1f, 0.15f, 0.35f, 1f); // Visible dark blue
+            orbImage.raycastTarget = false;
+
+            // Cost text
+            var costTextObj = new GameObject("CostText");
+            costTextObj.transform.SetParent(orbObj.transform, false);
+
+            var costTextRect = costTextObj.AddComponent<RectTransform>();
+            costTextRect.anchorMin = Vector2.zero;
+            costTextRect.anchorMax = Vector2.one;
+            costTextRect.sizeDelta = Vector2.zero;
+            costTextRect.offsetMin = Vector2.zero;
+            costTextRect.offsetMax = Vector2.zero;
+
+            var costText = costTextObj.AddComponent<TextMeshProUGUI>();
+            SetupTMPText(costText, cost.ToString(), 14, FontStyles.Bold, TextAlignmentOptions.Center);
+            costText.color = new Color(0.5f, 0.85f, 1f); // Bright cyan for AP
+        }
+
+        /// <summary>
+        /// Helper to set up TMP text with default font.
+        /// </summary>
+        private void SetupTMPText(TextMeshProUGUI tmp, string text, float fontSize, FontStyles style, TextAlignmentOptions alignment)
+        {
+            tmp.text = text;
+            tmp.fontSize = fontSize;
+            tmp.fontStyle = style;
+            tmp.alignment = alignment;
+            tmp.enableWordWrapping = true;
+            tmp.overflowMode = TextOverflowModes.Ellipsis;
+
+            // Ensure font is assigned - TMP requires font asset
+            if (tmp.font == null)
+            {
+                // Try to get default font from TMP Settings
+                var defaultFont = TMPro.TMP_Settings.defaultFontAsset;
+                if (defaultFont != null)
+                {
+                    tmp.font = defaultFont;
+                }
+                else
+                {
+                    // Fallback: try to load LiberationSans SDF
+                    var fallbackFont = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
+                    if (fallbackFont != null)
+                    {
+                        tmp.font = fallbackFont;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[SanctuaryScreen] No TMP font available - text may not render");
+                    }
+                }
+            }
+        }
+
+        private void CreateCardNameText(Transform parent, string cardName)
+        {
+            var nameObj = new GameObject("CardName");
+            nameObj.transform.SetParent(parent, false);
+
+            var nameRect = nameObj.AddComponent<RectTransform>();
+            nameRect.anchorMin = new Vector2(0, 1);
+            nameRect.anchorMax = new Vector2(1, 1);
+            nameRect.pivot = new Vector2(0.5f, 1);
+            nameRect.anchoredPosition = new Vector2(0, -4);
+            nameRect.sizeDelta = new Vector2(-8, 28);
+
+            var nameText = nameObj.AddComponent<TextMeshProUGUI>();
+            SetupTMPText(nameText, cardName, 11, FontStyles.Bold, TextAlignmentOptions.Center);
+            nameText.color = Color.white;
+        }
+
+        private void CreateCardTypeText(Transform parent, CardType cardType)
+        {
+            var typeObj = new GameObject("CardType");
+            typeObj.transform.SetParent(parent, false);
+
+            var typeRect = typeObj.AddComponent<RectTransform>();
+            typeRect.anchorMin = new Vector2(0, 0.5f);
+            typeRect.anchorMax = new Vector2(1, 0.5f);
+            typeRect.pivot = new Vector2(0.5f, 0.5f);
+            typeRect.anchoredPosition = new Vector2(0, 15);
+            typeRect.sizeDelta = new Vector2(-8, 16);
+
+            var typeText = typeObj.AddComponent<TextMeshProUGUI>();
+            SetupTMPText(typeText, $"[{cardType}]", 9, FontStyles.Normal, TextAlignmentOptions.Center);
+            typeText.color = GetCardFrameColor(cardType);
+        }
+
+        private void CreateCardDescription(Transform parent, string description)
+        {
+            var descObj = new GameObject("Description");
+            descObj.transform.SetParent(parent, false);
+
+            var descRect = descObj.AddComponent<RectTransform>();
+            descRect.anchorMin = new Vector2(0, 0);
+            descRect.anchorMax = new Vector2(1, 0.5f);
+            descRect.pivot = new Vector2(0.5f, 0);
+            descRect.anchoredPosition = new Vector2(0, 6);
+            descRect.sizeDelta = new Vector2(-8, -16);
+
+            var descText = descObj.AddComponent<TextMeshProUGUI>();
+            SetupTMPText(descText, description, 8, FontStyles.Normal, TextAlignmentOptions.Center);
+            descText.color = new Color(0.9f, 0.9f, 0.9f);
+        }
+
+        private Color GetCardBackgroundColor(CardType type)
+        {
+            return type switch
+            {
+                CardType.Strike => new Color(0.25f, 0.12f, 0.12f), // Dark red
+                CardType.Guard => new Color(0.12f, 0.18f, 0.28f),  // Dark blue
+                CardType.Skill => new Color(0.12f, 0.22f, 0.15f),  // Dark green
+                CardType.Power => new Color(0.2f, 0.12f, 0.25f),   // Dark purple
+                _ => new Color(0.18f, 0.18f, 0.22f)                // Dark gray
+            };
+        }
+
+        private Color GetCardFrameColor(CardType type)
+        {
+            return type switch
+            {
+                CardType.Strike => new Color(0.9f, 0.3f, 0.3f),  // Red
+                CardType.Guard => new Color(0.3f, 0.5f, 0.9f),   // Blue
+                CardType.Skill => new Color(0.3f, 0.8f, 0.4f),   // Green
+                CardType.Power => new Color(0.7f, 0.3f, 0.8f),   // Purple
+                _ => new Color(0.6f, 0.6f, 0.6f)                 // Gray
+            };
+        }
+
+        private GameObject CreateEmptyStateSlot()
+        {
+            var slot = new GameObject("EmptyState");
+            slot.transform.SetParent(_upgradeCardContainer, false);
+
+            var rect = slot.AddComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(300, 100);
+
+            // Empty state message
+            var textObj = new GameObject("Message");
             textObj.transform.SetParent(slot.transform, false);
 
             var textRect = textObj.AddComponent<RectTransform>();
@@ -438,10 +851,10 @@ namespace HNR.UI
             textRect.sizeDelta = Vector2.zero;
 
             var text = textObj.AddComponent<TextMeshProUGUI>();
-            text.text = card?.CardName ?? "Unknown";
-            text.fontSize = 10;
+            text.text = "No cards available to upgrade.\n<size=80%><color=#888888>Your deck is empty or all cards are already upgraded.</color></size>";
+            text.fontSize = 14;
             text.alignment = TextAlignmentOptions.Center;
-            text.color = Color.white;
+            text.color = new Color(0.7f, 0.7f, 0.7f);
 
             return slot;
         }
@@ -465,21 +878,40 @@ namespace HNR.UI
             _selectedCardForUpgrade = _upgradableCards[index];
             Debug.Log($"[SanctuaryScreen] Card selected for upgrade: {_selectedCardForUpgrade.CardName}");
 
-            // Visual feedback
+            // Visual feedback - highlight selected, dim others
             for (int i = 0; i < _spawnedCardSlots.Count; i++)
             {
                 var slot = _spawnedCardSlots[i];
                 if (slot == null) continue;
 
+                bool isSelected = (i == index);
+
+                // Get original card type color or use default
+                CardType cardType = (i < _upgradableCards.Count) ? _upgradableCards[i].CardType : CardType.Skill;
+                Color baseColor = GetCardBackgroundColorBright(cardType);
+
                 var image = slot.GetComponent<Image>();
                 if (image != null)
                 {
-                    image.color = (i == index)
-                        ? new Color(0.3f, 0.4f, 0.3f)
-                        : new Color(0.15f, 0.15f, 0.2f);
+                    if (isSelected)
+                    {
+                        // Brighten selected card
+                        image.color = new Color(
+                            Mathf.Min(baseColor.r * 1.5f, 1f),
+                            Mathf.Min(baseColor.g * 1.5f, 1f),
+                            Mathf.Min(baseColor.b * 1.5f, 1f),
+                            1f
+                        );
+                    }
+                    else
+                    {
+                        // Dim unselected cards slightly
+                        image.color = new Color(baseColor.r * 0.6f, baseColor.g * 0.6f, baseColor.b * 0.6f, 0.8f);
+                    }
                 }
 
-                slot.transform.DOScale(i == index ? 1.1f : 1f, 0.2f).SetLink(slot);
+                // Scale animation
+                slot.transform.DOScale(isSelected ? 1.1f : 0.95f, 0.2f).SetEase(Ease.OutBack).SetLink(slot);
             }
 
             // Enable confirm button
@@ -540,8 +972,15 @@ namespace HNR.UI
 
         private void NavigateToMap()
         {
-            var gameManager = ServiceLocator.Get<IGameManager>();
-            gameManager?.ChangeState(GameState.Run);
+            // Use UIManager to show MapScreen (we're already in Run state, just switching screens)
+            if (ServiceLocator.TryGet<IUIManager>(out var uiManager))
+            {
+                uiManager.ShowScreen<MapScreen>();
+            }
+            else
+            {
+                Debug.LogWarning("[SanctuaryScreen] UIManager not available for screen transition");
+            }
         }
 
         // ============================================

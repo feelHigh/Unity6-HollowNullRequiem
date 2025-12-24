@@ -9,14 +9,16 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 using HNR.Core.Interfaces;
+using HNR.UI;
 
 namespace HNR.Cards
 {
     /// <summary>
     /// Visual representation of a card in hand/play.
     /// Handles display, interaction, and pooling.
+    /// Implements ICardDisplay for use in non-combat screens (Sanctuary, Results, Treasure).
     /// </summary>
-    public class Card : MonoBehaviour, IPoolable, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
+    public class Card : MonoBehaviour, IPoolable, ICardDisplay, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
         // ============================================
         // Visual References
@@ -120,6 +122,25 @@ namespace HNR.Cards
         public void Initialize(CardInstance instance)
         {
             _cardInstance = instance;
+            UpdateVisuals();
+        }
+
+        /// <summary>
+        /// Set card display from CardDataSO (ICardDisplay implementation).
+        /// Creates a temporary CardInstance for display purposes.
+        /// Used by non-combat screens (Sanctuary, Results, Treasure).
+        /// </summary>
+        /// <param name="card">Card data to display</param>
+        public void SetCard(CardDataSO card)
+        {
+            if (card == null)
+            {
+                Debug.LogWarning("[Card] SetCard called with null card data");
+                return;
+            }
+
+            // Create a temporary CardInstance for display
+            _cardInstance = new CardInstance(card);
             UpdateVisuals();
         }
 

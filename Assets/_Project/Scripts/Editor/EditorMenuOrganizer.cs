@@ -136,6 +136,12 @@ namespace HNR.Editor
             ProductionDataGenerator.GenerateZone2And3Encounters();
         }
 
+        [MenuItem("HNR/1. Data Assets/Production/Shop Config", priority = 28)]
+        public static void GenerateShopConfig()
+        {
+            ProductionDataGenerator.GenerateShopConfig();
+        }
+
         // ============================================
         // 2. Prefabs (priority 30-49)
         // ============================================

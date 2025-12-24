@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEditor;
 using HNR.Map;
 using HNR.Combat;
+using HNR.Progression;
 
 namespace HNR.Editor
 {
@@ -23,6 +24,7 @@ namespace HNR.Editor
         private const string ENCOUNTER_PATH = "Assets/_Project/Data/Encounters";
         private const string ENEMY_PATH = "Assets/_Project/Data/Enemies";
         private const string EVENTS_PATH = "Assets/_Project/Data/Events";
+        private const string CONFIG_PATH = "Assets/_Project/Resources/Data/Config";
 
         // ============================================
         // Public Methods (called from EditorMenuOrganizer)
@@ -87,6 +89,33 @@ namespace HNR.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("[ProductionDataGenerator] Zone 2 & 3 encounters generated");
+        }
+
+        /// <summary>
+        /// Generates the ShopConfigSO asset for the Void Market.
+        /// </summary>
+        public static void GenerateShopConfig()
+        {
+            EnsureDirectoryExists(CONFIG_PATH);
+
+            string path = $"{CONFIG_PATH}/ShopConfig.asset";
+
+            // Check if already exists
+            var existing = AssetDatabase.LoadAssetAtPath<ShopConfigSO>(path);
+            if (existing != null)
+            {
+                Debug.Log("[ProductionDataGenerator] ShopConfig already exists");
+                return;
+            }
+
+            // Create new ShopConfigSO with default values
+            var config = ScriptableObject.CreateInstance<ShopConfigSO>();
+            AssetDatabase.CreateAsset(config, path);
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Debug.Log($"[ProductionDataGenerator] Created ShopConfig at {path}");
         }
 
         // ============================================

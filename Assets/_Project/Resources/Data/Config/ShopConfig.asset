@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abe43dbcd91b4f94982adb1cb0b547f0, type: 3}
+  m_Name: ShopConfig
+  m_EditorClassIdentifier: 
+  _minCardCount: 3
+  _maxCardCount: 4
+  _relicCount: 1
+  _cardRemovePrice: 75
+  _purificationPrice: 50
+  _purificationAmount: 15
+  _commonCardPrice: {x: 30, y: 50}
+  _uncommonCardPrice: {x: 60, y: 90}
+  _rareCardPrice: {x: 100, y: 150}
+  _legendaryCardPrice: {x: 200, y: 300}
+  _commonRelicPrice: {x: 100, y: 150}
+  _uncommonRelicPrice: {x: 150, y: 200}
+  _rareRelicPrice: {x: 200, y: 300}

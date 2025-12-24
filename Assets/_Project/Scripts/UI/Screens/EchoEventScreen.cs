@@ -4,13 +4,16 @@
 // ============================================
 
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using HNR.Core;
 using HNR.Core.Events;
 using HNR.Core.Interfaces;
+using HNR.Cards;
 using HNR.UI;
+using HNR.UI.Components;
 
 namespace HNR.Map
 {
@@ -51,6 +54,21 @@ namespace HNR.Map
         [SerializeField, Tooltip("Button to continue after viewing outcome")]
         private Button _continueButton;
 
+        [Header("Navigation")]
+        [SerializeField, Tooltip("Button to skip/close event (shown when no choices available)")]
+        private Button _skipButton;
+
+        [Header("Card Selection")]
+        [SerializeField, Tooltip("Deck viewer modal for card upgrade selection")]
+        private DeckViewerModal _deckViewerModal;
+
+        [Header("Outcome Card Display")]
+        [SerializeField, Tooltip("Container for outcome card display in outcome panel")]
+        private Transform _outcomeCardContainer;
+
+        [SerializeField, Tooltip("Card prefab for outcome display")]
+        private Card _cardPrefab;
+
         // ============================================
         // Runtime State
         // ============================================
@@ -58,6 +76,7 @@ namespace HNR.Map
         private readonly List<Button> _choiceButtons = new();
         private EchoEventManager _echoManager;
         private EchoEventDataSO _currentEvent;
+        private int _pendingChoiceIndex = -1;
 
         // ============================================
         // Screen Lifecycle
@@ -80,6 +99,12 @@ namespace HNR.Map
                 _continueButton.onClick.AddListener(OnContinueClicked);
             }
 
+            // Setup skip button
+            if (_skipButton != null)
+            {
+                _skipButton.onClick.AddListener(OnSkipClicked);
+            }
+
             // Hide outcome panel initially
             if (_outcomePanel != null)
             {
@@ -90,6 +115,11 @@ namespace HNR.Map
             if (_echoManager?.CurrentEvent != null)
             {
                 DisplayEvent(_echoManager.CurrentEvent);
+            }
+            else
+            {
+                // No event - show empty state with skip option
+                ShowEmptyState();
             }
         }
 
@@ -105,6 +135,11 @@ namespace HNR.Map
             if (_continueButton != null)
             {
                 _continueButton.onClick.RemoveListener(OnContinueClicked);
+            }
+
+            if (_skipButton != null)
+            {
+                _skipButton.onClick.RemoveListener(OnSkipClicked);
             }
 
             ClearChoices();
@@ -172,6 +207,13 @@ namespace HNR.Map
                 _outcomePanel.SetActive(false);
             }
 
+            // Show skip button if no choices available, hide otherwise
+            if (_skipButton != null)
+            {
+                bool hasChoices = eventData.Choices != null && eventData.Choices.Count > 0;
+                _skipButton.gameObject.SetActive(!hasChoices);
+            }
+
             Debug.Log($"[EchoEventScreen] Displaying event: {eventData.EventTitle}");
         }
 
@@ -194,11 +236,36 @@ namespace HNR.Map
         {
             var button = Instantiate(_choiceButtonPrefab, _choiceContainer);
 
-            // Set button text
+            // Ensure instantiated button is active (template may be inactive)
+            button.gameObject.SetActive(true);
+
+            // Set button text with choice and outcome preview
             var buttonText = button.GetComponentInChildren<TextMeshProUGUI>();
             if (buttonText != null)
             {
-                buttonText.text = choice.ChoiceText;
+                string outcomePreview = FormatOutcomePreview(choice.Outcomes);
+                if (!string.IsNullOrEmpty(outcomePreview))
+                {
+                    buttonText.text = $"{choice.ChoiceText}\n<size=80%><color=#AAAAAA>{outcomePreview}</color></size>";
+                }
+                else
+                {
+                    buttonText.text = choice.ChoiceText;
+                }
+            }
+
+            // Improve button visual clarity with better sizing
+            var rectTransform = button.GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                // Ensure button has enough height for text + outcome
+                var layoutElement = button.GetComponent<UnityEngine.UI.LayoutElement>();
+                if (layoutElement == null)
+                {
+                    layoutElement = button.gameObject.AddComponent<UnityEngine.UI.LayoutElement>();
+                }
+                layoutElement.minHeight = 60f;
+                layoutElement.preferredHeight = 80f;
             }
 
             // Add click listener (capture index by value)
@@ -206,6 +273,88 @@ namespace HNR.Map
             button.onClick.AddListener(() => OnChoiceClicked(choiceIndex));
 
             _choiceButtons.Add(button);
+        }
+
+        /// <summary>
+        /// Formats the outcomes into a readable preview string.
+        /// </summary>
+        private string FormatOutcomePreview(System.Collections.Generic.IReadOnlyList<EchoOutcome> outcomes)
+        {
+            if (outcomes == null || outcomes.Count == 0)
+                return string.Empty;
+
+            var parts = new System.Collections.Generic.List<string>();
+
+            foreach (var outcome in outcomes)
+            {
+                string part = FormatSingleOutcome(outcome);
+                if (!string.IsNullOrEmpty(part))
+                {
+                    parts.Add(part);
+                }
+            }
+
+            return string.Join(" | ", parts);
+        }
+
+        /// <summary>
+        /// Formats a single outcome into readable text.
+        /// </summary>
+        private string FormatSingleOutcome(EchoOutcome outcome)
+        {
+            switch (outcome.Type)
+            {
+                case EchoOutcomeType.None:
+                    return string.Empty;
+
+                case EchoOutcomeType.GainGold:
+                    return $"+{outcome.Value} Shards";
+
+                case EchoOutcomeType.LoseGold:
+                    return $"-{outcome.Value} Shards";
+
+                case EchoOutcomeType.GainHP:
+                    return $"+{outcome.Value} HP";
+
+                case EchoOutcomeType.LoseHP:
+                    return $"-{outcome.Value} HP";
+
+                case EchoOutcomeType.GainMaxHP:
+                    return $"+{outcome.Value} Max HP";
+
+                case EchoOutcomeType.LoseMaxHP:
+                    return $"-{outcome.Value} Max HP";
+
+                case EchoOutcomeType.GainCorruption:
+                    return $"+{outcome.Value} Corruption";
+
+                case EchoOutcomeType.LoseCorruption:
+                    return $"-{outcome.Value} Corruption";
+
+                case EchoOutcomeType.GainCard:
+                    return "+1 Card";
+
+                case EchoOutcomeType.RemoveCard:
+                    return "-1 Card";
+
+                case EchoOutcomeType.UpgradeCard:
+                    return "Upgrade Card";
+
+                case EchoOutcomeType.GainRelic:
+                    return "+1 Relic";
+
+                case EchoOutcomeType.GainRandomCard:
+                    return "+Random Card";
+
+                case EchoOutcomeType.GainRandomRelic:
+                    return "+Random Relic";
+
+                case EchoOutcomeType.StartCombat:
+                    return "Fight!";
+
+                default:
+                    return string.Empty;
+            }
         }
 
         private void ClearChoices()
@@ -243,7 +392,45 @@ namespace HNR.Map
                 }
             }
 
+            // Display outcome card if any card was added
+            DisplayOutcomeCard();
+
             Debug.Log($"[EchoEventScreen] Showing outcome: {choice.OutcomeText}");
+        }
+
+        /// <summary>
+        /// Displays the outcome card in the outcome panel if one was added.
+        /// </summary>
+        private void DisplayOutcomeCard()
+        {
+            // Clear previous card
+            if (_outcomeCardContainer != null)
+            {
+                foreach (Transform child in _outcomeCardContainer)
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+
+            // Check if we have a card to display
+            var outcomeCard = _echoManager?.LastOutcomeCard;
+            if (outcomeCard == null || _outcomeCardContainer == null)
+            {
+                return;
+            }
+
+            // Instantiate and display card
+            if (_cardPrefab != null)
+            {
+                var card = Instantiate(_cardPrefab, _outcomeCardContainer);
+                card.SetCard(outcomeCard);
+                card.transform.localScale = Vector3.one * 0.8f; // Scale down for panel
+                Debug.Log($"[EchoEventScreen] Displaying outcome card: {outcomeCard.CardName}");
+            }
+            else
+            {
+                Debug.Log($"[EchoEventScreen] Card prefab not assigned, cannot display outcome card: {outcomeCard.CardName}");
+            }
         }
 
         // ============================================
@@ -259,7 +446,64 @@ namespace HNR.Map
             }
 
             Debug.Log($"[EchoEventScreen] Choice selected: {index}");
+
+            // Check if this choice has an UpgradeCard outcome
+            if (_currentEvent != null && index < _currentEvent.Choices.Count)
+            {
+                var choice = _currentEvent.Choices[index];
+                bool hasUpgradeOutcome = choice.Outcomes.Any(o => o.Type == EchoOutcomeType.UpgradeCard);
+
+                if (hasUpgradeOutcome)
+                {
+                    // Show card selection modal before applying outcomes
+                    ShowCardUpgradeModal(index);
+                    return;
+                }
+            }
+
+            // No upgrade outcome, proceed normally
             _echoManager.SelectChoice(index);
+        }
+
+        private void ShowCardUpgradeModal(int choiceIndex)
+        {
+            // Find or use assigned DeckViewerModal
+            var modal = _deckViewerModal;
+            if (modal == null)
+            {
+                modal = FindAnyObjectByType<DeckViewerModal>(FindObjectsInactive.Include);
+            }
+
+            if (modal == null)
+            {
+                Debug.LogWarning("[EchoEventScreen] DeckViewerModal not found - falling back to random upgrade");
+                _echoManager.SelectChoice(choiceIndex);
+                return;
+            }
+
+            // Store pending choice to complete after modal
+            _pendingChoiceIndex = choiceIndex;
+
+            // Show deck viewer in upgrade mode
+            modal.Show(DeckViewerModal.ViewMode.UpgradeCard, (upgradedCard) =>
+            {
+                // Whether upgrade was selected or cancelled, proceed with the choice
+                // The modal already handled the upgrade via RunManager
+                int pendingIndex = _pendingChoiceIndex;
+                _pendingChoiceIndex = -1;
+
+                if (upgradedCard != null)
+                {
+                    Debug.Log($"[EchoEventScreen] Card upgraded: {upgradedCard.CardName}");
+                    // Skip the manager's UpgradeRandomCard by using a different approach
+                    // Actually apply all OTHER outcomes (non-upgrade) through the manager
+                }
+
+                // Complete the choice (outcomes are applied here, but upgrade was already done)
+                _echoManager.SelectChoiceWithoutUpgrade(pendingIndex);
+            });
+
+            Debug.Log("[EchoEventScreen] Showing card upgrade selection modal");
         }
 
         private void OnContinueClicked()
@@ -276,6 +520,64 @@ namespace HNR.Map
             {
                 Debug.LogWarning("[EchoEventScreen] UIManager not available for screen transition");
             }
+        }
+
+        private void OnSkipClicked()
+        {
+            Debug.Log("[EchoEventScreen] Skip clicked - returning to map");
+
+            // Complete node without event resolution
+            if (ServiceLocator.TryGet<MapManager>(out var mapManager))
+            {
+                mapManager.CompleteCurrentNode();
+            }
+
+            // Return to map screen
+            if (ServiceLocator.TryGet<IUIManager>(out var uiManager))
+            {
+                uiManager.ShowScreen<MapScreen>();
+            }
+        }
+
+        // ============================================
+        // Empty State
+        // ============================================
+
+        private void ShowEmptyState()
+        {
+            // Set title to indicate no event
+            if (_titleText != null)
+            {
+                _titleText.text = "ECHO FADES...";
+            }
+
+            // Set narrative
+            if (_narrativeText != null)
+            {
+                _narrativeText.text = "The whispers of the void grow silent. No echoes remain to be heard in this place.";
+            }
+
+            // Hide background image
+            if (_backgroundImage != null)
+            {
+                _backgroundImage.enabled = false;
+            }
+
+            // Clear any choices
+            ClearChoices();
+
+            // Show skip button, hide outcome panel
+            if (_skipButton != null)
+            {
+                _skipButton.gameObject.SetActive(true);
+            }
+
+            if (_outcomePanel != null)
+            {
+                _outcomePanel.SetActive(false);
+            }
+
+            Debug.Log("[EchoEventScreen] Showing empty state - no event available");
         }
 
         // ============================================

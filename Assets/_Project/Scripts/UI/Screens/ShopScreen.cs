@@ -12,6 +12,7 @@ using HNR.Core.Events;
 using HNR.Core.Interfaces;
 using HNR.Progression;
 using HNR.Map;
+using HNR.UI.Components;
 
 namespace HNR.UI
 {
@@ -65,6 +66,9 @@ namespace HNR.UI
 
         [SerializeField, Tooltip("Amount of corruption removed by purify")]
         private int _purifyAmount = 30;
+
+        [SerializeField, Tooltip("Deck viewer modal for card removal")]
+        private DeckViewerModal _deckViewerModal;
 
         [Header("Item Details Panel")]
         [SerializeField, Tooltip("Panel showing selected item details")]
@@ -454,11 +458,41 @@ namespace HNR.UI
                 return;
             }
 
-            // Spend shards and publish event for RunManager/DeckViewer to handle
-            // The subscriber should show deck selection UI and publish CardRemovedFromDeckEvent
+            // Find or use assigned DeckViewerModal
+            var modal = _deckViewerModal;
+            if (modal == null)
+            {
+                modal = FindAnyObjectByType<DeckViewerModal>(FindObjectsInactive.Include);
+            }
+
+            if (modal == null)
+            {
+                Debug.LogWarning("[ShopScreen] DeckViewerModal not found - cannot show card removal UI");
+                // Fallback: just publish event in case there's a handler
+                EventBus.Publish(new ShopRemoveCardRequestedEvent());
+                return;
+            }
+
+            // Spend shards first
             _shopManager.SpendVoidShards(_removeCardCost);
-            EventBus.Publish(new ShopRemoveCardRequestedEvent());
-            Debug.Log($"[ShopScreen] Remove card service used ({_removeCardCost} shards)");
+
+            // Show deck viewer in remove mode
+            modal.Show(DeckViewerModal.ViewMode.RemoveCard, (removedCard) =>
+            {
+                if (removedCard != null)
+                {
+                    Debug.Log($"[ShopScreen] Card removed: {removedCard.CardName}");
+                    RefreshServiceButtons();
+                }
+                else
+                {
+                    // User cancelled - refund the shards
+                    _shopManager.AddVoidShards(_removeCardCost);
+                    Debug.Log("[ShopScreen] Card removal cancelled - refunded shards");
+                }
+            });
+
+            Debug.Log($"[ShopScreen] Remove card service initiated ({_removeCardCost} shards)");
         }
 
         private void OnPurifyClicked()

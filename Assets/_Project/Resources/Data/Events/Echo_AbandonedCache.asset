@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51ddc4d0e4300974ead16198ab3de904, type: 3}
+  m_Name: Echo_AbandonedCache
+  m_EditorClassIdentifier: 
+  _eventId: Echo_AbandonedCache
+  _eventTitle: Abandoned Cache
+  _narrative: You discover a rusted lockbox half-buried in the corrupted soil. Strange
+    whispers emanate from within, promising treasure... or something else.
+  _backgroundImage: {fileID: 0}
+  _choices:
+  - _choiceText: Force it open
+    _outcomeText: The lock shatters. Gold coins spill out, glinting with an otherworldly
+      sheen.
+    _outcomes:
+    - _type: 1
+      _value: 50
+      _cardId: 
+      _relicId: 
+  - _choiceText: Listen to the whispers
+    _outcomeText: The voices guide you to a hidden card, pulsing with power.
+    _outcomes:
+    - _type: 14
+      _value: 0
+      _cardId: 
+      _relicId: 
+  - _choiceText: Leave it be
+    _outcomeText: Some things are best left undisturbed. You walk away unscathed.
+    _outcomes:
+    - _type: 0
+      _value: 0
+      _cardId: 
+      _relicId: 
+  _validZones: 
+  _uniquePerRun: 1

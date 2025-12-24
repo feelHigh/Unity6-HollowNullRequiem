@@ -204,7 +204,10 @@ namespace HNR.Editor
 
             GameObject echoEventObj = new GameObject("EchoEventManager");
             echoEventObj.transform.SetParent(managersParent.transform);
-            echoEventObj.AddComponent<EchoEventManager>();
+            var echoEventManager = echoEventObj.AddComponent<EchoEventManager>();
+
+            // Wire available Echo events to EchoEventManager
+            WireEchoEvents(echoEventManager);
 
             // NodeEventHandler for handling Sanctuary/Shop events
             GameObject nodeEventHandlerObj = new GameObject("NodeEventHandler");
@@ -615,6 +618,39 @@ namespace HNR.Editor
             so.ApplyModifiedPropertiesWithoutUndo();
 
             Debug.Log($"[ProductionSceneSetupGenerator] Wired {count} zone configs to MapManager");
+        }
+
+        private static void WireEchoEvents(EchoEventManager echoEventManager)
+        {
+            // Try to load Echo events from Resources folder (where EchoEventGenerator creates them)
+            var events = AssetDatabase.FindAssets("t:EchoEventDataSO", new[] { "Assets/_Project/Resources/Data/Events" });
+
+            // Also try the regular Data folder
+            if (events == null || events.Length == 0)
+            {
+                events = AssetDatabase.FindAssets("t:EchoEventDataSO", new[] { "Assets/_Project/Data/Events" });
+            }
+
+            if (events == null || events.Length == 0)
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] No Echo events found. Run HNR > Events > Echo Events to generate them.");
+                return;
+            }
+
+            SerializedObject so = new SerializedObject(echoEventManager);
+            var availableEventsProp = so.FindProperty("_availableEvents");
+            availableEventsProp.arraySize = events.Length;
+
+            for (int i = 0; i < events.Length; i++)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(events[i]);
+                var eventAsset = AssetDatabase.LoadAssetAtPath<EchoEventDataSO>(path);
+                availableEventsProp.GetArrayElementAtIndex(i).objectReferenceValue = eventAsset;
+            }
+
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            Debug.Log($"[ProductionSceneSetupGenerator] Wired {events.Length} Echo events to EchoEventManager");
         }
 
         // ============================================
@@ -1108,6 +1144,29 @@ namespace HNR.Editor
 
             outcomePanel.SetActive(false);
 
+            // === Skip Button (for empty events or when no choices) ===
+            GameObject skipBtn = new GameObject("SkipButton");
+            skipBtn.transform.SetParent(panel.transform, false);
+            RectTransform skipBtnRect = skipBtn.AddComponent<RectTransform>();
+            skipBtnRect.anchorMin = new Vector2(0.5f, 0.08f);
+            skipBtnRect.anchorMax = new Vector2(0.5f, 0.08f);
+            skipBtnRect.sizeDelta = new Vector2(160, 50);
+
+            Image skipBtnImg = skipBtn.AddComponent<Image>();
+            skipBtnImg.color = new Color(0.4f, 0.35f, 0.5f); // Muted purple
+
+            Button skipBtnComponent = skipBtn.AddComponent<Button>();
+            skipBtnComponent.targetGraphic = skipBtnImg;
+
+            GameObject skipBtnText = CreateText(skipBtn, "Text", "CONTINUE", 16);
+            RectTransform skipBtnTextRect = skipBtnText.GetComponent<RectTransform>();
+            skipBtnTextRect.anchorMin = Vector2.zero;
+            skipBtnTextRect.anchorMax = Vector2.one;
+            skipBtnTextRect.sizeDelta = Vector2.zero;
+            skipBtnText.GetComponent<TextMeshProUGUI>().fontStyle = TMPro.FontStyles.Bold;
+
+            skipBtn.SetActive(false); // Hidden by default, shown when no choices
+
             // === Create Choice Button Template (for prefab) ===
             GameObject choiceButtonTemplate = CreateEchoChoiceButton(screenObj);
             choiceButtonTemplate.SetActive(false); // Hidden template
@@ -1125,6 +1184,7 @@ namespace HNR.Editor
                 so.FindProperty("_outcomePanel").objectReferenceValue = outcomePanel;
                 so.FindProperty("_outcomeText").objectReferenceValue = outcomeTmp;
                 so.FindProperty("_continueButton").objectReferenceValue = continueBtnComponent;
+                so.FindProperty("_skipButton").objectReferenceValue = skipBtnComponent;
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
 
@@ -1210,7 +1270,7 @@ namespace HNR.Editor
             GridLayoutGroup grid = itemsContainer.AddComponent<GridLayoutGroup>();
             grid.cellSize = new Vector2(180, 250);
             grid.spacing = new Vector2(15, 15);
-            grid.childAlignment = TextAnchor.UpperLeft;
+            grid.childAlignment = TextAnchor.MiddleCenter; // Centered for better visual alignment
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = 3;
             grid.padding = new RectOffset(10, 10, 10, 10);
@@ -1363,16 +1423,100 @@ namespace HNR.Editor
             // Upgrade button (gold)
             GameObject upgradeBtn = CreateSanctuaryChoice(choicesContainer, "UpgradeButton", "UPGRADE", "Upgrade a card", new Color(0.83f, 0.69f, 0.22f));
 
-            // Skip button - Note: SanctuaryScreen doesn't have a skip/leave button field,
-            // the only way to leave is to make a choice (Rest/Purify/Upgrade)
-            // But we can still display it for visual purposes
-            GameObject skipBtn = CreateMenuButton(screenObj, "SkipButton", "LEAVE");
-            RectTransform skipRect = skipBtn.GetComponent<RectTransform>();
-            skipRect.anchorMin = new Vector2(0.5f, 0.1f);
-            skipRect.anchorMax = new Vector2(0.5f, 0.1f);
-            skipRect.sizeDelta = new Vector2(150, 40);
-            // Hide the leave button since Sanctuary requires a choice
-            skipBtn.SetActive(false);
+            // Leave button - allows skipping sanctuary without making a choice
+            GameObject leaveBtn = CreateMenuButton(screenObj, "LeaveButton", "LEAVE");
+            RectTransform leaveRect = leaveBtn.GetComponent<RectTransform>();
+            leaveRect.anchorMin = new Vector2(0.5f, 0.12f);
+            leaveRect.anchorMax = new Vector2(0.5f, 0.12f);
+            leaveRect.sizeDelta = new Vector2(150, 40);
+            // Style as a muted button
+            leaveBtn.GetComponent<Image>().color = new Color(0.25f, 0.25f, 0.25f, 0.8f);
+
+            // === Card Selection Panel (shown when Upgrade is clicked) ===
+            GameObject cardSelectionPanel = new GameObject("CardSelectionPanel");
+            cardSelectionPanel.transform.SetParent(screenObj.transform, false);
+            RectTransform cardPanelRect = cardSelectionPanel.AddComponent<RectTransform>();
+            cardPanelRect.anchorMin = Vector2.zero;
+            cardPanelRect.anchorMax = Vector2.one;
+            cardPanelRect.sizeDelta = Vector2.zero;
+
+            Image cardPanelBg = cardSelectionPanel.AddComponent<Image>();
+            cardPanelBg.color = new Color(0.05f, 0.05f, 0.08f, 0.98f);
+
+            // Panel title
+            GameObject panelTitle = CreateText(cardSelectionPanel, "PanelTitle", "SELECT A CARD TO UPGRADE", 24);
+            RectTransform panelTitleRect = panelTitle.GetComponent<RectTransform>();
+            panelTitleRect.anchorMin = new Vector2(0.5f, 0.88f);
+            panelTitleRect.anchorMax = new Vector2(0.5f, 0.88f);
+            panelTitleRect.sizeDelta = new Vector2(400, 40);
+            panelTitle.GetComponent<TMP_Text>().color = new Color(0.83f, 0.69f, 0.22f);
+            panelTitle.GetComponent<TMP_Text>().fontStyle = FontStyles.Bold;
+
+            // Card container with scroll capability
+            GameObject scrollView = new GameObject("ScrollView");
+            scrollView.transform.SetParent(cardSelectionPanel.transform, false);
+            RectTransform scrollRect = scrollView.AddComponent<RectTransform>();
+            scrollRect.anchorMin = new Vector2(0.1f, 0.2f);
+            scrollRect.anchorMax = new Vector2(0.9f, 0.82f);
+            scrollRect.sizeDelta = Vector2.zero;
+
+            Image scrollBg = scrollView.AddComponent<Image>();
+            scrollBg.color = new Color(0.08f, 0.08f, 0.12f, 0.8f);
+
+            ScrollRect scroll = scrollView.AddComponent<ScrollRect>();
+
+            // Viewport
+            GameObject viewport = new GameObject("Viewport");
+            viewport.transform.SetParent(scrollView.transform, false);
+            RectTransform viewportRect = viewport.AddComponent<RectTransform>();
+            viewportRect.anchorMin = Vector2.zero;
+            viewportRect.anchorMax = Vector2.one;
+            viewportRect.sizeDelta = Vector2.zero;
+            // Use RectMask2D instead of Mask - more reliable for scroll views
+            // RectMask2D clips children to RectTransform bounds without needing an Image sprite
+            viewport.AddComponent<RectMask2D>();
+
+            // Content (card container)
+            GameObject upgradeCardContainer = new GameObject("UpgradeCardContainer");
+            upgradeCardContainer.transform.SetParent(viewport.transform, false);
+            RectTransform contentRect = upgradeCardContainer.AddComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0, 1);
+            contentRect.anchorMax = new Vector2(1, 1);
+            contentRect.pivot = new Vector2(0.5f, 1);
+            contentRect.sizeDelta = new Vector2(0, 0);
+
+            GridLayoutGroup grid = upgradeCardContainer.AddComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(100, 140);
+            grid.spacing = new Vector2(15, 15);
+            grid.padding = new RectOffset(20, 20, 20, 20);
+            grid.childAlignment = TextAnchor.UpperCenter;
+
+            ContentSizeFitter fitter = upgradeCardContainer.AddComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            scroll.content = contentRect;
+            scroll.viewport = viewportRect;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+
+            // Confirm button
+            GameObject confirmUpgradeBtn = CreateMenuButton(cardSelectionPanel, "ConfirmUpgradeButton", "CONFIRM UPGRADE");
+            RectTransform confirmRect = confirmUpgradeBtn.GetComponent<RectTransform>();
+            confirmRect.anchorMin = new Vector2(0.35f, 0.08f);
+            confirmRect.anchorMax = new Vector2(0.35f, 0.08f);
+            confirmRect.sizeDelta = new Vector2(180, 45);
+            confirmUpgradeBtn.GetComponent<Image>().color = new Color(0.18f, 0.7f, 0.35f);
+            confirmUpgradeBtn.GetComponent<Button>().interactable = false;
+
+            // Cancel button
+            GameObject cancelUpgradeBtn = CreateMenuButton(cardSelectionPanel, "CancelUpgradeButton", "CANCEL");
+            RectTransform cancelRect = cancelUpgradeBtn.GetComponent<RectTransform>();
+            cancelRect.anchorMin = new Vector2(0.65f, 0.08f);
+            cancelRect.anchorMax = new Vector2(0.65f, 0.08f);
+            cancelRect.sizeDelta = new Vector2(140, 45);
+            cancelUpgradeBtn.GetComponent<Image>().color = new Color(0.5f, 0.3f, 0.3f);
+
+            cardSelectionPanel.SetActive(false);
 
             // === Wire SanctuaryScreen references ===
             SerializedObject so = new SerializedObject(sanctuaryScreen);
@@ -1381,7 +1525,36 @@ namespace HNR.Editor
             so.FindProperty("_restButton").objectReferenceValue = restBtn.GetComponent<Button>();
             so.FindProperty("_purifyButton").objectReferenceValue = purifyBtn.GetComponent<Button>();
             so.FindProperty("_upgradeButton").objectReferenceValue = upgradeBtn.GetComponent<Button>();
+            so.FindProperty("_leaveButton").objectReferenceValue = leaveBtn.GetComponent<Button>();
+            so.FindProperty("_cardSelectionPanel").objectReferenceValue = cardSelectionPanel;
+            so.FindProperty("_upgradeCardContainer").objectReferenceValue = upgradeCardContainer.transform;
+            so.FindProperty("_confirmUpgradeButton").objectReferenceValue = confirmUpgradeBtn.GetComponent<Button>();
+            so.FindProperty("_cancelUpgradeButton").objectReferenceValue = cancelUpgradeBtn.GetComponent<Button>();
+
+            // Wire Card prefab for proper card display (implements ICardDisplay)
+            var cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/Combat/Card.prefab");
+            if (cardPrefab != null)
+            {
+                var cardSlotProp = so.FindProperty("_cardSlotPrefab");
+                if (cardSlotProp != null)
+                {
+                    cardSlotProp.objectReferenceValue = cardPrefab;
+                    Debug.Log($"[ProductionSceneSetupGenerator] Wired Card.prefab to SanctuaryScreen._cardSlotPrefab");
+                }
+                else
+                {
+                    Debug.LogError("[ProductionSceneSetupGenerator] Failed to find _cardSlotPrefab property on SanctuaryScreen");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] Card.prefab not found at Assets/_Project/Prefabs/UI/Combat/Card.prefab");
+            }
+
             so.ApplyModifiedPropertiesWithoutUndo();
+
+            // Mark component dirty to ensure changes persist
+            EditorUtility.SetDirty(sanctuaryScreen);
 
             Debug.Log("[ProductionSceneSetupGenerator] Created SanctuaryScreen with wired references");
             return screenObj;
@@ -1497,7 +1670,29 @@ namespace HNR.Editor
             so.FindProperty("_cardRewardContainer").objectReferenceValue = cardContainer.transform;
             so.FindProperty("_skipRewardButton").objectReferenceValue = skipBtn.GetComponent<Button>();
             so.FindProperty("_continueButton").objectReferenceValue = continueBtn.GetComponent<Button>();
+
+            // Wire Card prefab for proper card display (implements ICardDisplay)
+            var cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/Combat/Card.prefab");
+            if (cardPrefab != null)
+            {
+                var cardSlotProp = so.FindProperty("_cardRewardSlotPrefab");
+                if (cardSlotProp != null)
+                {
+                    cardSlotProp.objectReferenceValue = cardPrefab;
+                    Debug.Log("[ProductionSceneSetupGenerator] Wired Card.prefab to TreasureScreen._cardRewardSlotPrefab");
+                }
+                else
+                {
+                    Debug.LogError("[ProductionSceneSetupGenerator] Failed to find _cardRewardSlotPrefab property on TreasureScreen");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] Card.prefab not found for TreasureScreen");
+            }
+
             so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(treasureScreen);
 
             return screenObj;
         }
@@ -1626,7 +1821,29 @@ namespace HNR.Editor
             so.FindProperty("_continueButton").objectReferenceValue = continueBtn.GetComponent<Button>();
             so.FindProperty("_retryButton").objectReferenceValue = retryBtn.GetComponent<Button>();
             so.FindProperty("_abandonButton").objectReferenceValue = abandonBtn.GetComponent<Button>();
+
+            // Wire Card prefab for proper card display (implements ICardDisplay)
+            var cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/Combat/Card.prefab");
+            if (cardPrefab != null)
+            {
+                var cardSlotProp = so.FindProperty("_cardRewardSlotPrefab");
+                if (cardSlotProp != null)
+                {
+                    cardSlotProp.objectReferenceValue = cardPrefab;
+                    Debug.Log("[ProductionSceneSetupGenerator] Wired Card.prefab to ResultsScreen._cardRewardSlotPrefab");
+                }
+                else
+                {
+                    Debug.LogError("[ProductionSceneSetupGenerator] Failed to find _cardRewardSlotPrefab property on ResultsScreen");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] Card.prefab not found for ResultsScreen");
+            }
+
             so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(resultsScreen);
 
             return screenObj;
         }

@@ -8,6 +8,7 @@ using System.Linq;
 using UnityEngine;
 using HNR.Core;
 using HNR.Core.Events;
+using HNR.Core.Interfaces;
 using HNR.Cards;
 
 namespace HNR.Combat
@@ -62,6 +63,7 @@ namespace HNR.Combat
 
         /// <summary>
         /// Initialize deck with team's cards at combat start.
+        /// Checks RunManager for upgraded cards and applies upgrade state.
         /// </summary>
         /// <param name="teamCards">All cards from the team's combined deck</param>
         public void InitializeDeck(List<CardDataSO> teamCards)
@@ -70,13 +72,29 @@ namespace HNR.Combat
             _discardPile.Clear();
             _exhaustPile.Clear();
 
+            // Get RunManager to check for upgraded cards
+            IRunManager runManager = null;
+            ServiceLocator.TryGet(out runManager);
+
+            int upgradedCount = 0;
             foreach (var cardData in teamCards)
             {
-                _drawPile.Add(new CardInstance(cardData));
+                // Check if this card is upgraded
+                bool isUpgraded = runManager != null && runManager.IsCardUpgraded(cardData.CardId);
+                var cardInstance = new CardInstance(cardData, isUpgraded);
+
+                // If upgraded and has upgraded version, apply the upgrade
+                if (isUpgraded && cardData.UpgradedVersion != null)
+                {
+                    cardInstance.ApplyUpgrade(cardData.UpgradedVersion);
+                    upgradedCount++;
+                }
+
+                _drawPile.Add(cardInstance);
             }
 
             Shuffle(_drawPile);
-            Debug.Log($"[DeckManager] Deck initialized with {_drawPile.Count} cards");
+            Debug.Log($"[DeckManager] Deck initialized with {_drawPile.Count} cards ({upgradedCount} upgraded)");
         }
 
         // ============================================

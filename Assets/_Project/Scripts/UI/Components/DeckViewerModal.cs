@@ -31,7 +31,8 @@ namespace HNR.UI.Components
         public enum ViewMode
         {
             ViewOnly,       // Just view the deck
-            RemoveCard      // Select a card to remove
+            RemoveCard,     // Select a card to remove
+            UpgradeCard     // Select a card to upgrade
         }
 
         // ============================================
@@ -223,6 +224,7 @@ namespace HNR.UI.Components
                 _titleText.text = _currentMode switch
                 {
                     ViewMode.RemoveCard => "REMOVE A CARD",
+                    ViewMode.UpgradeCard => "UPGRADE A CARD",
                     _ => "YOUR DECK"
                 };
             }
@@ -232,6 +234,7 @@ namespace HNR.UI.Components
                 _instructionText.text = _currentMode switch
                 {
                     ViewMode.RemoveCard => "Select a card to remove from your deck",
+                    ViewMode.UpgradeCard => "Select a card to upgrade",
                     _ => ""
                 };
                 _instructionText.gameObject.SetActive(_currentMode != ViewMode.ViewOnly);
@@ -242,6 +245,7 @@ namespace HNR.UI.Components
                 _confirmButtonText.text = _currentMode switch
                 {
                     ViewMode.RemoveCard => "Remove",
+                    ViewMode.UpgradeCard => "Upgrade",
                     _ => "Close"
                 };
             }
@@ -253,20 +257,28 @@ namespace HNR.UI.Components
             _displayedCards.Clear();
 
             // Get deck from RunManager
-            if (ServiceLocator.TryGet<IRunManager>(out var runManager))
-            {
-                foreach (var card in runManager.Deck)
-                {
-                    if (card != null)
-                    {
-                        _displayedCards.Add(card);
-                    }
-                }
-            }
-            else
+            if (!ServiceLocator.TryGet<IRunManager>(out var runManager))
             {
                 Debug.LogWarning("[DeckViewerModal] RunManager not available - cannot load deck");
                 return;
+            }
+
+            foreach (var card in runManager.Deck)
+            {
+                if (card == null) continue;
+
+                // For upgrade mode, only show cards that can be upgraded
+                if (_currentMode == ViewMode.UpgradeCard)
+                {
+                    // Skip already upgraded cards
+                    if (runManager.IsCardUpgraded(card.CardId))
+                        continue;
+                    // Skip cards without upgraded version
+                    if (card.UpgradedVersion == null)
+                        continue;
+                }
+
+                _displayedCards.Add(card);
             }
 
             // Create card slots
@@ -279,6 +291,16 @@ namespace HNR.UI.Components
             for (int i = 0; i < _displayedCards.Count; i++)
             {
                 CreateCardSlot(_displayedCards[i], i);
+            }
+
+            // Show message if no upgradable cards
+            if (_currentMode == ViewMode.UpgradeCard && _displayedCards.Count == 0)
+            {
+                if (_instructionText != null)
+                {
+                    _instructionText.text = "No cards available for upgrade";
+                }
+                Debug.Log("[DeckViewerModal] No upgradable cards in deck");
             }
         }
 
@@ -457,18 +479,33 @@ namespace HNR.UI.Components
                 return;
             }
 
-            // Remove the card from deck
-            if (ServiceLocator.TryGet<IRunManager>(out var runManager))
+            if (!ServiceLocator.TryGet<IRunManager>(out var runManager))
             {
+                Debug.LogWarning("[DeckViewerModal] RunManager not available");
+                Hide();
+                _onCardSelected?.Invoke(null);
+                return;
+            }
+
+            if (_currentMode == ViewMode.RemoveCard)
+            {
+                // Remove the card from deck
                 runManager.RemoveCardFromDeck(_selectedCard);
                 EventBus.Publish(new CardRemovedFromDeckEvent(_selectedCard));
                 Debug.Log($"[DeckViewerModal] Card removed: {_selectedCard.CardName}");
             }
+            else if (_currentMode == ViewMode.UpgradeCard)
+            {
+                // Upgrade the card
+                runManager.UpgradeCard(_selectedCard);
+                EventBus.Publish(new CardUpgradedEvent(_selectedCard));
+                Debug.Log($"[DeckViewerModal] Card upgraded: {_selectedCard.CardName}");
+            }
 
             // Invoke callback
-            var removedCard = _selectedCard;
+            var processedCard = _selectedCard;
             Hide();
-            _onCardSelected?.Invoke(removedCard);
+            _onCardSelected?.Invoke(processedCard);
         }
 
         private void OnCancelClicked()

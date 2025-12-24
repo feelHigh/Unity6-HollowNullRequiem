@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51ddc4d0e4300974ead16198ab3de904, type: 3}
+  m_Name: Echo_AncientShrine
+  m_EditorClassIdentifier: 
+  _eventId: Echo_AncientShrine
+  _eventTitle: Ancient Shrine
+  _narrative: A forgotten shrine stands untouched by corruption. The altar glows
+    with residual divine energy, offering blessings to those who would pray.
+  _backgroundImage: {fileID: 0}
+  _choices:
+  - _choiceText: Pray for healing
+    _outcomeText: Warm light envelops you, mending wounds and soothing pain.
+    _outcomes:
+    - _type: 3
+      _value: 25
+      _cardId: 
+      _relicId: 
+  - _choiceText: Pray for strength
+    _outcomeText: The shrine grants you an upgrade to one of your cards.
+    _outcomes:
+    - _type: 10
+      _value: 0
+      _cardId: 
+      _relicId: 
+  - _choiceText: Pray for guidance
+    _outcomeText: Visions show you the path ahead and hidden treasures.
+    _outcomes:
+    - _type: 1
+      _value: 40
+      _cardId: 
+      _relicId: 
+  _validZones: 
+  _uniquePerRun: 1

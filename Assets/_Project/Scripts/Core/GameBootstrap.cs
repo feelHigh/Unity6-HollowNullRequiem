@@ -69,6 +69,8 @@ namespace HNR.Core
             InitializePoolManager();
             InitializeAudioManager();
             InitializeRunManager();
+            InitializeShopManager();
+            InitializeRelicManager();
 
             Debug.Log("[GameBootstrap] Core systems initialized.");
         }
@@ -200,6 +202,56 @@ namespace HNR.Core
             else
             {
                 Debug.Log("[GameBootstrap] RunManager found in scene.");
+            }
+        }
+
+        /// <summary>
+        /// Find or create ShopManager.
+        /// ShopManager self-registers in Awake.
+        /// </summary>
+        private void InitializeShopManager()
+        {
+            if (ServiceLocator.Has<IShopManager>())
+            {
+                Debug.Log("[GameBootstrap] ShopManager already registered.");
+                return;
+            }
+
+            var shopManager = FindAnyObjectByType<ShopManager>();
+            if (shopManager == null)
+            {
+                var go = new GameObject("[ShopManager]");
+                go.AddComponent<ShopManager>();
+                Debug.Log("[GameBootstrap] ShopManager created dynamically.");
+            }
+            else
+            {
+                Debug.Log("[GameBootstrap] ShopManager found in scene.");
+            }
+        }
+
+        /// <summary>
+        /// Find or create RelicManager.
+        /// RelicManager self-registers in Awake.
+        /// </summary>
+        private void InitializeRelicManager()
+        {
+            if (ServiceLocator.Has<IRelicManager>())
+            {
+                Debug.Log("[GameBootstrap] RelicManager already registered.");
+                return;
+            }
+
+            var relicManager = FindAnyObjectByType<RelicManager>();
+            if (relicManager == null)
+            {
+                var go = new GameObject("[RelicManager]");
+                go.AddComponent<RelicManager>();
+                Debug.Log("[GameBootstrap] RelicManager created dynamically.");
+            }
+            else
+            {
+                Debug.Log("[GameBootstrap] RelicManager found in scene.");
             }
         }
     }
