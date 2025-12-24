@@ -13,6 +13,7 @@ using HNR.Core.Interfaces;
 using HNR.Core.Events;
 using HNR.Characters;
 using HNR.Cards;
+using HNR.Map;
 
 namespace HNR.UI
 {
@@ -527,6 +528,12 @@ namespace HNR.UI
             // Brief delay for feedback
             DOVirtual.DelayedCall(0.5f, () =>
             {
+                // Mark node as complete before navigation
+                if (ServiceLocator.TryGet<MapManager>(out var mapManager))
+                {
+                    mapManager.CompleteCurrentNode();
+                }
+
                 NavigateToMap();
             }).SetLink(gameObject);
         }

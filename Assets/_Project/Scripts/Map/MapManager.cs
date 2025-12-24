@@ -169,6 +169,29 @@ namespace HNR.Map
             }
         }
 
+        /// <summary>
+        /// Locks sibling nodes (same row, not visited) when committing to a path.
+        /// This prevents backtracking to other nodes in the same row after completing a node.
+        /// </summary>
+        private void LockSiblingNodes(MapNodeData completedNode)
+        {
+            if (_currentMap == null) return;
+
+            int currentRow = completedNode.Row;
+
+            foreach (var node in _currentMap.Nodes)
+            {
+                // Lock sibling nodes in the same row that are still Available (not visited)
+                if (node.Row == currentRow &&
+                    node.NodeId != completedNode.NodeId &&
+                    node.State == NodeState.Available)
+                {
+                    node.State = NodeState.Locked;
+                    Debug.Log($"[MapManager] Locked sibling node {node.NodeId} (row {currentRow})");
+                }
+            }
+        }
+
         // ============================================
         // Node Completion
         // ============================================
@@ -187,6 +210,10 @@ namespace HNR.Map
             }
 
             current.State = NodeState.Visited;
+
+            // Lock sibling nodes (same row) that weren't visited - player committed to this path
+            LockSiblingNodes(current);
+
             EventBus.Publish(new NodeCompletedEvent(current));
 
             Debug.Log($"[MapManager] Completed node {current.NodeId} ({current.Type})");

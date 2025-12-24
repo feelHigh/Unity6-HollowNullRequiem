@@ -48,17 +48,12 @@ namespace HNR.Map
         [SerializeField, Tooltip("Zone subtitle (Zone X • Zone Name)")]
         private TMP_Text _zoneSubtitle;
 
-        [SerializeField, Tooltip("Team HP display text")]
-        private TMP_Text _hpText;
+        [Header("Stats Display")]
+        [SerializeField, Tooltip("Animated HP display (current/max)")]
+        private AnimatedStatDisplay _hpDisplay;
 
-        [SerializeField, Tooltip("HP icon")]
-        private Image _hpIcon;
-
-        [SerializeField, Tooltip("Currency display text")]
-        private TMP_Text _currencyText;
-
-        [SerializeField, Tooltip("Currency icon")]
-        private Image _currencyIcon;
+        [SerializeField, Tooltip("Animated currency display")]
+        private AnimatedStatDisplay _currencyDisplay;
 
         [Header("Navigation")]
         [SerializeField, Tooltip("Back button to abandon run")]
@@ -520,32 +515,38 @@ namespace HNR.Map
                 _zoneSubtitle.text = $"Zone {zone} • {zoneName}";
             }
 
-            // Get HP from RunManager
+            // Get HP from RunManager - set immediately on initial load
             if (ServiceLocator.TryGet<IRunManager>(out var runManager))
             {
-                UpdateHPDisplay(runManager.TeamCurrentHP, runManager.TeamMaxHP);
+                if (_hpDisplay != null)
+                {
+                    _hpDisplay.SetValueImmediate(runManager.TeamCurrentHP, runManager.TeamMaxHP);
+                }
             }
 
-            // Get currency from ShopManager
+            // Get currency from ShopManager - set immediately on initial load
             if (ServiceLocator.TryGet<IShopManager>(out var shopManager))
             {
-                UpdateCurrencyDisplay(shopManager.VoidShards);
+                if (_currencyDisplay != null)
+                {
+                    _currencyDisplay.SetValueImmediate(shopManager.VoidShards);
+                }
             }
         }
 
         private void UpdateHPDisplay(int current, int max)
         {
-            if (_hpText != null)
+            if (_hpDisplay != null)
             {
-                _hpText.text = $"{current}/{max}";
+                _hpDisplay.AnimateToValue(current, max);
             }
         }
 
         private void UpdateCurrencyDisplay(int amount)
         {
-            if (_currencyText != null)
+            if (_currencyDisplay != null)
             {
-                _currencyText.text = amount.ToString();
+                _currencyDisplay.AnimateToValue(amount);
             }
         }
 

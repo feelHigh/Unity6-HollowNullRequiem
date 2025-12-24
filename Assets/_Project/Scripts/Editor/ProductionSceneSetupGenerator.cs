@@ -206,6 +206,11 @@ namespace HNR.Editor
             echoEventObj.transform.SetParent(managersParent.transform);
             echoEventObj.AddComponent<EchoEventManager>();
 
+            // NodeEventHandler for handling Sanctuary/Shop events
+            GameObject nodeEventHandlerObj = new GameObject("NodeEventHandler");
+            nodeEventHandlerObj.transform.SetParent(managersParent.transform);
+            var nodeEventHandler = nodeEventHandlerObj.AddComponent<NodeEventHandler>();
+
             // === Main Canvas ===
             GameObject canvasObj = CreateMainCanvas("NullRiftCanvas");
 
@@ -232,6 +237,14 @@ namespace HNR.Editor
 
             // === ConfirmationDialog (overlay) ===
             GameObject confirmationDialog = CreateConfirmationDialog(overlayContainer);
+
+            // === DeckViewerModal (overlay for card removal) ===
+            GameObject deckViewerModal = CreateDeckViewerModal(overlayContainer);
+
+            // Wire DeckViewerModal to NodeEventHandler
+            SerializedObject nodeEventSo = new SerializedObject(nodeEventHandler);
+            nodeEventSo.FindProperty("_deckViewerModal").objectReferenceValue = deckViewerModal.GetComponent<DeckViewerModal>();
+            nodeEventSo.ApplyModifiedPropertiesWithoutUndo();
 
             // === Background ===
             CreateBackground(canvasObj, new Color(0.03f, 0.01f, 0.08f));
@@ -941,17 +954,13 @@ namespace HNR.Editor
             // Wire zone header references
             var zoneTitle = zoneHeader.transform.Find("TitleContainer/ZoneTitle")?.GetComponent<TMP_Text>();
             var zoneSubtitle = zoneHeader.transform.Find("TitleContainer/ZoneSubtitle")?.GetComponent<TMP_Text>();
-            var hpText = zoneHeader.transform.Find("StatsContainer/HPContainer/HPText")?.GetComponent<TMP_Text>();
-            var hpIcon = zoneHeader.transform.Find("StatsContainer/HPContainer/HPIcon")?.GetComponent<Image>();
-            var currencyText = zoneHeader.transform.Find("StatsContainer/CurrencyContainer/CurrencyText")?.GetComponent<TMP_Text>();
-            var currencyIcon = zoneHeader.transform.Find("StatsContainer/CurrencyContainer/CurrencyIcon")?.GetComponent<Image>();
+            var hpDisplay = zoneHeader.transform.Find("StatsContainer/HPContainer/HPDisplay")?.GetComponent<AnimatedStatDisplay>();
+            var currencyDisplay = zoneHeader.transform.Find("StatsContainer/CurrencyContainer/CurrencyDisplay")?.GetComponent<AnimatedStatDisplay>();
 
             if (zoneTitle != null) so.FindProperty("_zoneTitle").objectReferenceValue = zoneTitle;
             if (zoneSubtitle != null) so.FindProperty("_zoneSubtitle").objectReferenceValue = zoneSubtitle;
-            if (hpText != null) so.FindProperty("_hpText").objectReferenceValue = hpText;
-            if (hpIcon != null) so.FindProperty("_hpIcon").objectReferenceValue = hpIcon;
-            if (currencyText != null) so.FindProperty("_currencyText").objectReferenceValue = currencyText;
-            if (currencyIcon != null) so.FindProperty("_currencyIcon").objectReferenceValue = currencyIcon;
+            if (hpDisplay != null) so.FindProperty("_hpDisplay").objectReferenceValue = hpDisplay;
+            if (currencyDisplay != null) so.FindProperty("_currencyDisplay").objectReferenceValue = currencyDisplay;
 
             // Wire back button
             var backButton = zoneHeader.transform.Find("BackButton")?.GetComponent<Button>();
@@ -1099,6 +1108,10 @@ namespace HNR.Editor
 
             outcomePanel.SetActive(false);
 
+            // === Create Choice Button Template (for prefab) ===
+            GameObject choiceButtonTemplate = CreateEchoChoiceButton(screenObj);
+            choiceButtonTemplate.SetActive(false); // Hidden template
+
             // === Wire EchoEventScreen references ===
             var echoScreen = screenObj.GetComponent<EchoEventScreen>();
             if (echoScreen != null)
@@ -1108,6 +1121,7 @@ namespace HNR.Editor
                 so.FindProperty("_narrativeText").objectReferenceValue = narrativeTmp;
                 so.FindProperty("_backgroundImage").objectReferenceValue = bgImage;
                 so.FindProperty("_choiceContainer").objectReferenceValue = choiceContainer.transform;
+                so.FindProperty("_choiceButtonPrefab").objectReferenceValue = choiceButtonTemplate.GetComponent<Button>();
                 so.FindProperty("_outcomePanel").objectReferenceValue = outcomePanel;
                 so.FindProperty("_outcomeText").objectReferenceValue = outcomeTmp;
                 so.FindProperty("_continueButton").objectReferenceValue = continueBtnComponent;
@@ -1115,6 +1129,41 @@ namespace HNR.Editor
             }
 
             return screenObj;
+        }
+
+        /// <summary>
+        /// Creates a choice button template for EchoEventScreen.
+        /// </summary>
+        private static GameObject CreateEchoChoiceButton(GameObject parent)
+        {
+            GameObject buttonObj = new GameObject("ChoiceButtonTemplate");
+            buttonObj.transform.SetParent(parent.transform, false);
+
+            RectTransform rect = buttonObj.AddComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(0, 45);
+
+            Image bg = buttonObj.AddComponent<Image>();
+            bg.color = new Color(0.15f, 0.12f, 0.2f, 0.9f);
+
+            Button button = buttonObj.AddComponent<Button>();
+            button.targetGraphic = bg;
+
+            // Add layout element for proper sizing
+            var layoutElement = buttonObj.AddComponent<LayoutElement>();
+            layoutElement.preferredHeight = 45;
+
+            // Button text
+            GameObject textObj = CreateText(buttonObj, "Text", "Choice Text", 14);
+            RectTransform textRect = textObj.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = new Vector2(15, 0);
+            textRect.offsetMax = new Vector2(-15, 0);
+            var tmp = textObj.GetComponent<TextMeshProUGUI>();
+            tmp.alignment = TextAlignmentOptions.Left;
+            tmp.color = Color.white;
+
+            return buttonObj;
         }
 
         private static GameObject CreateShopScreen(GameObject parent)
@@ -1127,7 +1176,7 @@ namespace HNR.Editor
             rect.anchorMax = Vector2.one;
             rect.sizeDelta = Vector2.zero;
 
-            screenObj.AddComponent<ShopScreen>();
+            var shopScreen = screenObj.AddComponent<ShopScreen>();
             screenObj.SetActive(false);
 
             // === Background ===
@@ -1140,28 +1189,63 @@ namespace HNR.Editor
             titleRect.anchorMin = new Vector2(0.5f, 0.92f);
             titleRect.anchorMax = new Vector2(0.5f, 0.92f);
             titleRect.sizeDelta = new Vector2(400, 60);
+            titleObj.GetComponent<TMP_Text>().color = new Color(0.83f, 0.69f, 0.22f); // Soul gold
 
             // === Currency Display ===
-            GameObject currencyObj = CreateText(screenObj, "CurrencyDisplay", "Void Shards: 0", 24);
+            GameObject currencyObj = CreateText(screenObj, "CurrencyDisplay", "0", 24);
             RectTransform currencyRect = currencyObj.GetComponent<RectTransform>();
             currencyRect.anchorMin = new Vector2(0.85f, 0.92f);
             currencyRect.anchorMax = new Vector2(0.85f, 0.92f);
             currencyRect.sizeDelta = new Vector2(200, 40);
+            var currencyText = currencyObj.GetComponent<TMP_Text>();
 
             // === Items Container ===
             GameObject itemsContainer = new GameObject("ItemsContainer");
             itemsContainer.transform.SetParent(screenObj.transform, false);
             RectTransform itemsRect = itemsContainer.AddComponent<RectTransform>();
-            itemsRect.anchorMin = new Vector2(0.05f, 0.15f);
-            itemsRect.anchorMax = new Vector2(0.95f, 0.85f);
+            itemsRect.anchorMin = new Vector2(0.05f, 0.18f);
+            itemsRect.anchorMax = new Vector2(0.7f, 0.85f);
             itemsRect.sizeDelta = Vector2.zero;
 
             GridLayoutGroup grid = itemsContainer.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(200, 280);
-            grid.spacing = new Vector2(20, 20);
-            grid.childAlignment = TextAnchor.UpperCenter;
+            grid.cellSize = new Vector2(180, 250);
+            grid.spacing = new Vector2(15, 15);
+            grid.childAlignment = TextAnchor.UpperLeft;
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = 4;
+            grid.constraintCount = 3;
+            grid.padding = new RectOffset(10, 10, 10, 10);
+
+            // === Services Panel (Right side) ===
+            GameObject servicesPanel = new GameObject("ServicesPanel");
+            servicesPanel.transform.SetParent(screenObj.transform, false);
+            RectTransform servicesRect = servicesPanel.AddComponent<RectTransform>();
+            servicesRect.anchorMin = new Vector2(0.72f, 0.18f);
+            servicesRect.anchorMax = new Vector2(0.95f, 0.85f);
+            servicesRect.sizeDelta = Vector2.zero;
+
+            Image servicesBg = servicesPanel.AddComponent<Image>();
+            servicesBg.color = new Color(0.1f, 0.08f, 0.12f, 0.9f);
+
+            VerticalLayoutGroup servicesLayout = servicesPanel.AddComponent<VerticalLayoutGroup>();
+            servicesLayout.padding = new RectOffset(10, 10, 10, 10);
+            servicesLayout.spacing = 10;
+            servicesLayout.childAlignment = TextAnchor.UpperCenter;
+            servicesLayout.childForceExpandWidth = true;
+            servicesLayout.childForceExpandHeight = false;
+
+            // Services title
+            GameObject servicesTitleObj = CreateText(servicesPanel, "ServicesTitle", "SERVICES", 18);
+            servicesTitleObj.GetComponent<TMP_Text>().fontStyle = FontStyles.Bold;
+            var servTitleLayout = servicesTitleObj.AddComponent<LayoutElement>();
+            servTitleLayout.preferredHeight = 30;
+
+            // Remove Card Button
+            GameObject removeCardBtn = CreateShopServiceButton(servicesPanel, "RemoveCardButton", "Remove Card", "75 Shards");
+            var removeCardButton = removeCardBtn.GetComponent<Button>();
+
+            // Purify Button
+            GameObject purifyBtn = CreateShopServiceButton(servicesPanel, "PurifyButton", "Purify", "50 Shards");
+            var purifyButton = purifyBtn.GetComponent<Button>();
 
             // === Leave Button ===
             GameObject leaveBtn = CreateMenuButton(screenObj, "LeaveButton", "LEAVE SHOP");
@@ -1169,8 +1253,55 @@ namespace HNR.Editor
             leaveRect.anchorMin = new Vector2(0.5f, 0.05f);
             leaveRect.anchorMax = new Vector2(0.5f, 0.05f);
             leaveRect.sizeDelta = new Vector2(200, 50);
+            var leaveButton = leaveBtn.GetComponent<Button>();
 
+            // === Wire ShopScreen references ===
+            SerializedObject so = new SerializedObject(shopScreen);
+            so.FindProperty("_voidShardsText").objectReferenceValue = currencyText;
+            so.FindProperty("_itemContainer").objectReferenceValue = itemsContainer.transform;
+            so.FindProperty("_leaveButton").objectReferenceValue = leaveButton;
+            so.FindProperty("_removeCardButton").objectReferenceValue = removeCardButton;
+            so.FindProperty("_purifyButton").objectReferenceValue = purifyButton;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            Debug.Log("[ProductionSceneSetupGenerator] Created ShopScreen with wired references");
             return screenObj;
+        }
+
+        /// <summary>
+        /// Creates a service button for the shop.
+        /// </summary>
+        private static GameObject CreateShopServiceButton(GameObject parent, string name, string label, string cost)
+        {
+            GameObject btnObj = new GameObject(name);
+            btnObj.transform.SetParent(parent.transform, false);
+
+            Image bg = btnObj.AddComponent<Image>();
+            bg.color = new Color(0.15f, 0.12f, 0.2f, 0.9f);
+
+            Button button = btnObj.AddComponent<Button>();
+            button.targetGraphic = bg;
+
+            var layoutElement = btnObj.AddComponent<LayoutElement>();
+            layoutElement.preferredHeight = 60;
+
+            VerticalLayoutGroup layout = btnObj.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(8, 8, 5, 5);
+            layout.spacing = 2;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            // Label text
+            GameObject labelObj = CreateText(btnObj, "Label", label, 14);
+            labelObj.GetComponent<TMP_Text>().fontStyle = FontStyles.Bold;
+            labelObj.GetComponent<TMP_Text>().color = Color.white;
+
+            // Cost text
+            GameObject costObj = CreateText(btnObj, "Cost", cost, 11);
+            costObj.GetComponent<TMP_Text>().color = new Color(0f, 0.83f, 0.89f);
+
+            return btnObj;
         }
 
         private static GameObject CreateSanctuaryScreen(GameObject parent)
@@ -1183,7 +1314,7 @@ namespace HNR.Editor
             rect.anchorMax = Vector2.one;
             rect.sizeDelta = Vector2.zero;
 
-            screenObj.AddComponent<SanctuaryScreen>();
+            var sanctuaryScreen = screenObj.AddComponent<SanctuaryScreen>();
             screenObj.SetActive(false);
 
             // Background
@@ -1196,7 +1327,9 @@ namespace HNR.Editor
             titleRect.anchorMin = new Vector2(0.5f, 0.88f);
             titleRect.anchorMax = new Vector2(0.5f, 0.88f);
             titleRect.sizeDelta = new Vector2(300, 50);
-            titleObj.GetComponent<TMP_Text>().color = new Color(0.18f, 0.8f, 0.44f); // Health green
+            var titleText = titleObj.GetComponent<TMP_Text>();
+            titleText.color = new Color(0.18f, 0.8f, 0.44f); // Health green
+            titleText.fontStyle = FontStyles.Bold;
 
             // Description
             GameObject descObj = CreateText(screenObj, "Description", "A moment of respite in the Null Rift...", 16);
@@ -1204,7 +1337,8 @@ namespace HNR.Editor
             descRect.anchorMin = new Vector2(0.5f, 0.78f);
             descRect.anchorMax = new Vector2(0.5f, 0.78f);
             descRect.sizeDelta = new Vector2(500, 40);
-            descObj.GetComponent<TMP_Text>().color = new Color(0.7f, 0.7f, 0.7f);
+            var descText = descObj.GetComponent<TMP_Text>();
+            descText.color = new Color(0.7f, 0.7f, 0.7f);
 
             // Choice buttons container
             GameObject choicesContainer = new GameObject("ChoicesContainer");
@@ -1221,25 +1355,39 @@ namespace HNR.Editor
             choicesLayout.childForceExpandHeight = true;
 
             // Rest button (green)
-            CreateSanctuaryChoice(choicesContainer, "RestButton", "REST", "Heal 30% HP", new Color(0.18f, 0.8f, 0.44f));
+            GameObject restBtn = CreateSanctuaryChoice(choicesContainer, "RestButton", "REST", "Heal 30% HP", new Color(0.18f, 0.8f, 0.44f));
 
             // Purify button (cyan)
-            CreateSanctuaryChoice(choicesContainer, "PurifyButton", "PURIFY", "Remove -30 Corruption", new Color(0f, 0.83f, 0.89f));
+            GameObject purifyBtn = CreateSanctuaryChoice(choicesContainer, "PurifyButton", "PURIFY", "Remove -30 Corruption", new Color(0f, 0.83f, 0.89f));
 
             // Upgrade button (gold)
-            CreateSanctuaryChoice(choicesContainer, "UpgradeButton", "UPGRADE", "Upgrade a card", new Color(0.83f, 0.69f, 0.22f));
+            GameObject upgradeBtn = CreateSanctuaryChoice(choicesContainer, "UpgradeButton", "UPGRADE", "Upgrade a card", new Color(0.83f, 0.69f, 0.22f));
 
-            // Skip button
+            // Skip button - Note: SanctuaryScreen doesn't have a skip/leave button field,
+            // the only way to leave is to make a choice (Rest/Purify/Upgrade)
+            // But we can still display it for visual purposes
             GameObject skipBtn = CreateMenuButton(screenObj, "SkipButton", "LEAVE");
             RectTransform skipRect = skipBtn.GetComponent<RectTransform>();
             skipRect.anchorMin = new Vector2(0.5f, 0.1f);
             skipRect.anchorMax = new Vector2(0.5f, 0.1f);
             skipRect.sizeDelta = new Vector2(150, 40);
+            // Hide the leave button since Sanctuary requires a choice
+            skipBtn.SetActive(false);
 
+            // === Wire SanctuaryScreen references ===
+            SerializedObject so = new SerializedObject(sanctuaryScreen);
+            so.FindProperty("_titleText").objectReferenceValue = titleText;
+            so.FindProperty("_descriptionText").objectReferenceValue = descText;
+            so.FindProperty("_restButton").objectReferenceValue = restBtn.GetComponent<Button>();
+            so.FindProperty("_purifyButton").objectReferenceValue = purifyBtn.GetComponent<Button>();
+            so.FindProperty("_upgradeButton").objectReferenceValue = upgradeBtn.GetComponent<Button>();
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            Debug.Log("[ProductionSceneSetupGenerator] Created SanctuaryScreen with wired references");
             return screenObj;
         }
 
-        private static void CreateSanctuaryChoice(GameObject parent, string name, string title, string desc, Color color)
+        private static GameObject CreateSanctuaryChoice(GameObject parent, string name, string title, string desc, Color color)
         {
             GameObject choice = new GameObject(name);
             choice.transform.SetParent(parent.transform, false);
@@ -1275,6 +1423,8 @@ namespace HNR.Editor
             // Description
             GameObject descObj = CreateText(choice, "Desc", desc, 12);
             descObj.GetComponent<TMP_Text>().color = new Color(0.7f, 0.7f, 0.7f);
+
+            return choice;
         }
 
         private static GameObject CreateTreasureScreen(GameObject parent)
@@ -2606,7 +2756,7 @@ namespace HNR.Editor
             statsLayout.childForceExpandWidth = false;
             statsLayout.childForceExpandHeight = false;
 
-            // HP Container
+            // HP Container with AnimatedStatDisplay
             GameObject hpContainer = new GameObject("HPContainer");
             hpContainer.transform.SetParent(statsContainer.transform, false);
             HorizontalLayoutGroup hpLayout = hpContainer.AddComponent<HorizontalLayoutGroup>();
@@ -2623,10 +2773,35 @@ namespace HNR.Editor
             hpIconLayout.preferredWidth = 16;
             hpIconLayout.preferredHeight = 16;
 
-            GameObject hpText = CreateText(hpContainer, "HPText", "210/210", 12);
-            hpText.GetComponent<TMP_Text>().fontStyle = TMPro.FontStyles.Bold;
+            // HP AnimatedStatDisplay (DualValue mode for "current/max")
+            GameObject hpDisplayObj = new GameObject("HPDisplay");
+            hpDisplayObj.transform.SetParent(hpContainer.transform, false);
+            var hpDisplay = hpDisplayObj.AddComponent<AnimatedStatDisplay>();
+            var hpDisplayLayout = hpDisplayObj.AddComponent<LayoutElement>();
+            hpDisplayLayout.preferredWidth = 80;
+            hpDisplayLayout.preferredHeight = 20;
 
-            // Currency Container
+            // Create text for HP display
+            GameObject hpText = CreateText(hpDisplayObj, "ValueText", "210/210", 12);
+            hpText.GetComponent<TMP_Text>().fontStyle = TMPro.FontStyles.Bold;
+            RectTransform hpTextRect = hpText.GetComponent<RectTransform>();
+            hpTextRect.anchorMin = Vector2.zero;
+            hpTextRect.anchorMax = Vector2.one;
+            hpTextRect.sizeDelta = Vector2.zero;
+
+            // Wire HP AnimatedStatDisplay
+            SerializedObject hpDisplaySo = new SerializedObject(hpDisplay);
+            hpDisplaySo.FindProperty("_valueText").objectReferenceValue = hpText.GetComponent<TMP_Text>();
+            hpDisplaySo.FindProperty("_displayMode").enumValueIndex = 1; // DualValue
+            hpDisplaySo.FindProperty("_animationSpeed").floatValue = 5f;
+            hpDisplaySo.FindProperty("_punchScale").floatValue = 1.1f;
+            hpDisplaySo.FindProperty("_punchDuration").floatValue = 0.2f;
+            hpDisplaySo.FindProperty("_normalColor").colorValue = Color.white;
+            hpDisplaySo.FindProperty("_increaseColor").colorValue = new Color(0.18f, 0.8f, 0.44f); // Health green
+            hpDisplaySo.FindProperty("_decreaseColor").colorValue = new Color(0.77f, 0.12f, 0.23f); // Crimson
+            hpDisplaySo.ApplyModifiedPropertiesWithoutUndo();
+
+            // Currency Container with AnimatedStatDisplay
             GameObject currencyContainer = new GameObject("CurrencyContainer");
             currencyContainer.transform.SetParent(statsContainer.transform, false);
             HorizontalLayoutGroup currencyLayout = currencyContainer.AddComponent<HorizontalLayoutGroup>();
@@ -2643,8 +2818,33 @@ namespace HNR.Editor
             currIconLayout.preferredWidth = 16;
             currIconLayout.preferredHeight = 16;
 
-            GameObject currencyText = CreateText(currencyContainer, "CurrencyText", "45", 12);
+            // Currency AnimatedStatDisplay (SingleValue mode for just number)
+            GameObject currDisplayObj = new GameObject("CurrencyDisplay");
+            currDisplayObj.transform.SetParent(currencyContainer.transform, false);
+            var currDisplay = currDisplayObj.AddComponent<AnimatedStatDisplay>();
+            var currDisplayLayout = currDisplayObj.AddComponent<LayoutElement>();
+            currDisplayLayout.preferredWidth = 50;
+            currDisplayLayout.preferredHeight = 20;
+
+            // Create text for currency display (starts at 0)
+            GameObject currencyText = CreateText(currDisplayObj, "ValueText", "0", 12);
             currencyText.GetComponent<TMP_Text>().fontStyle = TMPro.FontStyles.Bold;
+            RectTransform currTextRect = currencyText.GetComponent<RectTransform>();
+            currTextRect.anchorMin = Vector2.zero;
+            currTextRect.anchorMax = Vector2.one;
+            currTextRect.sizeDelta = Vector2.zero;
+
+            // Wire Currency AnimatedStatDisplay
+            SerializedObject currDisplaySo = new SerializedObject(currDisplay);
+            currDisplaySo.FindProperty("_valueText").objectReferenceValue = currencyText.GetComponent<TMP_Text>();
+            currDisplaySo.FindProperty("_displayMode").enumValueIndex = 0; // SingleValue
+            currDisplaySo.FindProperty("_animationSpeed").floatValue = 5f;
+            currDisplaySo.FindProperty("_punchScale").floatValue = 1.1f;
+            currDisplaySo.FindProperty("_punchDuration").floatValue = 0.2f;
+            currDisplaySo.FindProperty("_normalColor").colorValue = Color.white;
+            currDisplaySo.FindProperty("_increaseColor").colorValue = new Color(0.18f, 0.8f, 0.44f); // Green for gains
+            currDisplaySo.FindProperty("_decreaseColor").colorValue = new Color(0.77f, 0.12f, 0.23f); // Red for spending
+            currDisplaySo.ApplyModifiedPropertiesWithoutUndo();
 
             return header;
         }
@@ -2959,6 +3159,213 @@ namespace HNR.Editor
 
             overlay.SetActive(false);
             return overlay;
+        }
+
+        /// <summary>
+        /// Creates the DeckViewerModal overlay for viewing/removing cards.
+        /// Used by shop's card removal service.
+        /// </summary>
+        private static GameObject CreateDeckViewerModal(GameObject parent)
+        {
+            GameObject modal = new GameObject("DeckViewerModal");
+            modal.transform.SetParent(parent.transform, false);
+
+            RectTransform modalRect = modal.AddComponent<RectTransform>();
+            modalRect.anchorMin = Vector2.zero;
+            modalRect.anchorMax = Vector2.one;
+            modalRect.sizeDelta = Vector2.zero;
+
+            // === Modal Panel (holds all content) ===
+            GameObject modalPanel = new GameObject("ModalPanel");
+            modalPanel.transform.SetParent(modal.transform, false);
+            RectTransform panelRect = modalPanel.AddComponent<RectTransform>();
+            panelRect.anchorMin = Vector2.zero;
+            panelRect.anchorMax = Vector2.one;
+            panelRect.sizeDelta = Vector2.zero;
+            modalPanel.SetActive(false);
+
+            // === Canvas Group for fade animation ===
+            CanvasGroup canvasGroup = modalPanel.AddComponent<CanvasGroup>();
+            canvasGroup.alpha = 0f;
+
+            // === Background Overlay (semi-transparent) ===
+            Image bgOverlay = modalPanel.AddComponent<Image>();
+            bgOverlay.color = new Color(0f, 0f, 0f, 0.85f);
+
+            // === Content Container (centered panel) ===
+            GameObject contentPanel = new GameObject("ContentPanel");
+            contentPanel.transform.SetParent(modalPanel.transform, false);
+            RectTransform contentRect = contentPanel.AddComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0.1f, 0.08f);
+            contentRect.anchorMax = new Vector2(0.9f, 0.92f);
+            contentRect.sizeDelta = Vector2.zero;
+
+            Image contentBg = contentPanel.AddComponent<Image>();
+            contentBg.color = new Color(0.08f, 0.06f, 0.12f, 0.98f);
+
+            // === Header ===
+            GameObject header = new GameObject("Header");
+            header.transform.SetParent(contentPanel.transform, false);
+            RectTransform headerRect = header.AddComponent<RectTransform>();
+            headerRect.anchorMin = new Vector2(0, 0.88f);
+            headerRect.anchorMax = new Vector2(1, 1);
+            headerRect.sizeDelta = Vector2.zero;
+
+            Image headerBg = header.AddComponent<Image>();
+            headerBg.color = new Color(0.1f, 0.08f, 0.15f, 0.95f);
+
+            // Title
+            GameObject title = CreateText(header, "Title", "YOUR DECK", 28);
+            RectTransform titleRect = title.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0, 0);
+            titleRect.anchorMax = new Vector2(1, 1);
+            titleRect.offsetMin = new Vector2(20, 0);
+            titleRect.offsetMax = new Vector2(-20, 0);
+            var titleTmp = title.GetComponent<TMP_Text>();
+            titleTmp.alignment = TextAlignmentOptions.Left;
+            titleTmp.fontStyle = TMPro.FontStyles.Bold;
+            titleTmp.color = new Color(0.83f, 0.69f, 0.22f); // Soul gold
+
+            // Instruction text
+            GameObject instruction = CreateText(header, "Instruction", "", 14);
+            RectTransform instrRect = instruction.GetComponent<RectTransform>();
+            instrRect.anchorMin = new Vector2(0.5f, 0);
+            instrRect.anchorMax = new Vector2(1, 1);
+            instrRect.offsetMin = new Vector2(0, 0);
+            instrRect.offsetMax = new Vector2(-20, 0);
+            var instrTmp = instruction.GetComponent<TMP_Text>();
+            instrTmp.alignment = TextAlignmentOptions.Right;
+            instrTmp.color = new Color(0.7f, 0.7f, 0.7f);
+            instruction.SetActive(false);
+
+            // === Scroll Area ===
+            GameObject scrollArea = new GameObject("ScrollArea");
+            scrollArea.transform.SetParent(contentPanel.transform, false);
+            RectTransform scrollRect = scrollArea.AddComponent<RectTransform>();
+            scrollRect.anchorMin = new Vector2(0, 0.12f);
+            scrollRect.anchorMax = new Vector2(1, 0.86f);
+            scrollRect.sizeDelta = Vector2.zero;
+
+            ScrollRect scroll = scrollArea.AddComponent<ScrollRect>();
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.scrollSensitivity = 20f;
+
+            Image scrollMask = scrollArea.AddComponent<Image>();
+            scrollMask.color = new Color(0.05f, 0.03f, 0.08f, 0.5f);
+            scrollArea.AddComponent<Mask>().showMaskGraphic = true;
+
+            // === Viewport ===
+            GameObject viewport = new GameObject("Viewport");
+            viewport.transform.SetParent(scrollArea.transform, false);
+            RectTransform viewportRect = viewport.AddComponent<RectTransform>();
+            viewportRect.anchorMin = Vector2.zero;
+            viewportRect.anchorMax = Vector2.one;
+            viewportRect.sizeDelta = Vector2.zero;
+
+            // === Card Container (GridLayoutGroup) ===
+            GameObject cardContainer = new GameObject("CardContainer");
+            cardContainer.transform.SetParent(viewport.transform, false);
+            RectTransform cardContainerRect = cardContainer.AddComponent<RectTransform>();
+            cardContainerRect.anchorMin = new Vector2(0, 1);
+            cardContainerRect.anchorMax = new Vector2(1, 1);
+            cardContainerRect.pivot = new Vector2(0.5f, 1);
+            cardContainerRect.sizeDelta = new Vector2(0, 300);
+
+            GridLayoutGroup grid = cardContainer.AddComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(90, 120);
+            grid.spacing = new Vector2(10, 10);
+            grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
+            grid.startAxis = GridLayoutGroup.Axis.Horizontal;
+            grid.childAlignment = TextAnchor.UpperCenter;
+            grid.padding = new RectOffset(10, 10, 10, 10);
+
+            ContentSizeFitter fitter = cardContainer.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            scroll.content = cardContainerRect;
+            scroll.viewport = viewportRect;
+
+            // === Footer / Button Area ===
+            GameObject footer = new GameObject("Footer");
+            footer.transform.SetParent(contentPanel.transform, false);
+            RectTransform footerRect = footer.AddComponent<RectTransform>();
+            footerRect.anchorMin = new Vector2(0, 0);
+            footerRect.anchorMax = new Vector2(1, 0.1f);
+            footerRect.sizeDelta = Vector2.zero;
+
+            HorizontalLayoutGroup footerLayout = footer.AddComponent<HorizontalLayoutGroup>();
+            footerLayout.padding = new RectOffset(20, 20, 8, 8);
+            footerLayout.spacing = 16;
+            footerLayout.childAlignment = TextAnchor.MiddleRight;
+            footerLayout.childForceExpandWidth = false;
+            footerLayout.childForceExpandHeight = true;
+
+            // Spacer to push buttons right
+            GameObject spacer = new GameObject("Spacer");
+            spacer.transform.SetParent(footer.transform, false);
+            var spacerLayout = spacer.AddComponent<LayoutElement>();
+            spacerLayout.flexibleWidth = 1;
+
+            // Cancel button
+            GameObject cancelBtn = new GameObject("CancelButton");
+            cancelBtn.transform.SetParent(footer.transform, false);
+            Image cancelBg = cancelBtn.AddComponent<Image>();
+            cancelBg.color = new Color(0.15f, 0.12f, 0.2f, 0.9f);
+            Button cancelButton = cancelBtn.AddComponent<Button>();
+            cancelButton.targetGraphic = cancelBg;
+            var cancelLayout = cancelBtn.AddComponent<LayoutElement>();
+            cancelLayout.preferredWidth = 120;
+            cancelLayout.preferredHeight = 40;
+
+            GameObject cancelText = CreateText(cancelBtn, "Text", "Cancel", 16);
+            RectTransform cancelTextRect = cancelText.GetComponent<RectTransform>();
+            cancelTextRect.anchorMin = Vector2.zero;
+            cancelTextRect.anchorMax = Vector2.one;
+            cancelTextRect.sizeDelta = Vector2.zero;
+            cancelText.GetComponent<TMP_Text>().color = new Color(0f, 0.83f, 0.89f); // Soul cyan
+
+            // Confirm button
+            GameObject confirmBtn = new GameObject("ConfirmButton");
+            confirmBtn.transform.SetParent(footer.transform, false);
+            Image confirmBg = confirmBtn.AddComponent<Image>();
+            confirmBg.color = new Color(0.77f, 0.12f, 0.23f, 0.9f); // Crimson
+            Button confirmButton = confirmBtn.AddComponent<Button>();
+            confirmButton.targetGraphic = confirmBg;
+            var confirmLayout = confirmBtn.AddComponent<LayoutElement>();
+            confirmLayout.preferredWidth = 120;
+            confirmLayout.preferredHeight = 40;
+
+            GameObject confirmText = CreateText(confirmBtn, "Text", "Close", 16);
+            RectTransform confirmTextRect = confirmText.GetComponent<RectTransform>();
+            confirmTextRect.anchorMin = Vector2.zero;
+            confirmTextRect.anchorMax = Vector2.one;
+            confirmTextRect.sizeDelta = Vector2.zero;
+            confirmText.GetComponent<TMP_Text>().fontStyle = TMPro.FontStyles.Bold;
+
+            // === Add DeckViewerModal component and wire references ===
+            var deckViewer = modal.AddComponent<DeckViewerModal>();
+            var so = new SerializedObject(deckViewer);
+            so.FindProperty("_modalPanel").objectReferenceValue = modalPanel;
+            so.FindProperty("_canvasGroup").objectReferenceValue = canvasGroup;
+            so.FindProperty("_backgroundOverlay").objectReferenceValue = bgOverlay;
+            so.FindProperty("_titleText").objectReferenceValue = titleTmp;
+            so.FindProperty("_instructionText").objectReferenceValue = instrTmp;
+            so.FindProperty("_cardContainer").objectReferenceValue = cardContainer.transform;
+            so.FindProperty("_scrollRect").objectReferenceValue = scroll;
+            so.FindProperty("_confirmButton").objectReferenceValue = confirmButton;
+            so.FindProperty("_confirmButtonText").objectReferenceValue = confirmText.GetComponent<TMP_Text>();
+            so.FindProperty("_cancelButton").objectReferenceValue = cancelButton;
+            so.FindProperty("_fadeInDuration").floatValue = 0.3f;
+            so.FindProperty("_fadeOutDuration").floatValue = 0.2f;
+            so.FindProperty("_normalSlotColor").colorValue = new Color(0.15f, 0.15f, 0.2f);
+            so.FindProperty("_selectedSlotColor").colorValue = new Color(0.2f, 0.35f, 0.5f);
+            so.FindProperty("_hoverSlotColor").colorValue = new Color(0.2f, 0.25f, 0.3f);
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            Debug.Log("[ProductionSceneSetupGenerator] Created DeckViewerModal");
+            return modal;
         }
     }
 }

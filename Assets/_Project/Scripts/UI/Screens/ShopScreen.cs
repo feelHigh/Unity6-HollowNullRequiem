@@ -434,18 +434,13 @@ namespace HNR.UI
         {
             Debug.Log("[ShopScreen] Leaving shop");
 
+            // Complete the shop node
+            var mapManager = ServiceLocator.Get<MapManager>();
+            mapManager?.CompleteCurrentNode();
+
             // Navigate back to map
             var uiManager = ServiceLocator.Get<IUIManager>();
-            if (uiManager != null)
-            {
-                uiManager.ShowScreen<MapScreen>();
-            }
-            else
-            {
-                // Fallback: try to complete the node
-                var mapManager = ServiceLocator.Get<MapManager>();
-                mapManager?.CompleteCurrentNode();
-            }
+            uiManager?.ShowScreen<MapScreen>();
         }
 
         private void OnRemoveCardClicked()
