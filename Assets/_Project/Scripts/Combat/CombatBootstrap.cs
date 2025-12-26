@@ -144,7 +144,7 @@ namespace HNR.Combat
 
         /// <summary>
         /// Coroutine that waits for UI to be ready before starting combat.
-        /// This ensures CombatScreenCZN subscribes to events before cards are drawn.
+        /// This ensures CombatScreen subscribes to events before cards are drawn.
         /// </summary>
         private IEnumerator StartCombatAfterUIReady(TurnManager turnManager, List<RequiemInstance> teamList, List<EnemyInstance> enemies, EncounterDataSO encounter)
         {
@@ -168,7 +168,7 @@ namespace HNR.Combat
 
             Debug.Log("[CombatBootstrap] UI ready, starting combat...");
 
-            // Now start combat - DrawPhase will publish CardDrawnEvent which CombatScreenCZN will receive
+            // Now start combat - DrawPhase will publish CardDrawnEvent which CombatScreen will receive
             turnManager.StartCombat(teamList, enemies);
 
             // Clear pending data
@@ -182,7 +182,7 @@ namespace HNR.Combat
             // Try to show via UIManager first
             if (ServiceLocator.TryGet<IUIManager>(out var uiManager))
             {
-                uiManager.ShowScreen<CombatScreenCZN>();
+                uiManager.ShowScreen<CombatScreen>();
                 return;
             }
 

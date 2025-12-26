@@ -12,7 +12,6 @@ namespace HNR.UI.Combat
 {
     /// <summary>
     /// Left sidebar showing party members with EP gauges and status icons.
-    /// Per CZN layout specification.
     /// </summary>
     public class PartyStatusSidebar : MonoBehaviour
     {

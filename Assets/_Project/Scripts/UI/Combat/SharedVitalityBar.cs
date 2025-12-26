@@ -1,7 +1,7 @@
 // ============================================
-// SharedVitalityBarCZN.cs
+// SharedVitalityBar.cs
 // Wide HP bar with embedded party portraits
-// CZN layout with damage linger effect
+// Layout with damage linger effect
 // ============================================
 
 using System.Collections;
@@ -18,10 +18,10 @@ using HNR.Characters;
 namespace HNR.UI.Combat
 {
     /// <summary>
-    /// Wide HP bar with embedded party portraits per CZN layout.
+    /// Wide HP bar with embedded party portraits.
     /// Shows team HP with damage linger effect and block indicator.
     /// </summary>
-    public class SharedVitalityBarCZN : MonoBehaviour
+    public class SharedVitalityBar : MonoBehaviour
     {
         [Header("Layout")]
         [SerializeField] private RectTransform _barContainer;
@@ -111,7 +111,7 @@ namespace HNR.UI.Combat
             }
 
             // Log wiring status
-            Debug.Log($"[SharedVitalityBarCZN] Auto-wired: _healthFill={(_healthFill != null ? "OK" : "NULL")}, " +
+            Debug.Log($"[SharedVitalityBar] Auto-wired: _healthFill={(_healthFill != null ? "OK" : "NULL")}, " +
                       $"_blockContainer={(_blockContainer != null ? "OK" : "NULL")}, " +
                       $"_shieldIcon={(_shieldIcon != null ? "OK" : "NULL")}, " +
                       $"_blockText={(_blockText != null ? "OK" : "NULL")}");
@@ -153,13 +153,13 @@ namespace HNR.UI.Combat
 
         private void OnTeamHPChanged(TeamHPChangedEvent evt)
         {
-            Debug.Log($"[SharedVitalityBarCZN] TeamHPChangedEvent received: {evt.CurrentHP}/{evt.MaxHP} (delta: {evt.Delta})");
+            Debug.Log($"[SharedVitalityBar] TeamHPChangedEvent received: {evt.CurrentHP}/{evt.MaxHP} (delta: {evt.Delta})");
             UpdateHealth(evt.CurrentHP, evt.MaxHP, evt.Delta);
         }
 
         private void OnBlockChanged(BlockChangedEvent evt)
         {
-            Debug.Log($"[SharedVitalityBarCZN] BlockChangedEvent received: block={evt.Block}, _blockContainer={(_blockContainer != null ? "OK" : "NULL")}");
+            Debug.Log($"[SharedVitalityBar] BlockChangedEvent received: block={evt.Block}, _blockContainer={(_blockContainer != null ? "OK" : "NULL")}");
             UpdateBlock(evt.Block);
         }
 
@@ -172,7 +172,7 @@ namespace HNR.UI.Combat
         public void UpdateHealth(int current, int max, int delta = 0)
         {
             float newFill = max > 0 ? (float)current / max : 0;
-            Debug.Log($"[SharedVitalityBarCZN] UpdateHealth: {current}/{max}, newFill={newFill:F2}, _healthFill={(_healthFill != null ? "OK" : "NULL")}");
+            Debug.Log($"[SharedVitalityBar] UpdateHealth: {current}/{max}, newFill={newFill:F2}, _healthFill={(_healthFill != null ? "OK" : "NULL")}");
 
             // Damage taken - trigger linger effect
             if (newFill < _targetHealthFill)

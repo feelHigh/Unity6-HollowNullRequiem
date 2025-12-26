@@ -468,7 +468,7 @@ namespace HNR.Combat
 
         /// <summary>
         /// Coroutine that draws cards one at a time with delays.
-        /// DeckManager.Draw() publishes CardDrawnEvent which CombatScreenCZN
+        /// DeckManager.Draw() publishes CardDrawnEvent which CombatScreen
         /// listens to for adding cards to CardFanLayout.
         /// </summary>
         private IEnumerator DrawCardsSequentialCoroutine(int count, Action onComplete)
@@ -493,7 +493,7 @@ namespace HNR.Combat
                 Debug.Log($"[TurnManager] Drawing card {i + 1}/{count}...");
 
                 // Draw the card - this publishes CardDrawnEvent
-                // CombatScreenCZN.OnCardDrawn() handles adding to CardFanLayout
+                // CombatScreen.OnCardDrawn() handles adding to CardFanLayout
                 var card = _context.DeckManager.Draw();
 
                 if (card != null)

@@ -68,7 +68,7 @@ namespace HNR.Map
         [SerializeField, Tooltip("Color when node is visited")]
         private Color _visitedColor = new Color(0.5f, 0.5f, 0.5f, 1f);
 
-        [Header("Node Type Colors (CZN Mockup)")]
+        [Header("Node Type Colors")]
         [SerializeField] private Color _startColor = new Color(0f, 0.83f, 0.89f, 1f);      // Cyan #00D4E4
         [SerializeField] private Color _combatColor = new Color(0.77f, 0.12f, 0.23f, 1f);  // Red #C41E3A
         [SerializeField] private Color _eliteColor = new Color(1f, 0.27f, 0.27f, 1f);      // Glow Red #FF4444

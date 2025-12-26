@@ -357,8 +357,8 @@ namespace HNR.Editor
             // === Screen Container ===
             GameObject screenContainer = CreateUIContainer(canvasObj, "ScreenContainer");
 
-            // === CombatScreenCZN ===
-            GameObject combatScreen = CreateCombatScreenCZN(screenContainer);
+            // === CombatScreen ===
+            GameObject combatScreen = CreateCombatScreen(screenContainer);
 
             // === ResultsScreen (Victory/Defeat) ===
             GameObject resultsScreen = CreateResultsScreen(screenContainer);
@@ -455,8 +455,8 @@ namespace HNR.Editor
                 Debug.Log("[ProductionSceneSetupGenerator] Wired DamageNumberSpawner");
             }
 
-            // === Wire CombatScreenCZN components ===
-            WireCombatScreenCZN(combatScreen);
+            // === Wire CombatScreen components ===
+            WireCombatScreen(combatScreen);
 
             // === Overlay Container (for modals/dialogs) ===
             GameObject overlayContainer = CreateUIContainer(canvasObj, "OverlayContainer");
@@ -964,9 +964,9 @@ namespace HNR.Editor
             var mapScreen = screenObj.AddComponent<MapScreen>();
 
             // ============================================
-            // ZONE HEADER (CZN Layout)
+            // ZONE HEADER
             // ============================================
-            GameObject zoneHeader = CreateZoneHeaderCZN(screenObj);
+            GameObject zoneHeader = CreateZoneHeader(screenObj);
 
             // === Map Container ===
             GameObject mapContainer = new GameObject("MapContainer");
@@ -982,7 +982,7 @@ namespace HNR.Editor
             // ============================================
             // NODE TYPE LEGEND (Bottom Footer)
             // ============================================
-            GameObject legend = CreateMapLegendCZN(screenObj);
+            GameObject legend = CreateMapLegend(screenObj);
 
             // === Node Container ===
             GameObject nodeContainer = new GameObject("NodeContainer");
@@ -1053,7 +1053,7 @@ namespace HNR.Editor
 
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            Debug.Log("[ProductionSceneSetupGenerator] Created MapScreen with CZN zone header");
+            Debug.Log("[ProductionSceneSetupGenerator] Created MapScreen with zone header");
 
             return screenObj;
         }
@@ -1082,7 +1082,7 @@ namespace HNR.Editor
             Image panelBg = panel.AddComponent<Image>();
             panelBg.color = new Color(0.1f, 0.08f, 0.15f, 0.95f);
 
-            // === Illustration Panel (Left 200px per CZN mockup) ===
+            // === Illustration Panel (Left 200px per mockup) ===
             GameObject illustrationPanel = new GameObject("IllustrationPanel");
             illustrationPanel.transform.SetParent(panel.transform, false);
             RectTransform illustRect = illustrationPanel.AddComponent<RectTransform>();
@@ -1114,7 +1114,7 @@ namespace HNR.Editor
             contentRect.offsetMin = new Vector2(240, 20); // Leave space for illustration
             contentRect.offsetMax = new Vector2(-20, -20);
 
-            // === Event Title (Soul Gold per CZN mockup) ===
+            // === Event Title (Soul Gold per mockup) ===
             GameObject titleObj = CreateText(contentPanel, "EventTitle", "ECHO OF THE VOID", 28);
             RectTransform titleRect = titleObj.GetComponent<RectTransform>();
             titleRect.anchorMin = new Vector2(0, 0.88f);
@@ -1934,9 +1934,9 @@ namespace HNR.Editor
         // Screen Creation - Combat
         // ============================================
 
-        private static GameObject CreateCombatScreenCZN(GameObject parent)
+        private static GameObject CreateCombatScreen(GameObject parent)
         {
-            GameObject screenObj = new GameObject("CombatScreenCZN");
+            GameObject screenObj = new GameObject("CombatScreen");
             screenObj.transform.SetParent(parent.transform, false);
 
             RectTransform rect = screenObj.AddComponent<RectTransform>();
@@ -1944,7 +1944,7 @@ namespace HNR.Editor
             rect.anchorMax = Vector2.one;
             rect.sizeDelta = Vector2.zero;
 
-            var combatScreen = screenObj.AddComponent<CombatScreenCZN>();
+            var combatScreen = screenObj.AddComponent<CombatScreen>();
 
             // ============================================
             // TOP HUD (48px) - Vitality Bar + System Menu
@@ -1959,7 +1959,7 @@ namespace HNR.Editor
             topHUDBg.color = new Color(0f, 0f, 0f, 0.85f);
 
             // Shared Vitality Bar (left side of top HUD)
-            GameObject vitalityBar = CreateSharedVitalityBarCZN(topHUD);
+            GameObject vitalityBar = CreateSharedVitalityBarFull(topHUD);
 
             // System Menu Bar (right side of top HUD)
             GameObject sysMenuBar = CreateSystemMenuBar(topHUD);
@@ -1967,7 +1967,7 @@ namespace HNR.Editor
             // ============================================
             // LEFT SIDEBAR (80px) - Party Status
             // ============================================
-            GameObject partySidebar = CreatePartySidebarCZN(screenObj);
+            GameObject partySidebar = CreatePartySidebar(screenObj);
 
             // ============================================
             // CENTER - Enemy Zone + Battle Area
@@ -2027,10 +2027,10 @@ namespace HNR.Editor
             bottomBg.color = new Color(0f, 0f, 0f, 0.8f);
 
             // AP Counter (top center of bottom area)
-            GameObject apCounter = CreateAPCounterCZN(bottomHUD);
+            GameObject apCounter = CreateAPCounter(bottomHUD);
 
             // Execution Button (right side)
-            GameObject executionBtn = CreateExecutionButtonCZN(bottomHUD);
+            GameObject executionBtn = CreateExecutionButton(bottomHUD);
 
             // Wire references
             SerializedObject screenSO = new SerializedObject(combatScreen);
@@ -2083,134 +2083,6 @@ namespace HNR.Editor
             textRect.sizeDelta = Vector2.zero;
 
             return barObj;
-        }
-
-        private static GameObject CreatePartySidebar(GameObject parent)
-        {
-            GameObject sidebar = new GameObject("PartySidebar");
-            sidebar.transform.SetParent(parent.transform, false);
-
-            RectTransform rect = sidebar.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0, 0.2f);
-            rect.anchorMax = new Vector2(0.12f, 0.85f);
-            rect.sizeDelta = Vector2.zero;
-
-            Image bg = sidebar.AddComponent<Image>();
-            bg.color = new Color(0.1f, 0.08f, 0.15f, 0.8f);
-
-            VerticalLayoutGroup layout = sidebar.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 10f;
-            layout.padding = new RectOffset(5, 5, 10, 10);
-            layout.childAlignment = TextAnchor.UpperCenter;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-
-            // Create 3 party member slots
-            for (int i = 0; i < 3; i++)
-            {
-                GameObject slot = new GameObject($"PartySlot_{i}");
-                slot.transform.SetParent(sidebar.transform, false);
-
-                RectTransform slotRect = slot.AddComponent<RectTransform>();
-                slotRect.sizeDelta = new Vector2(100, 120);
-
-                Image slotBg = slot.AddComponent<Image>();
-                slotBg.color = new Color(0.2f, 0.15f, 0.25f, 0.6f);
-
-                // Portrait placeholder
-                GameObject portrait = new GameObject("Portrait");
-                portrait.transform.SetParent(slot.transform, false);
-                RectTransform portraitRect = portrait.AddComponent<RectTransform>();
-                portraitRect.anchorMin = new Vector2(0.1f, 0.4f);
-                portraitRect.anchorMax = new Vector2(0.9f, 0.95f);
-                portraitRect.sizeDelta = Vector2.zero;
-
-                Image portraitImg = portrait.AddComponent<Image>();
-                portraitImg.color = new Color(0.3f, 0.25f, 0.35f);
-
-                // EP Bar placeholder
-                GameObject epBar = new GameObject("EPBar");
-                epBar.transform.SetParent(slot.transform, false);
-                RectTransform epRect = epBar.AddComponent<RectTransform>();
-                epRect.anchorMin = new Vector2(0.1f, 0.1f);
-                epRect.anchorMax = new Vector2(0.9f, 0.3f);
-                epRect.sizeDelta = Vector2.zero;
-
-                Image epBg = epBar.AddComponent<Image>();
-                epBg.color = new Color(0.2f, 0.15f, 0.3f);
-            }
-
-            return sidebar;
-        }
-
-        private static GameObject CreateAPCounter(GameObject parent)
-        {
-            GameObject counter = new GameObject("APCounter");
-            counter.transform.SetParent(parent.transform, false);
-
-            RectTransform rect = counter.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.88f, 0.4f);
-            rect.anchorMax = new Vector2(1f, 0.6f);
-            rect.sizeDelta = Vector2.zero;
-
-            Image bg = counter.AddComponent<Image>();
-            bg.color = new Color(0.15f, 0.1f, 0.25f, 0.9f);
-
-            // AP Number
-            GameObject apNum = CreateText(counter, "APNumber", "3", 48);
-            RectTransform numRect = apNum.GetComponent<RectTransform>();
-            numRect.anchorMin = new Vector2(0.5f, 0.6f);
-            numRect.anchorMax = new Vector2(0.5f, 0.6f);
-            numRect.sizeDelta = new Vector2(80, 60);
-            var apText = apNum.GetComponent<TMP_Text>();
-
-            // AP Label
-            GameObject apLabel = CreateText(counter, "APLabel", "AP", 18);
-            RectTransform labelRect = apLabel.GetComponent<RectTransform>();
-            labelRect.anchorMin = new Vector2(0.5f, 0.3f);
-            labelRect.anchorMax = new Vector2(0.5f, 0.3f);
-            labelRect.sizeDelta = new Vector2(50, 25);
-
-            // Add APCounterDisplay component and wire references
-            var apCounter = counter.AddComponent<APCounterDisplay>();
-            var so = new SerializedObject(apCounter);
-            so.FindProperty("_apText").objectReferenceValue = apText;
-            so.FindProperty("_glowBackground").objectReferenceValue = bg;
-            so.ApplyModifiedPropertiesWithoutUndo();
-
-            return counter;
-        }
-
-        private static GameObject CreateExecutionButton(GameObject parent)
-        {
-            GameObject btnObj = new GameObject("ExecutionButton");
-            btnObj.transform.SetParent(parent.transform, false);
-
-            RectTransform rect = btnObj.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.85f, 0.05f);
-            rect.anchorMax = new Vector2(0.95f, 0.15f);
-            rect.sizeDelta = Vector2.zero;
-
-            Image bg = btnObj.AddComponent<Image>();
-            bg.color = new Color(0.6f, 0.3f, 0.1f);
-
-            Button btn = btnObj.AddComponent<Button>();
-            btn.targetGraphic = bg;
-
-            GameObject textObj = CreateText(btnObj, "Text", "END\nTURN", 16);
-            RectTransform textRect = textObj.GetComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.sizeDelta = Vector2.zero;
-
-            // Add ExecutionButton component and wire references
-            var execButton = btnObj.AddComponent<ExecutionButton>();
-            var so = new SerializedObject(execButton);
-            so.FindProperty("_buttonBackground").objectReferenceValue = bg;
-            so.FindProperty("_button").objectReferenceValue = btn;
-            so.ApplyModifiedPropertiesWithoutUndo();
-
-            return btnObj;
         }
 
         private static GameObject CreateHandContainer(GameObject canvas)
@@ -2471,19 +2343,19 @@ namespace HNR.Editor
         }
 
         /// <summary>
-        /// Wires CombatScreenCZN component references.
+        /// Wires CombatScreen component references.
         /// </summary>
-        private static void WireCombatScreenCZN(GameObject combatScreenObj)
+        private static void WireCombatScreen(GameObject combatScreenObj)
         {
             if (combatScreenObj == null) return;
 
-            var screen = combatScreenObj.GetComponent<CombatScreenCZN>();
+            var screen = combatScreenObj.GetComponent<CombatScreen>();
             if (screen == null) return;
 
             SerializedObject so = new SerializedObject(screen);
 
             // Find and wire child components
-            var vitalityBar = combatScreenObj.GetComponentInChildren<SharedVitalityBarCZN>(true);
+            var vitalityBar = combatScreenObj.GetComponentInChildren<SharedVitalityBar>(true);
             var partySidebar = combatScreenObj.GetComponentInChildren<PartyStatusSidebar>(true);
             var cardFan = combatScreenObj.GetComponentInChildren<CardFanLayout>(true);
             var apCounter = combatScreenObj.GetComponentInChildren<APCounterDisplay>(true);
@@ -2532,7 +2404,7 @@ namespace HNR.Editor
                         var slot = allySlotsParent.transform.GetChild(i);
                         allySlotsArray.GetArrayElementAtIndex(i).objectReferenceValue = slot;
                     }
-                    Debug.Log($"[ProductionSceneSetupGenerator] Wired {slotCount} ally slots to CombatScreenCZN");
+                    Debug.Log($"[ProductionSceneSetupGenerator] Wired {slotCount} ally slots to CombatScreen");
                 }
             }
             else
@@ -2567,19 +2439,19 @@ namespace HNR.Editor
             }
 
             so.ApplyModifiedPropertiesWithoutUndo();
-            Debug.Log("[ProductionSceneSetupGenerator] Wired CombatScreenCZN component references");
+            Debug.Log("[ProductionSceneSetupGenerator] Wired CombatScreen component references");
         }
 
         // ============================================
-        // CZN Layout Helper Methods
+        // Layout Helper Methods
         // ============================================
 
         /// <summary>
-        /// Creates the CZN-style shared vitality bar with embedded party portraits.
+        /// Creates the shared vitality bar with embedded party portraits.
         /// </summary>
-        private static GameObject CreateSharedVitalityBarCZN(GameObject parent)
+        private static GameObject CreateSharedVitalityBarFull(GameObject parent)
         {
-            GameObject barObj = new GameObject("SharedVitalityBarCZN");
+            GameObject barObj = new GameObject("SharedVitalityBar");
             barObj.transform.SetParent(parent.transform, false);
 
             RectTransform rect = barObj.AddComponent<RectTransform>();
@@ -2616,7 +2488,7 @@ namespace HNR.Editor
                 pLayout.preferredHeight = 28;
             }
 
-            // HP Bar container - wide bar per CZN layout
+            // HP Bar container - wide bar
             GameObject hpBarContainer = new GameObject("HPBarContainer");
             hpBarContainer.transform.SetParent(barObj.transform, false);
             var hpLayout = hpBarContainer.AddComponent<LayoutElement>();
@@ -2684,8 +2556,8 @@ namespace HNR.Editor
             blockText.GetComponent<TextMeshProUGUI>().color = new Color(0.2f, 0.6f, 0.86f);
             blockText.GetComponent<TextMeshProUGUI>().fontStyle = TMPro.FontStyles.Bold;
 
-            // Add SharedVitalityBarCZN component
-            var vitalityComponent = barObj.AddComponent<SharedVitalityBarCZN>();
+            // Add SharedVitalityBar component
+            var vitalityComponent = barObj.AddComponent<SharedVitalityBar>();
             SerializedObject so = new SerializedObject(vitalityComponent);
             so.FindProperty("_healthFill").objectReferenceValue = fillImg;
             so.FindProperty("_damageFill").objectReferenceValue = dmgImg;
@@ -2763,9 +2635,9 @@ namespace HNR.Editor
         }
 
         /// <summary>
-        /// Creates the CZN-style party status sidebar.
+        /// Creates the party status sidebar.
         /// </summary>
-        private static GameObject CreatePartySidebarCZN(GameObject parent)
+        private static GameObject CreatePartySidebar(GameObject parent)
         {
             GameObject sidebar = new GameObject("PartySidebar");
             sidebar.transform.SetParent(parent.transform, false);
@@ -2788,7 +2660,7 @@ namespace HNR.Editor
             // Create 3 party member slots
             for (int i = 0; i < 3; i++)
             {
-                CreatePartyMemberSlotCZN(sidebar, i);
+                CreatePartyMemberSlot(sidebar, i);
             }
 
             // Add PartyStatusSidebar component if exists
@@ -2797,7 +2669,7 @@ namespace HNR.Editor
             return sidebar;
         }
 
-        private static GameObject CreatePartyMemberSlotCZN(GameObject parent, int index)
+        private static GameObject CreatePartyMemberSlot(GameObject parent, int index)
         {
             GameObject slot = new GameObject($"PartySlot_{index}");
             slot.transform.SetParent(parent.transform, false);
@@ -2932,9 +2804,9 @@ namespace HNR.Editor
         }
 
         /// <summary>
-        /// Creates the CZN-style AP counter display.
+        /// Creates the AP counter display.
         /// </summary>
-        private static GameObject CreateAPCounterCZN(GameObject parent)
+        private static GameObject CreateAPCounter(GameObject parent)
         {
             GameObject counter = new GameObject("APCounter");
             counter.transform.SetParent(parent.transform, false);
@@ -2986,9 +2858,9 @@ namespace HNR.Editor
         }
 
         /// <summary>
-        /// Creates the CZN-style zone header for MapScreen.
+        /// Creates the zone header for MapScreen.
         /// </summary>
-        private static GameObject CreateZoneHeaderCZN(GameObject parent)
+        private static GameObject CreateZoneHeader(GameObject parent)
         {
             GameObject header = new GameObject("ZoneHeader");
             header.transform.SetParent(parent.transform, false);
@@ -3151,7 +3023,7 @@ namespace HNR.Editor
         /// <summary>
         /// Creates the node type legend for the map footer.
         /// </summary>
-        private static GameObject CreateMapLegendCZN(GameObject parent)
+        private static GameObject CreateMapLegend(GameObject parent)
         {
             GameObject legend = new GameObject("MapLegend");
             legend.transform.SetParent(parent.transform, false);
@@ -3208,9 +3080,9 @@ namespace HNR.Editor
         }
 
         /// <summary>
-        /// Creates the CZN-style circular execution (end turn) button.
+        /// Creates the circular execution (end turn) button.
         /// </summary>
-        private static GameObject CreateExecutionButtonCZN(GameObject parent)
+        private static GameObject CreateExecutionButton(GameObject parent)
         {
             GameObject btnObj = new GameObject("ExecutionButton");
             btnObj.transform.SetParent(parent.transform, false);

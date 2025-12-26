@@ -58,7 +58,7 @@ namespace HNR.Editor
                 EditorUtility.DisplayDialog("Scene Wiring Fixed",
                     "All scene wiring issues have been fixed.\n\n" +
                     "- NullRift: MapPathRenderer wired\n" +
-                    "- Combat: SharedVitalityBarCZN and Card prefab wired",
+                    "- Combat: SharedVitalityBar and Card prefab wired",
                     "OK");
             }
             else
@@ -153,7 +153,7 @@ namespace HNR.Editor
         }
 
         /// <summary>
-        /// Fixes Combat scene wiring (SharedVitalityBarCZN, Card prefab).
+        /// Fixes Combat scene wiring (SharedVitalityBar, Card prefab).
         /// </summary>
         public static bool FixCombatScene()
         {
@@ -168,10 +168,10 @@ namespace HNR.Editor
             var scene = EditorSceneManager.OpenScene(scenePath);
             bool modified = false;
 
-            // Fix 1: SharedVitalityBarCZN
+            // Fix 1: SharedVitalityBar
             modified |= FixSharedVitalityBar();
 
-            // Fix 2: CombatScreenCZN._vitalityBar reference
+            // Fix 2: CombatScreen._vitalityBar reference
             modified |= FixCombatScreenVitalityBarRef();
 
             // Fix 3: HandManager._cardPrefab
@@ -205,22 +205,22 @@ namespace HNR.Editor
                 return false;
             }
 
-            // Check if SharedVitalityBarCZN component exists
-            var vitalityBarCZN = vitalityBarGO.GetComponent<SharedVitalityBarCZN>();
-            if (vitalityBarCZN == null)
+            // Check if SharedVitalityBar component exists
+            var vitalityBarComponent = vitalityBarGO.GetComponent<SharedVitalityBar>();
+            if (vitalityBarComponent == null)
             {
-                vitalityBarCZN = vitalityBarGO.AddComponent<SharedVitalityBarCZN>();
-                Debug.Log("[SceneWiringFixer] Added SharedVitalityBarCZN component");
+                vitalityBarComponent = vitalityBarGO.AddComponent<SharedVitalityBar>();
+                Debug.Log("[SceneWiringFixer] Added SharedVitalityBar component");
 
                 // Try to wire internal references
-                WireSharedVitalityBarInternals(vitalityBarCZN);
+                WireSharedVitalityBarInternals(vitalityBarComponent);
                 return true;
             }
 
             return false;
         }
 
-        private static void WireSharedVitalityBarInternals(SharedVitalityBarCZN vitalityBar)
+        private static void WireSharedVitalityBarInternals(SharedVitalityBar vitalityBar)
         {
             var serialized = new SerializedObject(vitalityBar);
 
@@ -267,10 +267,10 @@ namespace HNR.Editor
 
         private static bool FixCombatScreenVitalityBarRef()
         {
-            var combatScreen = Object.FindAnyObjectByType<CombatScreenCZN>();
+            var combatScreen = Object.FindAnyObjectByType<CombatScreen>();
             if (combatScreen == null)
             {
-                Debug.LogWarning("[SceneWiringFixer] CombatScreenCZN not found");
+                Debug.LogWarning("[SceneWiringFixer] CombatScreen not found");
                 return false;
             }
 
@@ -279,12 +279,12 @@ namespace HNR.Editor
 
             if (vitalityBarProp != null && vitalityBarProp.objectReferenceValue == null)
             {
-                var vitalityBar = Object.FindAnyObjectByType<SharedVitalityBarCZN>();
+                var vitalityBar = Object.FindAnyObjectByType<SharedVitalityBar>();
                 if (vitalityBar != null)
                 {
                     vitalityBarProp.objectReferenceValue = vitalityBar;
                     serialized.ApplyModifiedProperties();
-                    Debug.Log("[SceneWiringFixer] Wired CombatScreenCZN._vitalityBar");
+                    Debug.Log("[SceneWiringFixer] Wired CombatScreen._vitalityBar");
                     return true;
                 }
             }
@@ -408,15 +408,15 @@ namespace HNR.Editor
 
             EditorSceneManager.OpenScene(scenePath);
 
-            // CombatScreenCZN
-            var combatScreen = Object.FindAnyObjectByType<CombatScreenCZN>();
+            // CombatScreen
+            var combatScreen = Object.FindAnyObjectByType<CombatScreen>();
             if (combatScreen == null)
             {
-                sb.AppendLine("  CombatScreenCZN: NOT FOUND");
+                sb.AppendLine("  CombatScreen: NOT FOUND");
             }
             else
             {
-                sb.AppendLine("  CombatScreenCZN: OK");
+                sb.AppendLine("  CombatScreen: OK");
                 var serialized = new SerializedObject(combatScreen);
 
                 var vitalityBar = serialized.FindProperty("_vitalityBar");
@@ -453,9 +453,9 @@ namespace HNR.Editor
                 sb.AppendLine($"    _cardPrefab: {(cardPrefab?.objectReferenceValue != null ? "OK" : "NULL")}");
             }
 
-            // SharedVitalityBarCZN
-            var vitalityBarCZN = Object.FindAnyObjectByType<SharedVitalityBarCZN>();
-            sb.AppendLine($"  SharedVitalityBarCZN: {(vitalityBarCZN != null ? "OK" : "NOT FOUND")}");
+            // SharedVitalityBar
+            var sharedVitalityBar = Object.FindAnyObjectByType<SharedVitalityBar>();
+            sb.AppendLine($"  SharedVitalityBar: {(sharedVitalityBar != null ? "OK" : "NOT FOUND")}");
 
             return sb.ToString();
         }

@@ -470,7 +470,7 @@ namespace HNR.Editor
 
             EnsureDirectoryExists(prefabPath);
 
-            // Create node root (42x42 per CZN mockup spec)
+            // Create node root (42x42 per mockup spec)
             GameObject nodeObj = new GameObject("MapNodeUI");
 
             RectTransform rect = nodeObj.AddComponent<RectTransform>();

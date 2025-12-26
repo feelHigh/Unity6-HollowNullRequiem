@@ -1,227 +1,115 @@
 // ============================================
 // CombatScreen.cs
-// Combat UI screen with resource displays
+// Combat screen integrating all combat UI components
 // ============================================
 
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 using HNR.Core;
 using HNR.Core.Events;
+using HNR.Core.Interfaces;
 using HNR.Combat;
+using HNR.Characters;
+using HNR.Cards;
+using HNR.UI;
+using HNR.UI.Combat;
 
-namespace HNR.UI
+namespace HNR.UI.Screens
 {
     /// <summary>
-    /// Combat UI screen displaying resources, deck info, and turn controls.
-    /// Subscribes to combat events for real-time updates.
+    /// Combat screen integrating all combat UI components.
+    /// Features: top HUD, left sidebar, bottom command center, world-space UI.
     /// </summary>
     public class CombatScreen : ScreenBase
     {
         // ============================================
-        // Resource Displays
+        // Top HUD
         // ============================================
 
-        [Header("Resource Displays")]
-        [SerializeField, Tooltip("Action Points display")]
-        private TextMeshProUGUI _apText;
+        [Header("Top HUD")]
+        [SerializeField, Tooltip("Wide HP bar with embedded portraits")]
+        private SharedVitalityBar _vitalityBar;
 
-        [SerializeField, Tooltip("Team HP slider")]
-        private Slider _hpSlider;
-
-        [SerializeField, Tooltip("Team HP text display")]
-        private TextMeshProUGUI _hpText;
-
-        [SerializeField, Tooltip("Block amount display")]
-        private TextMeshProUGUI _blockText;
+        [SerializeField, Tooltip("Speed, auto-battle, settings buttons")]
+        private SystemMenuBar _systemMenu;
 
         // ============================================
-        // Deck Info
+        // Left Sidebar
         // ============================================
 
-        [Header("Deck Info")]
-        [SerializeField, Tooltip("Draw pile count")]
-        private TextMeshProUGUI _drawPileText;
-
-        [SerializeField, Tooltip("Discard pile count")]
-        private TextMeshProUGUI _discardPileText;
+        [Header("Left Sidebar")]
+        [SerializeField, Tooltip("Party member slots with EP gauges")]
+        private PartyStatusSidebar _partySidebar;
 
         // ============================================
-        // Controls
+        // Bottom Command Center
         // ============================================
 
-        [Header("Controls")]
+        [Header("Bottom Command Center")]
+        [SerializeField, Tooltip("Curved card fan layout")]
+        private CardFanLayout _cardFanLayout;
+
+        [SerializeField, Tooltip("Large AP number display")]
+        private APCounterDisplay _apCounter;
+
         [SerializeField, Tooltip("End turn button")]
-        private Button _endTurnButton;
+        private ExecutionButton _executionButton;
 
         // ============================================
-        // Turn Indicator
+        // World Space UI
         // ============================================
 
-        [Header("Turn Indicator")]
-        [SerializeField, Tooltip("Current turn display")]
-        private TextMeshProUGUI _turnText;
+        [Header("World Space")]
+        [SerializeField, Tooltip("Container for enemy floating UIs")]
+        private Transform _enemyUIContainer;
 
-        [SerializeField, Tooltip("Phase display")]
-        private TextMeshProUGUI _phaseText;
+        [SerializeField, Tooltip("Container for ally indicators")]
+        private Transform _allyIndicatorContainer;
+
+        [SerializeField, Tooltip("Prefab for enemy floating UI")]
+        private EnemyFloatingUI _enemyUIPrefab;
+
+        [SerializeField, Tooltip("Prefab for ally indicator")]
+        private AllyIndicator _allyIndicatorPrefab;
+
+        [SerializeField, Tooltip("Transforms for ally slot positions")]
+        private Transform[] _allySlots;
+
+        // ============================================
+        // Card Pooling
+        // ============================================
+
+        [Header("Card Pooling")]
+        [SerializeField, Tooltip("CombatCard prefab for instantiation")]
+        private CombatCard _combatCardPrefab;
+
+        // ============================================
+        // Runtime State
+        // ============================================
+
+        private CombatContext _context;
+        private int _cardDrawIndex;
 
         // ============================================
         // Unity Lifecycle
         // ============================================
 
-        private void Start()
+        protected override void Awake()
         {
-            if (_endTurnButton != null)
+            base.Awake();
+            _showGlobalHeader = false;
+            _showGlobalNav = false;
+
+            // Register CombatCard prefab with pool manager
+            if (_combatCardPrefab != null && ServiceLocator.TryGet<IPoolManager>(out var poolManager))
             {
-                _endTurnButton.onClick.AddListener(OnEndTurnClicked);
+                poolManager.RegisterPrefab(_combatCardPrefab);
+                poolManager.PreWarm<CombatCard>(10); // Pre-warm 10 cards
+                Debug.Log("[CombatScreen] Registered CombatCard prefab with pool");
             }
-
-            SubscribeToEvents();
-        }
-
-        private void OnDestroy()
-        {
-            if (_endTurnButton != null)
+            else if (_combatCardPrefab == null)
             {
-                _endTurnButton.onClick.RemoveListener(OnEndTurnClicked);
-            }
-
-            UnsubscribeFromEvents();
-        }
-
-        // ============================================
-        // Event Subscriptions
-        // ============================================
-
-        private void SubscribeToEvents()
-        {
-            EventBus.Subscribe<APChangedEvent>(OnAPChanged);
-            EventBus.Subscribe<TeamHPChangedEvent>(OnTeamHPChanged);
-            EventBus.Subscribe<BlockChangedEvent>(OnBlockChanged);
-            EventBus.Subscribe<TurnStartedEvent>(OnTurnStarted);
-            EventBus.Subscribe<CardDrawnEvent>(OnCardDrawn);
-            EventBus.Subscribe<CardDiscardedEvent>(OnCardDiscarded);
-            EventBus.Subscribe<CombatPhaseChangedEvent>(OnPhaseChanged);
-        }
-
-        private void UnsubscribeFromEvents()
-        {
-            EventBus.Unsubscribe<APChangedEvent>(OnAPChanged);
-            EventBus.Unsubscribe<TeamHPChangedEvent>(OnTeamHPChanged);
-            EventBus.Unsubscribe<BlockChangedEvent>(OnBlockChanged);
-            EventBus.Unsubscribe<TurnStartedEvent>(OnTurnStarted);
-            EventBus.Unsubscribe<CardDrawnEvent>(OnCardDrawn);
-            EventBus.Unsubscribe<CardDiscardedEvent>(OnCardDiscarded);
-            EventBus.Unsubscribe<CombatPhaseChangedEvent>(OnPhaseChanged);
-        }
-
-        // ============================================
-        // Event Handlers
-        // ============================================
-
-        private void OnAPChanged(APChangedEvent evt)
-        {
-            if (_apText != null)
-            {
-                _apText.text = $"{evt.CurrentAP}/{evt.MaxAP}";
-            }
-        }
-
-        private void OnTeamHPChanged(TeamHPChangedEvent evt)
-        {
-            if (_hpSlider != null)
-            {
-                _hpSlider.value = evt.MaxHP > 0 ? (float)evt.CurrentHP / evt.MaxHP : 0f;
-            }
-
-            if (_hpText != null)
-            {
-                _hpText.text = $"{evt.CurrentHP}/{evt.MaxHP}";
-            }
-        }
-
-        private void OnBlockChanged(BlockChangedEvent evt)
-        {
-            if (_blockText != null)
-            {
-                _blockText.text = evt.Block > 0 ? evt.Block.ToString() : "";
-                _blockText.gameObject.SetActive(evt.Block > 0);
-            }
-        }
-
-        private void OnTurnStarted(TurnStartedEvent evt)
-        {
-            if (_turnText != null)
-            {
-                _turnText.text = evt.IsPlayerTurn ? $"Turn {evt.TurnNumber}" : "Enemy Turn";
-            }
-
-            if (_endTurnButton != null)
-            {
-                _endTurnButton.interactable = evt.IsPlayerTurn;
-            }
-        }
-
-        private void OnPhaseChanged(CombatPhaseChangedEvent evt)
-        {
-            if (_phaseText != null)
-            {
-                _phaseText.text = evt.NewPhase.ToString();
-            }
-        }
-
-        private void OnCardDrawn(CardDrawnEvent evt)
-        {
-            UpdateDeckCounts();
-        }
-
-        private void OnCardDiscarded(CardDiscardedEvent evt)
-        {
-            UpdateDeckCounts();
-        }
-
-        // ============================================
-        // UI Updates
-        // ============================================
-
-        private void UpdateDeckCounts()
-        {
-            if (ServiceLocator.TryGet<DeckManager>(out var deckManager))
-            {
-                if (_drawPileText != null)
-                {
-                    _drawPileText.text = deckManager.DrawPileCount.ToString();
-                }
-
-                if (_discardPileText != null)
-                {
-                    _discardPileText.text = deckManager.DiscardPileCount.ToString();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Initialize display with current combat context.
-        /// </summary>
-        public void InitializeFromContext(CombatContext context)
-        {
-            if (context == null) return;
-
-            OnAPChanged(new APChangedEvent(context.CurrentAP, context.MaxAP));
-            OnTeamHPChanged(new TeamHPChangedEvent(context.TeamHP, context.TeamMaxHP));
-            OnBlockChanged(new BlockChangedEvent(context.TeamBlock, 0));
-            UpdateDeckCounts();
-        }
-
-        // ============================================
-        // Button Handlers
-        // ============================================
-
-        private void OnEndTurnClicked()
-        {
-            if (ServiceLocator.TryGet<TurnManager>(out var turnManager))
-            {
-                turnManager.EndPlayerTurn();
+                Debug.LogWarning("[CombatScreen] _combatCardPrefab is not assigned! Cards will not display properly.");
             }
         }
 
@@ -232,12 +120,696 @@ namespace HNR.UI
         public override void OnShow()
         {
             base.OnShow();
-            UpdateDeckCounts();
 
-            // Initialize from current context if available
+            // Get combat context
             if (ServiceLocator.TryGet<TurnManager>(out var turnManager))
             {
-                InitializeFromContext(turnManager.Context);
+                _context = turnManager.Context;
+            }
+
+            if (_context == null)
+            {
+                Debug.LogWarning("[CombatScreen] No combat context available");
+                return;
+            }
+
+            _cardDrawIndex = 0;
+            InitializeUI();
+            SubscribeToEvents();
+        }
+
+        public override void OnHide()
+        {
+            base.OnHide();
+            UnsubscribeFromEvents();
+
+            if (_systemMenu != null)
+            {
+                _systemMenu.ResetOnCombatEnd();
+            }
+
+            // Clear all cards and hide containers when hiding the combat screen
+            var cardFan = _cardFanLayout;
+            if (cardFan == null)
+            {
+                ServiceLocator.TryGet<CardFanLayout>(out cardFan);
+            }
+            if (cardFan != null)
+            {
+                cardFan.ClearHandImmediate();
+                cardFan.gameObject.SetActive(false);
+            }
+
+            if (ServiceLocator.TryGet<HandManager>(out var handManager))
+            {
+                handManager.ClearHand();
+                handManager.gameObject.SetActive(false);
+            }
+
+            ClearWorldSpaceUI();
+        }
+
+        // ============================================
+        // Initialization
+        // ============================================
+
+        private void InitializeUI()
+        {
+            // Auto-find missing references
+            AutoFindMissingReferences();
+
+            // Note: Team-dependent UI (vitality bar, party sidebar, enemy UIs, ally positions)
+            // is initialized in OnCombatStarted() after StartCombat() populates the context
+
+            // Bottom Command Center - AP counter can be initialized early
+            if (_apCounter != null && _context != null)
+            {
+                _apCounter.SetAP(_context.CurrentAP, _context.MaxAP);
+            }
+
+            // Re-enable card containers (they may have been hidden in previous combat)
+            var cardFan = _cardFanLayout;
+            if (cardFan == null)
+            {
+                ServiceLocator.TryGet<CardFanLayout>(out cardFan);
+            }
+            if (cardFan != null)
+            {
+                cardFan.gameObject.SetActive(true);
+            }
+            if (ServiceLocator.TryGet<HandManager>(out var handManager))
+            {
+                handManager.gameObject.SetActive(true);
+            }
+
+            Debug.Log("[CombatScreen] InitializeUI complete - waiting for CombatStartedEvent for team/enemy setup");
+        }
+
+        /// <summary>
+        /// Auto-find UI component references if not assigned in Inspector.
+        /// </summary>
+        private void AutoFindMissingReferences()
+        {
+            // Find SharedVitalityBar
+            if (_vitalityBar == null)
+            {
+                _vitalityBar = FindAnyObjectByType<SharedVitalityBar>(FindObjectsInactive.Include);
+                if (_vitalityBar != null)
+                {
+                    Debug.Log($"[CombatScreen] Auto-found SharedVitalityBar: {_vitalityBar.name}");
+                }
+                else
+                {
+                    // Try to find the GameObject and add the component
+                    var vitalityBarGO = GameObject.Find("SharedVitalityBar");
+                    if (vitalityBarGO != null)
+                    {
+                        _vitalityBar = vitalityBarGO.AddComponent<SharedVitalityBar>();
+                        AutoWireVitalityBar(_vitalityBar, vitalityBarGO);
+                        Debug.Log($"[CombatScreen] Added SharedVitalityBar component to {vitalityBarGO.name}");
+                    }
+                }
+            }
+
+            // Find PartyStatusSidebar
+            if (_partySidebar == null)
+            {
+                _partySidebar = FindAnyObjectByType<PartyStatusSidebar>(FindObjectsInactive.Include);
+                if (_partySidebar != null)
+                {
+                    Debug.Log($"[CombatScreen] Auto-found PartyStatusSidebar: {_partySidebar.name}");
+                }
+            }
+
+            // Find APCounterDisplay
+            if (_apCounter == null)
+            {
+                _apCounter = FindAnyObjectByType<APCounterDisplay>(FindObjectsInactive.Include);
+                if (_apCounter != null)
+                {
+                    Debug.Log($"[CombatScreen] Auto-found APCounterDisplay: {_apCounter.name}");
+                }
+            }
+
+            // Find CardFanLayout
+            if (_cardFanLayout == null)
+            {
+                _cardFanLayout = FindAnyObjectByType<CardFanLayout>(FindObjectsInactive.Include);
+                if (_cardFanLayout != null)
+                {
+                    Debug.Log($"[CombatScreen] Auto-found CardFanLayout: {_cardFanLayout.name}");
+                }
+            }
+
+            // Find enemy UI container
+            if (_enemyUIContainer == null)
+            {
+                var container = GameObject.Find("EnemyUIContainer");
+                if (container != null)
+                {
+                    _enemyUIContainer = container.transform;
+                    Debug.Log($"[CombatScreen] Auto-found EnemyUIContainer");
+                }
+            }
+        }
+
+        // ============================================
+        // World Space UI Management
+        // ============================================
+
+        private void SpawnEnemyUIs()
+        {
+            if (_enemyUIContainer == null)
+            {
+                Debug.LogWarning("[CombatScreen] Cannot spawn enemy UIs - _enemyUIContainer is null");
+                return;
+            }
+
+            // Auto-load prefab if not assigned
+            if (_enemyUIPrefab == null)
+            {
+                _enemyUIPrefab = Resources.Load<EnemyFloatingUI>("Prefabs/UI/Combat/EnemyFloatingUI");
+#if UNITY_EDITOR
+                if (_enemyUIPrefab == null)
+                {
+                    var prefabGO = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/Combat/EnemyFloatingUI.prefab");
+                    if (prefabGO != null)
+                    {
+                        _enemyUIPrefab = prefabGO.GetComponent<EnemyFloatingUI>();
+                        Debug.Log($"[CombatScreen] Loaded EnemyFloatingUI from AssetDatabase. Prefab childCount={prefabGO.transform.childCount}");
+                    }
+                }
+#endif
+                if (_enemyUIPrefab == null)
+                {
+                    Debug.LogError("[CombatScreen] Cannot spawn enemy UIs - _enemyUIPrefab is null and auto-load failed. Run: HNR > 2. Prefabs > UI > Combat UI > EnemyFloatingUI Only");
+                    return;
+                }
+                Debug.Log($"[CombatScreen] Auto-loaded EnemyFloatingUI prefab with {_enemyUIPrefab.transform.childCount} children");
+            }
+
+            // Clear existing
+            foreach (Transform child in _enemyUIContainer)
+            {
+                Destroy(child.gameObject);
+            }
+
+            // Spawn for each enemy
+            int spawnedCount = 0;
+            foreach (var enemy in _context.Enemies)
+            {
+                if (enemy == null || enemy.IsDead) continue;
+
+                var ui = Instantiate(_enemyUIPrefab, _enemyUIContainer);
+                Debug.Log($"[CombatScreen] Instantiated EnemyFloatingUI for {enemy.Name}, childCount={ui.transform.childCount}, prefab childCount={_enemyUIPrefab.transform.childCount}");
+                ui.Initialize(enemy);
+                spawnedCount++;
+            }
+            Debug.Log($"[CombatScreen] Spawned {spawnedCount} enemy floating UIs");
+        }
+
+        private void SpawnAllyIndicators()
+        {
+            // Position RequiemInstances at ally slots WITHOUT reparenting
+            // IMPORTANT: We must NOT reparent RequiemInstances because they need to persist
+            // across scene transitions. They are children of RunManager (DontDestroyOnLoad).
+            int positionedCount = 0;
+            for (int i = 0; i < _context.Team.Count; i++)
+            {
+                var requiem = _context.Team[i];
+                if (requiem == null) continue;
+
+                // Position at ally slot location (without changing parent)
+                if (_allySlots != null && i < _allySlots.Length && _allySlots[i] != null)
+                {
+                    // Just set world position, keep parent as RunManager
+                    requiem.transform.position = _allySlots[i].position;
+                    requiem.transform.rotation = _allySlots[i].rotation;
+
+                    // Ensure visual is facing right (toward enemies)
+                    requiem.Visual?.SetFacing(true);
+
+                    Debug.Log($"[CombatScreen] Positioned {requiem.Name} at slot {i}: {_allySlots[i].name}");
+                }
+                else
+                {
+                    // Fallback to fixed positions if slots not configured
+                    Vector3 fallbackPosition = new Vector3(-7f + (i * 2f), 0f, 0f);
+                    requiem.transform.position = fallbackPosition;
+                    requiem.Visual?.SetFacing(true);
+                    Debug.LogWarning($"[CombatScreen] Using fallback position for {requiem.Name}: {fallbackPosition}");
+                }
+
+                positionedCount++;
+            }
+            Debug.Log($"[CombatScreen] Positioned {positionedCount} Requiem visuals at ally slots");
+        }
+
+        private void ClearWorldSpaceUI()
+        {
+            if (_enemyUIContainer != null)
+            {
+                foreach (Transform child in _enemyUIContainer)
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+
+            if (_allyIndicatorContainer != null)
+            {
+                foreach (Transform child in _allyIndicatorContainer)
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+        }
+
+        // ============================================
+        // Event Management
+        // ============================================
+
+        private void SubscribeToEvents()
+        {
+            EventBus.Subscribe<CombatStartedEvent>(OnCombatStarted);
+            EventBus.Subscribe<TurnStartedEvent>(OnTurnStarted);
+            EventBus.Subscribe<CardDrawnEvent>(OnCardDrawn);
+            EventBus.Subscribe<CardPlayedEvent>(OnCardPlayed);
+            EventBus.Subscribe<CardDiscardedEvent>(OnCardDiscarded);
+            EventBus.Subscribe<CombatEndedEvent>(OnCombatEnded);
+            EventBus.Subscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
+            EventBus.Subscribe<OpenPauseMenuRequestEvent>(OnOpenPauseMenu);
+            EventBus.Subscribe<OpenSettingsRequestEvent>(OnOpenSettings);
+
+            Debug.Log($"[CombatScreen] Subscribed to events. CardFanLayout: {(_cardFanLayout != null ? _cardFanLayout.name : "NULL")}");
+        }
+
+        private void UnsubscribeFromEvents()
+        {
+            EventBus.Unsubscribe<CombatStartedEvent>(OnCombatStarted);
+            EventBus.Unsubscribe<TurnStartedEvent>(OnTurnStarted);
+            EventBus.Unsubscribe<CardDrawnEvent>(OnCardDrawn);
+            EventBus.Unsubscribe<CardPlayedEvent>(OnCardPlayed);
+            EventBus.Unsubscribe<CardDiscardedEvent>(OnCardDiscarded);
+            EventBus.Unsubscribe<CombatEndedEvent>(OnCombatEnded);
+            EventBus.Unsubscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
+            EventBus.Unsubscribe<OpenPauseMenuRequestEvent>(OnOpenPauseMenu);
+            EventBus.Unsubscribe<OpenSettingsRequestEvent>(OnOpenSettings);
+        }
+
+        // ============================================
+        // Event Handlers
+        // ============================================
+
+        private void OnCombatStarted(CombatStartedEvent evt)
+        {
+            Debug.Log("[CombatScreen] CombatStartedEvent received - initializing combat UI");
+
+            // Update context reference now that combat has started
+            if (ServiceLocator.TryGet<TurnManager>(out var turnManager))
+            {
+                _context = turnManager.Context;
+            }
+
+            if (_context == null)
+            {
+                Debug.LogWarning("[CombatScreen] No combat context in OnCombatStarted");
+                return;
+            }
+
+            // Now that Team and Enemies are populated, initialize the world space UI
+            if (_vitalityBar != null)
+            {
+                _vitalityBar.SetPartyPortraits(_context.Team.ToArray());
+                _vitalityBar.Initialize(_context.TeamHP, _context.TeamMaxHP, _context.TeamBlock);
+            }
+
+            if (_partySidebar != null)
+            {
+                _partySidebar.Initialize(_context.Team.ToArray());
+            }
+
+            SpawnEnemyUIs();
+            SpawnAllyIndicators();
+
+            Debug.Log($"[CombatScreen] Combat UI initialized: {_context.Team.Count} allies, {_context.Enemies.Count} enemies");
+        }
+
+        private void OnTurnStarted(TurnStartedEvent evt)
+        {
+            // Reset card draw index at the start of each turn for proper stagger animation
+            _cardDrawIndex = 0;
+
+            // Ensure CardFanLayout is found (may not have been available during OnShow)
+            if (_cardFanLayout == null)
+            {
+                _cardFanLayout = FindAnyObjectByType<CardFanLayout>(FindObjectsInactive.Include);
+                if (_cardFanLayout == null)
+                {
+                    ServiceLocator.TryGet<CardFanLayout>(out _cardFanLayout);
+                }
+                if (_cardFanLayout != null)
+                {
+                    Debug.Log($"[CombatScreen] Late-found CardFanLayout: {_cardFanLayout.name}");
+                }
+            }
+
+            Debug.Log($"[CombatScreen] Turn {evt.TurnNumber} started - CardFanLayout: {(_cardFanLayout != null ? "OK" : "NULL")}");
+        }
+
+        private void OnCardDrawn(CardDrawnEvent evt)
+        {
+            if (evt.Card == null)
+            {
+                Debug.LogWarning("[CombatScreen] OnCardDrawn received null card");
+                return;
+            }
+
+            // Try CardFanLayout first
+            var fanLayout = _cardFanLayout;
+            if (fanLayout == null)
+            {
+                ServiceLocator.TryGet<CardFanLayout>(out fanLayout);
+            }
+
+            if (fanLayout != null)
+            {
+                CombatCard card = null;
+
+                // Try to get card from pool first
+                if (ServiceLocator.TryGet<IPoolManager>(out var poolManager))
+                {
+                    card = poolManager.Get<CombatCard>();
+                }
+
+                // Fallback to direct instantiation if pool didn't return a card
+                if (card == null && _combatCardPrefab != null)
+                {
+                    card = Object.Instantiate(_combatCardPrefab);
+                    Debug.Log("[CombatScreen] Instantiated CombatCard (pool unavailable)");
+                }
+
+                if (card != null)
+                {
+                    card.Initialize(evt.Card);
+                    fanLayout.AddCard(card);
+                    _cardDrawIndex++;
+                    Debug.Log($"[CombatScreen] Card #{_cardDrawIndex} added: {evt.Card.Data?.CardName}, FanLayout count: {fanLayout.CardCount}");
+                }
+                else
+                {
+                    Debug.LogError("[CombatScreen] Failed to create CombatCard - prefab not assigned and pool unavailable");
+                }
+            }
+            else
+            {
+                // Fallback to HandManager if CardFanLayout not available
+                if (ServiceLocator.TryGet<HandManager>(out var handManager))
+                {
+                    handManager.AddCard(evt.Card);
+                    Debug.Log($"[CombatScreen] Fallback: Added card to HandManager: {evt.Card.Data?.CardName}");
+                }
+                else
+                {
+                    Debug.LogError("[CombatScreen] Neither CardFanLayout nor HandManager available for card display!");
+                }
+            }
+        }
+
+        private void OnCardPlayed(CardPlayedEvent evt)
+        {
+            // Card removal handled by CardFanLayout internally
+            _cardDrawIndex = Mathf.Max(0, _cardDrawIndex - 1);
+        }
+
+        private void OnCardDiscarded(CardDiscardedEvent evt)
+        {
+            _cardDrawIndex = Mathf.Max(0, _cardDrawIndex - 1);
+        }
+
+        private void OnEnemyDefeated(EnemyDefeatedEvent evt)
+        {
+            // Enemy UI handles its own cleanup via event subscription
+        }
+
+        private void OnOpenPauseMenu(OpenPauseMenuRequestEvent evt)
+        {
+            // Show pause menu overlay
+            if (PauseMenuOverlay.Instance != null)
+            {
+                PauseMenuOverlay.Instance.Show();
+            }
+            else
+            {
+                Debug.LogWarning("[CombatScreen] PauseMenuOverlay not found in scene");
+            }
+        }
+
+        private void OnOpenSettings(OpenSettingsRequestEvent evt)
+        {
+            // Find and show settings screen directly (it's a MonoBehaviour, not ScreenBase)
+            var settingsScreen = FindFirstObjectByType<SettingsScreen>(FindObjectsInactive.Include);
+            if (settingsScreen != null)
+            {
+                settingsScreen.gameObject.SetActive(true);
+            }
+            else
+            {
+                Debug.LogWarning("[CombatScreen] SettingsScreen not found in scene");
+            }
+        }
+
+        private void OnCombatEnded(CombatEndedEvent evt)
+        {
+            Debug.Log($"[CombatScreen] Combat ended - Victory: {evt.Victory}");
+
+            // Clear cards from both display systems so they don't overlap results screen
+            // Try cached reference first, then fallback to ServiceLocator
+            var cardFan = _cardFanLayout;
+            if (cardFan == null)
+            {
+                ServiceLocator.TryGet<CardFanLayout>(out cardFan);
+            }
+            if (cardFan != null)
+            {
+                cardFan.ClearHandImmediate();
+                // Also hide the CardFanLayout container itself
+                cardFan.gameObject.SetActive(false);
+                Debug.Log("[CombatScreen] Cleared and hid CardFanLayout on combat end");
+            }
+            else
+            {
+                Debug.LogWarning("[CombatScreen] CardFanLayout not found - cards may still be visible!");
+            }
+
+            // Also clear HandManager (legacy card display system)
+            if (ServiceLocator.TryGet<HandManager>(out var handManager))
+            {
+                handManager.ClearHand();
+                // Also hide the HandManager container itself
+                handManager.gameObject.SetActive(false);
+                Debug.Log("[CombatScreen] Cleared and hid HandManager on combat end");
+            }
+
+            // Get enemy name and rewards from context
+            string enemyName = "Enemy";
+            int voidShards = 0;
+            int soulEssence = 0;
+
+            if (ServiceLocator.TryGet<TurnManager>(out var turnManager) && turnManager.Context != null)
+            {
+                var context = turnManager.Context;
+                if (context.Enemies != null && context.Enemies.Count > 0)
+                {
+                    enemyName = context.Enemies[0].Name;
+                    foreach (var enemy in context.Enemies)
+                    {
+                        if (enemy.Data != null)
+                        {
+                            voidShards += enemy.Data.VoidShardReward;
+                        }
+                    }
+                }
+            }
+
+            // Generate random card rewards for victory
+            System.Collections.Generic.List<CardDataSO> cardRewards = null;
+            if (evt.Victory)
+            {
+                cardRewards = GenerateCardRewards(3);
+            }
+
+            // Show ResultsScreen and configure it
+            if (ServiceLocator.TryGet<IUIManager>(out var uiManager))
+            {
+                uiManager.ShowScreen<ResultsScreen>();
+
+                // Get the screen after showing it
+                if (uiManager is UIManager uiMgr)
+                {
+                    var resultsScreen = uiMgr.GetScreen<ResultsScreen>();
+                    if (resultsScreen != null)
+                    {
+                        resultsScreen.SetResults(evt.Victory, enemyName, voidShards, soulEssence, cardRewards);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Generates random card rewards from available cards.
+        /// </summary>
+        private System.Collections.Generic.List<CardDataSO> GenerateCardRewards(int count)
+        {
+            var rewards = new System.Collections.Generic.List<CardDataSO>();
+            var allCards = Resources.LoadAll<CardDataSO>("Data/Cards");
+
+            if (allCards == null || allCards.Length == 0)
+            {
+                allCards = Resources.LoadAll<CardDataSO>("");
+            }
+
+            if (allCards != null && allCards.Length > 0)
+            {
+                var shuffled = new System.Collections.Generic.List<CardDataSO>(allCards);
+                for (int i = shuffled.Count - 1; i > 0; i--)
+                {
+                    int j = Random.Range(0, i + 1);
+                    (shuffled[i], shuffled[j]) = (shuffled[j], shuffled[i]);
+                }
+
+                for (int i = 0; i < Mathf.Min(count, shuffled.Count); i++)
+                {
+                    rewards.Add(shuffled[i]);
+                }
+            }
+
+            return rewards;
+        }
+
+        // ============================================
+        // Public API
+        // ============================================
+
+        /// <summary>
+        /// Sets the active party member highlight in the sidebar.
+        /// </summary>
+        /// <param name="index">Index of active member (0-2).</param>
+        public void SetActivePartyMember(int index)
+        {
+            if (_partySidebar != null)
+            {
+                _partySidebar.SetActiveSlot(index);
+            }
+        }
+
+        /// <summary>
+        /// Refreshes all UI components from current context state.
+        /// </summary>
+        public void RefreshUI()
+        {
+            if (_context == null) return;
+
+            if (_vitalityBar != null)
+            {
+                _vitalityBar.UpdateHealth(_context.TeamHP, _context.TeamMaxHP);
+                _vitalityBar.UpdateBlock(_context.TeamBlock);
+            }
+
+            if (_partySidebar != null)
+            {
+                _partySidebar.RefreshAll();
+            }
+
+            if (_apCounter != null)
+            {
+                _apCounter.SetAP(_context.CurrentAP, _context.MaxAP);
+            }
+        }
+
+        // ============================================
+        // Auto-Wiring Helpers
+        // ============================================
+
+        /// <summary>
+        /// Auto-wire SharedVitalityBar child references using reflection.
+        /// </summary>
+        private void AutoWireVitalityBar(SharedVitalityBar vitalityBar, GameObject go)
+        {
+            var type = typeof(SharedVitalityBar);
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+
+            // Find HP Fill - look for "Fill" child inside "HPBar", or any child named "Fill"
+            Transform hpFillTransform = null;
+            var hpBarTransform = go.transform.Find("HPBar");
+            if (hpBarTransform != null)
+            {
+                hpFillTransform = hpBarTransform.Find("Fill");
+            }
+
+            // Fallback: search recursively for any "Fill" object
+            if (hpFillTransform == null)
+            {
+                foreach (Transform child in go.GetComponentsInChildren<Transform>(true))
+                {
+                    if (child.name == "Fill" || child.name.Contains("HPFill") || child.name.Contains("HealthFill"))
+                    {
+                        hpFillTransform = child;
+                        break;
+                    }
+                }
+            }
+
+            if (hpFillTransform != null)
+            {
+                var hpFillImage = hpFillTransform.GetComponent<Image>();
+                if (hpFillImage != null)
+                {
+                    // Ensure Image is set to Filled type for fillAmount to work
+                    hpFillImage.type = Image.Type.Filled;
+                    hpFillImage.fillMethod = Image.FillMethod.Horizontal;
+                    hpFillImage.fillOrigin = 0; // Left
+                    hpFillImage.fillAmount = 1f;
+
+                    type.GetField("_healthFill", flags)?.SetValue(vitalityBar, hpFillImage);
+                    Debug.Log($"[CombatScreen] Auto-wired _healthFill to {hpFillTransform.name} (set to Filled type)");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[CombatScreen] Could not find HP fill image for SharedVitalityBar");
+            }
+
+            // Find HP Text
+            var hpText = go.GetComponentInChildren<TMPro.TMP_Text>(true);
+            if (hpText != null)
+            {
+                type.GetField("_hpText", flags)?.SetValue(vitalityBar, hpText);
+                Debug.Log($"[CombatScreen] Auto-wired _hpText to {hpText.name}");
+            }
+
+            // Find damage fill (secondary fill for linger effect) - use HPBar background as fallback
+            var damageFillTransform = go.transform.Find("DamageFill");
+            if (damageFillTransform == null && hpBarTransform != null)
+            {
+                // Use HPBar itself as damage fill background
+                var hpBarImage = hpBarTransform.GetComponent<Image>();
+                if (hpBarImage != null)
+                {
+                    hpBarImage.type = Image.Type.Filled;
+                    hpBarImage.fillMethod = Image.FillMethod.Horizontal;
+                    hpBarImage.fillOrigin = 0;
+                    type.GetField("_damageFill", flags)?.SetValue(vitalityBar, hpBarImage);
+                    Debug.Log($"[CombatScreen] Auto-wired _damageFill to HPBar background");
+                }
+            }
+            else if (damageFillTransform != null)
+            {
+                var damageFillImage = damageFillTransform.GetComponent<Image>();
+                if (damageFillImage != null)
+                {
+                    type.GetField("_damageFill", flags)?.SetValue(vitalityBar, damageFillImage);
+                    Debug.Log($"[CombatScreen] Auto-wired _damageFill");
+                }
             }
         }
     }

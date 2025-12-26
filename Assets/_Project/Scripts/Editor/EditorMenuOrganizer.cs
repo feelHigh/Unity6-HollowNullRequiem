@@ -333,7 +333,7 @@ namespace HNR.Editor
             int wired = UIRefactorWiringTool.WireCombatSceneElements();
             EditorUtility.DisplayDialog("Combat Scene Wiring",
                 $"Wired {wired} elements in Combat scene.\n\n" +
-                "Check SharedVitalityBarCZN for block indicator.",
+                "Check SharedVitalityBar for block indicator.",
                 "OK");
         }
 

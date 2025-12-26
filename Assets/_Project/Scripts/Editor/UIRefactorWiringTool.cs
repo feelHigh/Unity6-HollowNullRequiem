@@ -17,8 +17,8 @@ using HNR.Map;
 namespace HNR.Editor
 {
     /// <summary>
-    /// Editor tool for wiring up UI elements added in the CZN UI refactor:
-    /// - SharedVitalityBarCZN block indicator
+    /// Editor tool for wiring up UI elements added in UI refactor:
+    /// - SharedVitalityBar block indicator
     /// - MapScreen zone header
     /// - ShopScreen service buttons
     /// - TreasureScreen prefab
@@ -81,15 +81,15 @@ namespace HNR.Editor
 
             try
             {
-                // Find SharedVitalityBarCZN in scene
-                var vitalityBar = Object.FindFirstObjectByType<SharedVitalityBarCZN>();
+                // Find SharedVitalityBar in scene
+                var vitalityBar = Object.FindFirstObjectByType<SharedVitalityBar>();
                 if (vitalityBar != null)
                 {
                     wired += WireVitalityBarBlockIndicator(vitalityBar);
                 }
                 else
                 {
-                    Debug.LogWarning("[UIRefactorWiringTool] SharedVitalityBarCZN not found in Combat scene");
+                    Debug.LogWarning("[UIRefactorWiringTool] SharedVitalityBar not found in Combat scene");
                 }
 
                 if (wired > 0)
@@ -106,7 +106,7 @@ namespace HNR.Editor
             return wired;
         }
 
-        private static int WireVitalityBarBlockIndicator(SharedVitalityBarCZN vitalityBar)
+        private static int WireVitalityBarBlockIndicator(SharedVitalityBar vitalityBar)
         {
             SerializedObject so = new SerializedObject(vitalityBar);
             int wired = 0;
@@ -129,7 +129,7 @@ namespace HNR.Editor
                 // Create block indicator UI
                 blockContainer = CreateBlockIndicator(barTransform);
                 wired++;
-                Debug.Log("[UIRefactorWiringTool] Created block indicator for SharedVitalityBarCZN");
+                Debug.Log("[UIRefactorWiringTool] Created block indicator for SharedVitalityBar");
             }
 
             // Wire the references

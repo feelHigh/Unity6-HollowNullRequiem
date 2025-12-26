@@ -92,7 +92,7 @@ namespace HNR.Core.GameStates
 
                 // NOTE: Don't transition here - let ResultsScreen handle navigation
                 // after user selects reward and clicks Continue.
-                // CombatScreenCZN.OnCombatEnded() shows ResultsScreen which calls
+                // CombatScreen.OnCombatEnded() shows ResultsScreen which calls
                 // GameManager.ChangeState(GameState.Run) when user clicks Continue.
             }
             else

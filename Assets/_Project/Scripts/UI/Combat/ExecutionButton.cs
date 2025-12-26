@@ -1,7 +1,7 @@
 // ============================================
 // ExecutionButton.cs
 // Large circular End Turn button with glow ring
-// Positioned bottom-right of combat screen per CZN layout
+// Positioned bottom-right of combat screen
 // ============================================
 
 using UnityEngine;
@@ -14,7 +14,7 @@ namespace HNR.UI.Combat
 {
     /// <summary>
     /// Large circular End Turn button with glowing ring effect.
-    /// Positioned bottom-right of combat screen per CZN layout.
+    /// Positioned bottom-right of combat screen.
     /// </summary>
     public class ExecutionButton : MonoBehaviour
     {

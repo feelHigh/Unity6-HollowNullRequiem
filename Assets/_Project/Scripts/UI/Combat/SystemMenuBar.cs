@@ -13,7 +13,6 @@ namespace HNR.UI.Combat
 {
     /// <summary>
     /// Top-right menu bar with speed toggle, auto-battle, and settings.
-    /// Per CZN layout specification.
     /// </summary>
     public class SystemMenuBar : MonoBehaviour
     {

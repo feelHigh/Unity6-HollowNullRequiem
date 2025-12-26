@@ -1,6 +1,6 @@
 // ============================================
 // CardFanLayout.cs
-// CZN-style curved card fan layout
+// Curved card fan layout
 // ============================================
 
 using System;
@@ -18,7 +18,7 @@ namespace HNR.UI.Combat
 {
     /// <summary>
     /// Displays cards in a curved fan layout emanating from bottom center.
-    /// CZN-style overlapping card fan with hover lift and deal animations.
+    /// Overlapping card fan with hover lift and deal animations.
     /// </summary>
     /// <remarks>
     /// Works with CombatCard components for drag-to-play targeting.

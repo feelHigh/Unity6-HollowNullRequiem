@@ -1,7 +1,6 @@
 // ============================================
 // APCounterDisplay.cs
 // Large glowing AP number display above card fan
-// Replaces 3-orb AP indicator with CZN-style counter
 // ============================================
 
 using UnityEngine;
@@ -16,7 +15,6 @@ namespace HNR.UI.Combat
 {
     /// <summary>
     /// Displays AP as a single glowing number above the card fan.
-    /// Replaces the 3-orb AP indicator with CZN-style counter.
     /// </summary>
     public class APCounterDisplay : MonoBehaviour
     {

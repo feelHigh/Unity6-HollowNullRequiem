@@ -20,7 +20,7 @@ namespace HNR.Editor
 {
     /// <summary>
     /// Completes Phase 2 scene UI wiring for production scenes.
-    /// Adds missing CZN components and overlay screens.
+    /// Adds missing components and overlay screens.
     /// </summary>
     public static class Phase2SceneCompleter
     {
@@ -85,7 +85,7 @@ namespace HNR.Editor
         }
 
         /// <summary>
-        /// Completes Combat scene - adds CZN components and overlay screens.
+        /// Completes Combat scene - adds UI components and overlay screens.
         /// </summary>
         public static bool CompleteCombatScene()
         {
@@ -102,7 +102,7 @@ namespace HNR.Editor
             // Fix basic wiring (delegate to SceneWiringFixer)
             modified |= SceneWiringFixer.FixCombatScene();
 
-            // Add CZN components
+            // Add combat UI components
             modified |= EnsureCardFanLayout();
             modified |= EnsurePartyStatusSidebar();
             modified |= EnsureAPCounterDisplay();
@@ -111,8 +111,8 @@ namespace HNR.Editor
             modified |= EnsureNullStateModal();
             modified |= EnsureResultsScreen();
 
-            // Wire CombatScreenCZN references
-            modified |= WireCombatScreenCZNReferences();
+            // Wire CombatScreen references
+            modified |= WireCombatScreenReferences();
 
             if (modified)
             {
@@ -158,7 +158,7 @@ namespace HNR.Editor
         }
 
         // ============================================
-        // Combat CZN Components
+        // Combat UI Components
         // ============================================
 
         private static bool EnsureCardFanLayout()
@@ -336,12 +336,12 @@ namespace HNR.Editor
         }
 
         // ============================================
-        // Wire CombatScreenCZN
+        // Wire CombatScreen
         // ============================================
 
-        private static bool WireCombatScreenCZNReferences()
+        private static bool WireCombatScreenReferences()
         {
-            var combatScreen = Object.FindAnyObjectByType<CombatScreenCZN>();
+            var combatScreen = Object.FindAnyObjectByType<CombatScreen>();
             if (combatScreen == null)
                 return false;
 
@@ -399,7 +399,7 @@ namespace HNR.Editor
             if (modified)
             {
                 serialized.ApplyModifiedProperties();
-                Debug.Log("[Phase2SceneCompleter] Wired CombatScreenCZN references");
+                Debug.Log("[Phase2SceneCompleter] Wired CombatScreen references");
             }
 
             return modified;

@@ -1,6 +1,6 @@
 // ============================================
 // CombatCard.cs
-// Card visual for CZN fan layout with drag-to-play targeting
+// Card visual for fan layout with drag-to-play targeting
 // ============================================
 
 using System;
@@ -18,7 +18,7 @@ using HNR.Combat;
 namespace HNR.UI.Combat
 {
     /// <summary>
-    /// Card visual component for CZN fan layout with drag-to-play targeting.
+    /// Card visual component for fan layout with drag-to-play targeting.
     /// Implements IPoolable for object pooling, drag handlers for card play.
     /// </summary>
     /// <remarks>
