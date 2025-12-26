@@ -20,7 +20,8 @@ namespace HNR.Core
     /// Singleton via ServiceLocator. Created in Boot scene and persists
     /// across all scene loads via DontDestroyOnLoad.
     ///
-    /// State flow: Boot → MainMenu → Bastion → Run ↔ Combat → Results
+    /// State flow: Boot → MainMenu → Bastion → Missions → BattleMission → Run ↔ Combat → Results
+    ///                                     └→ RequiemsViewer (viewer only)
     /// </remarks>
     public class GameManager : MonoBehaviour, IGameManager
     {
@@ -134,7 +135,10 @@ namespace HNR.Core
                 { GameState.Bastion, new BastionState(this) },
                 { GameState.Run, new RunState(this) },
                 { GameState.Combat, new CombatState(this) },
-                { GameState.Results, new ResultsState(this) }
+                { GameState.Results, new ResultsState(this) },
+                { GameState.Missions, new MissionsState(this) },
+                { GameState.BattleMission, new BattleMissionState(this) },
+                { GameState.RequiemsViewer, new RequiemsState(this) }
             };
 
             Debug.Log($"[GameManager] Initialized {_states.Count} states.");

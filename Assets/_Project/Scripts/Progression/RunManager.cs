@@ -41,6 +41,10 @@ namespace HNR.Progression
         // Run stats
         private StatsSaveData _stats = new();
 
+        // Battle Mission context (set before starting run)
+        private int _battleMissionZone = 1;
+        private DifficultyLevel _battleMissionDifficulty = DifficultyLevel.Easy;
+
         // ============================================
         // Properties
         // ============================================
@@ -68,6 +72,12 @@ namespace HNR.Progression
 
         /// <summary>Run statistics.</summary>
         public StatsSaveData Stats => _stats;
+
+        /// <summary>Battle Mission zone context.</summary>
+        public int BattleMissionZone => _battleMissionZone;
+
+        /// <summary>Battle Mission difficulty context.</summary>
+        public DifficultyLevel BattleMissionDifficulty => _battleMissionDifficulty;
 
         // ============================================
         // Unity Lifecycle
@@ -238,6 +248,57 @@ namespace HNR.Progression
         // ============================================
         // Run Management
         // ============================================
+
+        /// <summary>
+        /// Sets the Battle Mission context (zone and difficulty) before starting a run.
+        /// Called by BattleMissionScreen when a zone is selected.
+        /// </summary>
+        /// <param name="zone">Zone number (1-3)</param>
+        /// <param name="difficulty">Difficulty level</param>
+        public void SetBattleMissionContext(int zone, DifficultyLevel difficulty)
+        {
+            _battleMissionZone = Mathf.Clamp(zone, 1, 3);
+            _battleMissionDifficulty = difficulty;
+            _currentZone = _battleMissionZone;
+            Debug.Log($"[RunManager] Battle Mission context set: Zone {_battleMissionZone}, {_battleMissionDifficulty}");
+        }
+
+        /// <summary>
+        /// Clears the Battle Mission context (for regular runs).
+        /// </summary>
+        public void ClearBattleMissionContext()
+        {
+            _battleMissionZone = 1;
+            _battleMissionDifficulty = DifficultyLevel.Easy;
+        }
+
+        /// <summary>
+        /// Gets the enemy stat multiplier based on current difficulty.
+        /// </summary>
+        public float GetDifficultyHealthMultiplier()
+        {
+            return _battleMissionDifficulty switch
+            {
+                DifficultyLevel.Easy => 1.0f,
+                DifficultyLevel.Normal => 1.25f,
+                DifficultyLevel.Hard => 1.5f,
+                _ => 1.0f
+            };
+        }
+
+        /// <summary>
+        /// Gets the enemy ATK multiplier based on current difficulty.
+        /// </summary>
+        public float GetDifficultyAttackMultiplier()
+        {
+            return _battleMissionDifficulty switch
+            {
+                DifficultyLevel.Easy => 1.0f,
+                DifficultyLevel.Normal => 1.1f,
+                DifficultyLevel.Hard => 1.25f,
+                _ => 1.0f
+            };
+        }
 
         /// <summary>
         /// Initialize a new run with the selected team.

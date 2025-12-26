@@ -94,8 +94,9 @@ namespace HNR.UI.Screens
         // Unity Lifecycle
         // ============================================
 
-        protected virtual void Awake()
+        protected override void Awake()
         {
+            base.Awake();
             _showGlobalHeader = false;
             _showGlobalNav = false;
 

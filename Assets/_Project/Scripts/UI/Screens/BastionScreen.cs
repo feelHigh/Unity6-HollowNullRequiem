@@ -1,103 +1,95 @@
 // ============================================
 // BastionScreen.cs
-// Hub screen (Command Center) for run preparation
+// Hub screen - Main navigation to Missions and Requiems
 // ============================================
 
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
 using HNR.Core;
 using HNR.Core.Interfaces;
-using HNR.Core.Events;
-using HNR.Characters;
-using HNR.UI.Components;
+using HNR.UI.Screens;
 
 namespace HNR.UI
 {
     /// <summary>
-    /// Bastion hub screen where players prepare for runs.
-    /// Shows current team, currencies, and provides navigation to start runs.
-    /// Reference: HollowNullRequiem_Mockup.jsx lines 1010-1154
+    /// Bastion hub screen - simplified navigation hub.
+    /// Provides access to Missions and Requiems screens.
+    /// Reference: BastionSceneDesignReference.jpg
     /// </summary>
     public class BastionScreen : ScreenBase
     {
         // ============================================
-        // Header Section
+        // Header Section (Top Left)
         // ============================================
 
-        [Header("Header")]
-        [SerializeField, Tooltip("Title text displaying 'THE BASTION'")]
-        private TMP_Text _titleText;
+        [Header("Player Info (Top Left)")]
+        [SerializeField, Tooltip("Player level text")]
+        private TMP_Text _playerLevelText;
 
-        [SerializeField, Tooltip("Subtitle text")]
-        private TMP_Text _subtitleText;
+        [SerializeField, Tooltip("Player nickname text")]
+        private TMP_Text _playerNicknameText;
 
-        [SerializeField, Tooltip("Soul Crystals currency ticker")]
-        private CurrencyTicker _soulCrystalsTicker;
-
-        [SerializeField, Tooltip("Void Dust currency ticker")]
-        private CurrencyTicker _voidDustTicker;
+        [SerializeField, Tooltip("Player XP progress bar (optional)")]
+        private Image _xpProgressBar;
 
         // ============================================
-        // Team Display Section
+        // Settings Button (Top Right)
         // ============================================
 
-        [Header("Team Display")]
-        [SerializeField, Tooltip("Container for team member slots")]
-        private Transform _teamContainer;
-
-        [SerializeField, Tooltip("Team slot UI components (3 slots)")]
-        private RequiemSlotUI[] _teamSlots;
-
-        [SerializeField, Tooltip("Team section title (SELECTED TEAM)")]
-        private TMP_Text _teamSectionTitle;
-
-        [Header("Team Stats")]
-        [SerializeField, Tooltip("Total HP display")]
-        private TMP_Text _teamHPText;
-
-        [SerializeField, Tooltip("Total ATK display")]
-        private TMP_Text _teamATKText;
-
-        [SerializeField, Tooltip("Total DEF display")]
-        private TMP_Text _teamDEFText;
+        [Header("Settings (Top Right)")]
+        [SerializeField, Tooltip("Settings button (hamburger menu icon)")]
+        private Button _settingsButton;
 
         // ============================================
-        // Action Buttons
+        // Main Navigation Buttons
         // ============================================
 
-        [Header("Action Buttons")]
-        [SerializeField, Tooltip("Start new run button")]
-        private Button _newRunButton;
+        [Header("Navigation Buttons")]
+        [SerializeField, Tooltip("Missions button")]
+        private Button _missionsButton;
 
-        [SerializeField, Tooltip("Change team button")]
-        private Button _changeTeamButton;
+        [SerializeField, Tooltip("Missions button text")]
+        private TMP_Text _missionsButtonText;
 
-        [SerializeField, Tooltip("View deck button")]
-        private Button _viewDeckButton;
+        [SerializeField, Tooltip("Missions button subtitle")]
+        private TMP_Text _missionsButtonSubtitle;
 
-        [SerializeField, Tooltip("Continue saved run button (hidden if no save)")]
-        private Button _continueRunButton;
+        [SerializeField, Tooltip("Requiems button")]
+        private Button _requiemsButton;
 
-        [SerializeField, Tooltip("CanvasGroup for continue button visibility")]
-        private CanvasGroup _continueButtonGroup;
+        [SerializeField, Tooltip("Requiems button text")]
+        private TMP_Text _requiemsButtonText;
+
+        [SerializeField, Tooltip("Requiems button subtitle")]
+        private TMP_Text _requiemsButtonSubtitle;
 
         // ============================================
         // Animation Settings
         // ============================================
 
         [Header("Animation")]
-        [SerializeField] private float _fadeAnimDuration = 0.3f;
-        [SerializeField] private float _teamSlotStaggerDelay = 0.1f;
+        [SerializeField] private float _buttonEntranceDelay = 0.1f;
+        [SerializeField] private float _buttonEntranceDuration = 0.3f;
 
         // ============================================
         // State
         // ============================================
 
-        private List<RequiemDataSO> _currentTeam = new List<RequiemDataSO>();
-        private bool _hasSavedRun;
+        private Tween _currentTween;
+
+        // ============================================
+        // Configuration
+        // ============================================
+
+        protected override void Awake()
+        {
+            base.Awake();
+            // No global header or nav dock in new design
+            _showGlobalHeader = false;
+            _showGlobalNav = false;
+        }
 
         // ============================================
         // Screen Lifecycle
@@ -108,13 +100,8 @@ namespace HNR.UI
             base.OnShow();
 
             SetupButtons();
-            LoadTeamData();
-            LoadCurrencyData();
-            RefreshContinueButton();
+            LoadPlayerData();
             PlayShowAnimation();
-
-            // Subscribe to currency changes
-            EventBus.Subscribe<CurrencyChangedEvent>(OnCurrencyChanged);
 
             Debug.Log("[BastionScreen] Bastion hub shown");
         }
@@ -123,22 +110,11 @@ namespace HNR.UI
         {
             base.OnHide();
 
-            // Unsubscribe from events
-            EventBus.Unsubscribe<CurrencyChangedEvent>(OnCurrencyChanged);
-
             // Kill any running tweens
+            _currentTween?.Kill();
             DOTween.Kill(this);
 
             Debug.Log("[BastionScreen] Bastion hub hidden");
-        }
-
-        public override void OnResume()
-        {
-            base.OnResume();
-
-            // Refresh data when returning from other screens
-            LoadTeamData();
-            RefreshContinueButton();
         }
 
         // ============================================
@@ -147,305 +123,106 @@ namespace HNR.UI
 
         private void SetupButtons()
         {
-            if (_newRunButton != null)
+            // Settings button
+            if (_settingsButton != null)
             {
-                _newRunButton.onClick.RemoveAllListeners();
-                _newRunButton.onClick.AddListener(OnNewRunClicked);
+                _settingsButton.onClick.RemoveAllListeners();
+                _settingsButton.onClick.AddListener(OnSettingsClicked);
             }
 
-            if (_changeTeamButton != null)
+            // Missions button
+            if (_missionsButton != null)
             {
-                _changeTeamButton.onClick.RemoveAllListeners();
-                _changeTeamButton.onClick.AddListener(OnChangeTeamClicked);
+                _missionsButton.onClick.RemoveAllListeners();
+                _missionsButton.onClick.AddListener(OnMissionsClicked);
             }
 
-            if (_viewDeckButton != null)
+            // Requiems button
+            if (_requiemsButton != null)
             {
-                _viewDeckButton.onClick.RemoveAllListeners();
-                _viewDeckButton.onClick.AddListener(OnViewDeckClicked);
+                _requiemsButton.onClick.RemoveAllListeners();
+                _requiemsButton.onClick.AddListener(OnRequiemsClicked);
             }
 
-            if (_continueRunButton != null)
-            {
-                _continueRunButton.onClick.RemoveAllListeners();
-                _continueRunButton.onClick.AddListener(OnContinueRunClicked);
-            }
+            // Setup button text
+            if (_missionsButtonText != null)
+                _missionsButtonText.text = "Missions";
+
+            if (_missionsButtonSubtitle != null)
+                _missionsButtonSubtitle.text = "Enter the Null Rift";
+
+            if (_requiemsButtonText != null)
+                _requiemsButtonText.text = "Requiems";
+
+            if (_requiemsButtonSubtitle != null)
+                _requiemsButtonSubtitle.text = "View your combatants";
         }
 
-        // ============================================
-        // Data Loading
-        // ============================================
-
-        private void LoadTeamData()
+        private void LoadPlayerData()
         {
-            _currentTeam.Clear();
+            // Load player data from save
+            // For now, display placeholder values
+            int playerLevel = 1;
+            string playerNickname = "Commander";
+            float xpProgress = 0f;
 
-            var saveManager = ServiceLocator.Get<ISaveManager>();
-            if (saveManager != null)
+            // Try to load from save
+            if (ServiceLocator.TryGet<ISaveManager>(out var saveManager))
             {
-                var saveData = saveManager.LoadRun();
-                if (saveData?.Team?.RequiemIds != null && saveData.Team.RequiemIds.Count > 0)
+                var metaData = (saveManager as Progression.SaveManager)?.LoadMeta();
+                if (metaData != null)
                 {
-                    // Load RequiemDataSO assets from saved IDs
-                    var allRequiems = Resources.LoadAll<RequiemDataSO>("Data/Characters/Requiems");
-                    foreach (var id in saveData.Team.RequiemIds)
-                    {
-                        var requiem = System.Array.Find(allRequiems, r => r.RequiemId == id);
-                        if (requiem != null)
-                        {
-                            _currentTeam.Add(requiem);
-                        }
-                    }
+                    // Could derive level from total runs or enemies defeated
+                    playerLevel = Mathf.Max(1, metaData.TotalRunsCompleted + 1);
                 }
             }
 
-            // If no team saved, load default team
-            if (_currentTeam.Count == 0)
+            // Update UI
+            if (_playerLevelText != null)
             {
-                LoadDefaultTeam();
+                _playerLevelText.text = $"LV\n{playerLevel}";
             }
 
-            UpdateTeamDisplay();
-            UpdateTeamStats();
-        }
-
-        private void LoadDefaultTeam()
-        {
-            // Load default Requiems from Resources or predefined assets
-            var defaultRequiems = Resources.LoadAll<RequiemDataSO>("Data/Characters/Requiems");
-
-            // Take first 3 available Requiems
-            for (int i = 0; i < Mathf.Min(3, defaultRequiems.Length); i++)
+            if (_playerNicknameText != null)
             {
-                _currentTeam.Add(defaultRequiems[i]);
+                _playerNicknameText.text = playerNickname;
             }
 
-            if (_currentTeam.Count == 0)
+            if (_xpProgressBar != null)
             {
-                Debug.LogWarning("[BastionScreen] No default Requiems found in Resources");
+                _xpProgressBar.fillAmount = xpProgress;
             }
-        }
-
-        private void LoadCurrencyData()
-        {
-            // Note: Soul Crystals and Void Dust are meta-currencies stored separately
-            // For now, display placeholder values - actual values would come from MetaSaveData
-            int soulCrystals = 0;
-            int voidDust = 0;
-
-            var saveManager = ServiceLocator.Get<ISaveManager>();
-            if (saveManager != null)
-            {
-                // Try to get meta currency data if available
-                // This would typically be loaded from a separate meta save file
-                var runData = saveManager.LoadRun();
-                if (runData?.Progression != null)
-                {
-                    // VoidShards is the run-specific currency
-                    voidDust = runData.Progression.VoidShards;
-                }
-            }
-
-            if (_soulCrystalsTicker != null)
-                _soulCrystalsTicker.SetValueImmediate(soulCrystals);
-
-            if (_voidDustTicker != null)
-                _voidDustTicker.SetValueImmediate(voidDust);
-        }
-
-        // ============================================
-        // Team Display
-        // ============================================
-
-        private void UpdateTeamDisplay()
-        {
-            if (_teamSlots == null) return;
-
-            for (int i = 0; i < _teamSlots.Length; i++)
-            {
-                if (_teamSlots[i] == null) continue;
-
-                if (i < _currentTeam.Count && _currentTeam[i] != null)
-                {
-                    _teamSlots[i].gameObject.SetActive(true);
-                    _teamSlots[i].Initialize(_currentTeam[i], OnTeamSlotClicked);
-                }
-                else
-                {
-                    // Empty slot
-                    _teamSlots[i].gameObject.SetActive(false);
-                }
-            }
-        }
-
-        private void UpdateTeamStats()
-        {
-            int totalHP = 0;
-            int totalATK = 0;
-            int totalDEF = 0;
-
-            foreach (var requiem in _currentTeam)
-            {
-                if (requiem != null)
-                {
-                    totalHP += requiem.BaseHP;
-                    totalATK += requiem.BaseATK;
-                    totalDEF += requiem.BaseDEF;
-                }
-            }
-
-            if (_teamHPText != null)
-                _teamHPText.text = $"{totalHP} HP";
-
-            if (_teamATKText != null)
-                _teamATKText.text = $"{totalATK} ATK";
-
-            if (_teamDEFText != null)
-                _teamDEFText.text = $"{totalDEF} DEF";
-        }
-
-        // ============================================
-        // Continue Button
-        // ============================================
-
-        private void RefreshContinueButton()
-        {
-            var saveManager = ServiceLocator.Get<ISaveManager>();
-            _hasSavedRun = saveManager?.HasSavedRun ?? false;
-
-            if (_continueRunButton != null)
-            {
-                _continueRunButton.gameObject.SetActive(_hasSavedRun);
-            }
-
-            if (_hasSavedRun && _continueButtonGroup != null)
-            {
-                // Animate fade in
-                _continueButtonGroup.alpha = 0f;
-                _continueButtonGroup.DOFade(1f, _fadeAnimDuration).SetEase(Ease.OutQuad);
-            }
-
-            Debug.Log($"[BastionScreen] Saved run exists: {_hasSavedRun}");
-        }
-
-        // ============================================
-        // Event Handlers
-        // ============================================
-
-        private void OnCurrencyChanged(CurrencyChangedEvent evt)
-        {
-            if (evt.CurrencyType == CurrencyType.SoulCrystals && _soulCrystalsTicker != null)
-            {
-                _soulCrystalsTicker.AnimateToValue(evt.NewValue);
-            }
-            else if (evt.CurrencyType == CurrencyType.VoidDust && _voidDustTicker != null)
-            {
-                _voidDustTicker.AnimateToValue(evt.NewValue);
-            }
-        }
-
-        private void OnTeamSlotClicked(RequiemDataSO requiem)
-        {
-            if (requiem == null) return;
-
-            Debug.Log($"[BastionScreen] Team slot clicked: {requiem.RequiemName}");
-
-            // Publish event for detail screen or popup to handle
-            EventBus.Publish(new RequiemDetailRequestedEvent(requiem));
         }
 
         // ============================================
         // Button Handlers
         // ============================================
 
-        private void OnNewRunClicked()
+        private void OnSettingsClicked()
         {
-            Debug.Log("[BastionScreen] New Run clicked");
+            Debug.Log("[BastionScreen] Settings clicked");
+            SettingsOverlay.ShowSettings();
+        }
 
-            // Clear existing save if any
-            var saveManager = ServiceLocator.Get<ISaveManager>();
-            if (saveManager?.HasSavedRun == true)
-            {
-                saveManager.DeleteRun();
-                Debug.Log("[BastionScreen] Deleted existing saved run");
-            }
+        private void OnMissionsClicked()
+        {
+            Debug.Log("[BastionScreen] Missions clicked");
 
-            // Navigate to Requiem selection if team not complete
-            if (_currentTeam.Count < 3)
+            // Navigate to Missions screen
+            if (ServiceLocator.TryGet<IGameManager>(out var gameManager))
             {
-                NavigateToRequiemSelection();
-            }
-            else
-            {
-                // Team is ready, start the run
-                StartNewRun();
+                gameManager.ChangeState(GameState.Missions);
             }
         }
 
-        private void OnChangeTeamClicked()
+        private void OnRequiemsClicked()
         {
-            Debug.Log("[BastionScreen] Change Team clicked");
-            NavigateToRequiemSelection();
-        }
+            Debug.Log("[BastionScreen] Requiems clicked");
 
-        private void OnViewDeckClicked()
-        {
-            Debug.Log("[BastionScreen] View Deck clicked");
-
-            // Publish event for deck viewer to handle
-            EventBus.Publish(new DeckViewRequestedEvent());
-        }
-
-        private void OnContinueRunClicked()
-        {
-            Debug.Log("[BastionScreen] Continue Run clicked");
-
-            var runManager = ServiceLocator.Get<IRunManager>();
-            if (runManager != null && runManager.LoadRun())
+            // Navigate to Requiems viewer
+            if (ServiceLocator.TryGet<IGameManager>(out var gameManager))
             {
-                // Transition to map scene
-                var gameManager = ServiceLocator.Get<IGameManager>();
-                gameManager?.ChangeState(GameState.Run);
-            }
-            else
-            {
-                Debug.LogWarning("[BastionScreen] Failed to load saved run");
-                RefreshContinueButton();
-            }
-        }
-
-        // ============================================
-        // Navigation
-        // ============================================
-
-        private void NavigateToRequiemSelection()
-        {
-            var uiManager = ServiceLocator.Get<IUIManager>();
-            if (uiManager != null)
-            {
-                uiManager.ShowScreen<RequiemSelectionScreen>();
-            }
-            else
-            {
-                Debug.LogWarning("[BastionScreen] UIManager not available for navigation");
-            }
-        }
-
-        private void StartNewRun()
-        {
-            Debug.Log("[BastionScreen] Starting new run with current team");
-
-            var runManager = ServiceLocator.Get<IRunManager>();
-            if (runManager != null)
-            {
-                runManager.InitializeNewRun(_currentTeam);
-            }
-
-            // Transition to map
-            var gameManager = ServiceLocator.Get<IGameManager>();
-            if (gameManager != null)
-            {
-                gameManager.ChangeState(GameState.Run);
+                gameManager.ChangeState(GameState.RequiemsViewer);
             }
         }
 
@@ -455,40 +232,38 @@ namespace HNR.UI
 
         protected override void PlayShowAnimation()
         {
-            // Fade in team slots with stagger
-            if (_teamSlots != null)
+            _currentTween?.Kill();
+
+            var sequence = DOTween.Sequence();
+
+            // Animate player info
+            if (_playerLevelText != null)
             {
-                for (int i = 0; i < _teamSlots.Length; i++)
-                {
-                    if (_teamSlots[i] == null) continue;
-
-                    var canvasGroup = _teamSlots[i].GetComponent<CanvasGroup>();
-                    if (canvasGroup == null)
-                    {
-                        canvasGroup = _teamSlots[i].gameObject.AddComponent<CanvasGroup>();
-                    }
-
-                    canvasGroup.alpha = 0f;
-                    canvasGroup.DOFade(1f, _fadeAnimDuration)
-                        .SetDelay(i * _teamSlotStaggerDelay)
-                        .SetEase(Ease.OutQuad);
-
-                    // Scale punch
-                    _teamSlots[i].transform.localScale = Vector3.one * 0.8f;
-                    _teamSlots[i].transform.DOScale(1f, _fadeAnimDuration)
-                        .SetDelay(i * _teamSlotStaggerDelay)
-                        .SetEase(Ease.OutBack);
-                }
+                _playerLevelText.transform.localScale = Vector3.zero;
+                sequence.Append(_playerLevelText.transform.DOScale(1f, _buttonEntranceDuration)
+                    .SetEase(Ease.OutBack));
             }
 
-            // Fade in buttons
-            if (_newRunButton != null)
+            // Animate Missions button
+            if (_missionsButton != null)
             {
-                _newRunButton.transform.localScale = Vector3.one * 0.9f;
-                _newRunButton.transform.DOScale(1f, _fadeAnimDuration)
-                    .SetDelay(0.2f)
-                    .SetEase(Ease.OutBack);
+                _missionsButton.transform.localScale = Vector3.zero;
+                sequence.Append(_missionsButton.transform.DOScale(1f, _buttonEntranceDuration)
+                    .SetEase(Ease.OutBack)
+                    .SetDelay(_buttonEntranceDelay));
             }
+
+            // Animate Requiems button
+            if (_requiemsButton != null)
+            {
+                _requiemsButton.transform.localScale = Vector3.zero;
+                sequence.Append(_requiemsButton.transform.DOScale(1f, _buttonEntranceDuration)
+                    .SetEase(Ease.OutBack)
+                    .SetDelay(_buttonEntranceDelay));
+            }
+
+            sequence.SetLink(gameObject);
+            _currentTween = sequence;
         }
 
         // ============================================
@@ -498,39 +273,11 @@ namespace HNR.UI
         public override bool OnBackPressed()
         {
             // Navigate to main menu
-            var gameManager = ServiceLocator.Get<IGameManager>();
-            gameManager?.ChangeState(GameState.MainMenu);
-            return true;
-        }
-
-        // ============================================
-        // Public Methods
-        // ============================================
-
-        /// <summary>
-        /// Sets the team to display. Called after Requiem selection.
-        /// </summary>
-        /// <param name="team">List of selected Requiems.</param>
-        public void SetTeam(List<RequiemDataSO> team)
-        {
-            _currentTeam.Clear();
-            if (team != null)
+            if (ServiceLocator.TryGet<IGameManager>(out var gameManager))
             {
-                _currentTeam.AddRange(team);
+                gameManager.ChangeState(GameState.MainMenu);
             }
-
-            UpdateTeamDisplay();
-            UpdateTeamStats();
-        }
-
-        /// <summary>
-        /// Force refresh the screen data.
-        /// </summary>
-        public void RefreshUI()
-        {
-            LoadTeamData();
-            LoadCurrencyData();
-            RefreshContinueButton();
+            return true;
         }
     }
 }

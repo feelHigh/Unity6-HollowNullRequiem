@@ -24,6 +24,7 @@ namespace HNR.Progression
         private const string RUN_SAVE_KEY = "CurrentRun";
         private const string SETTINGS_KEY = "Settings";
         private const string META_KEY = "MetaProgression";
+        private const string BATTLE_MISSION_KEY = "BattleMissionProgress";
 
         // ============================================
         // Properties
@@ -243,6 +244,75 @@ namespace HNR.Progression
 
             Debug.Log("[SaveManager] Using default meta data");
             return new MetaSaveData();
+        }
+
+        // ============================================
+        // Battle Mission Progress Save/Load
+        // ============================================
+
+        /// <summary>
+        /// Save Battle Mission progress (zone clears, difficulty unlocks).
+        /// </summary>
+        /// <param name="data">Battle mission progress data to save.</param>
+        public void SaveBattleMissionProgress(BattleMissionSaveData data)
+        {
+            if (data == null)
+            {
+                Debug.LogWarning("[SaveManager] Cannot save null battle mission data");
+                return;
+            }
+
+            try
+            {
+                ES3.Save(BATTLE_MISSION_KEY, data, SAVE_FILE);
+                Debug.Log("[SaveManager] Battle mission progress saved");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[SaveManager] Failed to save battle mission progress: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Load Battle Mission progress.
+        /// </summary>
+        /// <returns>Loaded battle mission data, or defaults if none exist.</returns>
+        public BattleMissionSaveData LoadBattleMissionProgress()
+        {
+            try
+            {
+                if (ES3.KeyExists(BATTLE_MISSION_KEY, SAVE_FILE))
+                {
+                    var data = ES3.Load<BattleMissionSaveData>(BATTLE_MISSION_KEY, SAVE_FILE);
+                    Debug.Log("[SaveManager] Battle mission progress loaded");
+                    return data;
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[SaveManager] Failed to load battle mission progress: {e.Message}");
+            }
+
+            Debug.Log("[SaveManager] Using default battle mission data");
+            return new BattleMissionSaveData();
+        }
+
+        /// <summary>
+        /// Check if Battle Mission progress exists.
+        /// </summary>
+        public bool HasBattleMissionProgress
+        {
+            get
+            {
+                try
+                {
+                    return ES3.KeyExists(BATTLE_MISSION_KEY, SAVE_FILE);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
         }
 
         // ============================================

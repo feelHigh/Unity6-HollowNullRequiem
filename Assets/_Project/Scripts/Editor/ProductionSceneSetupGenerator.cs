@@ -49,6 +49,9 @@ namespace HNR.Editor
                 "- Boot (managers only)\n" +
                 "- MainMenu\n" +
                 "- Bastion\n" +
+                "- Missions\n" +
+                "- BattleMission\n" +
+                "- Requiems\n" +
                 "- NullRift\n" +
                 "- Combat\n\n" +
                 "Existing scenes will be overwritten. Continue?",
@@ -60,12 +63,15 @@ namespace HNR.Editor
             SetupBootScene();
             SetupMainMenuScene();
             SetupBastionScene();
+            SetupMissionsScene();
+            SetupBattleMissionScene();
+            SetupRequiemsScene();
             SetupNullRiftScene();
             SetupCombatScene();
-            ConfigureBuildSettings();
+            UpdateBuildSettings();
 
             EditorUtility.DisplayDialog("Production Scenes Setup Complete",
-                "All production scenes have been created and configured.\n\n" +
+                "All 8 production scenes have been created and configured.\n\n" +
                 "Build Settings have been updated with the correct scene order.\n\n" +
                 "IMPORTANT: Always start from Boot scene to ensure proper initialization.",
                 "OK");
@@ -162,11 +168,8 @@ namespace HNR.Editor
             // === RequiemSelectionScreen (overlay) ===
             GameObject requiemSelectionScreen = CreateRequiemSelectionScreen(overlayContainer);
 
-            // === Global Header Placeholder ===
-            GameObject header = CreateGlobalHeaderPlaceholder(canvasObj);
-
-            // === Global Nav Dock Placeholder ===
-            GameObject navDock = CreateGlobalNavDockPlaceholder(canvasObj);
+            // === Settings Overlay ===
+            CreateSettingsOverlay(canvasObj.transform);
 
             // === Background ===
             CreateBackground(canvasObj, new Color(0.08f, 0.05f, 0.12f));
@@ -757,113 +760,149 @@ namespace HNR.Editor
 
             var bastionScreen = screenObj.AddComponent<BastionScreen>();
 
-            // === Title ===
-            GameObject titleObj = CreateText(screenObj, "Title", "THE BASTION", 48);
-            RectTransform titleRect = titleObj.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0.5f, 0.85f);
-            titleRect.anchorMax = new Vector2(0.5f, 0.85f);
-            titleRect.sizeDelta = new Vector2(400, 60);
+            // ============================================
+            // Player Info (Top Left)
+            // ============================================
+            GameObject playerInfoContainer = new GameObject("PlayerInfo");
+            playerInfoContainer.transform.SetParent(screenObj.transform, false);
+            RectTransform playerInfoRect = playerInfoContainer.AddComponent<RectTransform>();
+            playerInfoRect.anchorMin = new Vector2(0, 0.85f);
+            playerInfoRect.anchorMax = new Vector2(0.3f, 1f);
+            playerInfoRect.offsetMin = new Vector2(20, 10);
+            playerInfoRect.offsetMax = new Vector2(-10, -10);
 
-            // === Subtitle ===
-            GameObject subtitleObj = CreateText(screenObj, "Subtitle", "Command Center", 24);
-            RectTransform subtitleRect = subtitleObj.GetComponent<RectTransform>();
-            subtitleRect.anchorMin = new Vector2(0.5f, 0.8f);
-            subtitleRect.anchorMax = new Vector2(0.5f, 0.8f);
-            subtitleRect.sizeDelta = new Vector2(300, 40);
+            HorizontalLayoutGroup playerInfoHLG = playerInfoContainer.AddComponent<HorizontalLayoutGroup>();
+            playerInfoHLG.spacing = 15;
+            playerInfoHLG.childAlignment = TextAnchor.MiddleLeft;
+            playerInfoHLG.childForceExpandWidth = false;
+            playerInfoHLG.childForceExpandHeight = false;
 
-            // === Team Section ===
-            GameObject teamSection = new GameObject("TeamSection");
-            teamSection.transform.SetParent(screenObj.transform, false);
-            RectTransform teamRect = teamSection.AddComponent<RectTransform>();
-            teamRect.anchorMin = new Vector2(0.1f, 0.4f);
-            teamRect.anchorMax = new Vector2(0.5f, 0.75f);
-            teamRect.sizeDelta = Vector2.zero;
+            // Level badge
+            GameObject levelBadge = new GameObject("LevelBadge");
+            levelBadge.transform.SetParent(playerInfoContainer.transform, false);
+            levelBadge.AddComponent<RectTransform>();
+            LayoutElement levelBadgeLE = levelBadge.AddComponent<LayoutElement>();
+            levelBadgeLE.preferredWidth = 60;
+            levelBadgeLE.preferredHeight = 60;
+            Image levelBadgeImage = levelBadge.AddComponent<Image>();
+            levelBadgeImage.color = new Color(0.3f, 0.4f, 0.5f, 0.9f);
 
-            GameObject teamTitle = CreateText(teamSection, "TeamSectionTitle", "SELECTED TEAM", 20);
-            RectTransform teamTitleRect = teamTitle.GetComponent<RectTransform>();
-            teamTitleRect.anchorMin = new Vector2(0.5f, 0.95f);
-            teamTitleRect.anchorMax = new Vector2(0.5f, 0.95f);
-            teamTitleRect.sizeDelta = new Vector2(200, 30);
+            GameObject levelTextObj = CreateText(levelBadge, "LevelText", "LV\n1", 18);
+            RectTransform levelTextRect = levelTextObj.GetComponent<RectTransform>();
+            levelTextRect.anchorMin = Vector2.zero;
+            levelTextRect.anchorMax = Vector2.one;
+            levelTextRect.sizeDelta = Vector2.zero;
+            TextMeshProUGUI levelTMP = levelTextObj.GetComponent<TextMeshProUGUI>();
+            levelTMP.alignment = TextAlignmentOptions.Center;
+            levelTMP.fontStyle = FontStyles.Bold;
 
-            GameObject teamContainer = new GameObject("TeamContainer");
-            teamContainer.transform.SetParent(teamSection.transform, false);
-            RectTransform teamContainerRect = teamContainer.AddComponent<RectTransform>();
-            teamContainerRect.anchorMin = new Vector2(0.05f, 0.1f);
-            teamContainerRect.anchorMax = new Vector2(0.95f, 0.85f);
-            teamContainerRect.sizeDelta = Vector2.zero;
+            // Nickname
+            GameObject nicknameObj = CreateText(playerInfoContainer, "Nickname", "Commander", 24);
+            LayoutElement nicknameLE = nicknameObj.AddComponent<LayoutElement>();
+            nicknameLE.preferredWidth = 150;
+            nicknameLE.preferredHeight = 50;
+            TextMeshProUGUI nicknameText = nicknameObj.GetComponent<TextMeshProUGUI>();
+            nicknameText.fontStyle = FontStyles.Bold;
+            nicknameText.alignment = TextAlignmentOptions.Left;
 
-            HorizontalLayoutGroup teamLayout = teamContainer.AddComponent<HorizontalLayoutGroup>();
-            teamLayout.spacing = 20f;
-            teamLayout.childAlignment = TextAnchor.MiddleCenter;
-            teamLayout.childForceExpandWidth = false;
-            teamLayout.childForceExpandHeight = false;
+            // ============================================
+            // Settings Button (Top Right)
+            // ============================================
+            GameObject settingsButton = CreateMenuButton(screenObj, "SettingsButton", "≡");
+            RectTransform settingsRect = settingsButton.GetComponent<RectTransform>();
+            settingsRect.anchorMin = new Vector2(1, 1);
+            settingsRect.anchorMax = new Vector2(1, 1);
+            settingsRect.pivot = new Vector2(1, 1);
+            settingsRect.sizeDelta = new Vector2(60, 60);
+            settingsRect.anchoredPosition = new Vector2(-20, -20);
+            settingsButton.GetComponentInChildren<TextMeshProUGUI>().fontSize = 32;
 
-            // === Action Buttons Container ===
-            GameObject buttonContainer = new GameObject("ActionButtons");
-            buttonContainer.transform.SetParent(screenObj.transform, false);
-            RectTransform containerRect = buttonContainer.AddComponent<RectTransform>();
-            containerRect.anchorMin = new Vector2(0.55f, 0.4f);
-            containerRect.anchorMax = new Vector2(0.9f, 0.75f);
-            containerRect.sizeDelta = Vector2.zero;
+            // ============================================
+            // Navigation Buttons (Right Side - Vertical Stack)
+            // ============================================
+            GameObject navContainer = new GameObject("NavigationButtons");
+            navContainer.transform.SetParent(screenObj.transform, false);
+            RectTransform navRect = navContainer.AddComponent<RectTransform>();
+            // Position on right side like reference image
+            navRect.anchorMin = new Vector2(0.65f, 0.25f);
+            navRect.anchorMax = new Vector2(0.98f, 0.80f);
+            navRect.offsetMin = Vector2.zero;
+            navRect.offsetMax = Vector2.zero;
 
-            VerticalLayoutGroup btnLayout = buttonContainer.AddComponent<VerticalLayoutGroup>();
-            btnLayout.spacing = 15f;
-            btnLayout.childAlignment = TextAnchor.MiddleCenter;
-            btnLayout.childForceExpandWidth = true;
-            btnLayout.childForceExpandHeight = false;
-            btnLayout.childControlWidth = true;
-            btnLayout.childControlHeight = false;
+            VerticalLayoutGroup navVLG = navContainer.AddComponent<VerticalLayoutGroup>();
+            navVLG.spacing = 15;
+            navVLG.childAlignment = TextAnchor.UpperRight;
+            navVLG.childForceExpandWidth = true;
+            navVLG.childForceExpandHeight = false;
+            navVLG.padding = new RectOffset(0, 0, 10, 10);
 
-            // Action buttons
-            GameObject newRunBtn = CreateMenuButton(buttonContainer, "NewRunButton", "ENTER NULL RIFT");
-            newRunBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(280, 60);
+            // Missions button (wide horizontal, no subtitle)
+            GameObject missionsButton = CreateWideNavButton(navContainer, "MissionsButton", "Missions");
+            LayoutElement missionsLE = missionsButton.AddComponent<LayoutElement>();
+            missionsLE.preferredHeight = 70;
 
-            GameObject changeTeamBtn = CreateMenuButton(buttonContainer, "ChangeTeamButton", "CHANGE TEAM");
-            changeTeamBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(280, 50);
+            // Requiems button (wide horizontal, no subtitle)
+            GameObject requiemsButton = CreateWideNavButton(navContainer, "RequiemsButton", "Requiems");
+            LayoutElement requiemsLE = requiemsButton.AddComponent<LayoutElement>();
+            requiemsLE.preferredHeight = 70;
 
-            GameObject viewDeckBtn = CreateMenuButton(buttonContainer, "ViewDeckButton", "VIEW DECK");
-            viewDeckBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(280, 50);
-
-            GameObject continueBtn = CreateMenuButton(buttonContainer, "ContinueRunButton", "CONTINUE RUN");
-            continueBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(280, 50);
-            CanvasGroup continueGroup = continueBtn.AddComponent<CanvasGroup>();
-            continueBtn.SetActive(false);
-
-            // === Team Stats ===
-            GameObject statsContainer = new GameObject("TeamStats");
-            statsContainer.transform.SetParent(screenObj.transform, false);
-            RectTransform statsRect = statsContainer.AddComponent<RectTransform>();
-            statsRect.anchorMin = new Vector2(0.1f, 0.3f);
-            statsRect.anchorMax = new Vector2(0.5f, 0.38f);
-            statsRect.sizeDelta = Vector2.zero;
-
-            HorizontalLayoutGroup statsLayout = statsContainer.AddComponent<HorizontalLayoutGroup>();
-            statsLayout.spacing = 30f;
-            statsLayout.childAlignment = TextAnchor.MiddleCenter;
-
-            GameObject hpText = CreateText(statsContainer, "TeamHPText", "150 HP", 18);
-            GameObject atkText = CreateText(statsContainer, "TeamATKText", "30 ATK", 18);
-            GameObject defText = CreateText(statsContainer, "TeamDEFText", "15 DEF", 18);
-
-            // === Wire References ===
+            // ============================================
+            // Wire References
+            // ============================================
             SerializedObject screenSO = new SerializedObject(bastionScreen);
-            screenSO.FindProperty("_titleText").objectReferenceValue = titleObj.GetComponent<TextMeshProUGUI>();
-            screenSO.FindProperty("_subtitleText").objectReferenceValue = subtitleObj.GetComponent<TextMeshProUGUI>();
-            screenSO.FindProperty("_teamContainer").objectReferenceValue = teamContainer.transform;
-            screenSO.FindProperty("_teamSectionTitle").objectReferenceValue = teamTitle.GetComponent<TextMeshProUGUI>();
-            screenSO.FindProperty("_newRunButton").objectReferenceValue = newRunBtn.GetComponent<Button>();
-            screenSO.FindProperty("_changeTeamButton").objectReferenceValue = changeTeamBtn.GetComponent<Button>();
-            screenSO.FindProperty("_viewDeckButton").objectReferenceValue = viewDeckBtn.GetComponent<Button>();
-            screenSO.FindProperty("_continueRunButton").objectReferenceValue = continueBtn.GetComponent<Button>();
-            screenSO.FindProperty("_continueButtonGroup").objectReferenceValue = continueGroup;
-            screenSO.FindProperty("_teamHPText").objectReferenceValue = hpText.GetComponent<TextMeshProUGUI>();
-            screenSO.FindProperty("_teamATKText").objectReferenceValue = atkText.GetComponent<TextMeshProUGUI>();
-            screenSO.FindProperty("_teamDEFText").objectReferenceValue = defText.GetComponent<TextMeshProUGUI>();
-            screenSO.FindProperty("_showGlobalHeader").boolValue = true;
-            screenSO.FindProperty("_showGlobalNav").boolValue = true;
+            screenSO.FindProperty("_playerLevelText").objectReferenceValue = levelTMP;
+            screenSO.FindProperty("_playerNicknameText").objectReferenceValue = nicknameText;
+            screenSO.FindProperty("_settingsButton").objectReferenceValue = settingsButton.GetComponent<Button>();
+            screenSO.FindProperty("_missionsButton").objectReferenceValue = missionsButton.GetComponent<Button>();
+            screenSO.FindProperty("_missionsButtonText").objectReferenceValue = missionsButton.transform.Find("ButtonText")?.GetComponent<TextMeshProUGUI>();
+            screenSO.FindProperty("_requiemsButton").objectReferenceValue = requiemsButton.GetComponent<Button>();
+            screenSO.FindProperty("_requiemsButtonText").objectReferenceValue = requiemsButton.transform.Find("ButtonText")?.GetComponent<TextMeshProUGUI>();
+            screenSO.FindProperty("_showGlobalHeader").boolValue = false;
+            screenSO.FindProperty("_showGlobalNav").boolValue = false;
             screenSO.ApplyModifiedPropertiesWithoutUndo();
 
             return screenObj;
+        }
+
+        /// <summary>
+        /// Creates a wide navigation button (horizontal, single-line title, no subtitle).
+        /// Matches the reference design from BastionSceneDesignReference.jpg
+        /// </summary>
+        private static GameObject CreateWideNavButton(GameObject parent, string name, string title)
+        {
+            GameObject buttonObj = new GameObject(name);
+            buttonObj.transform.SetParent(parent.transform, false);
+            buttonObj.AddComponent<RectTransform>();
+
+            Image image = buttonObj.AddComponent<Image>();
+            image.color = new Color(0.15f, 0.15f, 0.2f, 0.85f);
+
+            Button button = buttonObj.AddComponent<Button>();
+            button.targetGraphic = image;
+
+            // Button text (centered, single line)
+            GameObject textObj = CreateText(buttonObj, "ButtonText", title, 22);
+            RectTransform textRect = textObj.GetComponent<RectTransform>();
+            textRect.anchorMin = new Vector2(0, 0);
+            textRect.anchorMax = new Vector2(0.85f, 1);
+            textRect.offsetMin = new Vector2(20, 0);
+            textRect.offsetMax = new Vector2(-10, 0);
+            TextMeshProUGUI buttonText = textObj.GetComponent<TextMeshProUGUI>();
+            buttonText.fontStyle = FontStyles.Normal;
+            buttonText.alignment = TextAlignmentOptions.Left;
+
+            // Icon placeholder on right side
+            GameObject iconObj = new GameObject("Icon");
+            iconObj.transform.SetParent(buttonObj.transform, false);
+            RectTransform iconRect = iconObj.AddComponent<RectTransform>();
+            iconRect.anchorMin = new Vector2(0.85f, 0.2f);
+            iconRect.anchorMax = new Vector2(0.95f, 0.8f);
+            iconRect.offsetMin = Vector2.zero;
+            iconRect.offsetMax = Vector2.zero;
+            Image iconImage = iconObj.AddComponent<Image>();
+            iconImage.color = new Color(0.6f, 0.6f, 0.7f, 0.5f);
+
+            return buttonObj;
         }
 
         private static GameObject CreateRequiemSelectionScreen(GameObject parent)
@@ -3639,6 +3678,1447 @@ namespace HNR.Editor
 
             Debug.Log("[ProductionSceneSetupGenerator] Created DeckViewerModal");
             return modal;
+        }
+
+        // ============================================
+        // Missions Scene
+        // ============================================
+
+        public static void SetupMissionsScene()
+        {
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            CreateMainCamera("Missions");
+            CreateEventSystem();
+
+            var canvas = CreateMainCanvas("MissionsCanvas");
+            CreateBackground(canvas, new Color(0.08f, 0.08f, 0.12f));
+            CreateMissionsScreen(canvas.transform);
+            CreateSettingsOverlay(canvas.transform);
+
+            string scenePath = $"{SCENES_PATH}/Missions.unity";
+            EditorSceneManager.SaveScene(scene, scenePath);
+            Debug.Log($"[ProductionSceneSetupGenerator] Created Missions scene at {scenePath}");
+        }
+
+        private static void CreateMissionsScreen(Transform parent)
+        {
+            var screenContainer = CreateSimpleUIObject("ScreenContainer", parent);
+            SetFullStretchRect(screenContainer);
+
+            var missionsScreenObj = CreateSimpleUIObject("MissionsScreen", screenContainer.transform);
+            SetFullStretchRect(missionsScreenObj);
+            var missionsScreen = missionsScreenObj.AddComponent<MissionsScreen>();
+
+            // Header
+            var header = CreateSimpleUIObject("Header", missionsScreenObj.transform);
+            var headerRect = header.GetComponent<RectTransform>();
+            headerRect.anchorMin = new Vector2(0, 0.9f);
+            headerRect.anchorMax = new Vector2(1, 1);
+            headerRect.offsetMin = new Vector2(20, 0);
+            headerRect.offsetMax = new Vector2(-20, -10);
+
+            // Back button
+            var backButton = CreateSimpleButton("BackButton", header.transform, "<");
+            var backButtonRect = backButton.GetComponent<RectTransform>();
+            backButtonRect.anchorMin = new Vector2(0, 0.5f);
+            backButtonRect.anchorMax = new Vector2(0, 0.5f);
+            backButtonRect.pivot = new Vector2(0, 0.5f);
+            backButtonRect.sizeDelta = new Vector2(60, 60);
+            backButtonRect.anchoredPosition = Vector2.zero;
+
+            // Title
+            var title = CreateSimpleTextObject("Title", header.transform, "Missions");
+            var titleRect = title.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0, 0.5f);
+            titleRect.anchorMax = new Vector2(0, 0.5f);
+            titleRect.pivot = new Vector2(0, 0.5f);
+            titleRect.sizeDelta = new Vector2(200, 50);
+            titleRect.anchoredPosition = new Vector2(80, 0);
+            var titleText = title.GetComponent<TMP_Text>();
+            titleText.fontSize = 32;
+            titleText.fontStyle = FontStyles.Bold;
+
+            // Settings button
+            var settingsButton = CreateSimpleButton("SettingsButton", header.transform, "=");
+            var settingsButtonRect = settingsButton.GetComponent<RectTransform>();
+            settingsButtonRect.anchorMin = new Vector2(1, 0.5f);
+            settingsButtonRect.anchorMax = new Vector2(1, 0.5f);
+            settingsButtonRect.pivot = new Vector2(1, 0.5f);
+            settingsButtonRect.sizeDelta = new Vector2(60, 60);
+            settingsButtonRect.anchoredPosition = Vector2.zero;
+
+            // Content area
+            var content = CreateSimpleUIObject("Content", missionsScreenObj.transform);
+            var contentRect = content.GetComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0.1f, 0.15f);
+            contentRect.anchorMax = new Vector2(0.9f, 0.85f);
+            contentRect.offsetMin = Vector2.zero;
+            contentRect.offsetMax = Vector2.zero;
+
+            var hlg = content.AddComponent<HorizontalLayoutGroup>();
+            hlg.spacing = 50;
+            hlg.childAlignment = TextAnchor.MiddleCenter;
+            hlg.childForceExpandWidth = true;
+            hlg.childForceExpandHeight = true;
+
+            // Story button (placeholder)
+            var storyButton = CreateLargeButtonWithSubtitle("StoryButton", content.transform, "Story", "Coming Soon");
+
+            // Battle Mission button
+            var battleMissionButton = CreateLargeButtonWithSubtitle("BattleMissionButton", content.transform, "Battle Mission", "Challenge the Null Rift");
+
+            // Wire references
+            var so = new SerializedObject(missionsScreen);
+            so.FindProperty("_backButton").objectReferenceValue = backButton.GetComponent<Button>();
+            so.FindProperty("_titleText").objectReferenceValue = title.GetComponent<TMP_Text>();
+            so.FindProperty("_settingsButton").objectReferenceValue = settingsButton.GetComponent<Button>();
+            so.FindProperty("_storyMissionButton").objectReferenceValue = storyButton.GetComponent<Button>();
+            so.FindProperty("_storyMissionTitle").objectReferenceValue = storyButton.transform.Find("Title")?.GetComponent<TMP_Text>();
+            so.FindProperty("_storyMissionSubtitle").objectReferenceValue = storyButton.transform.Find("Subtitle")?.GetComponent<TMP_Text>();
+            so.FindProperty("_battleMissionButton").objectReferenceValue = battleMissionButton.GetComponent<Button>();
+            so.FindProperty("_battleMissionTitle").objectReferenceValue = battleMissionButton.transform.Find("Title")?.GetComponent<TMP_Text>();
+            so.FindProperty("_battleMissionSubtitle").objectReferenceValue = battleMissionButton.transform.Find("Subtitle")?.GetComponent<TMP_Text>();
+            so.ApplyModifiedProperties();
+        }
+
+        // ============================================
+        // BattleMission Scene
+        // ============================================
+
+        public static void SetupBattleMissionScene()
+        {
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            CreateMainCamera("BattleMission");
+            CreateEventSystem();
+
+            var canvas = CreateMainCanvas("BattleMissionCanvas");
+            CreateBackground(canvas, new Color(0.08f, 0.08f, 0.12f));
+            CreateBattleMissionScreen(canvas.transform);
+
+            // Create overlay container for modals
+            var overlayContainer = CreateSimpleUIObject("OverlayContainer", canvas.transform);
+            SetFullStretchRect(overlayContainer);
+
+            // Add RequiemSelectionScreen overlay
+            CreateBMRequiemSelectionScreen(overlayContainer.transform);
+
+            // Add SettingsOverlay
+            CreateSettingsOverlay(canvas.transform);
+
+            string scenePath = $"{SCENES_PATH}/BattleMission.unity";
+            EditorSceneManager.SaveScene(scene, scenePath);
+            Debug.Log($"[ProductionSceneSetupGenerator] Created BattleMission scene at {scenePath}");
+        }
+
+        private static void CreateBattleMissionScreen(Transform parent)
+        {
+            var screenContainer = CreateSimpleUIObject("ScreenContainer", parent);
+            SetFullStretchRect(screenContainer);
+
+            var screenObj = CreateSimpleUIObject("BattleMissionScreen", screenContainer.transform);
+            SetFullStretchRect(screenObj);
+            var screen = screenObj.AddComponent<BattleMissionScreen>();
+
+            // Header
+            var header = CreateSimpleUIObject("Header", screenObj.transform);
+            var headerRect = header.GetComponent<RectTransform>();
+            headerRect.anchorMin = new Vector2(0, 0.9f);
+            headerRect.anchorMax = new Vector2(1, 1);
+            headerRect.offsetMin = new Vector2(20, 0);
+            headerRect.offsetMax = new Vector2(-20, -10);
+
+            var backButton = CreateSimpleButton("BackButton", header.transform, "<");
+            var backRect = backButton.GetComponent<RectTransform>();
+            backRect.anchorMin = new Vector2(0, 0.5f);
+            backRect.anchorMax = new Vector2(0, 0.5f);
+            backRect.pivot = new Vector2(0, 0.5f);
+            backRect.sizeDelta = new Vector2(60, 60);
+
+            var title = CreateSimpleTextObject("Title", header.transform, "Battle Mission");
+            var titleRect = title.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0, 0.5f);
+            titleRect.anchorMax = new Vector2(0, 0.5f);
+            titleRect.pivot = new Vector2(0, 0.5f);
+            titleRect.sizeDelta = new Vector2(300, 50);
+            titleRect.anchoredPosition = new Vector2(80, 0);
+            title.GetComponent<TMP_Text>().fontSize = 32;
+
+            var settingsButton = CreateSimpleButton("SettingsButton", header.transform, "=");
+            var settingsRect = settingsButton.GetComponent<RectTransform>();
+            settingsRect.anchorMin = new Vector2(1, 0.5f);
+            settingsRect.anchorMax = new Vector2(1, 0.5f);
+            settingsRect.pivot = new Vector2(1, 0.5f);
+            settingsRect.sizeDelta = new Vector2(60, 60);
+
+            // Zone container
+            var zoneContainer = CreateSimpleUIObject("ZoneContainer", screenObj.transform);
+            var zoneRect = zoneContainer.GetComponent<RectTransform>();
+            zoneRect.anchorMin = new Vector2(0.1f, 0.3f);
+            zoneRect.anchorMax = new Vector2(0.9f, 0.8f);
+            zoneRect.offsetMin = Vector2.zero;
+            zoneRect.offsetMax = Vector2.zero;
+
+            var hlg = zoneContainer.AddComponent<HorizontalLayoutGroup>();
+            hlg.spacing = 30;
+            hlg.childAlignment = TextAnchor.MiddleCenter;
+            hlg.childForceExpandWidth = true;
+            hlg.childForceExpandHeight = true;
+
+            // Zone nodes
+            var zone1 = CreateZoneNode("Zone1Node", zoneContainer.transform, 1, "The Outer Reaches");
+            var zone2 = CreateZoneNode("Zone2Node", zoneContainer.transform, 2, "The Hollow Depths");
+            var zone3 = CreateZoneNode("Zone3Node", zoneContainer.transform, 3, "The Null Core");
+
+            // Difficulty selector (bottom center, matching reference design)
+            var difficultySection = CreateDifficultySelectorUI(screenObj.transform);
+            var diffSelector = difficultySection.GetComponent<DifficultySelector>();
+
+            // Connection lines between zones
+            CreateZoneConnectionLines(screenObj.transform, zone1, zone2, zone3);
+
+            // Wire references
+            var so = new SerializedObject(screen);
+            so.FindProperty("_backButton").objectReferenceValue = backButton.GetComponent<Button>();
+            so.FindProperty("_titleText").objectReferenceValue = title.GetComponent<TMP_Text>();
+            so.FindProperty("_settingsButton").objectReferenceValue = settingsButton.GetComponent<Button>();
+            so.FindProperty("_zoneContainer").objectReferenceValue = zoneContainer.transform;
+            so.FindProperty("_zone1Node").objectReferenceValue = zone1.GetComponent<ZoneNodeButton>();
+            so.FindProperty("_zone2Node").objectReferenceValue = zone2.GetComponent<ZoneNodeButton>();
+            so.FindProperty("_zone3Node").objectReferenceValue = zone3.GetComponent<ZoneNodeButton>();
+            so.FindProperty("_difficultySelector").objectReferenceValue = diffSelector;
+            so.ApplyModifiedProperties();
+        }
+
+        private static GameObject CreateDifficultySelectorUI(Transform parent)
+        {
+            var container = CreateSimpleUIObject("DifficultySelector", parent);
+            var containerRect = container.GetComponent<RectTransform>();
+            // Position at bottom center like reference image
+            containerRect.anchorMin = new Vector2(0.25f, 0.03f);
+            containerRect.anchorMax = new Vector2(0.75f, 0.12f);
+            containerRect.offsetMin = Vector2.zero;
+            containerRect.offsetMax = Vector2.zero;
+
+            var bgImage = container.AddComponent<Image>();
+            bgImage.color = new Color(0.15f, 0.15f, 0.2f, 0.9f);
+
+            var diffSelector = container.AddComponent<DifficultySelector>();
+
+            // Create a buttons container for the layout group (NOT the selector itself)
+            var buttonsContainer = CreateSimpleUIObject("ButtonsContainer", container.transform);
+            SetFullStretchRect(buttonsContainer);
+            buttonsContainer.GetComponent<RectTransform>().offsetMin = new Vector2(10, 5);
+            buttonsContainer.GetComponent<RectTransform>().offsetMax = new Vector2(-10, -5);
+
+            var hlg = buttonsContainer.AddComponent<HorizontalLayoutGroup>();
+            hlg.spacing = 0;
+            hlg.childAlignment = TextAnchor.MiddleCenter;
+            hlg.childForceExpandWidth = true;
+            hlg.childForceExpandHeight = true;
+
+            // Create difficulty buttons INSIDE the buttons container (so they're part of layout)
+            var easyButton = CreateDifficultyButton(buttonsContainer.transform, "EASY");
+            var normalButton = CreateDifficultyButton(buttonsContainer.transform, "NORMAL");
+            var hardButton = CreateDifficultyButton(buttonsContainer.transform, "HARD");
+
+            // Selection indicator is OUTSIDE the layout group, positioned absolutely
+            var selectionIndicator = CreateSimpleUIObject("SelectionIndicator", container.transform);
+            var indicatorRect = selectionIndicator.GetComponent<RectTransform>();
+            // Position for first button (Easy) - spans roughly 1/3 width
+            indicatorRect.anchorMin = new Vector2(0, 0);
+            indicatorRect.anchorMax = new Vector2(0.333f, 1);
+            indicatorRect.offsetMin = new Vector2(10, 5);
+            indicatorRect.offsetMax = new Vector2(-5, -5);
+            var indicatorImage = selectionIndicator.AddComponent<Image>();
+            indicatorImage.color = new Color(0.9f, 0.7f, 0.2f, 0.3f);
+            // Move indicator behind buttons
+            selectionIndicator.transform.SetAsFirstSibling();
+
+            var so = new SerializedObject(diffSelector);
+            so.FindProperty("_easyButton").objectReferenceValue = easyButton.GetComponent<Button>();
+            so.FindProperty("_normalButton").objectReferenceValue = normalButton.GetComponent<Button>();
+            so.FindProperty("_hardButton").objectReferenceValue = hardButton.GetComponent<Button>();
+            so.FindProperty("_easyText").objectReferenceValue = easyButton.GetComponentInChildren<TMP_Text>();
+            so.FindProperty("_normalText").objectReferenceValue = normalButton.GetComponentInChildren<TMP_Text>();
+            so.FindProperty("_hardText").objectReferenceValue = hardButton.GetComponentInChildren<TMP_Text>();
+            so.FindProperty("_selectionIndicator").objectReferenceValue = indicatorImage;
+            so.ApplyModifiedProperties();
+
+            return container;
+        }
+
+        private static GameObject CreateDifficultyButton(Transform parent, string text)
+        {
+            var buttonObj = CreateSimpleUIObject(text + "Button", parent);
+            var image = buttonObj.AddComponent<Image>();
+            image.color = new Color(0.2f, 0.2f, 0.25f, 0.8f);
+
+            var button = buttonObj.AddComponent<Button>();
+            button.targetGraphic = image;
+
+            var textObj = CreateSimpleTextObject("Text", buttonObj.transform, text);
+            SetFullStretchRect(textObj);
+            var tmpText = textObj.GetComponent<TMP_Text>();
+            tmpText.alignment = TextAlignmentOptions.Center;
+            tmpText.fontSize = 20;
+            tmpText.fontStyle = FontStyles.Bold;
+
+            return buttonObj;
+        }
+
+        private static void CreateZoneConnectionLines(Transform parent, GameObject zone1, GameObject zone2, GameObject zone3)
+        {
+            var linesContainer = CreateSimpleUIObject("ConnectionLines", parent);
+            var linesRect = linesContainer.GetComponent<RectTransform>();
+            // Same area as zone container
+            linesRect.anchorMin = new Vector2(0.1f, 0.3f);
+            linesRect.anchorMax = new Vector2(0.9f, 0.8f);
+            linesRect.offsetMin = Vector2.zero;
+            linesRect.offsetMax = Vector2.zero;
+
+            // Line from Zone 1 to Zone 2 (short line between nodes, not spanning entire width)
+            // Zones are at roughly 1/6, 3/6, 5/6 of container width due to HLG
+            // Line 1->2 goes from edge of zone1 to edge of zone2
+            var line1 = CreateConnectionLine(linesContainer.transform, "Line1to2");
+            var line1Rect = line1.GetComponent<RectTransform>();
+            line1Rect.anchorMin = new Vector2(0.25f, 0.48f);  // After zone 1
+            line1Rect.anchorMax = new Vector2(0.42f, 0.52f);  // Before zone 2
+            line1Rect.offsetMin = Vector2.zero;
+            line1Rect.offsetMax = Vector2.zero;
+
+            // Line from Zone 2 to Zone 3 (short line between nodes)
+            var line2 = CreateConnectionLine(linesContainer.transform, "Line2to3");
+            var line2Rect = line2.GetComponent<RectTransform>();
+            line2Rect.anchorMin = new Vector2(0.58f, 0.48f);  // After zone 2
+            line2Rect.anchorMax = new Vector2(0.75f, 0.52f);  // Before zone 3
+            line2Rect.offsetMin = Vector2.zero;
+            line2Rect.offsetMax = Vector2.zero;
+
+            // Put lines behind zone nodes
+            linesContainer.transform.SetAsFirstSibling();
+        }
+
+        private static GameObject CreateConnectionLine(Transform parent, string name)
+        {
+            var lineObj = CreateSimpleUIObject(name, parent);
+            var lineImage = lineObj.AddComponent<Image>();
+            lineImage.color = new Color(0.5f, 0.5f, 0.6f, 0.8f);
+            return lineObj;
+        }
+
+        private static GameObject CreateZoneNode(string name, Transform parent, int zoneNumber, string zoneName)
+        {
+            var nodeObj = CreateSimpleUIObject(name, parent);
+            var nodeImage = nodeObj.AddComponent<Image>();
+            nodeImage.color = new Color(0.2f, 0.3f, 0.4f, 0.9f);
+
+            var button = nodeObj.AddComponent<Button>();
+            var nodeComponent = nodeObj.AddComponent<ZoneNodeButton>();
+
+            var numberText = CreateSimpleTextObject("ZoneNumber", nodeObj.transform, $"Zone {zoneNumber}");
+            var numRect = numberText.GetComponent<RectTransform>();
+            numRect.anchorMin = new Vector2(0, 0.6f);
+            numRect.anchorMax = new Vector2(1, 0.9f);
+            numRect.offsetMin = new Vector2(10, 0);
+            numRect.offsetMax = new Vector2(-10, 0);
+            numberText.GetComponent<TMP_Text>().fontSize = 24;
+
+            var nameText = CreateSimpleTextObject("ZoneName", nodeObj.transform, zoneName);
+            var nameRect = nameText.GetComponent<RectTransform>();
+            nameRect.anchorMin = new Vector2(0, 0.3f);
+            nameRect.anchorMax = new Vector2(1, 0.55f);
+            nameRect.offsetMin = new Vector2(10, 0);
+            nameRect.offsetMax = new Vector2(-10, 0);
+            nameText.GetComponent<TMP_Text>().fontSize = 16;
+
+            var so = new SerializedObject(nodeComponent);
+            so.FindProperty("_zoneNumber").intValue = zoneNumber;
+            so.FindProperty("_zoneName").stringValue = zoneName;
+            so.FindProperty("_button").objectReferenceValue = button;
+            so.FindProperty("_zoneNumberText").objectReferenceValue = numberText.GetComponent<TMP_Text>();
+            so.FindProperty("_zoneNameText").objectReferenceValue = nameText.GetComponent<TMP_Text>();
+            so.FindProperty("_backgroundImage").objectReferenceValue = nodeImage;
+            so.ApplyModifiedProperties();
+
+            return nodeObj;
+        }
+
+        private static void CreateBMRequiemSelectionScreen(Transform parent)
+        {
+            var screenObj = CreateSimpleUIObject("RequiemSelectionScreen", parent);
+            SetFullStretchRect(screenObj);
+            var screen = screenObj.AddComponent<RequiemSelectionScreen>();
+
+            var bgImage = screenObj.AddComponent<Image>();
+            bgImage.color = new Color(0.1f, 0.08f, 0.15f, 0.95f);
+
+            var titleObj = CreateSimpleTextObject("Title", screenObj.transform, "SELECT YOUR REQUIEMS");
+            var titleRect = titleObj.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0.5f, 0.9f);
+            titleRect.anchorMax = new Vector2(0.5f, 0.95f);
+            titleRect.pivot = new Vector2(0.5f, 0.5f);
+            titleRect.sizeDelta = new Vector2(500, 50);
+            var titleText = titleObj.GetComponent<TMP_Text>();
+            titleText.fontSize = 36;
+            titleText.fontStyle = FontStyles.Bold;
+            titleText.alignment = TextAlignmentOptions.Center;
+
+            // Slot container for Requiem selection slots
+            var slotContainer = CreateSimpleUIObject("SlotContainer", screenObj.transform);
+            var slotRect = slotContainer.GetComponent<RectTransform>();
+            slotRect.anchorMin = new Vector2(0.1f, 0.2f);
+            slotRect.anchorMax = new Vector2(0.9f, 0.85f);
+            slotRect.offsetMin = Vector2.zero;
+            slotRect.offsetMax = Vector2.zero;
+
+            var grid = slotContainer.AddComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(200, 280);
+            grid.spacing = new Vector2(20, 20);
+            grid.childAlignment = TextAnchor.MiddleCenter;
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 4;
+
+            // Start run button
+            var startRunButton = CreateSimpleButton("StartRunButton", screenObj.transform, "CONFIRM TEAM");
+            var startRunRect = startRunButton.GetComponent<RectTransform>();
+            startRunRect.anchorMin = new Vector2(0.5f, 0.08f);
+            startRunRect.anchorMax = new Vector2(0.5f, 0.08f);
+            startRunRect.pivot = new Vector2(0.5f, 0.5f);
+            startRunRect.sizeDelta = new Vector2(250, 60);
+            var startRunImage = startRunButton.GetComponent<Image>();
+            startRunImage.color = new Color(0.3f, 0.6f, 0.3f, 0.9f);
+
+            // Wire references using correct field names from RequiemSelectionScreen
+            var so = new SerializedObject(screen);
+            so.FindProperty("_slotContainer").objectReferenceValue = slotContainer.transform;
+            so.FindProperty("_startRunButton").objectReferenceValue = startRunButton.GetComponent<Button>();
+            so.ApplyModifiedProperties();
+
+            screenObj.SetActive(false);
+        }
+
+        // ============================================
+        // Requiems Scene
+        // ============================================
+
+        public static void SetupRequiemsScene()
+        {
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            CreateMainCamera("Requiems");
+            CreateEventSystem();
+
+            var canvas = CreateMainCanvas("RequiemsCanvas");
+            CreateBackground(canvas, new Color(0.08f, 0.08f, 0.12f));
+            CreateRequiemsScreen(canvas.transform);
+            CreateSettingsOverlay(canvas.transform);
+
+            string scenePath = $"{SCENES_PATH}/Requiems.unity";
+            EditorSceneManager.SaveScene(scene, scenePath);
+            Debug.Log($"[ProductionSceneSetupGenerator] Created Requiems scene at {scenePath}");
+        }
+
+        private static void CreateRequiemsScreen(Transform parent)
+        {
+            var screenContainer = CreateSimpleUIObject("ScreenContainer", parent);
+            SetFullStretchRect(screenContainer);
+
+            var screenObj = CreateSimpleUIObject("RequiemsListScreen", screenContainer.transform);
+            SetFullStretchRect(screenObj);
+            var screen = screenObj.AddComponent<RequiemsListScreen>();
+
+            // Header
+            var header = CreateSimpleUIObject("Header", screenObj.transform);
+            var headerRect = header.GetComponent<RectTransform>();
+            headerRect.anchorMin = new Vector2(0, 0.9f);
+            headerRect.anchorMax = new Vector2(1, 1);
+            headerRect.offsetMin = new Vector2(20, 0);
+            headerRect.offsetMax = new Vector2(-20, -10);
+
+            var backButton = CreateSimpleButton("BackButton", header.transform, "<");
+            var backRect = backButton.GetComponent<RectTransform>();
+            backRect.anchorMin = new Vector2(0, 0.5f);
+            backRect.anchorMax = new Vector2(0, 0.5f);
+            backRect.pivot = new Vector2(0, 0.5f);
+            backRect.sizeDelta = new Vector2(60, 60);
+
+            var title = CreateSimpleTextObject("Title", header.transform, "Requiems");
+            var titleRect = title.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0, 0.5f);
+            titleRect.anchorMax = new Vector2(0, 0.5f);
+            titleRect.pivot = new Vector2(0, 0.5f);
+            titleRect.sizeDelta = new Vector2(200, 50);
+            titleRect.anchoredPosition = new Vector2(80, 0);
+            title.GetComponent<TMP_Text>().fontSize = 32;
+
+            var settingsButton = CreateSimpleButton("SettingsButton", header.transform, "=");
+            var settingsRect = settingsButton.GetComponent<RectTransform>();
+            settingsRect.anchorMin = new Vector2(1, 0.5f);
+            settingsRect.anchorMax = new Vector2(1, 0.5f);
+            settingsRect.pivot = new Vector2(1, 0.5f);
+            settingsRect.sizeDelta = new Vector2(60, 60);
+
+            // Portrait grid container
+            var gridContainer = CreateSimpleUIObject("PortraitGrid", screenObj.transform);
+            var gridRect = gridContainer.GetComponent<RectTransform>();
+            gridRect.anchorMin = new Vector2(0.1f, 0.15f);
+            gridRect.anchorMax = new Vector2(0.9f, 0.85f);
+            gridRect.offsetMin = Vector2.zero;
+            gridRect.offsetMax = Vector2.zero;
+
+            var grid = gridContainer.AddComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(200, 280);
+            grid.spacing = new Vector2(30, 30);
+            grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
+            grid.startAxis = GridLayoutGroup.Axis.Horizontal;
+            grid.childAlignment = TextAnchor.MiddleCenter;
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 2;
+
+            // Detail panel (hidden by default)
+            var detailPanelObj = CreateRequiemDetailPanelUI(screenObj.transform);
+            var panelComponent = detailPanelObj.GetComponent<RequiemDetailPanel>();
+
+            // Load Requiem data assets
+            var requiemAssets = AssetDatabase.FindAssets("t:RequiemDataSO", new[] { "Assets/_Project/Data/Characters/Requiems" });
+            var requiemDataList = new List<RequiemDataSO>();
+            foreach (var guid in requiemAssets)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var data = AssetDatabase.LoadAssetAtPath<RequiemDataSO>(path);
+                if (data != null)
+                {
+                    requiemDataList.Add(data);
+                }
+            }
+
+            // Wire references
+            var so = new SerializedObject(screen);
+            so.FindProperty("_backButton").objectReferenceValue = backButton.GetComponent<Button>();
+            so.FindProperty("_titleText").objectReferenceValue = title.GetComponent<TMP_Text>();
+            so.FindProperty("_settingsButton").objectReferenceValue = settingsButton.GetComponent<Button>();
+            so.FindProperty("_portraitContainer").objectReferenceValue = gridContainer.transform;
+            so.FindProperty("_detailPanel").objectReferenceValue = panelComponent;
+
+            // Wire Requiem data array
+            var requiemDataProp = so.FindProperty("_requiemData");
+            requiemDataProp.arraySize = requiemDataList.Count;
+            for (int i = 0; i < requiemDataList.Count; i++)
+            {
+                requiemDataProp.GetArrayElementAtIndex(i).objectReferenceValue = requiemDataList[i];
+            }
+
+            so.ApplyModifiedProperties();
+            Debug.Log($"[ProductionSceneSetupGenerator] Wired {requiemDataList.Count} Requiem data assets to RequiemsListScreen");
+        }
+
+        private static GameObject CreateRequiemDetailPanelUI(Transform parent)
+        {
+            var panelObj = CreateSimpleUIObject("RequiemDetailPanel", parent);
+            SetFullStretchRect(panelObj);
+            var detailPanel = panelObj.AddComponent<RequiemDetailPanel>();
+
+            var canvasGroup = panelObj.AddComponent<CanvasGroup>();
+            canvasGroup.alpha = 0;
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
+
+            var bgImage = panelObj.AddComponent<Image>();
+            bgImage.color = new Color(0.92f, 0.92f, 0.94f, 1f); // Light gray background like reference
+
+            var panelContent = CreateSimpleUIObject("PanelContent", panelObj.transform);
+            var contentRect = panelContent.GetComponent<RectTransform>();
+            contentRect.anchorMin = Vector2.zero;
+            contentRect.anchorMax = Vector2.one;
+            contentRect.offsetMin = Vector2.zero;
+            contentRect.offsetMax = Vector2.zero;
+
+            // Header (top bar)
+            var header = CreateSimpleUIObject("Header", panelContent.transform);
+            var headerRect = header.GetComponent<RectTransform>();
+            headerRect.anchorMin = new Vector2(0, 0.92f);
+            headerRect.anchorMax = new Vector2(1, 1);
+            headerRect.offsetMin = Vector2.zero;
+            headerRect.offsetMax = Vector2.zero;
+
+            var headerBg = header.AddComponent<Image>();
+            headerBg.color = new Color(0.95f, 0.95f, 0.97f, 1f);
+
+            var closeButton = CreateSimpleButton("CloseButton", header.transform, "<");
+            var closeRect = closeButton.GetComponent<RectTransform>();
+            closeRect.anchorMin = new Vector2(0, 0.5f);
+            closeRect.anchorMax = new Vector2(0, 0.5f);
+            closeRect.pivot = new Vector2(0, 0.5f);
+            closeRect.sizeDelta = new Vector2(60, 50);
+            closeRect.anchoredPosition = new Vector2(10, 0);
+            closeButton.GetComponent<Image>().color = new Color(0.3f, 0.35f, 0.45f, 1f);
+            var closeBtnText = closeButton.GetComponentInChildren<TMP_Text>();
+            if (closeBtnText != null)
+            {
+                closeBtnText.fontSize = 24;
+                closeBtnText.fontStyle = FontStyles.Bold;
+            }
+
+            var titleObj = CreateSimpleTextObject("Title", header.transform, "Details");
+            var titleRect = titleObj.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0, 0.5f);
+            titleRect.anchorMax = new Vector2(0.3f, 0.5f);
+            titleRect.pivot = new Vector2(0, 0.5f);
+            titleRect.sizeDelta = new Vector2(150, 40);
+            titleRect.anchoredPosition = new Vector2(80, 0);
+            var titleText = titleObj.GetComponent<TMP_Text>();
+            titleText.fontSize = 24;
+            titleText.fontStyle = FontStyles.Bold;
+            titleText.color = Color.black;
+
+            // ==============================
+            // Left Sidebar - Portrait List
+            // ==============================
+            var leftSidebar = CreateSimpleUIObject("LeftSidebar", panelContent.transform);
+            var leftRect = leftSidebar.GetComponent<RectTransform>();
+            leftRect.anchorMin = new Vector2(0, 0);
+            leftRect.anchorMax = new Vector2(0.08f, 0.92f);
+            leftRect.offsetMin = Vector2.zero;
+            leftRect.offsetMax = Vector2.zero;
+
+            var leftBg = leftSidebar.AddComponent<Image>();
+            leftBg.color = new Color(0.85f, 0.85f, 0.88f, 1f);
+
+            var portraitListContainer = CreateSimpleUIObject("PortraitList", leftSidebar.transform);
+            SetFullStretchRect(portraitListContainer);
+            portraitListContainer.GetComponent<RectTransform>().offsetMin = new Vector2(5, 5);
+            portraitListContainer.GetComponent<RectTransform>().offsetMax = new Vector2(-5, -5);
+
+            var vlg = portraitListContainer.AddComponent<VerticalLayoutGroup>();
+            vlg.spacing = 8;
+            vlg.childAlignment = TextAnchor.UpperCenter;
+            vlg.childForceExpandWidth = true;
+            vlg.childForceExpandHeight = false;
+            vlg.padding = new RectOffset(3, 3, 10, 10);
+
+            // ==============================
+            // Menu Sidebar - Stats/Cards Tabs (Vertical)
+            // ==============================
+            var menuSidebar = CreateSimpleUIObject("MenuSidebar", panelContent.transform);
+            var menuRect = menuSidebar.GetComponent<RectTransform>();
+            menuRect.anchorMin = new Vector2(0.08f, 0);
+            menuRect.anchorMax = new Vector2(0.22f, 0.92f);
+            menuRect.offsetMin = Vector2.zero;
+            menuRect.offsetMax = Vector2.zero;
+
+            var menuBg = menuSidebar.AddComponent<Image>();
+            menuBg.color = new Color(0.95f, 0.95f, 0.97f, 1f);
+
+            // Menu buttons container
+            var menuButtonsContainer = CreateSimpleUIObject("MenuButtons", menuSidebar.transform);
+            var menuBtnsRect = menuButtonsContainer.GetComponent<RectTransform>();
+            menuBtnsRect.anchorMin = new Vector2(0, 0.5f);
+            menuBtnsRect.anchorMax = new Vector2(1, 0.95f);
+            menuBtnsRect.offsetMin = new Vector2(5, 0);
+            menuBtnsRect.offsetMax = new Vector2(-5, -5);
+
+            var menuVlg = menuButtonsContainer.AddComponent<VerticalLayoutGroup>();
+            menuVlg.spacing = 5;
+            menuVlg.childAlignment = TextAnchor.UpperLeft;
+            menuVlg.childForceExpandWidth = true;
+            menuVlg.childForceExpandHeight = false;
+            menuVlg.padding = new RectOffset(5, 5, 10, 10);
+
+            // Stats tab button (vertical menu item)
+            var statsTabButton = CreateMenuTabButton(menuButtonsContainer.transform, "StatsTab", "Stats", true);
+            var cardsTabButton = CreateMenuTabButton(menuButtonsContainer.transform, "CardsTab", "Cards", false);
+
+            // ==============================
+            // Stats Tab Content - Character Visual + Stats
+            // ==============================
+            var statsContent = CreateSimpleUIObject("StatsTabContent", panelContent.transform);
+            var statsContentRect = statsContent.GetComponent<RectTransform>();
+            statsContentRect.anchorMin = new Vector2(0.22f, 0);
+            statsContentRect.anchorMax = new Vector2(1, 0.92f);
+            statsContentRect.offsetMin = Vector2.zero;
+            statsContentRect.offsetMax = Vector2.zero;
+
+            // Character Visual Area (center of stats view)
+            var characterArea = CreateSimpleUIObject("CharacterArea", statsContent.transform);
+            var characterAreaRect = characterArea.GetComponent<RectTransform>();
+            characterAreaRect.anchorMin = new Vector2(0, 0);
+            characterAreaRect.anchorMax = new Vector2(0.65f, 1);
+            characterAreaRect.offsetMin = Vector2.zero;
+            characterAreaRect.offsetMax = Vector2.zero;
+
+            var characterBg = characterArea.AddComponent<Image>();
+            characterBg.color = new Color(0.88f, 0.9f, 0.95f, 1f); // Light blue-ish like reference
+
+            var artContainer = CreateSimpleUIObject("CharacterArt", characterArea.transform);
+            var artRect = artContainer.GetComponent<RectTransform>();
+            artRect.anchorMin = new Vector2(0.1f, 0.05f);
+            artRect.anchorMax = new Vector2(0.9f, 0.95f);
+            artRect.offsetMin = Vector2.zero;
+            artRect.offsetMax = Vector2.zero;
+
+            var artImage = artContainer.AddComponent<Image>();
+            artImage.color = new Color(1f, 1f, 1f, 0.9f);
+            artImage.preserveAspect = true;
+
+            // Stats Panel (right side of stats view)
+            var statsPanel = CreateSimpleUIObject("StatsPanel", statsContent.transform);
+            var statsPanelRect = statsPanel.GetComponent<RectTransform>();
+            statsPanelRect.anchorMin = new Vector2(0.65f, 0);
+            statsPanelRect.anchorMax = new Vector2(1, 1);
+            statsPanelRect.offsetMin = Vector2.zero;
+            statsPanelRect.offsetMax = Vector2.zero;
+
+            var statsPanelBg = statsPanel.AddComponent<Image>();
+            statsPanelBg.color = new Color(0.95f, 0.95f, 0.97f, 1f);
+
+            // Character name and level at top of stats panel
+            var nameObj = CreateSimpleTextObject("CharacterName", statsPanel.transform, "Requiem Name");
+            var nameRect = nameObj.GetComponent<RectTransform>();
+            nameRect.anchorMin = new Vector2(0, 0.88f);
+            nameRect.anchorMax = new Vector2(1, 0.95f);
+            nameRect.offsetMin = new Vector2(15, 0);
+            nameRect.offsetMax = new Vector2(-15, 0);
+            var nameText = nameObj.GetComponent<TMP_Text>();
+            nameText.fontSize = 22;
+            nameText.fontStyle = FontStyles.Bold;
+            nameText.color = Color.black;
+            nameText.alignment = TextAlignmentOptions.Left;
+
+            var classObj = CreateSimpleTextObject("CharacterClass", statsPanel.transform, "Class | Aspect");
+            var classRect = classObj.GetComponent<RectTransform>();
+            classRect.anchorMin = new Vector2(0, 0.82f);
+            classRect.anchorMax = new Vector2(1, 0.88f);
+            classRect.offsetMin = new Vector2(15, 0);
+            classRect.offsetMax = new Vector2(-15, 0);
+            var classText = classObj.GetComponent<TMP_Text>();
+            classText.fontSize = 14;
+            classText.color = new Color(0.4f, 0.4f, 0.4f);
+            classText.alignment = TextAlignmentOptions.Left;
+
+            // Stats header
+            var statsHeaderObj = CreateSimpleTextObject("StatsHeader", statsPanel.transform, "Stats");
+            var statsHeaderRect = statsHeaderObj.GetComponent<RectTransform>();
+            statsHeaderRect.anchorMin = new Vector2(0, 0.72f);
+            statsHeaderRect.anchorMax = new Vector2(1, 0.78f);
+            statsHeaderRect.offsetMin = new Vector2(15, 0);
+            statsHeaderRect.offsetMax = new Vector2(-15, 0);
+            var statsHeaderText = statsHeaderObj.GetComponent<TMP_Text>();
+            statsHeaderText.fontSize = 14;
+            statsHeaderText.color = new Color(0.5f, 0.5f, 0.5f);
+            statsHeaderText.alignment = TextAlignmentOptions.Left;
+
+            // Stats rows container
+            var statsRowsContainer = CreateSimpleUIObject("StatsRows", statsPanel.transform);
+            var statsRowsRect = statsRowsContainer.GetComponent<RectTransform>();
+            statsRowsRect.anchorMin = new Vector2(0, 0.35f);
+            statsRowsRect.anchorMax = new Vector2(1, 0.72f);
+            statsRowsRect.offsetMin = new Vector2(15, 0);
+            statsRowsRect.offsetMax = new Vector2(-15, 0);
+
+            var statsVlg = statsRowsContainer.AddComponent<VerticalLayoutGroup>();
+            statsVlg.spacing = 8;
+            statsVlg.childForceExpandWidth = true;
+            statsVlg.childForceExpandHeight = false;
+            statsVlg.padding = new RectOffset(0, 0, 5, 5);
+
+            var atkRow = CreateStatRowForDetailRedesigned(statsRowsContainer.transform, "Attack", "0");
+            var defRow = CreateStatRowForDetailRedesigned(statsRowsContainer.transform, "Defense", "0");
+            var hpRow = CreateStatRowForDetailRedesigned(statsRowsContainer.transform, "Health", "0");
+
+            // ==============================
+            // Cards Tab Content - Card Grid
+            // ==============================
+            var cardsContent = CreateSimpleUIObject("CardsTabContent", panelContent.transform);
+            var cardsContentRect = cardsContent.GetComponent<RectTransform>();
+            cardsContentRect.anchorMin = new Vector2(0.22f, 0);
+            cardsContentRect.anchorMax = new Vector2(1, 0.92f);
+            cardsContentRect.offsetMin = Vector2.zero;
+            cardsContentRect.offsetMax = Vector2.zero;
+            cardsContent.SetActive(false);
+
+            var cardsContentBg = cardsContent.AddComponent<Image>();
+            cardsContentBg.color = new Color(0.95f, 0.95f, 0.97f, 1f);
+
+            // Starting Cards section - expanded to fill most of the content area
+            var startingCardsSection = CreateSimpleUIObject("StartingCardsSection", cardsContent.transform);
+            var startingRect = startingCardsSection.GetComponent<RectTransform>();
+            startingRect.anchorMin = new Vector2(0, 0);
+            startingRect.anchorMax = new Vector2(1, 1);
+            startingRect.offsetMin = new Vector2(20, 20);
+            startingRect.offsetMax = new Vector2(-20, -20);
+
+            var startingHeader = CreateSimpleTextObject("StartingCardsHeader", startingCardsSection.transform, "Starting Cards");
+            var startingHeaderRect = startingHeader.GetComponent<RectTransform>();
+            startingHeaderRect.anchorMin = new Vector2(0, 0.93f);
+            startingHeaderRect.anchorMax = new Vector2(1, 1);
+            startingHeaderRect.offsetMin = Vector2.zero;
+            startingHeaderRect.offsetMax = Vector2.zero;
+            var startingHeaderText = startingHeader.GetComponent<TMP_Text>();
+            startingHeaderText.fontSize = 18;
+            startingHeaderText.fontStyle = FontStyles.Bold;
+            startingHeaderText.color = Color.black;
+            startingHeaderText.alignment = TextAlignmentOptions.Left;
+
+            // ScrollView for cards (matching Sanctuary screen pattern)
+            var cardsScrollView = CreateSimpleUIObject("CardsScrollView", startingCardsSection.transform);
+            var scrollViewRect = cardsScrollView.GetComponent<RectTransform>();
+            scrollViewRect.anchorMin = new Vector2(0, 0);
+            scrollViewRect.anchorMax = new Vector2(1, 0.92f);
+            scrollViewRect.offsetMin = Vector2.zero;
+            scrollViewRect.offsetMax = Vector2.zero;
+
+            // Add background to scroll view
+            var scrollBg = cardsScrollView.AddComponent<Image>();
+            scrollBg.color = new Color(0.92f, 0.92f, 0.94f, 0.5f);
+
+            var scrollRect = cardsScrollView.AddComponent<ScrollRect>();
+
+            // Viewport with RectMask2D (not Mask - more reliable for scroll views)
+            var viewport = CreateSimpleUIObject("Viewport", cardsScrollView.transform);
+            SetFullStretchRect(viewport);
+            viewport.AddComponent<RectMask2D>(); // RectMask2D clips without needing Image
+
+            // Card container (content of scroll view) - GridLayoutGroup directly on content
+            var cardContainer = CreateSimpleUIObject("CardContainer", viewport.transform);
+            var cardContainerRect = cardContainer.GetComponent<RectTransform>();
+            cardContainerRect.anchorMin = new Vector2(0, 1);
+            cardContainerRect.anchorMax = new Vector2(1, 1);
+            cardContainerRect.pivot = new Vector2(0.5f, 1);
+            cardContainerRect.sizeDelta = new Vector2(0, 0);
+
+            // GridLayoutGroup directly on the scroll content (matching Sanctuary pattern)
+            var cardGrid = cardContainer.AddComponent<GridLayoutGroup>();
+            cardGrid.cellSize = new Vector2(200, 280); // Match Card.prefab native size
+            cardGrid.spacing = new Vector2(20, 20);
+            cardGrid.padding = new RectOffset(20, 20, 15, 15);
+            cardGrid.childAlignment = TextAnchor.UpperCenter;
+
+            // ContentSizeFitter on same object as GridLayoutGroup
+            var contentFitter = cardContainer.AddComponent<ContentSizeFitter>();
+            contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            // Wire scroll rect
+            scrollRect.content = cardContainerRect;
+            scrollRect.viewport = viewport.GetComponent<RectTransform>();
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+
+            // RequiemCardDisplay component directly on card container
+            // Cards are added as children of _cardContainer, which is this same object
+            var cardDisplayComponent = cardContainer.AddComponent<RequiemCardDisplay>();
+
+            var cardDisplaySO = new SerializedObject(cardDisplayComponent);
+            cardDisplaySO.FindProperty("_cardContainer").objectReferenceValue = cardContainer.transform;
+
+            // Load and wire Card.prefab for proper card display
+            var cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Cards/Card.prefab");
+            if (cardPrefab != null)
+            {
+                cardDisplaySO.FindProperty("_cardItemPrefab").objectReferenceValue = cardPrefab;
+                Debug.Log("[ProductionSceneSetupGenerator] Wired Card.prefab to RequiemCardDisplay");
+            }
+            else
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] Card.prefab not found at Assets/_Project/Prefabs/Cards/Card.prefab");
+            }
+
+            cardDisplaySO.ApplyModifiedProperties();
+
+            // Wire all references
+            var so = new SerializedObject(detailPanel);
+            so.FindProperty("_panelGroup").objectReferenceValue = canvasGroup;
+            so.FindProperty("_panelContent").objectReferenceValue = panelContent.GetComponent<RectTransform>();
+            so.FindProperty("_closeButton").objectReferenceValue = closeButton.GetComponent<Button>();
+            so.FindProperty("_titleText").objectReferenceValue = titleText;
+            so.FindProperty("_portraitListContainer").objectReferenceValue = portraitListContainer.transform;
+            so.FindProperty("_characterArtImage").objectReferenceValue = artImage;
+            so.FindProperty("_characterNameText").objectReferenceValue = nameText;
+            so.FindProperty("_characterClassText").objectReferenceValue = classText;
+            so.FindProperty("_attackText").objectReferenceValue = atkRow.transform.Find("Value").GetComponent<TMP_Text>();
+            so.FindProperty("_defenseText").objectReferenceValue = defRow.transform.Find("Value").GetComponent<TMP_Text>();
+            so.FindProperty("_healthText").objectReferenceValue = hpRow.transform.Find("Value").GetComponent<TMP_Text>();
+            so.FindProperty("_statsTabButton").objectReferenceValue = statsTabButton.GetComponent<Button>();
+            so.FindProperty("_cardsTabButton").objectReferenceValue = cardsTabButton.GetComponent<Button>();
+            so.FindProperty("_statsTabContent").objectReferenceValue = statsContent;
+            so.FindProperty("_cardsTabContent").objectReferenceValue = cardsContent;
+            so.FindProperty("_startingCardsDisplay").objectReferenceValue = cardDisplayComponent;
+            so.ApplyModifiedProperties();
+
+            panelObj.SetActive(false);
+            return panelObj;
+        }
+
+        /// <summary>
+        /// Creates a vertical menu tab button for the RequiemDetailPanel.
+        /// </summary>
+        private static GameObject CreateMenuTabButton(Transform parent, string name, string label, bool isSelected)
+        {
+            var buttonObj = new GameObject(name);
+            buttonObj.transform.SetParent(parent, false);
+
+            var layoutElement = buttonObj.AddComponent<LayoutElement>();
+            layoutElement.preferredHeight = 45;
+
+            var image = buttonObj.AddComponent<Image>();
+            image.color = isSelected ? new Color(0.3f, 0.35f, 0.45f, 1f) : new Color(0.9f, 0.9f, 0.92f, 1f);
+
+            var button = buttonObj.AddComponent<Button>();
+            button.targetGraphic = image;
+
+            // Icon placeholder
+            var iconObj = new GameObject("Icon");
+            iconObj.transform.SetParent(buttonObj.transform, false);
+            var iconRect = iconObj.AddComponent<RectTransform>();
+            iconRect.anchorMin = new Vector2(0, 0.5f);
+            iconRect.anchorMax = new Vector2(0, 0.5f);
+            iconRect.pivot = new Vector2(0, 0.5f);
+            iconRect.sizeDelta = new Vector2(20, 20);
+            iconRect.anchoredPosition = new Vector2(10, 0);
+
+            var iconImage = iconObj.AddComponent<Image>();
+            iconImage.color = isSelected ? Color.white : new Color(0.4f, 0.4f, 0.4f);
+
+            // Label text
+            var textObj = new GameObject("Label");
+            textObj.transform.SetParent(buttonObj.transform, false);
+            var textRect = textObj.AddComponent<RectTransform>();
+            textRect.anchorMin = new Vector2(0, 0);
+            textRect.anchorMax = new Vector2(1, 1);
+            textRect.offsetMin = new Vector2(35, 0);
+            textRect.offsetMax = new Vector2(-5, 0);
+
+            var tmpText = textObj.AddComponent<TextMeshProUGUI>();
+            tmpText.text = label;
+            tmpText.fontSize = 16;
+            tmpText.color = isSelected ? Color.white : new Color(0.3f, 0.3f, 0.3f);
+            tmpText.alignment = TextAlignmentOptions.Left;
+            tmpText.verticalAlignment = VerticalAlignmentOptions.Middle;
+
+            return buttonObj;
+        }
+
+        /// <summary>
+        /// Creates a stat row for the redesigned detail panel.
+        /// </summary>
+        private static GameObject CreateStatRowForDetailRedesigned(Transform parent, string label, string value)
+        {
+            var row = CreateSimpleUIObject(label + "Row", parent);
+            var layoutElement = row.AddComponent<LayoutElement>();
+            layoutElement.preferredHeight = 30;
+
+            var labelObj = CreateSimpleTextObject("Label", row.transform, label);
+            var labelRect = labelObj.GetComponent<RectTransform>();
+            labelRect.anchorMin = new Vector2(0, 0);
+            labelRect.anchorMax = new Vector2(0.6f, 1);
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            var labelText = labelObj.GetComponent<TMP_Text>();
+            labelText.fontSize = 16;
+            labelText.color = new Color(0.3f, 0.3f, 0.3f);
+            labelText.alignment = TextAlignmentOptions.Left;
+
+            var valueObj = CreateSimpleTextObject("Value", row.transform, value);
+            var valueRect = valueObj.GetComponent<RectTransform>();
+            valueRect.anchorMin = new Vector2(0.6f, 0);
+            valueRect.anchorMax = new Vector2(1, 1);
+            valueRect.offsetMin = Vector2.zero;
+            valueRect.offsetMax = Vector2.zero;
+            var valueText = valueObj.GetComponent<TMP_Text>();
+            valueText.fontSize = 18;
+            valueText.fontStyle = FontStyles.Bold;
+            valueText.color = Color.black;
+            valueText.alignment = TextAlignmentOptions.Right;
+
+            return row;
+        }
+
+        // ============================================
+        // Settings Overlay (shared across all scenes)
+        // ============================================
+
+        public static void CreateSettingsOverlay(Transform parent)
+        {
+            var overlayObj = CreateSimpleUIObject("SettingsOverlay", parent);
+            SetFullStretchRect(overlayObj);
+            var overlay = overlayObj.AddComponent<SettingsOverlay>();
+
+            var canvasGroup = overlayObj.AddComponent<CanvasGroup>();
+            canvasGroup.alpha = 0;
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
+
+            // Semi-transparent background
+            var bg = CreateSimpleUIObject("Background", overlayObj.transform);
+            SetFullStretchRect(bg);
+            var bgImage = bg.AddComponent<Image>();
+            bgImage.color = new Color(0, 0, 0, 0.6f);
+
+            // Main panel container (matches reference design)
+            var panel = CreateSimpleUIObject("Panel", overlayObj.transform);
+            var panelRect = panel.GetComponent<RectTransform>();
+            panelRect.anchorMin = new Vector2(0.1f, 0.1f);
+            panelRect.anchorMax = new Vector2(0.9f, 0.9f);
+            panelRect.offsetMin = Vector2.zero;
+            panelRect.offsetMax = Vector2.zero;
+
+            // ============================================
+            // Left Sidebar (category icons)
+            // ============================================
+            var leftSidebar = CreateSimpleUIObject("LeftSidebar", panel.transform);
+            var sidebarRect = leftSidebar.GetComponent<RectTransform>();
+            sidebarRect.anchorMin = new Vector2(0, 0);
+            sidebarRect.anchorMax = new Vector2(0.08f, 1);
+            sidebarRect.offsetMin = Vector2.zero;
+            sidebarRect.offsetMax = Vector2.zero;
+
+            var sidebarBg = leftSidebar.AddComponent<Image>();
+            sidebarBg.color = new Color(0.12f, 0.12f, 0.15f, 1f);
+
+            var sidebarVlg = leftSidebar.AddComponent<VerticalLayoutGroup>();
+            sidebarVlg.spacing = 5;
+            sidebarVlg.padding = new RectOffset(5, 5, 10, 10);
+            sidebarVlg.childAlignment = TextAnchor.UpperCenter;
+            sidebarVlg.childForceExpandWidth = true;
+            sidebarVlg.childForceExpandHeight = false;
+
+            // Category buttons (icons would be sprites, using text placeholders)
+            CreateSettingsCategoryButton(leftSidebar.transform, "DisplayBtn", "🖥", false);
+            CreateSettingsCategoryButton(leftSidebar.transform, "AudioBtn", "🎧", true);   // Selected
+            CreateSettingsCategoryButton(leftSidebar.transform, "GameBtn", "⚙", false);
+            CreateSettingsCategoryButton(leftSidebar.transform, "NetworkBtn", "🌐", false);
+            CreateSettingsCategoryButton(leftSidebar.transform, "AccountBtn", "👤", false);
+
+            // ============================================
+            // Main Content Area
+            // ============================================
+            var mainContent = CreateSimpleUIObject("MainContent", panel.transform);
+            var mainRect = mainContent.GetComponent<RectTransform>();
+            mainRect.anchorMin = new Vector2(0.08f, 0);
+            mainRect.anchorMax = new Vector2(1, 1);
+            mainRect.offsetMin = Vector2.zero;
+            mainRect.offsetMax = Vector2.zero;
+
+            var mainBg = mainContent.AddComponent<Image>();
+            mainBg.color = new Color(0.9f, 0.9f, 0.92f, 1f);  // Light gray like reference
+
+            // Header with title and close button
+            var header = CreateSimpleUIObject("Header", mainContent.transform);
+            var headerRect = header.GetComponent<RectTransform>();
+            headerRect.anchorMin = new Vector2(0, 0.92f);
+            headerRect.anchorMax = new Vector2(1, 1);
+            headerRect.offsetMin = new Vector2(10, 0);
+            headerRect.offsetMax = new Vector2(-10, -5);
+
+            // Orange accent bar on left of title
+            var accentBar = CreateSimpleUIObject("AccentBar", header.transform);
+            var accentRect = accentBar.GetComponent<RectTransform>();
+            accentRect.anchorMin = new Vector2(0, 0.2f);
+            accentRect.anchorMax = new Vector2(0, 0.8f);
+            accentRect.pivot = new Vector2(0, 0.5f);
+            accentRect.sizeDelta = new Vector2(4, 0);
+            accentRect.anchoredPosition = new Vector2(5, 0);
+            var accentImage = accentBar.AddComponent<Image>();
+            accentImage.color = new Color(0.9f, 0.6f, 0.1f, 1f);
+
+            // Title "Sound Settings"
+            var title = CreateSimpleTextObject("Title", header.transform, "Sound Settings");
+            var titleRect = title.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0, 0);
+            titleRect.anchorMax = new Vector2(0.8f, 1);
+            titleRect.offsetMin = new Vector2(20, 0);
+            titleRect.offsetMax = new Vector2(0, 0);
+            var titleText = title.GetComponent<TMP_Text>();
+            titleText.fontSize = 26;
+            titleText.fontStyle = FontStyles.Bold;
+            titleText.color = Color.black;
+            titleText.alignment = TextAlignmentOptions.Left;
+
+            // Close button (X) on right
+            var closeButton = CreateSimpleButton("CloseButton", header.transform, "×");
+            var closeRect = closeButton.GetComponent<RectTransform>();
+            closeRect.anchorMin = new Vector2(1, 0.5f);
+            closeRect.anchorMax = new Vector2(1, 0.5f);
+            closeRect.pivot = new Vector2(1, 0.5f);
+            closeRect.sizeDelta = new Vector2(40, 40);
+            closeRect.anchoredPosition = new Vector2(-10, 0);
+            closeButton.GetComponent<Image>().color = new Color(0.85f, 0.85f, 0.88f, 1f);
+            closeButton.GetComponentInChildren<TMP_Text>().color = Color.black;
+            closeButton.GetComponentInChildren<TMP_Text>().fontSize = 28;
+
+            // ============================================
+            // Volume Sliders Content
+            // ============================================
+            var slidersContainer = CreateSimpleUIObject("Sliders", mainContent.transform);
+            var slidersRect = slidersContainer.GetComponent<RectTransform>();
+            slidersRect.anchorMin = new Vector2(0, 0.1f);
+            slidersRect.anchorMax = new Vector2(1, 0.9f);
+            slidersRect.offsetMin = new Vector2(20, 10);
+            slidersRect.offsetMax = new Vector2(-20, -10);
+
+            var vlg = slidersContainer.AddComponent<VerticalLayoutGroup>();
+            vlg.spacing = 15;
+            vlg.childForceExpandWidth = true;
+            vlg.childForceExpandHeight = false;
+            vlg.padding = new RectOffset(10, 10, 10, 10);
+
+            // Section header: "Overall Volume"
+            var overallHeader = CreateSectionHeader(slidersContainer.transform, "Overall Volume");
+
+            // Master volume slider (renamed to "Overall Volume" to match reference)
+            var masterSlider = CreateSettingsSliderRow("MasterVolume", slidersContainer.transform, "Overall Volume");
+
+            // Section header: "Volume Details Settings"
+            var detailsHeader = CreateSectionHeader(slidersContainer.transform, "Volume Details Settings");
+
+            // Detail sliders
+            var musicSlider = CreateSettingsSliderRow("MusicVolume", slidersContainer.transform, "Background Sound");
+            var voiceSlider = CreateSettingsSliderRow("VoiceVolume", slidersContainer.transform, "Voice");  // Placeholder
+            var sfxSlider = CreateSettingsSliderRow("SFXVolume", slidersContainer.transform, "SFX");
+
+            // Wire references
+            var so = new SerializedObject(overlay);
+            so.FindProperty("_overlay").objectReferenceValue = canvasGroup;
+            so.FindProperty("_backgroundPanel").objectReferenceValue = bgImage;
+            so.FindProperty("_settingsPanel").objectReferenceValue = panel.GetComponent<RectTransform>();
+            so.FindProperty("_titleText").objectReferenceValue = titleText;
+            so.FindProperty("_closeButton").objectReferenceValue = closeButton.GetComponent<Button>();
+            so.FindProperty("_masterVolumeSlider").objectReferenceValue = masterSlider.GetComponentInChildren<Slider>();
+            so.FindProperty("_musicVolumeSlider").objectReferenceValue = musicSlider.GetComponentInChildren<Slider>();
+            so.FindProperty("_sfxVolumeSlider").objectReferenceValue = sfxSlider.GetComponentInChildren<Slider>();
+            so.ApplyModifiedProperties();
+
+            overlayObj.SetActive(false);
+        }
+
+        private static GameObject CreateSettingsCategoryButton(Transform parent, string name, string icon, bool isSelected)
+        {
+            var buttonObj = CreateSimpleUIObject(name, parent);
+            var layoutElement = buttonObj.AddComponent<LayoutElement>();
+            layoutElement.preferredHeight = 50;
+            layoutElement.preferredWidth = 50;
+
+            var buttonImage = buttonObj.AddComponent<Image>();
+            buttonImage.color = isSelected ? new Color(0.2f, 0.2f, 0.25f, 1f) : new Color(0.15f, 0.15f, 0.18f, 1f);
+
+            var button = buttonObj.AddComponent<Button>();
+            button.targetGraphic = buttonImage;
+
+            // Orange highlight bar for selected item
+            if (isSelected)
+            {
+                var highlight = CreateSimpleUIObject("Highlight", buttonObj.transform);
+                var highlightRect = highlight.GetComponent<RectTransform>();
+                highlightRect.anchorMin = new Vector2(0, 0);
+                highlightRect.anchorMax = new Vector2(0, 1);
+                highlightRect.pivot = new Vector2(0, 0.5f);
+                highlightRect.sizeDelta = new Vector2(4, 0);
+                var highlightImage = highlight.AddComponent<Image>();
+                highlightImage.color = new Color(0.9f, 0.6f, 0.1f, 1f);
+            }
+
+            // Icon text
+            var iconObj = CreateSimpleTextObject("Icon", buttonObj.transform, icon);
+            SetFullStretchRect(iconObj);
+            var iconText = iconObj.GetComponent<TMP_Text>();
+            iconText.fontSize = 20;
+            iconText.alignment = TextAlignmentOptions.Center;
+            iconText.color = isSelected ? Color.white : new Color(0.6f, 0.6f, 0.65f, 1f);
+
+            return buttonObj;
+        }
+
+        private static GameObject CreateSectionHeader(Transform parent, string text)
+        {
+            var headerObj = CreateSimpleUIObject(text.Replace(" ", "") + "Header", parent);
+            var layoutElement = headerObj.AddComponent<LayoutElement>();
+            layoutElement.preferredHeight = 30;
+
+            var textObj = CreateSimpleTextObject("Text", headerObj.transform, text);
+            SetFullStretchRect(textObj);
+            var tmpText = textObj.GetComponent<TMP_Text>();
+            tmpText.fontSize = 16;
+            tmpText.fontStyle = FontStyles.Bold;
+            tmpText.color = new Color(0.3f, 0.3f, 0.35f, 1f);
+            tmpText.alignment = TextAlignmentOptions.Left;
+
+            return headerObj;
+        }
+
+        private static GameObject CreateSettingsSliderRow(string name, Transform parent, string labelText)
+        {
+            var row = CreateSimpleUIObject(name, parent);
+            var layoutElement = row.AddComponent<LayoutElement>();
+            layoutElement.preferredHeight = 45;
+
+            // Row background (light)
+            var rowBg = row.AddComponent<Image>();
+            rowBg.color = new Color(0.95f, 0.95f, 0.97f, 1f);
+
+            // Label
+            var label = CreateSimpleTextObject("Label", row.transform, labelText);
+            var labelRect = label.GetComponent<RectTransform>();
+            labelRect.anchorMin = new Vector2(0, 0);
+            labelRect.anchorMax = new Vector2(0.25f, 1);
+            labelRect.offsetMin = new Vector2(10, 0);
+            labelRect.offsetMax = new Vector2(0, 0);
+            var labelTmp = label.GetComponent<TMP_Text>();
+            labelTmp.fontSize = 16;
+            labelTmp.color = Color.black;
+            labelTmp.alignment = TextAlignmentOptions.Left;
+
+            // Slider
+            var sliderObj = CreateSimpleUIObject("Slider", row.transform);
+            var sliderRect = sliderObj.GetComponent<RectTransform>();
+            sliderRect.anchorMin = new Vector2(0.27f, 0.25f);
+            sliderRect.anchorMax = new Vector2(0.72f, 0.75f);
+            sliderRect.offsetMin = Vector2.zero;
+            sliderRect.offsetMax = Vector2.zero;
+
+            var slider = sliderObj.AddComponent<Slider>();
+            slider.minValue = 0;
+            slider.maxValue = 1;
+            slider.value = 1;
+
+            var sliderBgObj = CreateSimpleUIObject("Background", sliderObj.transform);
+            SetFullStretchRect(sliderBgObj);
+            var sliderBgImage = sliderBgObj.AddComponent<Image>();
+            sliderBgImage.color = new Color(0.75f, 0.75f, 0.78f, 1f);
+            slider.targetGraphic = sliderBgImage;
+
+            var fillArea = CreateSimpleUIObject("FillArea", sliderObj.transform);
+            var fillAreaRect = fillArea.GetComponent<RectTransform>();
+            fillAreaRect.anchorMin = Vector2.zero;
+            fillAreaRect.anchorMax = Vector2.one;
+            fillAreaRect.offsetMin = Vector2.zero;
+            fillAreaRect.offsetMax = Vector2.zero;
+
+            var fill = CreateSimpleUIObject("Fill", fillArea.transform);
+            SetFullStretchRect(fill);
+            var fillImage = fill.AddComponent<Image>();
+            fillImage.color = new Color(0.9f, 0.6f, 0.1f, 1f);  // Orange fill
+            slider.fillRect = fill.GetComponent<RectTransform>();
+
+            var handleArea = CreateSimpleUIObject("HandleSlideArea", sliderObj.transform);
+            SetFullStretchRect(handleArea);
+
+            var handle = CreateSimpleUIObject("Handle", handleArea.transform);
+            var handleRect = handle.GetComponent<RectTransform>();
+            handleRect.sizeDelta = new Vector2(18, 18);
+            var handleImage = handle.AddComponent<Image>();
+            handleImage.color = new Color(0.9f, 0.6f, 0.1f, 1f);  // Orange handle
+            slider.handleRect = handleRect;
+
+            // Percentage text
+            var percentText = CreateSimpleTextObject("Percent", row.transform, "100%");
+            var percentRect = percentText.GetComponent<RectTransform>();
+            percentRect.anchorMin = new Vector2(0.74f, 0);
+            percentRect.anchorMax = new Vector2(0.82f, 1);
+            percentRect.offsetMin = Vector2.zero;
+            percentRect.offsetMax = Vector2.zero;
+            var percentTmp = percentText.GetComponent<TMP_Text>();
+            percentTmp.fontSize = 14;
+            percentTmp.color = Color.black;
+            percentTmp.alignment = TextAlignmentOptions.Center;
+
+            // Mute label
+            var muteLabel = CreateSimpleTextObject("MuteLabel", row.transform, "Mute");
+            var muteLabelRect = muteLabel.GetComponent<RectTransform>();
+            muteLabelRect.anchorMin = new Vector2(0.83f, 0);
+            muteLabelRect.anchorMax = new Vector2(0.92f, 1);
+            muteLabelRect.offsetMin = Vector2.zero;
+            muteLabelRect.offsetMax = Vector2.zero;
+            var muteLabelTmp = muteLabel.GetComponent<TMP_Text>();
+            muteLabelTmp.fontSize = 14;
+            muteLabelTmp.color = new Color(0.5f, 0.5f, 0.55f, 1f);
+            muteLabelTmp.alignment = TextAlignmentOptions.Center;
+
+            // Mute checkbox placeholder
+            var muteBox = CreateSimpleUIObject("MuteCheckbox", row.transform);
+            var muteBoxRect = muteBox.GetComponent<RectTransform>();
+            muteBoxRect.anchorMin = new Vector2(0.93f, 0.25f);
+            muteBoxRect.anchorMax = new Vector2(0.98f, 0.75f);
+            muteBoxRect.offsetMin = Vector2.zero;
+            muteBoxRect.offsetMax = Vector2.zero;
+            var muteBoxImage = muteBox.AddComponent<Image>();
+            muteBoxImage.color = new Color(0.8f, 0.8f, 0.82f, 1f);
+
+            return row;
+        }
+
+        private static GameObject CreateSliderRow(string name, Transform parent, string labelText)
+        {
+            var row = CreateSimpleUIObject(name, parent);
+            var layoutElement = row.AddComponent<LayoutElement>();
+            layoutElement.preferredHeight = 60;
+
+            var label = CreateSimpleTextObject("Label", row.transform, labelText);
+            var labelRect = label.GetComponent<RectTransform>();
+            labelRect.anchorMin = new Vector2(0, 0);
+            labelRect.anchorMax = new Vector2(0.3f, 1);
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            label.GetComponent<TMP_Text>().fontSize = 18;
+
+            var sliderObj = CreateSimpleUIObject("Slider", row.transform);
+            var sliderRect = sliderObj.GetComponent<RectTransform>();
+            sliderRect.anchorMin = new Vector2(0.35f, 0.3f);
+            sliderRect.anchorMax = new Vector2(0.85f, 0.7f);
+            sliderRect.offsetMin = Vector2.zero;
+            sliderRect.offsetMax = Vector2.zero;
+
+            var slider = sliderObj.AddComponent<Slider>();
+            slider.minValue = 0;
+            slider.maxValue = 1;
+            slider.value = 1;
+
+            var bgObj = CreateSimpleUIObject("Background", sliderObj.transform);
+            SetFullStretchRect(bgObj);
+            var bgImage = bgObj.AddComponent<Image>();
+            bgImage.color = new Color(0.3f, 0.3f, 0.3f, 1f);
+            slider.targetGraphic = bgImage;
+
+            var fillArea = CreateSimpleUIObject("FillArea", sliderObj.transform);
+            var fillAreaRect = fillArea.GetComponent<RectTransform>();
+            fillAreaRect.anchorMin = Vector2.zero;
+            fillAreaRect.anchorMax = Vector2.one;
+            fillAreaRect.offsetMin = new Vector2(5, 5);
+            fillAreaRect.offsetMax = new Vector2(-5, -5);
+
+            var fill = CreateSimpleUIObject("Fill", fillArea.transform);
+            SetFullStretchRect(fill);
+            var fillImage = fill.AddComponent<Image>();
+            fillImage.color = new Color(0.8f, 0.6f, 0.2f, 1f);
+            slider.fillRect = fill.GetComponent<RectTransform>();
+
+            var handleArea = CreateSimpleUIObject("HandleSlideArea", sliderObj.transform);
+            SetFullStretchRect(handleArea);
+            handleArea.GetComponent<RectTransform>().offsetMin = new Vector2(10, 0);
+            handleArea.GetComponent<RectTransform>().offsetMax = new Vector2(-10, 0);
+
+            var handle = CreateSimpleUIObject("Handle", handleArea.transform);
+            var handleRect = handle.GetComponent<RectTransform>();
+            handleRect.sizeDelta = new Vector2(20, 0);
+            var handleImage = handle.AddComponent<Image>();
+            handleImage.color = Color.white;
+            slider.handleRect = handleRect;
+
+            var valueText = CreateSimpleTextObject("Value", row.transform, "100%");
+            var valueRect = valueText.GetComponent<RectTransform>();
+            valueRect.anchorMin = new Vector2(0.87f, 0);
+            valueRect.anchorMax = new Vector2(1, 1);
+            valueRect.offsetMin = Vector2.zero;
+            valueRect.offsetMax = Vector2.zero;
+            valueText.GetComponent<TMP_Text>().fontSize = 16;
+
+            return row;
+        }
+
+        // ============================================
+        // Build Settings
+        // ============================================
+
+        public static void UpdateBuildSettings()
+        {
+            var scenes = new EditorBuildSettingsScene[]
+            {
+                new EditorBuildSettingsScene($"{SCENES_PATH}/Boot.unity", true),
+                new EditorBuildSettingsScene($"{SCENES_PATH}/MainMenu.unity", true),
+                new EditorBuildSettingsScene($"{SCENES_PATH}/Bastion.unity", true),
+                new EditorBuildSettingsScene($"{SCENES_PATH}/Missions.unity", true),
+                new EditorBuildSettingsScene($"{SCENES_PATH}/BattleMission.unity", true),
+                new EditorBuildSettingsScene($"{SCENES_PATH}/Requiems.unity", true),
+                new EditorBuildSettingsScene($"{SCENES_PATH}/NullRift.unity", true),
+                new EditorBuildSettingsScene($"{SCENES_PATH}/Combat.unity", true)
+            };
+
+            EditorBuildSettings.scenes = scenes;
+            Debug.Log("[ProductionSceneSetupGenerator] Build settings updated with 8 scenes");
+        }
+
+        // ============================================
+        // Simple Helper Methods (for new scenes)
+        // ============================================
+
+        private static GameObject CreateSimpleUIObject(string name, Transform parent)
+        {
+            var obj = new GameObject(name);
+            obj.transform.SetParent(parent, false);
+            obj.AddComponent<RectTransform>();
+            return obj;
+        }
+
+        private static void SetFullStretchRect(GameObject obj)
+        {
+            var rect = obj.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+        }
+
+        private static GameObject CreateSimpleButton(string name, Transform parent, string text)
+        {
+            var buttonObj = CreateSimpleUIObject(name, parent);
+            var image = buttonObj.AddComponent<Image>();
+            image.color = new Color(0.25f, 0.25f, 0.3f, 0.9f);
+
+            var button = buttonObj.AddComponent<Button>();
+            button.targetGraphic = image;
+
+            var textObj = CreateSimpleTextObject("Text", buttonObj.transform, text);
+            SetFullStretchRect(textObj);
+            var tmpText = textObj.GetComponent<TMP_Text>();
+            tmpText.alignment = TextAlignmentOptions.Center;
+            tmpText.fontSize = 24;
+
+            return buttonObj;
+        }
+
+        private static GameObject CreateLargeButtonWithSubtitle(string name, Transform parent, string title, string subtitle)
+        {
+            var buttonObj = CreateSimpleUIObject(name, parent);
+            var image = buttonObj.AddComponent<Image>();
+            image.color = new Color(0.2f, 0.25f, 0.35f, 0.9f);
+
+            var button = buttonObj.AddComponent<Button>();
+            button.targetGraphic = image;
+
+            var titleObj = CreateSimpleTextObject("Title", buttonObj.transform, title);
+            var titleRect = titleObj.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0, 0.5f);
+            titleRect.anchorMax = new Vector2(1, 0.8f);
+            titleRect.offsetMin = new Vector2(20, 0);
+            titleRect.offsetMax = new Vector2(-20, 0);
+            var titleText = titleObj.GetComponent<TMP_Text>();
+            titleText.fontSize = 28;
+            titleText.fontStyle = FontStyles.Bold;
+            titleText.alignment = TextAlignmentOptions.Center;
+
+            var subtitleObj = CreateSimpleTextObject("Subtitle", buttonObj.transform, subtitle);
+            var subtitleRect = subtitleObj.GetComponent<RectTransform>();
+            subtitleRect.anchorMin = new Vector2(0, 0.2f);
+            subtitleRect.anchorMax = new Vector2(1, 0.45f);
+            subtitleRect.offsetMin = new Vector2(20, 0);
+            subtitleRect.offsetMax = new Vector2(-20, 0);
+            var subtitleText = subtitleObj.GetComponent<TMP_Text>();
+            subtitleText.fontSize = 16;
+            subtitleText.color = new Color(0.7f, 0.7f, 0.7f, 1f);
+            subtitleText.alignment = TextAlignmentOptions.Center;
+
+            return buttonObj;
+        }
+
+        private static GameObject CreateSimpleTextObject(string name, Transform parent, string text)
+        {
+            var textObj = CreateSimpleUIObject(name, parent);
+            var tmpText = textObj.AddComponent<TextMeshProUGUI>();
+            tmpText.text = text;
+            tmpText.color = Color.white;
+            tmpText.fontSize = 20;
+            tmpText.alignment = TextAlignmentOptions.Left;
+            return textObj;
         }
     }
 }

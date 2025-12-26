@@ -44,7 +44,20 @@ namespace HNR.UI
         public bool IsVisible { get; protected set; }
 
         // ============================================
-        // Lifecycle Methods
+        // Unity Lifecycle
+        // ============================================
+
+        /// <summary>
+        /// Unity Awake. Override to configure screen settings.
+        /// Always call base.Awake() first.
+        /// </summary>
+        protected virtual void Awake()
+        {
+            // Base implementation - derived classes can configure _showGlobalHeader, _showGlobalNav, etc.
+        }
+
+        // ============================================
+        // Screen Lifecycle Methods
         // ============================================
 
         /// <summary>

@@ -730,7 +730,7 @@ namespace HNR.UI
             tmp.fontSize = fontSize;
             tmp.fontStyle = style;
             tmp.alignment = alignment;
-            tmp.enableWordWrapping = true;
+            tmp.textWrappingMode = TextWrappingModes.Normal;
             tmp.overflowMode = TextOverflowModes.Ellipsis;
 
             // Ensure font is assigned - TMP requires font asset

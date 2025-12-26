@@ -296,4 +296,72 @@ namespace HNR.Progression
         /// <summary>Total enemies defeated across all runs.</summary>
         public int TotalEnemiesDefeated;
     }
+
+    // ============================================
+    // DIFFICULTY LEVEL ENUM
+    // ============================================
+
+    /// <summary>
+    /// Difficulty levels for Battle Mission mode.
+    /// </summary>
+    [Serializable]
+    public enum DifficultyLevel
+    {
+        Easy = 0,
+        Normal = 1,
+        Hard = 2
+    }
+
+    // ============================================
+    // BATTLE MISSION SAVE DATA
+    // ============================================
+
+    /// <summary>
+    /// Persistent save data for Battle Mission progression.
+    /// Tracks zone clears and difficulty unlocks across sessions.
+    /// </summary>
+    [Serializable]
+    public class BattleMissionSaveData
+    {
+        /// <summary>
+        /// Zone clear status per difficulty level.
+        /// Key format: "Zone{1-3}_{Easy|Normal|Hard}" (e.g., "Zone1_Easy", "Zone2_Normal")
+        /// </summary>
+        public Dictionary<string, bool> ZoneClearStatus = new();
+
+        /// <summary>Whether Normal difficulty is unlocked (all zones cleared on Easy).</summary>
+        public bool NormalUnlocked;
+
+        /// <summary>Whether Hard difficulty is unlocked (all zones cleared on Normal).</summary>
+        public bool HardUnlocked;
+
+        /// <summary>Currently selected difficulty level.</summary>
+        public DifficultyLevel CurrentDifficulty = DifficultyLevel.Easy;
+
+        /// <summary>
+        /// Gets the save key for a zone and difficulty combination.
+        /// </summary>
+        public static string GetZoneKey(int zone, DifficultyLevel difficulty)
+        {
+            return $"Zone{zone}_{difficulty}";
+        }
+
+        /// <summary>
+        /// Checks if a specific zone is cleared on a given difficulty.
+        /// </summary>
+        public bool IsZoneCleared(int zone, DifficultyLevel difficulty)
+        {
+            string key = GetZoneKey(zone, difficulty);
+            return ZoneClearStatus.TryGetValue(key, out bool cleared) && cleared;
+        }
+
+        /// <summary>
+        /// Marks a zone as cleared on a given difficulty.
+        /// </summary>
+        public void SetZoneCleared(int zone, DifficultyLevel difficulty, bool cleared = true)
+        {
+            string key = GetZoneKey(zone, difficulty);
+            ZoneClearStatus[key] = cleared;
+        }
+    }
 }

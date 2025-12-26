@@ -15,6 +15,15 @@ EditorBuildSettings:
     path: Assets/_Project/Scenes/Bastion.unity
     guid: dde0d036aff2b6746add290e0fa3e800
   - enabled: 1
+    path: Assets/_Project/Scenes/Missions.unity
+    guid: 0ad46ec954274574a870cb7388baab79
+  - enabled: 1
+    path: Assets/_Project/Scenes/BattleMission.unity
+    guid: e58460e6a10c071418aab07854a74ffc
+  - enabled: 1
+    path: Assets/_Project/Scenes/Requiems.unity
+    guid: 485a99c9ea559c444a953554c0ee55d3
+  - enabled: 1
     path: Assets/_Project/Scenes/NullRift.unity
     guid: 61b77589aaeabdb43a42a001437e507f
   - enabled: 1

@@ -48,6 +48,24 @@ namespace HNR.Core
         /// Post-run results screen showing statistics.
         /// Displays victory/defeat, stats, and rewards.
         /// </summary>
-        Results = 5
+        Results = 5,
+
+        /// <summary>
+        /// Mission type selection screen.
+        /// Choose between Story Mission (placeholder) or Battle Mission.
+        /// </summary>
+        Missions = 6,
+
+        /// <summary>
+        /// Battle Mission zone selection with difficulty selector.
+        /// Select zone (1-3) and difficulty (Easy/Normal/Hard) before starting run.
+        /// </summary>
+        BattleMission = 7,
+
+        /// <summary>
+        /// Requiem character viewer and details screen.
+        /// View Requiem stats, cards, and information (no run start).
+        /// </summary>
+        RequiemsViewer = 8
     }
 }
