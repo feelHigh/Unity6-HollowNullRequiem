@@ -16,7 +16,6 @@ namespace HNR.UI
     /// <summary>
     /// Modal overlay displayed when a Requiem reaches 100% corruption.
     /// Shows Null State effects and requires player confirmation to continue.
-    /// Reference: HollowNullRequiem_Mockup.jsx lines 1884-1957 (NullStateScreen)
     /// </summary>
     public class NullStateModal : MonoBehaviour
     {

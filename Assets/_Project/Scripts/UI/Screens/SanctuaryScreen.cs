@@ -20,7 +20,6 @@ namespace HNR.UI
     /// <summary>
     /// Sanctuary rest stop screen between combats.
     /// Offers three mutually exclusive choices: Rest, Purify, or Upgrade.
-    /// Reference: HollowNullRequiem_Mockup.jsx lines 1620-1702
     /// </summary>
     public class SanctuaryScreen : ScreenBase
     {

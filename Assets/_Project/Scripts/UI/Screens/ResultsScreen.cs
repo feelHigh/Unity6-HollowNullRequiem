@@ -18,7 +18,6 @@ namespace HNR.UI
     /// <summary>
     /// Results screen shown after combat ends.
     /// Displays victory/defeat status, rewards, and card selection.
-    /// Reference: HollowNullRequiem_Mockup.jsx lines 1814-1879 (VictoryScreen)
     /// </summary>
     public class ResultsScreen : ScreenBase
     {

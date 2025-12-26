@@ -19,7 +19,6 @@ namespace HNR.UI.Screens
     /// <summary>
     /// Screen for treasure node rewards. Displays 3 card choices + skip option.
     /// Similar to Victory screen but for treasure nodes.
-    /// Reference: HollowNullRequiem_Mockup.jsx lines 1814-1879 (similar to Victory)
     /// </summary>
     public class TreasureScreen : ScreenBase
     {
