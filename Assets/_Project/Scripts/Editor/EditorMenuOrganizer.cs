@@ -271,6 +271,18 @@ namespace HNR.Editor
             ProductionSetupTool.LinkAllVisualPrefabs();
         }
 
+        [MenuItem("HNR/2. Prefabs/Icons/Generate Scene Icons", priority = 50)]
+        public static void GenerateSceneIcons()
+        {
+            SceneIconAssetGenerator.GenerateSceneIcons();
+        }
+
+        [MenuItem("HNR/2. Prefabs/Icons/Verify Scene Icons", priority = 51)]
+        public static void VerifySceneIcons()
+        {
+            SceneIconAssetGenerator.VerifySceneIcons();
+        }
+
         // ============================================
         // 3. Audio (priority 70-79)
         // ============================================

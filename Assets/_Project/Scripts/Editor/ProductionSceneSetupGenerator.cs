@@ -37,6 +37,35 @@ namespace HNR.Editor
     {
         private const string SCENES_PATH = "Assets/_Project/Scenes";
         private const string PREFABS_PATH = "Assets/_Project/Prefabs";
+        private const string ICON_CONFIG_PATH = "Assets/_Project/Data/Config/SceneIconConfig.asset";
+
+        // Cached icon config for current generation run
+        private static SceneIconConfigSO _iconConfig;
+
+        /// <summary>
+        /// Loads the scene icon configuration asset.
+        /// </summary>
+        /// <returns>The icon config or null if not found</returns>
+        private static SceneIconConfigSO LoadIconConfig()
+        {
+            if (_iconConfig == null)
+            {
+                _iconConfig = AssetDatabase.LoadAssetAtPath<SceneIconConfigSO>(ICON_CONFIG_PATH);
+                if (_iconConfig == null)
+                {
+                    Debug.LogWarning("[ProductionSceneSetupGenerator] SceneIconConfig not found. Run 'HNR > 2. Prefabs > Icons > Generate Scene Icons' first. Using text fallback.");
+                }
+            }
+            return _iconConfig;
+        }
+
+        /// <summary>
+        /// Clears the cached icon config (call after scene generation batch completes).
+        /// </summary>
+        private static void ClearIconConfigCache()
+        {
+            _iconConfig = null;
+        }
 
         // ============================================
         // Public Methods - Menu Items
@@ -2190,6 +2219,53 @@ namespace HNR.Editor
             return obj;
         }
 
+        /// <summary>
+        /// Creates an Image component with a sprite icon.
+        /// Falls back to text if sprite is null.
+        /// </summary>
+        /// <param name="parent">Parent GameObject</param>
+        /// <param name="name">Name of the new GameObject</param>
+        /// <param name="sprite">Sprite to display (can be null for fallback)</param>
+        /// <param name="size">Size of the icon</param>
+        /// <param name="tint">Optional color tint</param>
+        /// <param name="fallbackText">Text to display if sprite is null</param>
+        /// <param name="fallbackFontSize">Font size for fallback text</param>
+        /// <returns>The created GameObject</returns>
+        private static GameObject CreateIconImage(GameObject parent, string name, Sprite sprite, Vector2 size, Color? tint = null, string fallbackText = null, int fallbackFontSize = 12)
+        {
+            GameObject obj = new GameObject(name);
+            obj.transform.SetParent(parent.transform, false);
+
+            RectTransform rect = obj.AddComponent<RectTransform>();
+            rect.sizeDelta = size;
+
+            if (sprite != null)
+            {
+                // Use sprite-based Image
+                Image image = obj.AddComponent<Image>();
+                image.sprite = sprite;
+                image.preserveAspect = true;
+                image.color = tint ?? Color.white;
+            }
+            else if (!string.IsNullOrEmpty(fallbackText))
+            {
+                // Fallback to text if no sprite
+                TextMeshProUGUI tmp = obj.AddComponent<TextMeshProUGUI>();
+                tmp.text = fallbackText;
+                tmp.fontSize = fallbackFontSize;
+                tmp.alignment = TextAlignmentOptions.Center;
+                tmp.color = tint ?? Color.white;
+            }
+            else
+            {
+                // No sprite and no fallback - create placeholder Image
+                Image image = obj.AddComponent<Image>();
+                image.color = tint ?? new Color(1f, 0f, 1f, 1f); // Magenta placeholder
+            }
+
+            return obj;
+        }
+
         private static GameObject CreateMenuButton(GameObject parent, string name, string text)
         {
             GameObject obj = new GameObject(name);
@@ -2594,19 +2670,22 @@ namespace HNR.Editor
             layout.childForceExpandHeight = false;
             layout.reverseArrangement = true;
 
-            // Settings button
-            CreateSystemMenuButton(menuBar, "SettingsBtn", "⚙", new Color(0.1f, 0.08f, 0.15f));
+            // Load icon config for system menu
+            var iconConfig = LoadIconConfig();
 
-            // Auto button
-            CreateSystemMenuButton(menuBar, "AutoBtn", "▶", new Color(0.1f, 0.08f, 0.15f));
+            // Settings button - use sprite if available
+            CreateSystemMenuButton(menuBar, "SettingsBtn", "\u2699", new Color(0.1f, 0.08f, 0.15f), iconConfig?.SettingsIcon);
 
-            // Speed button
+            // Auto button (text only)
+            CreateSystemMenuButton(menuBar, "AutoBtn", "\u25B6", new Color(0.1f, 0.08f, 0.15f));
+
+            // Speed button (text only)
             GameObject speedBtn = CreateSystemMenuButton(menuBar, "SpeedBtn", "1.5x", new Color(0.1f, 0.08f, 0.15f));
 
             return menuBar;
         }
 
-        private static GameObject CreateSystemMenuButton(GameObject parent, string name, string label, Color bgColor)
+        private static GameObject CreateSystemMenuButton(GameObject parent, string name, string label, Color bgColor, Sprite iconSprite = null)
         {
             GameObject btn = new GameObject(name);
             btn.transform.SetParent(parent.transform, false);
@@ -2624,12 +2703,13 @@ namespace HNR.Editor
             layoutElement.preferredWidth = 28;
             layoutElement.preferredHeight = 28;
 
-            GameObject text = CreateText(btn, "Label", label, 10);
-            RectTransform textRect = text.GetComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.sizeDelta = Vector2.zero;
-            text.GetComponent<TextMeshProUGUI>().color = new Color(0f, 0.83f, 0.89f); // Soul cyan
+            // Use sprite if available, otherwise use text
+            Color cyanColor = new Color(0f, 0.83f, 0.89f); // Soul cyan
+            GameObject content = CreateIconImage(btn, "Label", iconSprite, new Vector2(16, 16), cyanColor, label, 10);
+            RectTransform contentRect = content.GetComponent<RectTransform>();
+            contentRect.anchorMin = Vector2.zero;
+            contentRect.anchorMax = Vector2.one;
+            contentRect.sizeDelta = Vector2.zero;
 
             return btn;
         }
@@ -2750,11 +2830,14 @@ namespace HNR.Editor
             layout.childForceExpandHeight = false;
             layout.padding = new RectOffset(8, 8, 20, 20);
 
+            // Load icon config for deck icons
+            var iconConfig = LoadIconConfig();
+
             // Draw pile
-            var drawPile = CreateDeckPileDisplay(sidebar, "DrawPile", "📚", "23", "Draw", new Color(0f, 0.83f, 0.89f));
+            var drawPile = CreateDeckPileDisplay(sidebar, "DrawPile", iconConfig?.DrawPileIcon, "\U0001F4DA", "23", "Draw", new Color(0f, 0.83f, 0.89f));
 
             // Discard pile
-            var discardPile = CreateDeckPileDisplay(sidebar, "DiscardPile", "🔄", "0", "Discard", new Color(0.63f, 0.63f, 0.63f));
+            var discardPile = CreateDeckPileDisplay(sidebar, "DiscardPile", iconConfig?.DiscardPileIcon, "\U0001F504", "0", "Discard", new Color(0.63f, 0.63f, 0.63f));
 
             // Add DeckInfoSidebar component and wire references
             var deckInfoComponent = sidebar.AddComponent<DeckInfoSidebar>();
@@ -2777,7 +2860,7 @@ namespace HNR.Editor
             return sidebar;
         }
 
-        private static GameObject CreateDeckPileDisplay(GameObject parent, string name, string icon, string count, string label, Color color)
+        private static GameObject CreateDeckPileDisplay(GameObject parent, string name, Sprite iconSprite, string fallbackIcon, string count, string label, Color color)
         {
             GameObject pile = new GameObject(name);
             pile.transform.SetParent(parent.transform, false);
@@ -2788,8 +2871,11 @@ namespace HNR.Editor
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
-            // Icon
-            GameObject iconObj = CreateText(pile, "Icon", icon, 18);
+            // Icon - use sprite if available, fallback to text
+            GameObject iconObj = CreateIconImage(pile, "Icon", iconSprite, new Vector2(24, 24), color, fallbackIcon, 18);
+            var iconLayout = iconObj.AddComponent<LayoutElement>();
+            iconLayout.preferredWidth = 24;
+            iconLayout.preferredHeight = 24;
 
             // Count
             GameObject countObj = CreateText(pile, "Count", count, 14);
@@ -3043,27 +3129,30 @@ namespace HNR.Editor
             layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = true;
 
-            // Node type legend items
-            var nodeTypes = new (string icon, string label, Color color)[]
+            // Load icon config for map legend
+            var iconConfig = LoadIconConfig();
+
+            // Node type legend items - sprite, fallback text, label, color
+            var nodeTypes = new (Sprite sprite, string fallback, string label, Color color)[]
             {
-                ("⚔️", "Combat", new Color(0.77f, 0.12f, 0.23f)),
-                ("💀", "Elite", new Color(1f, 0.27f, 0.27f)),
-                ("🛒", "Shop", new Color(0.83f, 0.69f, 0.22f)),
-                ("❓", "Echo", new Color(0.42f, 0.25f, 0.63f)),
-                ("🕯️", "Sanctuary", new Color(0.18f, 0.8f, 0.44f)),
-                ("💎", "Treasure", new Color(0.83f, 0.69f, 0.22f)),
-                ("👹", "Boss", new Color(1f, 0.27f, 0.27f)),
+                (iconConfig?.CombatNodeIcon, "\u2694\uFE0F", "Combat", new Color(0.77f, 0.12f, 0.23f)),
+                (iconConfig?.EliteNodeIcon, "\U0001F480", "Elite", new Color(1f, 0.27f, 0.27f)),
+                (iconConfig?.ShopNodeIcon, "\U0001F6D2", "Shop", new Color(0.83f, 0.69f, 0.22f)),
+                (iconConfig?.EchoEventIcon, "\u2753", "Echo", new Color(0.42f, 0.25f, 0.63f)),
+                (iconConfig?.SanctuaryIcon, "\U0001F56F\uFE0F", "Sanctuary", new Color(0.18f, 0.8f, 0.44f)),
+                (iconConfig?.TreasureIcon, "\U0001F48E", "Treasure", new Color(0.83f, 0.69f, 0.22f)),
+                (iconConfig?.BossNodeIcon, "\U0001F479", "Boss", new Color(1f, 0.27f, 0.27f)),
             };
 
-            foreach (var (icon, label, color) in nodeTypes)
+            foreach (var (sprite, fallback, label, color) in nodeTypes)
             {
-                CreateLegendItem(legend, icon, label, color);
+                CreateLegendItem(legend, sprite, fallback, label, color);
             }
 
             return legend;
         }
 
-        private static void CreateLegendItem(GameObject parent, string icon, string label, Color color)
+        private static void CreateLegendItem(GameObject parent, Sprite iconSprite, string fallbackIcon, string label, Color color)
         {
             GameObject item = new GameObject($"Legend_{label}");
             item.transform.SetParent(parent.transform, false);
@@ -3074,7 +3163,12 @@ namespace HNR.Editor
             layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = false;
 
-            GameObject iconObj = CreateText(item, "Icon", icon, 12);
+            // Icon - use sprite if available, fallback to text
+            GameObject iconObj = CreateIconImage(item, "Icon", iconSprite, new Vector2(16, 16), color, fallbackIcon, 12);
+            var iconLayout = iconObj.AddComponent<LayoutElement>();
+            iconLayout.preferredWidth = 16;
+            iconLayout.preferredHeight = 16;
+
             GameObject labelObj = CreateText(item, "Label", label, 8);
             labelObj.GetComponent<TMP_Text>().color = new Color(0.63f, 0.63f, 0.63f);
         }
@@ -3119,13 +3213,14 @@ namespace HNR.Editor
             Button btn = circle.AddComponent<Button>();
             btn.targetGraphic = bg;
 
-            // Checkmark icon
-            GameObject checkObj = CreateText(circle, "Check", "✓", 28);
+            // Checkmark icon - use sprite if available from icon config
+            var iconConfig = LoadIconConfig();
+            Color voidBlack = new Color(0.04f, 0.04f, 0.04f);
+            GameObject checkObj = CreateIconImage(circle, "Check", iconConfig?.CheckmarkIcon, new Vector2(36, 36), voidBlack, "\u2713", 28);
             RectTransform checkRect = checkObj.GetComponent<RectTransform>();
             checkRect.anchorMin = Vector2.zero;
             checkRect.anchorMax = Vector2.one;
             checkRect.sizeDelta = Vector2.zero;
-            checkObj.GetComponent<TextMeshProUGUI>().color = new Color(0.04f, 0.04f, 0.04f); // Void black
 
             // Add ExecutionButton component and wire references
             var execButton = btnObj.AddComponent<ExecutionButton>();
@@ -4555,12 +4650,15 @@ namespace HNR.Editor
             sidebarVlg.childForceExpandWidth = true;
             sidebarVlg.childForceExpandHeight = false;
 
-            // Category buttons (icons would be sprites, using text placeholders)
-            CreateSettingsCategoryButton(leftSidebar.transform, "DisplayBtn", "🖥", false);
-            CreateSettingsCategoryButton(leftSidebar.transform, "AudioBtn", "🎧", true);   // Selected
-            CreateSettingsCategoryButton(leftSidebar.transform, "GameBtn", "⚙", false);
-            CreateSettingsCategoryButton(leftSidebar.transform, "NetworkBtn", "🌐", false);
-            CreateSettingsCategoryButton(leftSidebar.transform, "AccountBtn", "👤", false);
+            // Load icon config for settings categories
+            var iconConfig = LoadIconConfig();
+
+            // Category buttons - use sprites if available, fallback to emoji text
+            CreateSettingsCategoryButton(leftSidebar.transform, "DisplayBtn", iconConfig?.DisplaySettingsIcon, "\U0001F5A5", false);
+            CreateSettingsCategoryButton(leftSidebar.transform, "AudioBtn", iconConfig?.AudioSettingsIcon, "\U0001F3A7", true);   // Selected
+            CreateSettingsCategoryButton(leftSidebar.transform, "GameBtn", iconConfig?.GameSettingsIcon, "\u2699", false);
+            CreateSettingsCategoryButton(leftSidebar.transform, "NetworkBtn", iconConfig?.NetworkSettingsIcon, "\U0001F310", false);
+            CreateSettingsCategoryButton(leftSidebar.transform, "AccountBtn", iconConfig?.AccountSettingsIcon, "\U0001F464", false);
 
             // ============================================
             // Main Content Area
@@ -4664,7 +4762,7 @@ namespace HNR.Editor
             overlayObj.SetActive(false);
         }
 
-        private static GameObject CreateSettingsCategoryButton(Transform parent, string name, string icon, bool isSelected)
+        private static GameObject CreateSettingsCategoryButton(Transform parent, string name, Sprite iconSprite, string fallbackIcon, bool isSelected)
         {
             var buttonObj = CreateSimpleUIObject(name, parent);
             var layoutElement = buttonObj.AddComponent<LayoutElement>();
@@ -4690,13 +4788,10 @@ namespace HNR.Editor
                 highlightImage.color = new Color(0.9f, 0.6f, 0.1f, 1f);
             }
 
-            // Icon text
-            var iconObj = CreateSimpleTextObject("Icon", buttonObj.transform, icon);
+            // Icon - use sprite if available, fallback to text
+            Color iconColor = isSelected ? Color.white : new Color(0.6f, 0.6f, 0.65f, 1f);
+            var iconObj = CreateIconImage(buttonObj, "Icon", iconSprite, new Vector2(24, 24), iconColor, fallbackIcon, 20);
             SetFullStretchRect(iconObj);
-            var iconText = iconObj.GetComponent<TMP_Text>();
-            iconText.fontSize = 20;
-            iconText.alignment = TextAlignmentOptions.Center;
-            iconText.color = isSelected ? Color.white : new Color(0.6f, 0.6f, 0.65f, 1f);
 
             return buttonObj;
         }

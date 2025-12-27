@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db38cb736f91af541bdf3156568fd991, type: 3}
+  m_Name: SceneIconConfig
+  m_EditorClassIdentifier: 
+  _drawPileIcon: {fileID: 21300000, guid: ca4c5688b843cfd4c8db15b3326f2083, type: 3}
+  _discardPileIcon: {fileID: 21300000, guid: e2c0d065178e2ca49a68bc5c6ab6395d, type: 3}
+  _settingsIcon: {fileID: 21300000, guid: 2425850efb9728e458a999af93af85a2, type: 3}
+  _combatNodeIcon: {fileID: 21300000, guid: 4858ccdc41e41e54d84887271d5dd7a1, type: 3}
+  _eliteNodeIcon: {fileID: 21300000, guid: 24dd875433ec1474ba96f784f6ca9e6c, type: 3}
+  _shopNodeIcon: {fileID: 21300000, guid: cff2f9b0e5baeca498f41814ba380566, type: 3}
+  _echoEventIcon: {fileID: 21300000, guid: 7f778ef2bc85bbb40bfd6c5147515d19, type: 3}
+  _sanctuaryIcon: {fileID: 21300000, guid: 923fc21e338076344abafaf0be0a9771, type: 3}
+  _treasureIcon: {fileID: 21300000, guid: 7577b1bdbe154d647ae2f5594753c0e1, type: 3}
+  _bossNodeIcon: {fileID: 21300000, guid: 415dc6a684a9188479141791fe229ca6, type: 3}
+  _checkmarkIcon: {fileID: 21300000, guid: 7c251840625ce464ebfcaf23455f36d2, type: 3}
+  _displaySettingsIcon: {fileID: 21300000, guid: 9292de37a48f7404491e5350e333bc43, type: 3}
+  _audioSettingsIcon: {fileID: 21300000, guid: e97e631058840a94484f15c90a0bfa1d, type: 3}
+  _gameSettingsIcon: {fileID: 21300000, guid: 5f81d554c08a22747ab2107a4db0b3b9, type: 3}
+  _networkSettingsIcon: {fileID: 21300000, guid: 64f0472a5a9a7b642b98410d487c65f8, type: 3}
+  _accountSettingsIcon: {fileID: 21300000, guid: c13f450a9d1c53847b478222edfc889d, type: 3}
