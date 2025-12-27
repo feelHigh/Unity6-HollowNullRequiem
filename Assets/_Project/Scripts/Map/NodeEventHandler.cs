@@ -11,6 +11,7 @@ using HNR.Characters;
 using HNR.Combat;
 using HNR.UI;
 using HNR.UI.Components;
+using HNR.UI.Toast;
 
 namespace HNR.Map
 {
@@ -207,12 +208,18 @@ namespace HNR.Map
             {
                 Debug.LogWarning("[NodeEventHandler] DeckViewerModal not found - card removal unavailable");
 
-                // Fallback: Just log that this feature needs the modal to be set up
-                // The shards have already been spent, so we need to handle this gracefully
-                // For now, just warn the user
-                if (ServiceLocator.TryGet<IUIManager>(out var uiManager))
+                // Show toast notification about feature unavailability
+                // The shards have already been spent, so inform the user gracefully
+                if (ToastManager.Instance != null)
                 {
-                    // TODO: Show toast notification about feature unavailability
+                    ToastManager.Instance.ShowWarning("Card removal temporarily unavailable. Shards refunded.");
+                }
+
+                // Refund the shards since we couldn't complete the action
+                if (ServiceLocator.TryGet<IShopManager>(out var shopManager))
+                {
+                    shopManager.AddVoidShards(50); // Standard card removal cost
+                    Debug.Log("[NodeEventHandler] Refunded 50 shards for unavailable card removal");
                 }
             }
         }

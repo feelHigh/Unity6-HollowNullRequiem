@@ -224,10 +224,21 @@ namespace HNR.Core
         {
             Debug.Log($"[GameManager] Ending run. Victory: {victory}");
 
-            // TODO: Gather run statistics
-            // var runManager = ServiceLocator.Get<IRunManager>();
-            // var stats = runManager.GetRunStats();
-            // EventBus.Publish(new RunEndedEvent(victory, stats.FloorsCleared, stats.EnemiesDefeated));
+            // Gather run statistics from RunManager and end the run
+            if (ServiceLocator.TryGet<IRunManager>(out var runManager))
+            {
+                var stats = runManager.Stats;
+                Debug.Log($"[GameManager] Run stats - Floors: {stats.FloorsCleared}, Enemies: {stats.EnemiesDefeated}, " +
+                         $"Cards: {stats.CardsPlayed}, Damage: {stats.DamageDealt}, Time: {stats.PlayTime:F1}s");
+
+                // End run in RunManager (this also publishes RunEndedEvent)
+                runManager.EndRun(victory);
+            }
+            else
+            {
+                Debug.LogWarning("[GameManager] RunManager not found - publishing RunEndedEvent with default stats");
+                EventBus.Publish(new RunEndedEvent(victory, 0, 0));
+            }
 
             ChangeState(GameState.Results);
         }

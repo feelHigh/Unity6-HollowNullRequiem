@@ -479,11 +479,24 @@ namespace HNR.Editor
             // Add MapNodeUI component
             var nodeUI = nodeObj.AddComponent<MapNodeUI>();
 
-            // Node background (hexagonal shape - assign hex sprite in Inspector)
-            // For now using default Image - replace with hexagonal sprite asset
+            // Node background (hexagonal shape)
             Image nodeBg = nodeObj.AddComponent<Image>();
             nodeBg.color = new Color(0.2f, 0.15f, 0.25f);
-            // TODO: Assign hexagonal sprite: nodeBg.sprite = hexagonSprite;
+
+            // Try to find and assign hexagonal sprite from common locations
+            Sprite hexSprite = FindHexagonalSprite();
+            if (hexSprite != null)
+            {
+                nodeBg.sprite = hexSprite;
+                nodeBg.type = Image.Type.Simple;
+                nodeBg.preserveAspect = true;
+                Debug.Log($"[ProductionSetupTool] Assigned hexagonal sprite: {hexSprite.name}");
+            }
+            else
+            {
+                Debug.Log("[ProductionSetupTool] No hexagonal sprite found - using default rectangle. " +
+                         "Add a hex sprite to Assets/_Project/Art/UI/Map/ named 'Hexagon' or 'HexNode' to enable.");
+            }
 
             // Icon container (scaled for 42x42 node)
             GameObject iconObj = new GameObject("Icon");
@@ -830,6 +843,65 @@ namespace HNR.Editor
         // ============================================
         // Utility Methods
         // ============================================
+
+        /// <summary>
+        /// Searches for a hexagonal sprite in common project locations.
+        /// </summary>
+        private static Sprite FindHexagonalSprite()
+        {
+            // Search for common hexagon sprite names in expected locations
+            string[] searchPaths = new[]
+            {
+                "Assets/_Project/Art/UI/Map",
+                "Assets/_Project/Art/UI",
+                "Assets/_Project/Art/Sprites/UI",
+                "Assets/_Project/Sprites/UI",
+                "Assets/_Project/Resources/UI"
+            };
+
+            string[] hexNames = new[]
+            {
+                "Hexagon",
+                "HexNode",
+                "Hex",
+                "HexagonNode",
+                "MapNode",
+                "NodeHex",
+                "hex_node",
+                "hexagon_node"
+            };
+
+            // First, try direct asset path lookups
+            foreach (string basePath in searchPaths)
+            {
+                foreach (string hexName in hexNames)
+                {
+                    string fullPath = $"{basePath}/{hexName}.png";
+                    var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(fullPath);
+                    if (sprite != null) return sprite;
+
+                    // Also try .asset extension (for sprite atlases)
+                    fullPath = $"{basePath}/{hexName}.asset";
+                    sprite = AssetDatabase.LoadAssetAtPath<Sprite>(fullPath);
+                    if (sprite != null) return sprite;
+                }
+            }
+
+            // Fallback: Search entire project for any sprite containing "hex" in name
+            string[] spriteGuids = AssetDatabase.FindAssets("t:Sprite hex", new[] { "Assets/_Project" });
+            foreach (string guid in spriteGuids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                if (sprite != null)
+                {
+                    Debug.Log($"[ProductionSetupTool] Found hexagonal sprite via search: {path}");
+                    return sprite;
+                }
+            }
+
+            return null;
+        }
 
         private static GameObject CreateTextObject(GameObject parent, string name, string text, int fontSize)
         {

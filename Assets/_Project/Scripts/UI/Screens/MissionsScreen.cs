@@ -9,6 +9,7 @@ using TMPro;
 using DG.Tweening;
 using HNR.Core;
 using HNR.Core.Interfaces;
+using HNR.Progression;
 using HNR.UI.Toast;
 
 namespace HNR.UI.Screens
@@ -149,17 +150,22 @@ namespace HNR.UI.Screens
 
         /// <summary>
         /// Gets the progression subtitle based on cleared zones.
-        /// Shows the highest cleared zone on Easy difficulty.
+        /// Shows the highest cleared zone on current difficulty.
         /// </summary>
         private string GetProgressionSubtitle()
         {
-            // Try to get saved progress from PlayerPrefs (simple approach)
-            // TODO: Replace with proper BattleMissionSaveData when implemented
-            int highestCleared = PlayerPrefs.GetInt("BattleMission_HighestZone", 0);
-
-            if (highestCleared > 0)
+            // Get progress from BattleMissionProgressManager
+            var progressManager = BattleMissionProgressManager.Instance;
+            if (progressManager != null)
             {
-                return $"Zone {highestCleared}";
+                var difficulty = progressManager.CurrentDifficulty;
+                int zonesCleared = progressManager.GetZonesClearedCount(difficulty);
+
+                if (zonesCleared > 0)
+                {
+                    string difficultyStr = difficulty == DifficultyLevel.Easy ? "" : $" ({difficulty})";
+                    return $"Zone {zonesCleared} Cleared{difficultyStr}";
+                }
             }
 
             // Default subtitle when no progress
