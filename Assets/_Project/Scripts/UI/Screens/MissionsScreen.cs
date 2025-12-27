@@ -238,6 +238,9 @@ namespace HNR.UI.Screens
                     .SetEase(Ease.OutBack));
             }
 
+            // Delay before buttons
+            sequence.AppendInterval(_buttonEntranceDelay);
+
             // Animate Story Mission button
             if (_storyMissionButton != null)
             {
@@ -245,6 +248,9 @@ namespace HNR.UI.Screens
                 sequence.Append(_storyMissionButton.transform.DOScale(1f, _buttonEntranceDuration)
                     .SetEase(Ease.OutBack));
             }
+
+            // Delay between buttons
+            sequence.AppendInterval(_buttonEntranceDelay);
 
             // Animate Battle Mission button
             if (_battleMissionButton != null)

@@ -6,6 +6,7 @@
 using System.Collections.Generic;
 using HNR.Cards;
 using HNR.Characters;
+using HNR.Progression;
 
 namespace HNR.Core.Interfaces
 {
@@ -53,6 +54,11 @@ namespace HNR.Core.Interfaces
         /// Current zone number (1-3).
         /// </summary>
         int CurrentZone { get; }
+
+        /// <summary>
+        /// Run statistics for tracking progress and results.
+        /// </summary>
+        StatsSaveData Stats { get; }
 
         /// <summary>
         /// Initialize a new run with the selected team.
