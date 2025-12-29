@@ -491,20 +491,5 @@ namespace HNR.Audio
             return 1f;
         }
 
-        // ============================================
-        // Legacy Support
-        // ============================================
-
-        [System.Obsolete("Use MusicVolume property instead")]
-        public void SetMusicVolume(float volume)
-        {
-            MusicVolume = volume;
-        }
-
-        [System.Obsolete("Use SFXVolume property instead")]
-        public void SetSFXVolume(float volume)
-        {
-            SFXVolume = volume;
-        }
     }
 }

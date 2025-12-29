@@ -131,22 +131,5 @@ namespace HNR.Core.Interfaces
         /// </summary>
         void StopAllAmbient();
 
-        // ============================================
-        // Legacy Support (deprecated)
-        // ============================================
-
-        /// <summary>
-        /// Set music volume with clamping.
-        /// </summary>
-        /// <param name="volume">Volume level (0.0 - 1.0)</param>
-        [System.Obsolete("Use MusicVolume property instead")]
-        void SetMusicVolume(float volume);
-
-        /// <summary>
-        /// Set SFX volume with clamping.
-        /// </summary>
-        /// <param name="volume">Volume level (0.0 - 1.0)</param>
-        [System.Obsolete("Use SFXVolume property instead")]
-        void SetSFXVolume(float volume);
     }
 }
