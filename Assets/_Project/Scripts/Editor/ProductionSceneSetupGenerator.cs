@@ -4042,9 +4042,9 @@ namespace HNR.Editor
             slotRect.offsetMax = Vector2.zero;
 
             var grid = slotContainer.AddComponent<GridLayoutGroup>();
-            // 1:2 aspect ratio to match portrait dimensions
-            grid.cellSize = new Vector2(175, 350);
-            grid.spacing = new Vector2(20, 20);
+            // 1:2 aspect ratio to match portrait dimensions (doubled for larger display)
+            grid.cellSize = new Vector2(350, 700);
+            grid.spacing = new Vector2(30, 30);
             grid.childAlignment = TextAnchor.MiddleCenter;
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = 4;

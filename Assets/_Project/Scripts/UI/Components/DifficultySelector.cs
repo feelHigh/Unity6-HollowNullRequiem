@@ -275,7 +275,24 @@ namespace HNR.UI.Components
 
             if (targetButton != null)
             {
-                _selectionIndicator.transform.position = targetButton.transform.position;
+                // Use RectTransform anchors to properly position the indicator
+                // Set anchors to match the button's relative position (0-0.333, 0.333-0.666, 0.666-1)
+                var indicatorRect = _selectionIndicator.rectTransform;
+                int buttonIndex = _currentDifficulty switch
+                {
+                    DifficultyLevel.Easy => 0,
+                    DifficultyLevel.Normal => 1,
+                    DifficultyLevel.Hard => 2,
+                    _ => 0
+                };
+
+                float anchorStart = buttonIndex / 3f;
+                float anchorEnd = (buttonIndex + 1) / 3f;
+
+                indicatorRect.anchorMin = new Vector2(anchorStart, 0);
+                indicatorRect.anchorMax = new Vector2(anchorEnd, 1);
+                indicatorRect.offsetMin = new Vector2(10, 5);
+                indicatorRect.offsetMax = new Vector2(-5, -5);
             }
         }
 
@@ -289,21 +306,34 @@ namespace HNR.UI.Components
 
             if (_selectionIndicator != null)
             {
-                Button targetButton = _currentDifficulty switch
+                var indicatorRect = _selectionIndicator.rectTransform;
+                int buttonIndex = _currentDifficulty switch
                 {
-                    DifficultyLevel.Easy => _easyButton,
-                    DifficultyLevel.Normal => _normalButton,
-                    DifficultyLevel.Hard => _hardButton,
-                    _ => _easyButton
+                    DifficultyLevel.Easy => 0,
+                    DifficultyLevel.Normal => 1,
+                    DifficultyLevel.Hard => 2,
+                    _ => 0
                 };
 
-                if (targetButton != null)
-                {
-                    _currentTween = _selectionIndicator.transform
-                        .DOMove(targetButton.transform.position, _selectionAnimDuration)
-                        .SetEase(Ease.OutBack)
-                        .SetLink(gameObject);
-                }
+                float targetAnchorStart = buttonIndex / 3f;
+                float targetAnchorEnd = (buttonIndex + 1) / 3f;
+
+                // Animate anchor positions using DOTween sequence
+                var seq = DOTween.Sequence();
+                seq.Append(DOTween.To(
+                    () => indicatorRect.anchorMin.x,
+                    x => indicatorRect.anchorMin = new Vector2(x, 0),
+                    targetAnchorStart,
+                    _selectionAnimDuration));
+                seq.Join(DOTween.To(
+                    () => indicatorRect.anchorMax.x,
+                    x => indicatorRect.anchorMax = new Vector2(x, 1),
+                    targetAnchorEnd,
+                    _selectionAnimDuration));
+                seq.SetEase(Ease.OutBack);
+                seq.SetLink(gameObject);
+
+                _currentTween = seq;
             }
         }
 

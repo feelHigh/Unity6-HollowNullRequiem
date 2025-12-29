@@ -250,8 +250,8 @@ namespace HNR.UI
             slotGO.transform.SetParent(container, false);
 
             var slotRect = slotGO.GetComponent<RectTransform>();
-            // 1:2 aspect ratio to match portrait dimensions
-            slotRect.sizeDelta = new Vector2(175, 350);
+            // 1:2 aspect ratio to match portrait dimensions (doubled for larger display)
+            slotRect.sizeDelta = new Vector2(350, 700);
 
             var slotBg = slotGO.GetComponent<Image>();
             slotBg.color = new Color(0.15f, 0.15f, 0.2f, 0.95f);

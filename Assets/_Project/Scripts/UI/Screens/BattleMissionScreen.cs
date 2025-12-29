@@ -187,6 +187,14 @@ namespace HNR.UI.Screens
                 _difficultySelector.OnDifficultyChanged -= OnDifficultyChanged;
                 _difficultySelector.OnDifficultyChanged += OnDifficultyChanged;
 
+                // For new games (no zones cleared), ensure Easy is selected and visually indicated
+                var progressManager = BattleMissionProgressManager.Instance;
+                if (progressManager != null && progressManager.GetZonesClearedCount(DifficultyLevel.Easy) == 0)
+                {
+                    // Force Easy selection for new players
+                    _difficultySelector.SetDifficultyWithoutNotify(DifficultyLevel.Easy);
+                }
+
                 // Update description
                 UpdateDifficultyDescription(_difficultySelector.CurrentDifficulty);
             }
