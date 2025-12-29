@@ -12,6 +12,7 @@ using HNR.Core.Interfaces;
 using HNR.Core.Events;
 using HNR.Characters;
 using HNR.Cards;
+using HNR.UI.Config;
 
 namespace HNR.UI
 {
@@ -86,6 +87,10 @@ namespace HNR.UI
         [Header("Data")]
         [SerializeField, Tooltip("All available Requiems")]
         private RequiemDataSO[] _availableRequiems;
+
+        [Header("Config")]
+        [SerializeField, Tooltip("Aspect icon configuration for badges")]
+        private AspectIconConfigSO _aspectIconConfig;
 
         // ============================================
         // State
@@ -338,7 +343,7 @@ namespace HNR.UI
             classText.alignment = TextAlignmentOptions.Left;
             classText.raycastTarget = false;
 
-            // Top-left badge (slot number or aspect icon)
+            // Top-left badge with aspect icon sprite
             var badgeGO = new GameObject("AspectBadge", typeof(RectTransform), typeof(Image));
             badgeGO.transform.SetParent(slotGO.transform, false);
             var badgeRect = badgeGO.GetComponent<RectTransform>();
@@ -347,9 +352,22 @@ namespace HNR.UI
             badgeRect.pivot = new Vector2(0, 1);
             badgeRect.sizeDelta = new Vector2(35, 35);
             badgeRect.anchoredPosition = new Vector2(8, -8);
-            var badgeBg = badgeGO.GetComponent<Image>();
-            badgeBg.color = GetAspectColor(requiem.SoulAspect);
-            badgeBg.raycastTarget = false;
+            var badgeImage = badgeGO.GetComponent<Image>();
+            badgeImage.raycastTarget = false;
+            badgeImage.preserveAspect = true;
+
+            // Use aspect icon sprite if available, otherwise fall back to colored square
+            var aspectIcon = _aspectIconConfig != null ? _aspectIconConfig.GetIcon(requiem.SoulAspect) : null;
+            if (aspectIcon != null)
+            {
+                badgeImage.sprite = aspectIcon;
+                badgeImage.color = Color.white; // Use sprite's native colors
+            }
+            else
+            {
+                // Fallback to colored square when no icon config
+                badgeImage.color = GetAspectColor(requiem.SoulAspect);
+            }
 
             // HP text in bottom right
             var hpGO = new GameObject("HP", typeof(RectTransform), typeof(TextMeshProUGUI));

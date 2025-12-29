@@ -141,6 +141,18 @@ namespace HNR.Editor
             ProductionDataGenerator.GenerateShopConfig();
         }
 
+        [MenuItem("HNR/1. Data Assets/Config/Aspect Icon Config", priority = 29)]
+        public static void GenerateAspectIconConfig()
+        {
+            AspectIconConfigGenerator.GenerateAspectIconConfig();
+        }
+
+        [MenuItem("HNR/1. Data Assets/Config/Verify Aspect Icons", priority = 29)]
+        public static void VerifyAspectIconConfig()
+        {
+            AspectIconConfigGenerator.VerifyAspectIconConfig();
+        }
+
         // ============================================
         // 2. Prefabs (priority 30-49)
         // ============================================

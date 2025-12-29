@@ -21,6 +21,7 @@ using HNR.UI;
 using HNR.UI.Screens;
 using HNR.UI.Combat;
 using HNR.UI.Components;
+using HNR.UI.Config;
 using HNR.Map;
 
 namespace HNR.Editor
@@ -4057,11 +4058,49 @@ namespace HNR.Editor
             var startRunImage = startRunButton.GetComponent<Image>();
             startRunImage.color = new Color(0.3f, 0.6f, 0.3f, 0.9f);
 
+            // Load Requiem data assets for portrait display
+            var requiemAssets = AssetDatabase.FindAssets("t:RequiemDataSO", new[] { "Assets/_Project/Data/Characters/Requiems" });
+            var requiemDataList = new List<RequiemDataSO>();
+            foreach (var guid in requiemAssets)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var data = AssetDatabase.LoadAssetAtPath<RequiemDataSO>(path);
+                if (data != null)
+                {
+                    requiemDataList.Add(data);
+                }
+            }
+
+            // Load AspectIconConfig for aspect badges
+            var aspectIconConfig = AssetDatabase.LoadAssetAtPath<AspectIconConfigSO>(
+                "Assets/_Project/Data/Config/AspectIconConfig.asset");
+
             // Wire references using correct field names from RequiemSelectionScreen
             var so = new SerializedObject(screen);
             so.FindProperty("_slotContainer").objectReferenceValue = slotContainer.transform;
             so.FindProperty("_startRunButton").objectReferenceValue = startRunButton.GetComponent<Button>();
+
+            // Wire Requiem data array so portraits display correctly
+            var requiemDataProp = so.FindProperty("_availableRequiems");
+            requiemDataProp.arraySize = requiemDataList.Count;
+            for (int i = 0; i < requiemDataList.Count; i++)
+            {
+                requiemDataProp.GetArrayElementAtIndex(i).objectReferenceValue = requiemDataList[i];
+            }
+
+            // Wire AspectIconConfig for aspect badge sprites
+            if (aspectIconConfig != null)
+            {
+                so.FindProperty("_aspectIconConfig").objectReferenceValue = aspectIconConfig;
+                Debug.Log("[ProductionSceneSetupGenerator] Wired AspectIconConfig to RequiemSelectionScreen");
+            }
+            else
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] AspectIconConfig not found at Assets/_Project/Data/Config/AspectIconConfig.asset - aspect badges will use colored squares");
+            }
+
             so.ApplyModifiedProperties();
+            Debug.Log($"[ProductionSceneSetupGenerator] Wired {requiemDataList.Count} Requiem data assets to RequiemSelectionScreen");
 
             screenObj.SetActive(false);
         }
@@ -4326,7 +4365,7 @@ namespace HNR.Editor
             artRect.offsetMax = Vector2.zero;
 
             var artImage = artContainer.AddComponent<Image>();
-            artImage.color = new Color(1f, 1f, 1f, 0.9f);
+            artImage.color = Color.white; // Full alpha for proper portrait display
             artImage.preserveAspect = true;
 
             // Stats Panel (right side of stats view)

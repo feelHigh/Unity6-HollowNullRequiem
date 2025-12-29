@@ -240,7 +240,7 @@ namespace HNR.UI.Screens
             if (_titleText != null)
                 _titleText.text = "Details";
 
-            // Update character art
+            // Update character art - use full body sprite with full alpha
             if (_characterArtImage != null)
             {
                 // Try full body sprite first, fall back to portrait
@@ -248,6 +248,7 @@ namespace HNR.UI.Screens
                 if (sprite != null)
                 {
                     _characterArtImage.sprite = sprite;
+                    _characterArtImage.color = Color.white; // Full alpha for proper display
                 }
             }
 
@@ -334,7 +335,7 @@ namespace HNR.UI.Screens
             }
             else
             {
-                // Create simple button
+                // Create simple button with 1:1 aspect ratio portrait
                 portraitObj = new GameObject($"SidebarPortrait_{requiem.RequiemName}");
                 portraitObj.transform.SetParent(_portraitListContainer, false);
 
@@ -344,10 +345,12 @@ namespace HNR.UI.Screens
 
                 var button = portraitObj.AddComponent<Button>();
                 var image = portraitObj.AddComponent<Image>();
+                image.preserveAspect = true; // Maintain 1:1 aspect ratio
 
                 if (requiem.Portrait != null)
                 {
                     image.sprite = requiem.Portrait;
+                    image.color = Color.white;
                 }
             }
 
