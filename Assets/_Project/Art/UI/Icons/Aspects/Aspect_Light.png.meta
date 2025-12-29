@@ -3,8 +3,8 @@ guid: b063f7e5d5448f740a43353b7b2c4508
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 6053101881747608913
-    second: LightAspect_0
+      213: 9202725283493903363
+    second: Aspect_Light_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,7 +113,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: LightAspect_0
+      name: Aspect_Light_0
       rect:
         serializedVersion: 2
         x: 0
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 15590da3710f00450800000000000000
-      internalID: 6053101881747608913
+      spriteID: 30cf82023e5a6bf70800000000000000
+      internalID: 9202725283493903363
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      LightAspect_0: 6053101881747608913
+      Aspect_Light_0: 9202725283493903363
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

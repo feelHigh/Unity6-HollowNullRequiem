@@ -333,13 +333,31 @@ namespace HNR.Editor
             ProductionSceneSetupGenerator.SetupBastionScene();
         }
 
-        [MenuItem("HNR/4. Scenes/4. Setup NullRift Scene", priority = 113)]
+        [MenuItem("HNR/4. Scenes/4. Setup Missions Scene", priority = 113)]
+        public static void SetupMissionsScene()
+        {
+            ProductionSceneSetupGenerator.SetupMissionsScene();
+        }
+
+        [MenuItem("HNR/4. Scenes/5. Setup BattleMission Scene", priority = 114)]
+        public static void SetupBattleMissionScene()
+        {
+            ProductionSceneSetupGenerator.SetupBattleMissionScene();
+        }
+
+        [MenuItem("HNR/4. Scenes/6. Setup Requiems Scene", priority = 115)]
+        public static void SetupRequiemsScene()
+        {
+            ProductionSceneSetupGenerator.SetupRequiemsScene();
+        }
+
+        [MenuItem("HNR/4. Scenes/7. Setup NullRift Scene", priority = 116)]
         public static void SetupNullRiftScene()
         {
             ProductionSceneSetupGenerator.SetupNullRiftScene();
         }
 
-        [MenuItem("HNR/4. Scenes/5. Setup Combat Scene", priority = 114)]
+        [MenuItem("HNR/4. Scenes/8. Setup Combat Scene", priority = 117)]
         public static void SetupCombatScene()
         {
             ProductionSceneSetupGenerator.SetupCombatScene();
@@ -389,7 +407,7 @@ namespace HNR.Editor
                 "1. Create all prefabs (Card, MapNode, Enemy, Character)\n" +
                 "2. Link visual prefabs to data assets\n" +
                 "3. Generate Audio & VFX configs\n" +
-                "4. Setup all 5 production scenes\n" +
+                "4. Setup all 8 production scenes\n" +
                 "5. Configure build settings\n\n" +
                 "This may take a few minutes. Continue?",
                 "Yes, Run All", "Cancel"))
@@ -660,7 +678,7 @@ HNR/
 │
 ├── 4. Scenes/              (100-139) - Scene setup and UI wiring
 │   ├── Setup All Scenes
-│   ├── 1-5. Setup Individual Scenes
+│   ├── 1-8. Setup Individual Scenes
 │   ├── Wire UI/ (All, Combat, NullRift)
 │   └── Configure Build Settings
 │

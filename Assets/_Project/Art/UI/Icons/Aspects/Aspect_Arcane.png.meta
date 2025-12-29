@@ -3,8 +3,8 @@ guid: 7e0783441d842904b86a0eb4bff7d101
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 2388820827422507903
-    second: ArcaneAspect_0
+      213: 8259187446146266546
+    second: Aspect_Arcane_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,7 +113,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: ArcaneAspect_0
+      name: Aspect_Arcane_0
       rect:
         serializedVersion: 2
         x: 0
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f73c292d2ebc62120800000000000000
-      internalID: 2388820827422507903
+      spriteID: 2b5f9e429378e9270800000000000000
+      internalID: 8259187446146266546
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      ArcaneAspect_0: 2388820827422507903
+      Aspect_Arcane_0: 8259187446146266546
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

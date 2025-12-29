@@ -3,8 +3,8 @@ guid: 4c126d6ef66607c4eb401bfa292d4216
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -6249584626022697830
-    second: ShadowAspect_0
+      213: -3181491372086874048
+    second: Aspect_Shadow_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,7 +113,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: ShadowAspect_0
+      name: Aspect_Shadow_0
       rect:
         serializedVersion: 2
         x: 0
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a94bc24f4e30549a0800000000000000
-      internalID: -6249584626022697830
+      spriteID: 040bace047219d3d0800000000000000
+      internalID: -3181491372086874048
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      ShadowAspect_0: -6249584626022697830
+      Aspect_Shadow_0: -3181491372086874048
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

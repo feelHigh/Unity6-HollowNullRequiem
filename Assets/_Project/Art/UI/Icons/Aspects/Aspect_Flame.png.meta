@@ -3,8 +3,8 @@ guid: ba2ad32a43710624cb3395a13b202d01
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5032389772366023058
-    second: FlameAspect_0
+      213: -4753757718183820960
+    second: Aspect_Flame_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,7 +113,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: FlameAspect_0
+      name: Aspect_Flame_0
       rect:
         serializedVersion: 2
         x: 0
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e6670de2a2c592ab0800000000000000
-      internalID: -5032389772366023058
+      spriteID: 061c163ba82470eb0800000000000000
+      internalID: -4753757718183820960
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      FlameAspect_0: -5032389772366023058
+      Aspect_Flame_0: -4753757718183820960
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

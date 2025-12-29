@@ -223,11 +223,11 @@ namespace HNR.UI
                 // Create character card slot with portrait
                 var slotGO = CreateCharacterSlot(container, requiem);
                 var button = slotGO.GetComponent<Button>();
-                var frameImage = slotGO.transform.Find("Frame")?.GetComponent<Image>();
+                var selectionBorder = slotGO.transform.Find("SelectionBorder")?.gameObject;
 
                 if (button != null)
                 {
-                    _simpleSlotButtons.Add((requiem, button, frameImage ?? slotGO.GetComponent<Image>()));
+                    _simpleSlotButtons.Add((requiem, button, selectionBorder));
                 }
             }
 
@@ -250,7 +250,8 @@ namespace HNR.UI
             slotGO.transform.SetParent(container, false);
 
             var slotRect = slotGO.GetComponent<RectTransform>();
-            slotRect.sizeDelta = new Vector2(200, 300);
+            // 1:2 aspect ratio to match portrait dimensions
+            slotRect.sizeDelta = new Vector2(175, 350);
 
             var slotBg = slotGO.GetComponent<Image>();
             slotBg.color = new Color(0.15f, 0.15f, 0.2f, 0.95f);
@@ -259,29 +260,50 @@ namespace HNR.UI
             var capturedRequiem = requiem;
             button.onClick.AddListener(() => OnSlotClicked(capturedRequiem));
 
-            // Frame overlay (for selection highlight)
-            var frameGO = new GameObject("Frame", typeof(RectTransform), typeof(Image));
-            frameGO.transform.SetParent(slotGO.transform, false);
-            var frameRect = frameGO.GetComponent<RectTransform>();
-            frameRect.anchorMin = Vector2.zero;
-            frameRect.anchorMax = Vector2.one;
-            frameRect.offsetMin = Vector2.zero;
-            frameRect.offsetMax = Vector2.zero;
-            var frameImage = frameGO.GetComponent<Image>();
-            frameImage.color = new Color(GetAspectColor(requiem.SoulAspect).r, GetAspectColor(requiem.SoulAspect).g, GetAspectColor(requiem.SoulAspect).b, 0.3f);
-            frameImage.raycastTarget = false;
+            // Selection border container (4 edge rectangles for border effect)
+            var borderGO = new GameObject("SelectionBorder", typeof(RectTransform));
+            borderGO.transform.SetParent(slotGO.transform, false);
+            var borderRect = borderGO.GetComponent<RectTransform>();
+            borderRect.anchorMin = Vector2.zero;
+            borderRect.anchorMax = Vector2.one;
+            borderRect.offsetMin = Vector2.zero;
+            borderRect.offsetMax = Vector2.zero;
 
-            // Full body portrait image
+            // Border color - blue for selection
+            Color borderColor = new Color(0.2f, 0.6f, 1f, 1f); // Bright blue
+            float borderWidth = 4f;
+
+            // Top edge
+            CreateBorderEdge(borderGO.transform, "TopBorder", borderColor, borderWidth,
+                new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, -borderWidth), Vector2.zero);
+            // Bottom edge
+            CreateBorderEdge(borderGO.transform, "BottomBorder", borderColor, borderWidth,
+                new Vector2(0, 0), new Vector2(1, 0), Vector2.zero, new Vector2(0, borderWidth));
+            // Left edge
+            CreateBorderEdge(borderGO.transform, "LeftBorder", borderColor, borderWidth,
+                new Vector2(0, 0), new Vector2(0, 1), Vector2.zero, new Vector2(borderWidth, 0));
+            // Right edge
+            CreateBorderEdge(borderGO.transform, "RightBorder", borderColor, borderWidth,
+                new Vector2(1, 0), new Vector2(1, 1), new Vector2(-borderWidth, 0), Vector2.zero);
+
+            // Start hidden - will show on selection
+            borderGO.SetActive(false);
+
+            // Full body portrait image - fills entire slot as background
             var portraitGO = new GameObject("Portrait", typeof(RectTransform), typeof(Image));
             portraitGO.transform.SetParent(slotGO.transform, false);
             var portraitRect = portraitGO.GetComponent<RectTransform>();
-            portraitRect.anchorMin = new Vector2(0, 0.15f);
-            portraitRect.anchorMax = new Vector2(1, 1);
-            portraitRect.offsetMin = new Vector2(5, 0);
-            portraitRect.offsetMax = new Vector2(-5, -5);
+            // Fill entire slot - no margins
+            portraitRect.anchorMin = Vector2.zero;
+            portraitRect.anchorMax = Vector2.one;
+            portraitRect.offsetMin = Vector2.zero;
+            portraitRect.offsetMax = Vector2.zero;
             var portraitImage = portraitGO.GetComponent<Image>();
-            portraitImage.preserveAspect = true;
+            // Don't preserve aspect - stretch to fill like background
+            portraitImage.preserveAspect = false;
             portraitImage.raycastTarget = false;
+            // Ensure portrait renders behind frame and info panel
+            portraitGO.transform.SetAsFirstSibling();
 
             // Use FullBodySprite if available, otherwise fall back to Portrait
             if (requiem.FullBodySprite != null)
@@ -496,7 +518,25 @@ namespace HNR.UI
             };
         }
 
-        private List<(RequiemDataSO requiem, Button button, Image image)> _simpleSlotButtons = new();
+        /// <summary>
+        /// Creates a single edge of a border rectangle.
+        /// </summary>
+        private void CreateBorderEdge(Transform parent, string name, Color color, float width,
+            Vector2 anchorMin, Vector2 anchorMax, Vector2 offsetMin, Vector2 offsetMax)
+        {
+            var edgeGO = new GameObject(name, typeof(RectTransform), typeof(Image));
+            edgeGO.transform.SetParent(parent, false);
+            var rect = edgeGO.GetComponent<RectTransform>();
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.offsetMin = offsetMin;
+            rect.offsetMax = offsetMax;
+            var image = edgeGO.GetComponent<Image>();
+            image.color = color;
+            image.raycastTarget = false;
+        }
+
+        private List<(RequiemDataSO requiem, Button button, GameObject selectionBorder)> _simpleSlotButtons = new();
 
         private void ClearSlots()
         {
@@ -568,25 +608,16 @@ namespace HNR.UI
             }
 
             // Update simple slot button selection states
-            foreach (var (requiem, button, frameImage) in _simpleSlotButtons)
+            foreach (var (requiem, button, selectionBorder) in _simpleSlotButtons)
             {
-                if (button != null && frameImage != null)
+                if (button != null)
                 {
                     bool isSelected = _selectedRequiems.Contains(requiem);
-                    var baseColor = GetAspectColor(requiem.SoulAspect);
 
-                    // Frame glow effect when selected
-                    frameImage.color = isSelected
-                        ? new Color(baseColor.r, baseColor.g, baseColor.b, 0.8f) // Bright glow when selected
-                        : new Color(baseColor.r, baseColor.g, baseColor.b, 0.2f); // Subtle tint when not
-
-                    // Also update the slot background if it exists
-                    var slotBg = button.GetComponent<Image>();
-                    if (slotBg != null)
+                    // Show/hide blue border based on selection
+                    if (selectionBorder != null)
                     {
-                        slotBg.color = isSelected
-                            ? new Color(0.2f, 0.2f, 0.25f, 1f) // Brighter background when selected
-                            : new Color(0.15f, 0.15f, 0.2f, 0.95f); // Normal background
+                        selectionBorder.SetActive(isSelected);
                     }
                 }
             }
