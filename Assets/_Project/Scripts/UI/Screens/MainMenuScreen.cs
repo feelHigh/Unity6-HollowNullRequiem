@@ -10,6 +10,7 @@ using TMPro;
 using DG.Tweening;
 using HNR.Core;
 using HNR.Core.Interfaces;
+using HNR.Progression;
 
 namespace HNR.UI
 {
@@ -217,6 +218,25 @@ namespace HNR.UI
             {
                 saveManager.DeleteRun();
                 Debug.Log("[MainMenuScreen] Deleted existing saved run");
+            }
+
+            // Reset Battle Mission progress for fresh start
+            var progressManager = BattleMissionProgressManager.Instance;
+            if (progressManager != null)
+            {
+                progressManager.ResetAllProgress();
+                Debug.Log("[MainMenuScreen] Reset Battle Mission progress via manager");
+            }
+            else
+            {
+                // Manager doesn't exist yet, delete directly from save file
+                const string SAVE_FILE = "HNR_Save.es3";
+                const string BATTLE_MISSION_KEY = "BattleMissionProgress";
+                if (ES3.KeyExists(BATTLE_MISSION_KEY, SAVE_FILE))
+                {
+                    ES3.DeleteKey(BATTLE_MISSION_KEY, SAVE_FILE);
+                    Debug.Log("[MainMenuScreen] Reset Battle Mission progress via ES3");
+                }
             }
 
             // Navigate to Bastion (hub scene where team selection happens)
