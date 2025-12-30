@@ -100,7 +100,10 @@ namespace HNR.Map
             // Last row: Boss if configured, otherwise Elite (serves as zone exit)
             if (row == _config.RowCount - 1)
             {
-                return _config.BossEncounter != null ? NodeType.Boss : NodeType.Elite;
+                bool hasBoss = _config.BossEncounter != null;
+                var nodeType = hasBoss ? NodeType.Boss : NodeType.Elite;
+                Debug.Log($"[MapGenerator] Final row {row}: BossEncounter={_config.BossEncounter?.name ?? "null"}, NodeType={nodeType}");
+                return nodeType;
             }
 
             // Build weighted selection list
@@ -301,10 +304,12 @@ namespace HNR.Map
 
                     case NodeType.Elite:
                         node.Encounter = _config.GetRandomEliteEncounter(_rng);
+                        Debug.Log($"[MapGenerator] Assigned Elite encounter: {node.Encounter?.EncounterName ?? "null"} to node {node.NodeId}");
                         break;
 
                     case NodeType.Boss:
                         node.Encounter = _config.BossEncounter;
+                        Debug.Log($"[MapGenerator] Assigned Boss encounter: {node.Encounter?.EncounterName ?? "null"} (IsBoss={node.Encounter?.IsBoss}) to node {node.NodeId}");
                         break;
 
                     case NodeType.Echo:

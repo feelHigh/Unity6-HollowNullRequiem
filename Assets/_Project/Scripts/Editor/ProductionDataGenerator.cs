@@ -713,14 +713,17 @@ namespace HNR.Editor
                 var enc = AssetDatabase.LoadAssetAtPath<EncounterDataSO>(path);
                 if (enc != null)
                 {
-                    // Add by ID
+                    // Add by ID (with underscores)
                     string id = enc.EncounterId?.ToLower() ?? "";
                     if (!string.IsNullOrEmpty(id))
                     {
                         encounters[id] = enc;
+                        // Also add ID with underscores removed for lookup compatibility
+                        string idNoUnderscores = id.Replace("_", "");
+                        encounters[idNoUnderscores] = enc;
                     }
 
-                    // Also by filename
+                    // Also by filename (underscores removed)
                     string filename = System.IO.Path.GetFileNameWithoutExtension(path).ToLower().Replace("_", "");
                     encounters[filename] = enc;
                 }
