@@ -707,6 +707,59 @@ Build/ (separate menu)
             CardPrefabWiringTool.WireCardPrefabReferences();
         }
 
+        [MenuItem("HNR/5. Utilities/Reset Battle Mission Progress", priority = 212)]
+        public static void ResetBattleMissionProgress()
+        {
+            if (!EditorUtility.DisplayDialog("Reset Battle Mission Progress",
+                "This will reset all Battle Mission progress:\n\n" +
+                "• All zone clears will be reset\n" +
+                "• Normal and Hard difficulties will be locked\n" +
+                "• Only Zone 1 on Easy will be available\n\n" +
+                "This is useful for testing progression. Continue?",
+                "Reset Progress", "Cancel"))
+            {
+                return;
+            }
+
+            // Delete the Battle Mission key from ES3 save file
+            const string SAVE_FILE = "HNR_Save.es3";
+            const string BATTLE_MISSION_KEY = "BattleMissionProgress";
+
+            try
+            {
+                if (ES3.KeyExists(BATTLE_MISSION_KEY, SAVE_FILE))
+                {
+                    ES3.DeleteKey(BATTLE_MISSION_KEY, SAVE_FILE);
+                    Debug.Log($"[EditorMenuOrganizer] Deleted Battle Mission progress from {SAVE_FILE}");
+                }
+                else
+                {
+                    Debug.Log("[EditorMenuOrganizer] No Battle Mission progress found - already fresh");
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[EditorMenuOrganizer] Could not delete ES3 key: {e.Message}");
+            }
+
+            // If in play mode, also reset the runtime manager
+            if (Application.isPlaying)
+            {
+                var progressManager = HNR.Progression.BattleMissionProgressManager.Instance;
+                if (progressManager != null)
+                {
+                    progressManager.ResetAllProgress();
+                    Debug.Log("[EditorMenuOrganizer] Reset BattleMissionProgressManager runtime state");
+                }
+            }
+
+            EditorUtility.DisplayDialog("Progress Reset",
+                "Battle Mission progress has been reset.\n\n" +
+                "If you're in Play mode, the changes take effect immediately.\n" +
+                "If not, they'll apply next time you enter Play mode.",
+                "OK");
+        }
+
         [MenuItem("HNR/5. Utilities/Missing Scripts/Find in HeroEditor", priority = 220)]
         public static void FindMissingScriptsInHeroEditor()
         {

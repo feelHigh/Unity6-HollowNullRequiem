@@ -12,6 +12,7 @@ using HNR.Core;
 using HNR.Core.Interfaces;
 using HNR.Core.Events;
 using HNR.Cards;
+using HNR.Progression;
 
 namespace HNR.UI
 {
@@ -533,7 +534,46 @@ namespace HNR.UI
         private void NavigateToMap()
         {
             var gameManager = ServiceLocator.Get<IGameManager>();
-            gameManager?.ChangeState(GameState.Run);
+            var runManager = ServiceLocator.Get<IRunManager>();
+            var runManagerImpl = runManager as RunManager;
+
+            // Check if this is a Battle Mission run
+            if (runManager != null && runManager.IsBattleMissionRun)
+            {
+                // Check if this was a Boss node victory - only then mark zone as cleared
+                bool wasBossVictory = runManagerImpl?.WasLastCombatBossNode() ?? false;
+
+                if (wasBossVictory)
+                {
+                    // Mark zone as cleared only on Boss victory
+                    var progressManager = BattleMissionProgressManager.Instance;
+                    if (progressManager != null)
+                    {
+                        progressManager.MarkZoneCleared(
+                            runManager.BattleMissionZone,
+                            runManager.BattleMissionDifficulty);
+                        Debug.Log($"[ResultsScreen] Boss defeated! Marked Zone {runManager.BattleMissionZone} as cleared on {runManager.BattleMissionDifficulty}");
+                    }
+
+                    // End the run (clears team, etc.)
+                    runManager.EndRun(true);
+
+                    // Navigate to BattleMission screen
+                    gameManager?.ChangeState(GameState.BattleMission);
+                    Debug.Log("[ResultsScreen] Returning to BattleMission screen after zone completion");
+                }
+                else
+                {
+                    // Not a boss - continue the run, go back to map
+                    Debug.Log("[ResultsScreen] Combat victory (not boss) - returning to map");
+                    gameManager?.ChangeState(GameState.Run);
+                }
+            }
+            else
+            {
+                // Regular story run - navigate back to map
+                gameManager?.ChangeState(GameState.Run);
+            }
         }
 
         // ============================================

@@ -44,6 +44,7 @@ namespace HNR.Progression
         // Battle Mission context (set before starting run)
         private int _battleMissionZone = 1;
         private DifficultyLevel _battleMissionDifficulty = DifficultyLevel.Easy;
+        private bool _isBattleMissionRun = false;
 
         // ============================================
         // Properties
@@ -78,6 +79,9 @@ namespace HNR.Progression
 
         /// <summary>Battle Mission difficulty context.</summary>
         public DifficultyLevel BattleMissionDifficulty => _battleMissionDifficulty;
+
+        /// <summary>Whether this is a Battle Mission run (vs story run).</summary>
+        public bool IsBattleMissionRun => _isBattleMissionRun;
 
         // ============================================
         // Unity Lifecycle
@@ -260,6 +264,7 @@ namespace HNR.Progression
             _battleMissionZone = Mathf.Clamp(zone, 1, 3);
             _battleMissionDifficulty = difficulty;
             _currentZone = _battleMissionZone;
+            _isBattleMissionRun = true;
             Debug.Log($"[RunManager] Battle Mission context set: Zone {_battleMissionZone}, {_battleMissionDifficulty}");
         }
 
@@ -270,6 +275,7 @@ namespace HNR.Progression
         {
             _battleMissionZone = 1;
             _battleMissionDifficulty = DifficultyLevel.Easy;
+            _isBattleMissionRun = false;
         }
 
         /// <summary>
@@ -320,7 +326,10 @@ namespace HNR.Progression
             _deck.Clear();
             _upgradedCardIds.Clear();
             _stats = new StatsSaveData();
-            _currentZone = 1;
+            // Clear cached map data to ensure fresh map generation
+            _cachedMapData = null;
+            // Preserve zone from Battle Mission context, otherwise default to 1
+            _currentZone = _isBattleMissionRun ? _battleMissionZone : 1;
             _runStartTime = Time.time;
 
             // Initialize team
@@ -381,6 +390,12 @@ namespace HNR.Progression
             CleanupTeam();
 
             _isRunActive = false;
+
+            // Clear Battle Mission context
+            _isBattleMissionRun = false;
+
+            // Clear cached map data so next run generates fresh map
+            _cachedMapData = null;
 
             // Publish event
             EventBus.Publish(new RunEndedEvent(victory, _currentZone, _stats.EnemiesDefeated));
@@ -573,6 +588,21 @@ namespace HNR.Progression
         /// Gets the cached map save data for restoration.
         /// </summary>
         public MapSaveData GetCachedMapData() => _cachedMapData;
+
+        /// <summary>
+        /// Checks if the last combat node was a Boss node.
+        /// Used to determine if zone should be marked cleared.
+        /// </summary>
+        public bool WasLastCombatBossNode()
+        {
+            if (_cachedMapData == null || string.IsNullOrEmpty(_cachedMapData.CurrentNodeId))
+                return false;
+
+            var currentNodeEntry = _cachedMapData.VisitedNodes.Find(
+                v => v.NodeId == _cachedMapData.CurrentNodeId);
+
+            return currentNodeEntry?.NodeType == "Boss";
+        }
 
         /// <summary>
         /// Caches the current map state for cross-scene persistence.

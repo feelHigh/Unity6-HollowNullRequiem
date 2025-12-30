@@ -137,5 +137,20 @@ namespace HNR.Core.Interfaces
         /// Advance to the next zone.
         /// </summary>
         void AdvanceZone();
+
+        /// <summary>
+        /// Whether this is a Battle Mission run (vs story run).
+        /// </summary>
+        bool IsBattleMissionRun { get; }
+
+        /// <summary>
+        /// Battle Mission zone context (1-3).
+        /// </summary>
+        int BattleMissionZone { get; }
+
+        /// <summary>
+        /// Battle Mission difficulty context.
+        /// </summary>
+        DifficultyLevel BattleMissionDifficulty { get; }
     }
 }
