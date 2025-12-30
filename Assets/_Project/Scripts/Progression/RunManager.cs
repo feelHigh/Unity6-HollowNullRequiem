@@ -332,6 +332,13 @@ namespace HNR.Progression
             _currentZone = _isBattleMissionRun ? _battleMissionZone : 1;
             _runStartTime = Time.time;
 
+            // Reset VoidShards to 0 for new run (temporary run currency)
+            if (ServiceLocator.TryGet<IShopManager>(out var shopManager))
+            {
+                shopManager.SetVoidShards(0);
+                Debug.Log("[RunManager] VoidShards reset to 0 for new run");
+            }
+
             // Initialize team
             _teamMaxHP = 0;
             foreach (var requiemData in selectedTeam)

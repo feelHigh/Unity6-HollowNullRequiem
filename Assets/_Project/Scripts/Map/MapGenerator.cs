@@ -96,7 +96,12 @@ namespace HNR.Map
         {
             // Fixed types for first and last rows
             if (row == 0) return NodeType.Start;
-            if (row == _config.RowCount - 1) return NodeType.Boss;
+
+            // Last row: Boss if configured, otherwise Elite (serves as zone exit)
+            if (row == _config.RowCount - 1)
+            {
+                return _config.BossEncounter != null ? NodeType.Boss : NodeType.Elite;
+            }
 
             // Build weighted selection list
             var weights = BuildWeightList(row);

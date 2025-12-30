@@ -10,21 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5fe8c41b14aea83488f0b3926000b444, type: 3}
-  m_Name: Zone3_Hard
+  m_Name: Boss_Zone1
   m_EditorClassIdentifier: 
-  _encounterId: zone3_hard
-  _encounterName: Executioner's Judgment
-  _zone: 3
+  _encounterId: boss_zone1_warden
+  _encounterName: The Corrupted Warden
+  _zone: 1
   _difficulty: 2
   _isElite: 0
-  _isBoss: 0
+  _isBoss: 1
   _enemyPool:
-  - {fileID: 11400000, guid: d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0, type: 2}
-  - {fileID: 11400000, guid: e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1, type: 2}
-  _minEnemies: 2
-  _maxEnemies: 3
+  - {fileID: 11400000, guid: a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3, type: 2}
+  _minEnemies: 1
+  _maxEnemies: 1
   _fixedFormation: []
-  _rewardMultiplier: 1.6
+  _rewardMultiplier: 1.5
   _guaranteedCardTier: 0
   _arenaCorruptionPerTurn: 0
   _arenaDescription: 

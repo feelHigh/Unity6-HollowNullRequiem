@@ -162,16 +162,36 @@ namespace HNR.UI.Combat
             _cards.Add(card);
             card.transform.SetParent(transform, false);
 
+            // Ensure RectTransform is properly set after parenting
+            var rect = card.RectTransform;
+            if (rect == null)
+            {
+                rect = card.GetComponent<RectTransform>();
+            }
+
+            // Ensure proper anchoring for centered positioning after parenting
+            if (rect != null)
+            {
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+            }
+
             // Subscribe to events
             card.OnHoverEnter += OnCardHoverEnter;
             card.OnHoverExit += OnCardHoverExit;
             card.OnSelected += OnCardSelected;
             card.OnDragComplete += OnCardDragComplete;
 
-            // Set initial position at draw pile
+            // Set initial position at draw pile or off-screen
             if (_drawPilePosition != null)
             {
                 card.transform.position = _drawPilePosition.position;
+            }
+            else if (rect != null)
+            {
+                // Fallback: start off-screen at bottom
+                rect.anchoredPosition = new Vector2(0, -500f);
             }
             card.transform.localScale = Vector3.zero;
 
@@ -378,22 +398,45 @@ namespace HNR.UI.Combat
             _cardBasePositions[card] = position;
 
             var rect = card.RectTransform;
+            if (rect == null)
+            {
+                rect = card.GetComponent<RectTransform>();
+            }
+
             if (rect != null)
             {
                 // Kill any existing tweens on this card
                 DOTween.Kill(rect);
                 DOTween.Kill(card.transform);
 
-                rect.DOAnchorPos(position, _dealDuration).SetEase(_dealEase).SetLink(card.gameObject);
-                rect.DOLocalRotate(new Vector3(0, 0, rotation), _dealDuration).SetEase(_dealEase).SetLink(card.gameObject);
-                card.transform.DOScale(1f, _dealDuration).SetEase(_dealEase).SetLink(card.gameObject);
+                // Use magnitude check for more robust scale detection (handles floating-point issues)
+                bool isNewCard = card.transform.localScale.magnitude < 0.1f;
+
+                if (isNewCard)
+                {
+                    // Starting fresh from pool - animate position, rotation, and scale
+                    rect.DOAnchorPos(position, _dealDuration).SetEase(_dealEase).SetLink(card.gameObject);
+                    rect.DOLocalRotate(new Vector3(0, 0, rotation), _dealDuration).SetEase(_dealEase).SetLink(card.gameObject);
+                    card.transform.DOScale(1f, _dealDuration).SetEase(_dealEase).SetLink(card.gameObject);
+                }
+                else
+                {
+                    // Already visible, just reposition - but ensure scale is correct
+                    rect.DOAnchorPos(position, _repositionDuration).SetEase(Ease.OutQuad).SetLink(card.gameObject);
+                    rect.DOLocalRotate(new Vector3(0, 0, rotation), _repositionDuration).SetEase(Ease.OutQuad).SetLink(card.gameObject);
+                    // Ensure scale is 1 in case of any issues
+                    if (card.transform.localScale.magnitude < 0.9f)
+                    {
+                        card.transform.DOScale(1f, _repositionDuration).SetEase(Ease.OutQuad).SetLink(card.gameObject);
+                    }
+                }
             }
             else
             {
                 // Fallback: set position directly if RectTransform unavailable
                 card.transform.localPosition = new Vector3(position.x, position.y, 0);
                 card.transform.localScale = Vector3.one;
-                Debug.LogWarning($"[CardFanLayout] RectTransform null for card at index {index}");
+                Debug.LogWarning($"[CardFanLayout] RectTransform null for card at index {index}, setting position directly");
             }
 
             card.transform.SetSiblingIndex(index);

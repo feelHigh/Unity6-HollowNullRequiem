@@ -18,7 +18,9 @@ MonoBehaviour:
   _difficulty: 1
   _isElite: 0
   _isBoss: 0
-  _enemyPool: []
+  _enemyPool:
+  - {fileID: 11400000, guid: a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7, type: 2}
+  - {fileID: 11400000, guid: b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8, type: 2}
   _minEnemies: 2
   _maxEnemies: 2
   _fixedFormation: []

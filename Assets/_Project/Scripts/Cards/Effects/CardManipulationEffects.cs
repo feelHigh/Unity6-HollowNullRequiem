@@ -13,6 +13,8 @@ namespace HNR.Cards
 {
     /// <summary>
     /// Draw cards from the deck into hand.
+    /// Cards are displayed via CardDrawnEvent published by DeckManager.DrawCards().
+    /// CombatScreen.OnCardDrawn() listens for this event and adds cards to CardFanLayout.
     /// </summary>
     public class DrawCardsEffect : ICardEffect
     {
@@ -20,33 +22,24 @@ namespace HNR.Cards
         {
             int cardsToDraw = data.Value;
 
-            // Get managers from context or ServiceLocator
+            // Get DeckManager from context or ServiceLocator
             var deckManager = context.DeckManager;
-            var handManager = context.CombatContext?.HandManager;
 
             if (deckManager == null)
             {
                 ServiceLocator.TryGet<DeckManager>(out deckManager);
             }
-            if (handManager == null)
-            {
-                ServiceLocator.TryGet<HandManager>(out handManager);
-            }
 
-            if (deckManager == null || handManager == null)
+            if (deckManager == null)
             {
-                Debug.LogWarning("[DrawCardsEffect] DeckManager or HandManager not available");
+                Debug.LogWarning("[DrawCardsEffect] DeckManager not available");
                 return;
             }
 
-            // Draw cards (DeckManager handles reshuffling and events)
+            // Draw cards - DeckManager.DrawCards() publishes CardDrawnEvent for each card.
+            // CombatScreen.OnCardDrawn() receives the event and adds cards to CardFanLayout.
+            // DO NOT call HandManager.AddCard() here as it would duplicate the card display.
             var drawnCards = deckManager.DrawCards(cardsToDraw);
-
-            // Add each card to hand
-            foreach (var card in drawnCards)
-            {
-                handManager.AddCard(card);
-            }
 
             Debug.Log($"[DrawCardsEffect] Drew {drawnCards.Count} cards");
         }

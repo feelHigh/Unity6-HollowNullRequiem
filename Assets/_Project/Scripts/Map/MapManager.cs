@@ -170,6 +170,23 @@ namespace HNR.Map
         }
 
         /// <summary>
+        /// Checks if the given row is the last row of the map.
+        /// </summary>
+        private bool IsLastRow(int row)
+        {
+            if (_currentMap == null) return false;
+
+            // Find the maximum row number in the map
+            int maxRow = 0;
+            foreach (var node in _currentMap.Nodes)
+            {
+                if (node.Row > maxRow) maxRow = node.Row;
+            }
+
+            return row == maxRow;
+        }
+
+        /// <summary>
         /// Locks sibling nodes (same row, not visited) when committing to a path.
         /// This prevents backtracking to other nodes in the same row after completing a node.
         /// </summary>
@@ -226,7 +243,12 @@ namespace HNR.Map
             }
 
             // Check for zone completion
-            if (current.Type == NodeType.Boss)
+            // Zone is complete when the boss is defeated, OR when completing
+            // the last row's Elite node (for zones without bosses)
+            bool isBossNode = current.Type == NodeType.Boss;
+            bool isLastRowElite = current.Type == NodeType.Elite && IsLastRow(current.Row);
+
+            if (isBossNode || isLastRowElite)
             {
                 EventBus.Publish(new ZoneCompletedEvent(_currentMap.Zone));
                 Debug.Log($"[MapManager] Zone {_currentMap.Zone} completed!");

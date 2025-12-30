@@ -136,6 +136,7 @@ namespace HNR.UI.Combat
         private RectTransform _rectTransform;
         private CanvasGroup _canvasGroup;
         private Canvas _canvas;
+        private bool _canvasCached;
 
         // ============================================
         // Runtime State
@@ -189,7 +190,19 @@ namespace HNR.UI.Combat
         {
             _rectTransform = GetComponent<RectTransform>();
             _canvasGroup = GetComponent<CanvasGroup>();
-            _canvas = GetComponentInParent<Canvas>();
+            // Don't cache canvas here - it may change when parented to CardFanLayout
+        }
+
+        /// <summary>
+        /// Ensure canvas reference is valid. Call after parenting changes.
+        /// </summary>
+        private void EnsureCanvasCached()
+        {
+            if (!_canvasCached || _canvas == null)
+            {
+                _canvas = GetComponentInParent<Canvas>();
+                _canvasCached = _canvas != null;
+            }
         }
 
         // ============================================
@@ -328,6 +341,9 @@ namespace HNR.UI.Combat
             if (!_isPlayable) return;
 
             _isDragging = true;
+
+            // Ensure canvas is cached now that we're parented
+            EnsureCanvasCached();
 
             // Store original transform
             _originalPosition = _rectTransform.anchoredPosition;
@@ -574,8 +590,10 @@ namespace HNR.UI.Combat
                 _rectTransform = GetComponent<RectTransform>();
             if (_canvasGroup == null)
                 _canvasGroup = GetComponent<CanvasGroup>();
-            if (_canvas == null)
-                _canvas = GetComponentInParent<Canvas>();
+
+            // Reset canvas cache - will be re-cached after parenting to CardFanLayout
+            _canvas = null;
+            _canvasCached = false;
 
             // Kill any running tweens from previous use
             DOTween.Kill(transform);

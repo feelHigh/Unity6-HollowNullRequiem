@@ -164,8 +164,8 @@ namespace HNR.Editor
             eliteProp.ClearArray();
             AddEncounterToList(eliteProp, encounters.GetValueOrDefault("elitewarden"));
 
-            // Boss - Zone 1 doesn't have a boss
-            so.FindProperty("_bossEncounter").objectReferenceValue = null;
+            // Boss - Zone 1 uses Corrupted Warden as mini-boss
+            so.FindProperty("_bossEncounter").objectReferenceValue = encounters.GetValueOrDefault("bosszone1warden");
 
             // Echo Events
             var echoProp = so.FindProperty("_echoEvents");
@@ -228,8 +228,8 @@ namespace HNR.Editor
             AddEncounterToList(eliteProp, encounters.GetValueOrDefault("elitewarden"));
             AddEncounterToList(eliteProp, encounters.GetValueOrDefault("eliteherald"));
 
-            // Boss - Zone 2 doesn't have a boss
-            so.FindProperty("_bossEncounter").objectReferenceValue = null;
+            // Boss - Zone 2 uses Null Herald as mini-boss
+            so.FindProperty("_bossEncounter").objectReferenceValue = encounters.GetValueOrDefault("bosszone2herald");
 
             // Echo Events
             var echoProp = so.FindProperty("_echoEvents");
@@ -324,6 +324,12 @@ namespace HNR.Editor
             // Populate Zone 1 encounters with enemies
             PopulateZone1Encounters(enemies, encounters);
 
+            // Populate Zone 2 encounters with enemies
+            PopulateZone2Encounters(enemies, encounters);
+
+            // Populate Zone 3 encounters with enemies
+            PopulateZone3Encounters(enemies, encounters);
+
             // Populate elite and boss encounters
             PopulateEliteAndBossEncounters(enemies, encounters);
 
@@ -368,6 +374,78 @@ namespace HNR.Editor
             }
         }
 
+        private static void PopulateZone2Encounters(Dictionary<string, EnemyDataSO> enemies, Dictionary<string, EncounterDataSO> encounters)
+        {
+            // Find Zone 2 enemies (keys have underscores removed in LoadAllEnemies)
+            var knight = enemies.GetValueOrDefault("zone2fracturedknight") ?? FindEnemyByPartialName(enemies, "Knight");
+            var specter = enemies.GetValueOrDefault("zone2nullspecter") ?? FindEnemyByPartialName(enemies, "Specter");
+
+            Debug.Log($"[ProductionDataGenerator] Zone 2 enemies found: Knight={knight != null}, Specter={specter != null}");
+
+            if (knight == null && specter == null)
+            {
+                Debug.LogWarning("[ProductionDataGenerator] No Zone 2 enemies found. Skipping Zone 2 population.");
+                return;
+            }
+
+            // Populate Zone2_Easy
+            var zone2Easy = encounters.GetValueOrDefault("zone2easy");
+            if (zone2Easy != null)
+            {
+                PopulateEncounterEnemies(zone2Easy, new[] { knight ?? specter });
+            }
+
+            // Populate Zone2_Medium
+            var zone2Medium = encounters.GetValueOrDefault("zone2medium");
+            if (zone2Medium != null)
+            {
+                PopulateEncounterEnemies(zone2Medium, new[] { knight, specter });
+            }
+
+            // Populate Zone2_Hard
+            var zone2Hard = encounters.GetValueOrDefault("zone2hard");
+            if (zone2Hard != null)
+            {
+                PopulateEncounterEnemies(zone2Hard, new[] { specter, knight });
+            }
+        }
+
+        private static void PopulateZone3Encounters(Dictionary<string, EnemyDataSO> enemies, Dictionary<string, EncounterDataSO> encounters)
+        {
+            // Find Zone 3 enemies (keys have underscores removed in LoadAllEnemies)
+            var amalgam = enemies.GetValueOrDefault("zone3hollowamalgam") ?? FindEnemyByPartialName(enemies, "Amalgam");
+            var executioner = enemies.GetValueOrDefault("zone3voidexecutioner") ?? FindEnemyByPartialName(enemies, "Executioner");
+
+            Debug.Log($"[ProductionDataGenerator] Zone 3 enemies found: Amalgam={amalgam != null}, Executioner={executioner != null}");
+
+            if (amalgam == null && executioner == null)
+            {
+                Debug.LogWarning("[ProductionDataGenerator] No Zone 3 enemies found. Skipping Zone 3 population.");
+                return;
+            }
+
+            // Populate Zone3_Easy
+            var zone3Easy = encounters.GetValueOrDefault("zone3easy");
+            if (zone3Easy != null)
+            {
+                PopulateEncounterEnemies(zone3Easy, new[] { amalgam ?? executioner });
+            }
+
+            // Populate Zone3_Medium
+            var zone3Medium = encounters.GetValueOrDefault("zone3medium");
+            if (zone3Medium != null)
+            {
+                PopulateEncounterEnemies(zone3Medium, new[] { amalgam, executioner });
+            }
+
+            // Populate Zone3_Hard
+            var zone3Hard = encounters.GetValueOrDefault("zone3hard");
+            if (zone3Hard != null)
+            {
+                PopulateEncounterEnemies(zone3Hard, new[] { executioner, amalgam });
+            }
+        }
+
         private static void PopulateEliteAndBossEncounters(Dictionary<string, EnemyDataSO> enemies, Dictionary<string, EncounterDataSO> encounters)
         {
             // Find elite enemies
@@ -397,6 +475,44 @@ namespace HNR.Editor
             {
                 PopulateEncounterEnemies(bossHollowKing, new[] { hollowKing });
             }
+
+            // Create Zone 1 boss encounter (Corrupted Warden as mini-boss)
+            if (!encounters.ContainsKey("bosszone1warden") && warden != null)
+            {
+                var zone1Boss = CreateBossEncounter("boss_zone1_warden", "The Corrupted Warden", 1, warden);
+                encounters["bosszone1warden"] = zone1Boss;
+            }
+
+            // Create Zone 2 boss encounter (Null Herald as mini-boss)
+            if (!encounters.ContainsKey("bosszone2herald") && herald != null)
+            {
+                var zone2Boss = CreateBossEncounter("boss_zone2_herald", "The Null Herald", 2, herald);
+                encounters["bosszone2herald"] = zone2Boss;
+            }
+        }
+
+        private static EncounterDataSO CreateBossEncounter(string id, string name, int zone, EnemyDataSO bossEnemy)
+        {
+            string path = $"{ENCOUNTER_PATH}/Boss_Zone{zone}.asset";
+
+            var encounter = ScriptableObject.CreateInstance<EncounterDataSO>();
+
+            SetField(encounter, "_encounterId", id);
+            SetField(encounter, "_encounterName", name);
+            SetField(encounter, "_zone", zone);
+            SetField(encounter, "_difficulty", EncounterDifficulty.Hard);
+            SetField(encounter, "_isElite", false);
+            SetField(encounter, "_isBoss", true);
+
+            var pool = new List<EnemyDataSO> { bossEnemy };
+            SetField(encounter, "_enemyPool", pool);
+            SetField(encounter, "_minEnemies", 1);
+            SetField(encounter, "_maxEnemies", 1);
+            SetField(encounter, "_rewardMultiplier", zone == 1 ? 1.5f : 2.0f);
+
+            AssetDatabase.CreateAsset(encounter, path);
+            Debug.Log($"[ProductionDataGenerator] Created boss encounter: {path}");
+            return encounter;
         }
 
         private static void PopulateEncounterEnemies(EncounterDataSO encounter, EnemyDataSO[] enemyPool)
