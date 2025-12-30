@@ -414,10 +414,23 @@ namespace HNR.UI.Combat
 
                 if (isNewCard)
                 {
+                    // Bring newly dealt card to front during deal animation so it's always visible
+                    card.transform.SetAsLastSibling();
+
                     // Starting fresh from pool - animate position, rotation, and scale
                     rect.DOAnchorPos(position, _dealDuration).SetEase(_dealEase).SetLink(card.gameObject);
                     rect.DOLocalRotate(new Vector3(0, 0, rotation), _dealDuration).SetEase(_dealEase).SetLink(card.gameObject);
-                    card.transform.DOScale(1f, _dealDuration).SetEase(_dealEase).SetLink(card.gameObject);
+                    card.transform.DOScale(1f, _dealDuration).SetEase(_dealEase)
+                        .OnComplete(() =>
+                        {
+                            // After deal animation completes, set correct sibling index for fan layering
+                            int finalIndex = _cards.IndexOf(card);
+                            if (finalIndex >= 0)
+                            {
+                                card.transform.SetSiblingIndex(finalIndex);
+                            }
+                        })
+                        .SetLink(card.gameObject);
                 }
                 else
                 {
@@ -429,6 +442,7 @@ namespace HNR.UI.Combat
                     {
                         card.transform.DOScale(1f, _repositionDuration).SetEase(Ease.OutQuad).SetLink(card.gameObject);
                     }
+                    card.transform.SetSiblingIndex(index);
                 }
             }
             else
@@ -436,10 +450,9 @@ namespace HNR.UI.Combat
                 // Fallback: set position directly if RectTransform unavailable
                 card.transform.localPosition = new Vector3(position.x, position.y, 0);
                 card.transform.localScale = Vector3.one;
+                card.transform.SetSiblingIndex(index);
                 Debug.LogWarning($"[CardFanLayout] RectTransform null for card at index {index}, setting position directly");
             }
-
-            card.transform.SetSiblingIndex(index);
         }
 
         // ============================================

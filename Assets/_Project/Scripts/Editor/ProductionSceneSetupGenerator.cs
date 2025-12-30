@@ -2515,6 +2515,22 @@ namespace HNR.Editor
                 Debug.LogWarning("[ProductionSceneSetupGenerator] AllyIndicator.prefab not found - run HNR > 2. Prefabs > UI > Combat UI (All) first");
             }
 
+            // Wire CombatCard prefab for card instantiation during combat
+            var combatCardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/Combat/CombatCard.prefab");
+            if (combatCardPrefab != null)
+            {
+                var combatCard = combatCardPrefab.GetComponent<CombatCard>();
+                if (combatCard != null)
+                {
+                    SetPropertyIfExists(so, "_combatCardPrefab", combatCard);
+                    Debug.Log("[ProductionSceneSetupGenerator] Wired CombatCard.prefab to CombatScreen._combatCardPrefab");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] CombatCard.prefab not found - run HNR > 2. Prefabs > UI > CombatCard Prefab first");
+            }
+
             so.ApplyModifiedPropertiesWithoutUndo();
             Debug.Log("[ProductionSceneSetupGenerator] Wired CombatScreen component references");
         }
@@ -2717,22 +2733,28 @@ namespace HNR.Editor
 
         /// <summary>
         /// Creates the party status sidebar.
+        /// Styled after Chaos Zero Nightmare - vertical stack at bottom-left.
         /// </summary>
         private static GameObject CreatePartySidebar(GameObject parent)
         {
             GameObject sidebar = new GameObject("PartySidebar");
             sidebar.transform.SetParent(parent.transform, false);
 
+            // Positioned at bottom-left corner - narrow vertical strip
+            // Matches BottomCommandCenter height (0 to 0.35 of screen)
             RectTransform rect = sidebar.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0, 0.35f);
-            rect.anchorMax = new Vector2(0.1f, 0.87f);
-            rect.sizeDelta = Vector2.zero;
+            rect.anchorMin = new Vector2(0, 0);
+            rect.anchorMax = new Vector2(0, 0.35f); // Match BottomCommandCenter height
+            rect.pivot = new Vector2(0, 0);
+            rect.offsetMin = new Vector2(8, 8); // Left and bottom margin
+            rect.offsetMax = new Vector2(88, -8); // 80px width, top margin
 
             Image bg = sidebar.AddComponent<Image>();
-            bg.color = new Color(0, 0, 0, 0.5f);
+            bg.color = new Color(0, 0, 0, 0.6f);
 
+            // Vertical layout - party members stacked top to bottom
             VerticalLayoutGroup layout = sidebar.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 4f;
+            layout.spacing = 6f;
             layout.padding = new RectOffset(6, 6, 8, 8);
             layout.childAlignment = TextAnchor.UpperCenter;
             layout.childForceExpandWidth = true;
@@ -2755,45 +2777,48 @@ namespace HNR.Editor
             GameObject slot = new GameObject($"PartySlot_{index}");
             slot.transform.SetParent(parent.transform, false);
 
+            // Compact vertical slot - portrait + EP gauge style (like Chaos Zero Nightmare)
             var layoutElement = slot.AddComponent<LayoutElement>();
-            layoutElement.preferredHeight = 80;
-            layoutElement.flexibleHeight = 1;
+            layoutElement.preferredHeight = 82;
+            layoutElement.flexibleWidth = 1;
 
             VerticalLayoutGroup layout = slot.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 2f;
-            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.spacing = 3f;
+            layout.childAlignment = TextAnchor.MiddleCenter;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
             layout.padding = new RectOffset(4, 4, 4, 4);
 
             Image slotBg = slot.AddComponent<Image>();
-            slotBg.color = new Color(0.2f, 0.15f, 0.25f, 0.6f);
+            slotBg.color = new Color(0.15f, 0.12f, 0.2f, 0.7f);
 
-            // Hexagonal portrait frame
+            // Circular portrait frame (like Chaos Zero Nightmare style)
             GameObject portrait = new GameObject("Portrait");
             portrait.transform.SetParent(slot.transform, false);
             RectTransform portraitRect = portrait.AddComponent<RectTransform>();
-            portraitRect.sizeDelta = new Vector2(44, 50);
+            portraitRect.sizeDelta = new Vector2(48, 48);
             Image portraitImg = portrait.AddComponent<Image>();
             portraitImg.color = new Color(0.3f, 0.25f, 0.35f);
             var portraitLayout = portrait.AddComponent<LayoutElement>();
-            portraitLayout.preferredWidth = 44;
-            portraitLayout.preferredHeight = 50;
+            portraitLayout.preferredWidth = 48;
+            portraitLayout.preferredHeight = 48;
 
-            // Name label
-            GameObject nameLabel = CreateText(slot, "Name", $"Requiem {index + 1}", 8);
-            nameLabel.GetComponent<TextMeshProUGUI>().fontStyle = TMPro.FontStyles.Bold;
+            // EP Label with value (compact style like "EP 2")
+            GameObject epLabel = CreateText(slot, "EPLabel", "EP", 9);
+            var epTmp = epLabel.GetComponent<TextMeshProUGUI>();
+            epTmp.fontStyle = TMPro.FontStyles.Bold;
+            epTmp.color = new Color(0.4f, 0.7f, 1f); // Light blue
 
-            // SE Gauge
+            // SE/EP Gauge bar
             GameObject seGauge = new GameObject("SEGauge");
             seGauge.transform.SetParent(slot.transform, false);
             RectTransform seRect = seGauge.AddComponent<RectTransform>();
-            seRect.sizeDelta = new Vector2(0, 6);
+            seRect.sizeDelta = new Vector2(0, 8);
             var seLayoutElement = seGauge.AddComponent<LayoutElement>();
-            seLayoutElement.preferredHeight = 6;
+            seLayoutElement.preferredHeight = 8;
 
             Image seBg = seGauge.AddComponent<Image>();
-            seBg.color = new Color(0, 0, 0, 0.6f);
+            seBg.color = new Color(0.1f, 0.1f, 0.15f, 0.8f);
 
             GameObject seFill = new GameObject("SEFill");
             seFill.transform.SetParent(seGauge.transform, false);
@@ -2803,10 +2828,6 @@ namespace HNR.Editor
             seFillRect.sizeDelta = Vector2.zero;
             Image seFillImg = seFill.AddComponent<Image>();
             seFillImg.color = new Color(0.83f, 0.69f, 0.22f); // Soul gold #D4AF37
-
-            // SE Label
-            GameObject seLabel = CreateText(slot, "SELabel", "SE 24/40", 7);
-            seLabel.GetComponent<TextMeshProUGUI>().color = new Color(0.83f, 0.69f, 0.22f);
 
             return slot;
         }
@@ -2898,13 +2919,21 @@ namespace HNR.Editor
             GameObject counter = new GameObject("APCounter");
             counter.transform.SetParent(parent.transform, false);
 
-            // Positioned at bottom-middle, above cards - square 70x70 per UI refactor
+            // Positioned at center bottom of screen - square 70x70 per UI refactor
             RectTransform rect = counter.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.anchorMin = new Vector2(0.5f, 0f);
+            rect.anchorMax = new Vector2(0.5f, 0f);
             rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = new Vector2(0, 40); // Slightly above center
+            rect.anchoredPosition = new Vector2(0, 50); // 50px above bottom edge
             rect.sizeDelta = new Vector2(70, 70);
+
+            // Add Canvas with override sorting to render ABOVE cards
+            // Cards are in HandContainer which is a sibling after ScreenContainer,
+            // so we need explicit sorting order to ensure AP counter renders on top
+            Canvas apCanvas = counter.AddComponent<Canvas>();
+            apCanvas.overrideSorting = true;
+            apCanvas.sortingOrder = 100; // High sorting order to render above cards
+            counter.AddComponent<GraphicRaycaster>(); // Required for UI interactions
 
             // Glow background
             GameObject glow = new GameObject("Glow");
