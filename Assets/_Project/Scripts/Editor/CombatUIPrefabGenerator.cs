@@ -22,7 +22,106 @@ namespace HNR.Editor
         {
             GenerateEnemyFloatingUI();
             GenerateAllyIndicator();
+            GeneratePortraitCorruptionSlot();
             Debug.Log("[CombatUIPrefabGenerator] All Combat UI prefabs generated.");
+        }
+
+        /// <summary>
+        /// Generates the PortraitCorruptionSlot prefab for SharedVitalityBar.
+        /// Shows character portrait with a horizontal corruption bar below.
+        /// </summary>
+        public static void GeneratePortraitCorruptionSlot()
+        {
+            EnsureDirectoryExists();
+
+            // Create root GameObject
+            var root = new GameObject("PortraitCorruptionSlot");
+            var rootRect = root.AddComponent<RectTransform>();
+            rootRect.sizeDelta = new Vector2(48, 60); // 48x48 portrait + 6px bar + 6px spacing
+
+            // ============================================
+            // Portrait Frame (circular border)
+            // ============================================
+            var frameGO = CreateChild(root, "PortraitFrame");
+            var frameRect = frameGO.GetComponent<RectTransform>();
+            frameRect.anchorMin = new Vector2(0, 0.2f);
+            frameRect.anchorMax = new Vector2(1, 1);
+            frameRect.offsetMin = Vector2.zero;
+            frameRect.offsetMax = Vector2.zero;
+            var frameImage = frameGO.AddComponent<Image>();
+            frameImage.color = new Color(0.4f, 0.4f, 0.5f, 1f); // Default gray frame
+            // Note: Assign circular frame sprite in Inspector for proper look
+
+            // ============================================
+            // Portrait Image
+            // ============================================
+            var portraitGO = CreateChild(root, "Portrait");
+            var portraitRect = portraitGO.GetComponent<RectTransform>();
+            portraitRect.anchorMin = new Vector2(0.05f, 0.22f);
+            portraitRect.anchorMax = new Vector2(0.95f, 0.98f);
+            portraitRect.offsetMin = Vector2.zero;
+            portraitRect.offsetMax = Vector2.zero;
+            var portraitImage = portraitGO.AddComponent<Image>();
+            portraitImage.color = Color.white;
+            portraitImage.preserveAspect = true;
+            // Note: Assign circular mask for proper look
+
+            // ============================================
+            // Corruption Bar Background
+            // ============================================
+            var corruptBgGO = CreateChild(root, "CorruptionBackground");
+            var corruptBgRect = corruptBgGO.GetComponent<RectTransform>();
+            corruptBgRect.anchorMin = new Vector2(0, 0);
+            corruptBgRect.anchorMax = new Vector2(1, 0.15f);
+            corruptBgRect.offsetMin = Vector2.zero;
+            corruptBgRect.offsetMax = Vector2.zero;
+            var corruptBgImage = corruptBgGO.AddComponent<Image>();
+            corruptBgImage.color = new Color(0.15f, 0.15f, 0.2f, 0.9f);
+
+            // ============================================
+            // Corruption Bar Fill
+            // ============================================
+            var corruptFillGO = CreateChild(root, "CorruptionFill");
+            var corruptFillRect = corruptFillGO.GetComponent<RectTransform>();
+            corruptFillRect.anchorMin = new Vector2(0, 0);
+            corruptFillRect.anchorMax = new Vector2(1, 0.15f);
+            corruptFillRect.offsetMin = new Vector2(1, 1);
+            corruptFillRect.offsetMax = new Vector2(-1, -1);
+            var corruptFillImage = corruptFillGO.AddComponent<Image>();
+            corruptFillImage.color = new Color(0.2f, 0.8f, 0.2f, 1f); // Start green (safe)
+            corruptFillImage.type = Image.Type.Filled;
+            corruptFillImage.fillMethod = Image.FillMethod.Horizontal;
+            corruptFillImage.fillAmount = 0f; // Start at 0 corruption
+
+            // ============================================
+            // Add PortraitCorruptionSlot Component
+            // ============================================
+            var slotComponent = root.AddComponent<HNR.UI.Combat.PortraitCorruptionSlot>();
+
+            // Wire up references via SerializedObject
+            var so = new SerializedObject(slotComponent);
+            so.FindProperty("_portrait").objectReferenceValue = portraitImage;
+            so.FindProperty("_portraitFrame").objectReferenceValue = frameImage;
+            so.FindProperty("_corruptionFill").objectReferenceValue = corruptFillImage;
+            so.FindProperty("_corruptionBackground").objectReferenceValue = corruptBgImage;
+            so.FindProperty("_fillSpeed").floatValue = 5f;
+            so.FindProperty("_smoothTransition").boolValue = true;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            // Save as prefab
+            string prefabPath = $"{PrefabDir}/PortraitCorruptionSlot.prefab";
+            PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+
+            // Clean up scene object
+            Object.DestroyImmediate(root);
+
+            AssetDatabase.Refresh();
+            Debug.Log($"[CombatUIPrefabGenerator] PortraitCorruptionSlot prefab created at: {prefabPath}");
+
+            // Select the prefab
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            Selection.activeObject = prefab;
+            EditorGUIUtility.PingObject(prefab);
         }
 
         /// <summary>

@@ -29,9 +29,10 @@ namespace HNR.UI.Combat
         [SerializeField] private float _barHeight = 40f;
 
         [Header("Embedded Portraits")]
-        [SerializeField] private Image[] _partyPortraits;
-        [SerializeField] private float _portraitSize = 32f;
-        [SerializeField] private float _portraitOverlap = 8f;
+        [SerializeField] private PortraitCorruptionSlot[] _portraitSlots;
+        [SerializeField] private RectTransform _portraitContainer;
+        [SerializeField] private float _portraitSize = 48f;
+        [SerializeField] private float _portraitSpacing = 8f;
 
         [Header("Health Display")]
         [SerializeField] private Image _healthFill;
@@ -130,25 +131,27 @@ namespace HNR.UI.Combat
         }
 
         /// <summary>
-        /// Sets the party portrait images from the team.
+        /// Sets the party portraits and initializes corruption tracking from the team.
         /// </summary>
         /// <param name="team">Array of RequiemInstance for the party.</param>
         public void SetPartyPortraits(RequiemInstance[] team)
         {
-            if (_partyPortraits == null || team == null) return;
+            if (_portraitSlots == null || team == null) return;
 
-            for (int i = 0; i < _partyPortraits.Length; i++)
+            for (int i = 0; i < _portraitSlots.Length; i++)
             {
-                if (i < team.Length && team[i]?.Data?.Portrait != null)
+                if (i < team.Length && team[i] != null)
                 {
-                    _partyPortraits[i].sprite = team[i].Data.Portrait;
-                    _partyPortraits[i].gameObject.SetActive(true);
+                    _portraitSlots[i].Initialize(team[i]);
+                    _portraitSlots[i].gameObject.SetActive(true);
                 }
                 else
                 {
-                    _partyPortraits[i].gameObject.SetActive(false);
+                    _portraitSlots[i].gameObject.SetActive(false);
                 }
             }
+
+            Debug.Log($"[SharedVitalityBar] Initialized {team.Length} portrait slots with corruption tracking");
         }
 
         private void OnTeamHPChanged(TeamHPChangedEvent evt)

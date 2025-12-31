@@ -1994,10 +1994,8 @@ namespace HNR.Editor
             // System Menu Bar (right side of top HUD)
             GameObject sysMenuBar = CreateSystemMenuBar(topHUD);
 
-            // ============================================
-            // LEFT SIDEBAR (80px) - Party Status
-            // ============================================
-            GameObject partySidebar = CreatePartySidebar(screenObj);
+            // NOTE: PartySidebar is now created as child of BottomCommandCenter (see below)
+            // This ensures proper click interaction and layering
 
             // ============================================
             // CENTER - Enemy Zone + Battle Area
@@ -2061,6 +2059,11 @@ namespace HNR.Editor
 
             // Execution Button (right side)
             GameObject executionBtn = CreateExecutionButton(bottomHUD);
+
+            // ============================================
+            // LEFT SIDEBAR - Party Status (child of BottomCommandCenter for click interaction)
+            // ============================================
+            GameObject partySidebar = CreatePartySidebar(bottomHUD);
 
             // Wire references
             SerializedObject screenSO = new SerializedObject(combatScreen);
@@ -2540,7 +2543,8 @@ namespace HNR.Editor
         // ============================================
 
         /// <summary>
-        /// Creates the shared vitality bar with embedded party portraits.
+        /// Creates the shared vitality bar with HP bar on top and party portraits with corruption bars below.
+        /// Layout: HP Bar at top, 3 PortraitCorruptionSlots horizontally below.
         /// </summary>
         private static GameObject CreateSharedVitalityBarFull(GameObject parent)
         {
@@ -2548,48 +2552,53 @@ namespace HNR.Editor
             barObj.transform.SetParent(parent.transform, false);
 
             RectTransform rect = barObj.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0, 0.5f);
-            rect.anchorMax = new Vector2(0.6f, 0.5f);
+            // Fill left portion of TopHUD, stretch vertically within parent
+            rect.anchorMin = new Vector2(0, 0);
+            rect.anchorMax = new Vector2(0.6f, 1); // 60% of TopHUD width, full height
             rect.pivot = new Vector2(0, 0.5f);
-            rect.anchoredPosition = new Vector2(12, 0);
-            rect.sizeDelta = new Vector2(0, 32);
+            rect.offsetMin = new Vector2(12, 4); // Left and bottom margin
+            rect.offsetMax = new Vector2(0, -4); // Right edge at anchor, top margin
 
-            var layout = barObj.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 8f;
-            layout.childAlignment = TextAnchor.MiddleLeft;
-            layout.childForceExpandWidth = false;
+            // Vertical layout: HP bar on top, portraits below
+            var layout = barObj.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 4f;
+            layout.childAlignment = TextAnchor.UpperLeft;
+            layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
-            layout.padding = new RectOffset(8, 8, 4, 4);
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.padding = new RectOffset(4, 4, 2, 2);
 
-            // Party portraits container (overlapping circles)
-            GameObject portraitsContainer = new GameObject("PartyPortraits");
-            portraitsContainer.transform.SetParent(barObj.transform, false);
-            var portraitsLayout = portraitsContainer.AddComponent<HorizontalLayoutGroup>();
-            portraitsLayout.spacing = -8f; // Negative for overlap
-            portraitsLayout.childAlignment = TextAnchor.MiddleCenter;
+            // ============================================
+            // HP Bar Row (top) - WIDE RECTANGLE
+            // ============================================
+            GameObject hpRow = new GameObject("HPBarRow");
+            hpRow.transform.SetParent(barObj.transform, false);
 
-            for (int i = 0; i < 3; i++)
-            {
-                GameObject portrait = new GameObject($"Portrait_{i}");
-                portrait.transform.SetParent(portraitsContainer.transform, false);
-                RectTransform pRect = portrait.AddComponent<RectTransform>();
-                pRect.sizeDelta = new Vector2(28, 28);
-                Image pImg = portrait.AddComponent<Image>();
-                pImg.color = new Color(0.3f + i * 0.15f, 0.2f, 0.4f - i * 0.1f);
-                var pLayout = portrait.AddComponent<LayoutElement>();
-                pLayout.preferredWidth = 28;
-                pLayout.preferredHeight = 28;
-            }
+            RectTransform hpRowRect = hpRow.AddComponent<RectTransform>();
 
-            // HP Bar container - wide bar
+            var hpRowLayoutElement = hpRow.AddComponent<LayoutElement>();
+            hpRowLayoutElement.preferredHeight = 28;
+            hpRowLayoutElement.minHeight = 24;
+
+            var hpRowLayout = hpRow.AddComponent<HorizontalLayoutGroup>();
+            hpRowLayout.spacing = 8f;
+            hpRowLayout.childAlignment = TextAnchor.MiddleLeft;
+            hpRowLayout.childForceExpandWidth = false;
+            hpRowLayout.childForceExpandHeight = true;
+            hpRowLayout.childControlWidth = true;
+            hpRowLayout.childControlHeight = true;
+
+            // HP Bar container - WIDE rectangle (flexibleWidth makes it expand)
             GameObject hpBarContainer = new GameObject("HPBarContainer");
-            hpBarContainer.transform.SetParent(barObj.transform, false);
-            var hpLayout = hpBarContainer.AddComponent<LayoutElement>();
-            hpLayout.preferredWidth = 600;
-            hpLayout.preferredHeight = 40;
-            hpLayout.flexibleWidth = 1;
+            hpBarContainer.transform.SetParent(hpRow.transform, false);
 
             RectTransform hpContainerRect = hpBarContainer.AddComponent<RectTransform>();
+
+            var hpLayout = hpBarContainer.AddComponent<LayoutElement>();
+            hpLayout.minWidth = 200;
+            hpLayout.preferredHeight = 24;
+            hpLayout.flexibleWidth = 1; // Expand to fill available width
 
             // HP Bar background
             Image hpBg = hpBarContainer.AddComponent<Image>();
@@ -2601,7 +2610,8 @@ namespace HNR.Editor
             RectTransform fillRect = hpFill.AddComponent<RectTransform>();
             fillRect.anchorMin = Vector2.zero;
             fillRect.anchorMax = new Vector2(0.8f, 1); // 80% fill example
-            fillRect.sizeDelta = Vector2.zero;
+            fillRect.offsetMin = new Vector2(2, 2);
+            fillRect.offsetMax = new Vector2(-2, -2);
             Image fillImg = hpFill.AddComponent<Image>();
             fillImg.color = new Color(0.18f, 0.8f, 0.44f); // Health green #2ECC71
 
@@ -2612,12 +2622,13 @@ namespace HNR.Editor
             RectTransform dmgRect = damageFill.AddComponent<RectTransform>();
             dmgRect.anchorMin = Vector2.zero;
             dmgRect.anchorMax = new Vector2(0.85f, 1);
-            dmgRect.sizeDelta = Vector2.zero;
+            dmgRect.offsetMin = new Vector2(2, 2);
+            dmgRect.offsetMax = new Vector2(-2, -2);
             Image dmgImg = damageFill.AddComponent<Image>();
             dmgImg.color = new Color(1f, 0.27f, 0.27f); // Corruption glow #FF4444
 
             // HP Text
-            GameObject hpText = CreateText(hpBarContainer, "HPText", "150 / 150", 11);
+            GameObject hpText = CreateText(hpBarContainer, "HPText", "210 / 210", 11);
             RectTransform hpTextRect = hpText.GetComponent<RectTransform>();
             hpTextRect.anchorMin = Vector2.zero;
             hpTextRect.anchorMax = Vector2.one;
@@ -2627,14 +2638,15 @@ namespace HNR.Editor
 
             // Block indicator container
             GameObject blockContainer = new GameObject("BlockContainer");
-            blockContainer.transform.SetParent(barObj.transform, false);
+            blockContainer.transform.SetParent(hpRow.transform, false);
             var blockLayout = blockContainer.AddComponent<HorizontalLayoutGroup>();
             blockLayout.spacing = 4f;
             blockLayout.childAlignment = TextAnchor.MiddleCenter;
-            blockLayout.padding = new RectOffset(8, 8, 0, 0);
+            blockLayout.padding = new RectOffset(4, 4, 0, 0);
 
             var blockLayoutElement = blockContainer.AddComponent<LayoutElement>();
             blockLayoutElement.preferredWidth = 50;
+            blockLayoutElement.preferredHeight = 28;
 
             // Shield icon
             GameObject shieldIcon = new GameObject("ShieldIcon");
@@ -2649,7 +2661,34 @@ namespace HNR.Editor
             blockText.GetComponent<TextMeshProUGUI>().color = new Color(0.2f, 0.6f, 0.86f);
             blockText.GetComponent<TextMeshProUGUI>().fontStyle = TMPro.FontStyles.Bold;
 
-            // Add SharedVitalityBar component
+            blockContainer.SetActive(false); // Hidden by default
+
+            // ============================================
+            // Portrait Row (below HP bar) - with corruption bars
+            // ============================================
+            GameObject portraitContainer = new GameObject("PortraitContainer");
+            portraitContainer.transform.SetParent(barObj.transform, false);
+            var portraitsLayout = portraitContainer.AddComponent<HorizontalLayoutGroup>();
+            portraitsLayout.spacing = 8f;
+            portraitsLayout.childAlignment = TextAnchor.MiddleLeft;
+            portraitsLayout.childForceExpandWidth = false;
+            portraitsLayout.childForceExpandHeight = false;
+            var portraitContainerLayout = portraitContainer.AddComponent<LayoutElement>();
+            portraitContainerLayout.preferredHeight = 36;
+
+            // Create 3 PortraitCorruptionSlot instances
+            List<PortraitCorruptionSlot> portraitSlots = new List<PortraitCorruptionSlot>();
+            for (int i = 0; i < 3; i++)
+            {
+                GameObject slotObj = CreatePortraitCorruptionSlotInline(portraitContainer, i);
+                var slotComponent = slotObj.GetComponent<PortraitCorruptionSlot>();
+                if (slotComponent != null)
+                {
+                    portraitSlots.Add(slotComponent);
+                }
+            }
+
+            // Add SharedVitalityBar component and wire references
             var vitalityComponent = barObj.AddComponent<SharedVitalityBar>();
             SerializedObject so = new SerializedObject(vitalityComponent);
             so.FindProperty("_healthFill").objectReferenceValue = fillImg;
@@ -2658,11 +2697,114 @@ namespace HNR.Editor
             so.FindProperty("_blockContainer").objectReferenceValue = blockContainer;
             so.FindProperty("_shieldIcon").objectReferenceValue = shieldImg;
             so.FindProperty("_blockText").objectReferenceValue = blockText.GetComponent<TMP_Text>();
+            so.FindProperty("_portraitContainer").objectReferenceValue = portraitContainer.GetComponent<RectTransform>();
+
+            // Wire portrait slots array
+            var slotsProperty = so.FindProperty("_portraitSlots");
+            slotsProperty.arraySize = portraitSlots.Count;
+            for (int i = 0; i < portraitSlots.Count; i++)
+            {
+                slotsProperty.GetArrayElementAtIndex(i).objectReferenceValue = portraitSlots[i];
+            }
+
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            blockContainer.SetActive(false); // Hidden by default
-
             return barObj;
+        }
+
+        /// <summary>
+        /// Creates a PortraitCorruptionSlot inline for the SharedVitalityBar.
+        /// Uses Mask component to crop portrait sprite (show face only, not shrunk).
+        /// </summary>
+        private static GameObject CreatePortraitCorruptionSlotInline(GameObject parent, int index)
+        {
+            GameObject slotObj = new GameObject($"PortraitCorruptionSlot_{index}");
+            slotObj.transform.SetParent(parent.transform, false);
+
+            RectTransform slotRect = slotObj.AddComponent<RectTransform>();
+            slotRect.sizeDelta = new Vector2(56, 44); // Wider for rectangular portrait + corruption bar
+
+            var slotLayoutElement = slotObj.AddComponent<LayoutElement>();
+            slotLayoutElement.preferredWidth = 56;
+            slotLayoutElement.preferredHeight = 44;
+
+            // Portrait frame (rectangular border) - acts as mask container
+            GameObject frameObj = new GameObject("PortraitFrame");
+            frameObj.transform.SetParent(slotObj.transform, false);
+            RectTransform frameRect = frameObj.AddComponent<RectTransform>();
+            frameRect.anchorMin = new Vector2(0, 0.18f);
+            frameRect.anchorMax = new Vector2(1, 1);
+            frameRect.offsetMin = Vector2.zero;
+            frameRect.offsetMax = Vector2.zero;
+            Image frameImg = frameObj.AddComponent<Image>();
+            frameImg.color = new Color(0.4f, 0.4f, 0.5f, 1f);
+
+            // Portrait mask container - clips the portrait to show only face area
+            GameObject maskContainer = new GameObject("PortraitMask");
+            maskContainer.transform.SetParent(frameObj.transform, false);
+            RectTransform maskRect = maskContainer.AddComponent<RectTransform>();
+            maskRect.anchorMin = new Vector2(0.04f, 0.04f);
+            maskRect.anchorMax = new Vector2(0.96f, 0.96f);
+            maskRect.offsetMin = Vector2.zero;
+            maskRect.offsetMax = Vector2.zero;
+            Image maskImg = maskContainer.AddComponent<Image>();
+            maskImg.color = Color.white;
+            // Add Mask component to clip children
+            var mask = maskContainer.AddComponent<Mask>();
+            mask.showMaskGraphic = false; // Don't show the mask image itself
+
+            // Portrait image - positioned to show upper body/face, NOT shrunk
+            // The image will be larger than the mask and positioned so face is visible
+            GameObject portraitObj = new GameObject("Portrait");
+            portraitObj.transform.SetParent(maskContainer.transform, false);
+            RectTransform portraitRect = portraitObj.AddComponent<RectTransform>();
+            // Position image so upper portion (face) shows - anchor at top-center
+            portraitRect.anchorMin = new Vector2(0.5f, 1f);
+            portraitRect.anchorMax = new Vector2(0.5f, 1f);
+            portraitRect.pivot = new Vector2(0.5f, 0.85f); // Pivot near top of face
+            portraitRect.sizeDelta = new Vector2(80, 100); // Larger than mask area
+            portraitRect.anchoredPosition = Vector2.zero;
+            Image portraitImg = portraitObj.AddComponent<Image>();
+            portraitImg.color = Color.white; // Full color for actual sprite
+            portraitImg.preserveAspect = true; // Keep aspect ratio
+
+            // Corruption bar background
+            GameObject corruptBgObj = new GameObject("CorruptionBackground");
+            corruptBgObj.transform.SetParent(slotObj.transform, false);
+            RectTransform corruptBgRect = corruptBgObj.AddComponent<RectTransform>();
+            corruptBgRect.anchorMin = new Vector2(0, 0);
+            corruptBgRect.anchorMax = new Vector2(1, 0.16f);
+            corruptBgRect.offsetMin = Vector2.zero;
+            corruptBgRect.offsetMax = Vector2.zero;
+            Image corruptBgImg = corruptBgObj.AddComponent<Image>();
+            corruptBgImg.color = new Color(0.15f, 0.15f, 0.2f, 0.9f);
+
+            // Corruption bar fill
+            GameObject corruptFillObj = new GameObject("CorruptionFill");
+            corruptFillObj.transform.SetParent(slotObj.transform, false);
+            RectTransform corruptFillRect = corruptFillObj.AddComponent<RectTransform>();
+            corruptFillRect.anchorMin = new Vector2(0, 0);
+            corruptFillRect.anchorMax = new Vector2(1, 0.16f);
+            corruptFillRect.offsetMin = new Vector2(1, 1);
+            corruptFillRect.offsetMax = new Vector2(-1, -1);
+            Image corruptFillImg = corruptFillObj.AddComponent<Image>();
+            corruptFillImg.color = new Color(0.2f, 0.8f, 0.2f, 1f); // Start green (safe)
+            corruptFillImg.type = Image.Type.Filled;
+            corruptFillImg.fillMethod = Image.FillMethod.Horizontal;
+            corruptFillImg.fillAmount = 0f;
+
+            // Add PortraitCorruptionSlot component and wire
+            var slotComponent = slotObj.AddComponent<PortraitCorruptionSlot>();
+            SerializedObject so = new SerializedObject(slotComponent);
+            so.FindProperty("_portrait").objectReferenceValue = portraitImg;
+            so.FindProperty("_portraitFrame").objectReferenceValue = frameImg;
+            so.FindProperty("_corruptionFill").objectReferenceValue = corruptFillImg;
+            so.FindProperty("_corruptionBackground").objectReferenceValue = corruptBgImg;
+            so.FindProperty("_fillSpeed").floatValue = 5f;
+            so.FindProperty("_smoothTransition").boolValue = true;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            return slotObj;
         }
 
         /// <summary>
@@ -2732,102 +2874,253 @@ namespace HNR.Editor
         }
 
         /// <summary>
-        /// Creates the party status sidebar.
-        /// Styled after Chaos Zero Nightmare - vertical stack at bottom-left.
+        /// Creates the party status sidebar with shared SE gauge on the left.
+        /// Styled after Chaos Zero Nightmare - vertical SE gauge + portrait stack.
+        /// Now created as child of BottomCommandCenter for proper click interaction.
         /// </summary>
         private static GameObject CreatePartySidebar(GameObject parent)
         {
             GameObject sidebar = new GameObject("PartySidebar");
             sidebar.transform.SetParent(parent.transform, false);
 
-            // Positioned at bottom-left corner - narrow vertical strip
-            // Matches BottomCommandCenter height (0 to 0.35 of screen)
+            // Positioned at left edge of BottomCommandCenter, filling its full height
+            // Parent (BottomCommandCenter) has anchors (0,0) to (1, 0.35f)
             RectTransform rect = sidebar.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0, 0);
-            rect.anchorMax = new Vector2(0, 0.35f); // Match BottomCommandCenter height
+            rect.anchorMax = new Vector2(0, 1); // Fill full height of parent
             rect.pivot = new Vector2(0, 0);
             rect.offsetMin = new Vector2(8, 8); // Left and bottom margin
-            rect.offsetMax = new Vector2(88, -8); // 80px width, top margin
+            rect.offsetMax = new Vector2(88, -8); // 80px width total
 
             Image bg = sidebar.AddComponent<Image>();
             bg.color = new Color(0, 0, 0, 0.6f);
 
-            // Vertical layout - party members stacked top to bottom
-            VerticalLayoutGroup layout = sidebar.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 6f;
-            layout.padding = new RectOffset(6, 6, 8, 8);
-            layout.childAlignment = TextAnchor.UpperCenter;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
+            // Horizontal layout - SE gauge on left, portrait slots on right
+            HorizontalLayoutGroup mainLayout = sidebar.AddComponent<HorizontalLayoutGroup>();
+            mainLayout.spacing = 4f;
+            mainLayout.padding = new RectOffset(4, 4, 4, 4);
+            mainLayout.childAlignment = TextAnchor.MiddleLeft;
+            mainLayout.childForceExpandWidth = false;
+            mainLayout.childForceExpandHeight = true; // Children fill full height
+            mainLayout.childControlHeight = true;
+            mainLayout.childControlWidth = false;
 
-            // Create 3 party member slots
+            // ============================================
+            // Shared SE Gauge (vertical bar, full height on left)
+            // ============================================
+            GameObject seGaugeContainer = new GameObject("SharedSEGauge");
+            seGaugeContainer.transform.SetParent(sidebar.transform, false);
+
+            // RectTransform first, then add components
+            RectTransform seContainerRect = seGaugeContainer.AddComponent<RectTransform>();
+
+            var seGaugeLayoutElement = seGaugeContainer.AddComponent<LayoutElement>();
+            seGaugeLayoutElement.preferredWidth = 24;
+            seGaugeLayoutElement.minWidth = 24;
+            // No flexibleHeight - let HorizontalLayoutGroup control height via childForceExpandHeight
+
+            Image seBg = seGaugeContainer.AddComponent<Image>();
+            seBg.color = new Color(0.08f, 0.08f, 0.12f, 0.9f);
+
+            // SE Fill (vertical fill from bottom to top) - uses stretch anchors
+            GameObject seFillObj = new GameObject("SEFill");
+            seFillObj.transform.SetParent(seGaugeContainer.transform, false);
+            RectTransform seFillRect = seFillObj.AddComponent<RectTransform>();
+            seFillRect.anchorMin = new Vector2(0, 0);
+            seFillRect.anchorMax = new Vector2(1, 0.5f); // 50% fill example
+            seFillRect.offsetMin = new Vector2(3, 16); // Margin for SE text at bottom
+            seFillRect.offsetMax = new Vector2(-3, -16); // Margin for SE label at top
+            Image seFillImg = seFillObj.AddComponent<Image>();
+            seFillImg.color = new Color(0f, 0.83f, 0.89f); // Soul cyan
+
+            // SE Text at bottom (shows current SE value)
+            GameObject seTextObj = CreateText(seGaugeContainer, "SEText", "50", 10);
+            RectTransform seTextRect = seTextObj.GetComponent<RectTransform>();
+            seTextRect.anchorMin = new Vector2(0, 0);
+            seTextRect.anchorMax = new Vector2(1, 0);
+            seTextRect.pivot = new Vector2(0.5f, 0);
+            seTextRect.anchoredPosition = new Vector2(0, 2);
+            seTextRect.sizeDelta = new Vector2(0, 14);
+            var seTmp = seTextObj.GetComponent<TextMeshProUGUI>();
+            seTmp.fontStyle = TMPro.FontStyles.Bold;
+            seTmp.fontSize = 9;
+            seTmp.color = new Color(0f, 0.83f, 0.89f); // Soul cyan
+
+            // SE Label at top
+            GameObject seLabelObj = CreateText(seGaugeContainer, "SELabel", "SE", 8);
+            RectTransform seLabelRect = seLabelObj.GetComponent<RectTransform>();
+            seLabelRect.anchorMin = new Vector2(0, 1);
+            seLabelRect.anchorMax = new Vector2(1, 1);
+            seLabelRect.pivot = new Vector2(0.5f, 1);
+            seLabelRect.anchoredPosition = new Vector2(0, -2);
+            seLabelRect.sizeDelta = new Vector2(0, 12);
+            var seLabelTmp = seLabelObj.GetComponent<TextMeshProUGUI>();
+            seLabelTmp.fontStyle = TMPro.FontStyles.Bold;
+            seLabelTmp.fontSize = 8;
+            seLabelTmp.color = new Color(0.6f, 0.6f, 0.7f);
+
+            // ============================================
+            // Party Member Slots Container (vertical stack on right, fills height)
+            // ============================================
+            GameObject slotsContainer = new GameObject("SlotsContainer");
+            slotsContainer.transform.SetParent(sidebar.transform, false);
+
+            RectTransform slotsContainerRect = slotsContainer.AddComponent<RectTransform>();
+
+            var slotsLayoutElement = slotsContainer.AddComponent<LayoutElement>();
+            slotsLayoutElement.preferredWidth = 48;
+            slotsLayoutElement.minWidth = 48;
+            // No flexibleHeight - let HorizontalLayoutGroup control height via childForceExpandHeight
+
+            VerticalLayoutGroup slotsLayout = slotsContainer.AddComponent<VerticalLayoutGroup>();
+            slotsLayout.spacing = 4f;
+            slotsLayout.padding = new RectOffset(0, 0, 2, 2);
+            slotsLayout.childAlignment = TextAnchor.MiddleCenter;
+            slotsLayout.childForceExpandWidth = true;
+            slotsLayout.childForceExpandHeight = true; // Slots expand to fill height evenly
+            slotsLayout.childControlHeight = true;
+            slotsLayout.childControlWidth = true;
+
+            // Create 3 party member slots (clickable for Requiem Art)
+            List<PartyMemberSlot> memberSlots = new List<PartyMemberSlot>();
             for (int i = 0; i < 3; i++)
             {
-                CreatePartyMemberSlot(sidebar, i);
+                GameObject slotObj = CreatePartyMemberSlot(slotsContainer, i);
+                var slotComponent = slotObj.GetComponent<PartyMemberSlot>();
+                if (slotComponent != null)
+                {
+                    memberSlots.Add(slotComponent);
+                }
             }
 
-            // Add PartyStatusSidebar component if exists
-            sidebar.AddComponent<PartyStatusSidebar>();
+            // Add PartyStatusSidebar component and wire shared SE gauge
+            var sidebarComponent = sidebar.AddComponent<PartyStatusSidebar>();
+            SerializedObject so = new SerializedObject(sidebarComponent);
+
+            // Wire shared SE gauge
+            so.FindProperty("_sharedSEFill").objectReferenceValue = seFillImg;
+            so.FindProperty("_sharedSEText").objectReferenceValue = seTmp;
+
+            // Wire member slots array
+            var slotsProperty = so.FindProperty("_memberSlots");
+            slotsProperty.arraySize = memberSlots.Count;
+            for (int i = 0; i < memberSlots.Count; i++)
+            {
+                slotsProperty.GetArrayElementAtIndex(i).objectReferenceValue = memberSlots[i];
+            }
+
+            so.ApplyModifiedPropertiesWithoutUndo();
 
             return sidebar;
         }
 
+        /// <summary>
+        /// Creates a party member slot with portrait, status icons, and click handler for Requiem Art.
+        /// Uses Mask for circular portrait cropping. Clickable to trigger Requiem Art.
+        /// Slot fills available height from parent VerticalLayoutGroup.
+        /// </summary>
         private static GameObject CreatePartyMemberSlot(GameObject parent, int index)
         {
             GameObject slot = new GameObject($"PartySlot_{index}");
             slot.transform.SetParent(parent.transform, false);
 
-            // Compact vertical slot - portrait + EP gauge style (like Chaos Zero Nightmare)
+            RectTransform slotRect = slot.AddComponent<RectTransform>();
+
+            // LayoutElement - let parent VerticalLayoutGroup control size via childForceExpandHeight
             var layoutElement = slot.AddComponent<LayoutElement>();
-            layoutElement.preferredHeight = 82;
-            layoutElement.flexibleWidth = 1;
+            layoutElement.minHeight = 32; // Minimum height for each slot
+            // No preferredHeight or flexibleHeight - parent controls via childForceExpandHeight
 
-            VerticalLayoutGroup layout = slot.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 3f;
-            layout.childAlignment = TextAnchor.MiddleCenter;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-            layout.padding = new RectOffset(4, 4, 4, 4);
-
+            // Add Button component for click interaction (Requiem Art activation)
             Image slotBg = slot.AddComponent<Image>();
-            slotBg.color = new Color(0.15f, 0.12f, 0.2f, 0.7f);
+            slotBg.color = new Color(0.15f, 0.12f, 0.22f, 0.9f);
 
-            // Circular portrait frame (like Chaos Zero Nightmare style)
+            Button slotButton = slot.AddComponent<Button>();
+            slotButton.targetGraphic = slotBg;
+            var buttonColors = slotButton.colors;
+            buttonColors.normalColor = new Color(0.15f, 0.12f, 0.22f, 0.9f);
+            buttonColors.highlightedColor = new Color(0.25f, 0.2f, 0.35f, 1f);
+            buttonColors.pressedColor = new Color(0f, 0.7f, 0.8f, 1f); // Cyan press
+            buttonColors.selectedColor = new Color(0.2f, 0.16f, 0.28f, 0.95f);
+            slotButton.colors = buttonColors;
+
+            // Portrait frame (circular) with mask - centered in slot, size relative to slot
+            GameObject portraitFrame = new GameObject("PortraitFrame");
+            portraitFrame.transform.SetParent(slot.transform, false);
+            RectTransform frameRect = portraitFrame.AddComponent<RectTransform>();
+            // Use stretch anchors with padding to fill most of the slot
+            frameRect.anchorMin = new Vector2(0.1f, 0.1f);
+            frameRect.anchorMax = new Vector2(0.9f, 0.9f);
+            frameRect.offsetMin = Vector2.zero;
+            frameRect.offsetMax = Vector2.zero;
+            Image frameImg = portraitFrame.AddComponent<Image>();
+            frameImg.color = new Color(0.4f, 0.4f, 0.5f, 1f);
+
+            // Portrait mask (circular crop)
+            GameObject maskObj = new GameObject("PortraitMask");
+            maskObj.transform.SetParent(portraitFrame.transform, false);
+            RectTransform maskRect = maskObj.AddComponent<RectTransform>();
+            maskRect.anchorMin = new Vector2(0.05f, 0.05f);
+            maskRect.anchorMax = new Vector2(0.95f, 0.95f);
+            maskRect.offsetMin = Vector2.zero;
+            maskRect.offsetMax = Vector2.zero;
+            Image maskImg = maskObj.AddComponent<Image>();
+            maskImg.color = Color.white;
+            var mask = maskObj.AddComponent<Mask>();
+            mask.showMaskGraphic = false;
+
+            // Portrait image (larger than mask, positioned to show face)
             GameObject portrait = new GameObject("Portrait");
-            portrait.transform.SetParent(slot.transform, false);
+            portrait.transform.SetParent(maskObj.transform, false);
             RectTransform portraitRect = portrait.AddComponent<RectTransform>();
-            portraitRect.sizeDelta = new Vector2(48, 48);
+            // Fill mask area and extend beyond to allow cropping
+            portraitRect.anchorMin = new Vector2(0.5f, 0.5f);
+            portraitRect.anchorMax = new Vector2(0.5f, 0.5f);
+            portraitRect.pivot = new Vector2(0.5f, 0.65f); // Pivot slightly above center for face
+            portraitRect.sizeDelta = new Vector2(60, 80); // Larger than mask area
+            portraitRect.anchoredPosition = Vector2.zero;
             Image portraitImg = portrait.AddComponent<Image>();
-            portraitImg.color = new Color(0.3f, 0.25f, 0.35f);
-            var portraitLayout = portrait.AddComponent<LayoutElement>();
-            portraitLayout.preferredWidth = 48;
-            portraitLayout.preferredHeight = 48;
+            portraitImg.color = Color.white;
+            portraitImg.preserveAspect = true;
 
-            // EP Label with value (compact style like "EP 2")
-            GameObject epLabel = CreateText(slot, "EPLabel", "EP", 9);
-            var epTmp = epLabel.GetComponent<TextMeshProUGUI>();
-            epTmp.fontStyle = TMPro.FontStyles.Bold;
-            epTmp.color = new Color(0.4f, 0.7f, 1f); // Light blue
+            // Status effects container (below portrait)
+            GameObject statusContainer = new GameObject("StatusContainer");
+            statusContainer.transform.SetParent(slot.transform, false);
+            RectTransform statusRect = statusContainer.AddComponent<RectTransform>();
+            statusRect.anchorMin = new Vector2(0, 0);
+            statusRect.anchorMax = new Vector2(1, 0);
+            statusRect.pivot = new Vector2(0.5f, 0);
+            statusRect.anchoredPosition = new Vector2(0, 2);
+            statusRect.sizeDelta = new Vector2(0, 10);
 
-            // SE/EP Gauge bar
-            GameObject seGauge = new GameObject("SEGauge");
-            seGauge.transform.SetParent(slot.transform, false);
-            RectTransform seRect = seGauge.AddComponent<RectTransform>();
-            seRect.sizeDelta = new Vector2(0, 8);
-            var seLayoutElement = seGauge.AddComponent<LayoutElement>();
-            seLayoutElement.preferredHeight = 8;
+            HorizontalLayoutGroup statusLayout = statusContainer.AddComponent<HorizontalLayoutGroup>();
+            statusLayout.spacing = 1f;
+            statusLayout.childAlignment = TextAnchor.MiddleCenter;
+            statusLayout.childForceExpandWidth = false;
+            statusLayout.childForceExpandHeight = false;
 
-            Image seBg = seGauge.AddComponent<Image>();
-            seBg.color = new Color(0.1f, 0.1f, 0.15f, 0.8f);
+            // Active glow (for highlighting when Art is ready)
+            GameObject activeGlow = new GameObject("ActiveGlow");
+            activeGlow.transform.SetParent(slot.transform, false);
+            activeGlow.transform.SetAsFirstSibling();
+            RectTransform glowRect = activeGlow.AddComponent<RectTransform>();
+            glowRect.anchorMin = Vector2.zero;
+            glowRect.anchorMax = Vector2.one;
+            glowRect.offsetMin = new Vector2(-2, -2);
+            glowRect.offsetMax = new Vector2(2, 2);
+            Image glowImg = activeGlow.AddComponent<Image>();
+            glowImg.color = new Color(0f, 0.83f, 0.89f, 0.4f); // Soul cyan with alpha
+            activeGlow.SetActive(false); // Hidden by default
 
-            GameObject seFill = new GameObject("SEFill");
-            seFill.transform.SetParent(seGauge.transform, false);
-            RectTransform seFillRect = seFill.AddComponent<RectTransform>();
-            seFillRect.anchorMin = Vector2.zero;
-            seFillRect.anchorMax = new Vector2(0.6f, 1);
-            seFillRect.sizeDelta = Vector2.zero;
-            Image seFillImg = seFill.AddComponent<Image>();
-            seFillImg.color = new Color(0.83f, 0.69f, 0.22f); // Soul gold #D4AF37
+            // Add PartyMemberSlot component and wire references
+            var slotComponent = slot.AddComponent<PartyMemberSlot>();
+            SerializedObject so = new SerializedObject(slotComponent);
+            so.FindProperty("_portrait").objectReferenceValue = portraitImg;
+            so.FindProperty("_portraitFrame").objectReferenceValue = frameImg;
+            so.FindProperty("_statusContainer").objectReferenceValue = statusContainer.transform;
+            so.FindProperty("_activeGlow").objectReferenceValue = glowImg;
+            so.FindProperty("_slotButton").objectReferenceValue = slotButton;
+            so.ApplyModifiedPropertiesWithoutUndo();
 
             return slot;
         }
