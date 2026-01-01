@@ -266,6 +266,15 @@ namespace HNR.Progression
     [Serializable]
     public class MetaSaveData
     {
+        /// <summary>Current player level.</summary>
+        public int PlayerLevel = 1;
+
+        /// <summary>Current XP within level (progress toward next level).</summary>
+        public int CurrentXP;
+
+        /// <summary>Total XP earned across all runs.</summary>
+        public int TotalXP;
+
         /// <summary>Total runs started.</summary>
         public int TotalRunsStarted;
 

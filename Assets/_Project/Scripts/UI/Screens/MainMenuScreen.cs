@@ -115,17 +115,46 @@ namespace HNR.UI
         // Continue Button
         // ============================================
 
+        private bool _hasActiveRun;
+        private bool _hasAnyProgress;
+
         private void RefreshContinueButton()
         {
             var saveManager = ServiceLocator.Get<ISaveManager>();
-            bool hasSave = saveManager?.HasSavedRun ?? false;
+            var saveManagerImpl = saveManager as SaveManager;
+
+            // Check for active run (interrupted mid-progress)
+            _hasActiveRun = saveManager?.HasSavedRun ?? false;
+
+            // Check for any saved progress (zones cleared, level > 1, or active run)
+            _hasAnyProgress = _hasActiveRun;
+
+            if (!_hasAnyProgress && saveManagerImpl != null)
+            {
+                // Check for Battle Mission progress (zones cleared)
+                var battleProgress = saveManagerImpl.LoadBattleMissionProgress();
+                if (battleProgress != null && battleProgress.ZoneClearStatus.Count > 0)
+                {
+                    _hasAnyProgress = true;
+                }
+
+                // Check for player level progress
+                if (!_hasAnyProgress)
+                {
+                    var metaData = saveManagerImpl.LoadMeta();
+                    if (metaData != null && metaData.PlayerLevel > 1)
+                    {
+                        _hasAnyProgress = true;
+                    }
+                }
+            }
 
             if (_continueButton != null)
             {
-                _continueButton.gameObject.SetActive(hasSave);
+                _continueButton.gameObject.SetActive(_hasAnyProgress);
             }
 
-            if (hasSave && _continueButtonGroup != null)
+            if (_hasAnyProgress && _continueButtonGroup != null)
             {
                 // Animate fade in
                 _continueButtonGroup.alpha = 0f;
@@ -133,28 +162,41 @@ namespace HNR.UI
             }
 
             // Update save info display
-            UpdateSaveInfo(saveManager, hasSave);
+            UpdateSaveInfo(saveManagerImpl);
 
-            Debug.Log($"[MainMenuScreen] Continue button visible: {hasSave}");
+            Debug.Log($"[MainMenuScreen] Continue button visible: {_hasAnyProgress} (activeRun: {_hasActiveRun})");
         }
 
-        private void UpdateSaveInfo(ISaveManager saveManager, bool hasSave)
+        private void UpdateSaveInfo(SaveManager saveManager)
         {
             if (_saveInfoText == null) return;
 
-            if (!hasSave)
+            if (!_hasAnyProgress)
             {
                 _saveInfoText.gameObject.SetActive(false);
                 return;
             }
 
-            // Load save data to display info
-            var saveData = saveManager?.LoadRun();
-            if (saveData != null)
+            if (_hasActiveRun)
             {
-                string zoneText = $"Zone {saveData.Progression.CurrentZone}";
-                string timeText = FormatPlayTime(saveData.Stats.PlayTime);
-                _saveInfoText.text = $"{zoneText} - {timeText}";
+                // Show active run info
+                var saveData = saveManager?.LoadRun();
+                if (saveData != null)
+                {
+                    string zoneText = $"Zone {saveData.Progression.CurrentZone}";
+                    string timeText = FormatPlayTime(saveData.Stats.PlayTime);
+                    _saveInfoText.text = $"{zoneText} - {timeText}";
+                    _saveInfoText.gameObject.SetActive(true);
+                    return;
+                }
+            }
+
+            // Show progress info (level/zones cleared)
+            if (saveManager != null)
+            {
+                var metaData = saveManager.LoadMeta();
+                int level = metaData?.PlayerLevel ?? 1;
+                _saveInfoText.text = $"Level {level}";
                 _saveInfoText.gameObject.SetActive(true);
             }
             else
@@ -192,19 +234,34 @@ namespace HNR.UI
 
         private void OnContinueClicked()
         {
-            Debug.Log("[MainMenuScreen] Continue clicked - loading saved run");
+            Debug.Log("[MainMenuScreen] Continue clicked");
 
-            var runManager = ServiceLocator.Get<IRunManager>();
-            if (runManager != null && runManager.LoadRun())
+            // Check if there's an active run to resume
+            if (_hasActiveRun)
             {
-                // Transition to map scene
-                TransitionToGame();
+                Debug.Log("[MainMenuScreen] Resuming active run...");
+                var runManager = ServiceLocator.Get<IRunManager>();
+                if (runManager != null && runManager.LoadRun())
+                {
+                    // Transition to map scene
+                    TransitionToGame();
+                    return;
+                }
+                else
+                {
+                    Debug.LogWarning("[MainMenuScreen] Failed to load saved run");
+                }
+            }
+
+            // No active run - go to Bastion hub with existing progress
+            Debug.Log("[MainMenuScreen] No active run - going to Bastion with existing progress");
+            if (ServiceLocator.TryGet<IGameManager>(out var gameManager))
+            {
+                gameManager.ChangeState(GameState.Bastion);
             }
             else
             {
-                Debug.LogWarning("[MainMenuScreen] Failed to load saved run");
-                // Refresh button state in case save is corrupted
-                RefreshContinueButton();
+                Debug.LogWarning("[MainMenuScreen] GameManager not found!");
             }
         }
 
@@ -236,6 +293,27 @@ namespace HNR.UI
                 {
                     ES3.DeleteKey(BATTLE_MISSION_KEY, SAVE_FILE);
                     Debug.Log("[MainMenuScreen] Reset Battle Mission progress via ES3");
+                }
+            }
+
+            // Reset player level/XP progression
+            if (ServiceLocator.TryGet<PlayerProgressionManager>(out var playerProgress))
+            {
+                playerProgress.ResetProgression();
+                Debug.Log("[MainMenuScreen] Reset player level/XP progression");
+            }
+            else
+            {
+                // Manager doesn't exist yet, reset MetaSaveData directly
+                var saveManagerImpl = saveManager as SaveManager;
+                if (saveManagerImpl != null)
+                {
+                    var metaData = saveManagerImpl.LoadMeta() ?? new MetaSaveData();
+                    metaData.PlayerLevel = 1;
+                    metaData.CurrentXP = 0;
+                    metaData.TotalXP = 0;
+                    saveManagerImpl.SaveMeta(metaData);
+                    Debug.Log("[MainMenuScreen] Reset player level/XP via SaveManager");
                 }
             }
 

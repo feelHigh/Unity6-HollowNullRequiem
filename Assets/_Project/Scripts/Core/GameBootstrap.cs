@@ -63,6 +63,9 @@ namespace HNR.Core
             // Initialize non-MonoBehaviour services
             InitializeSaveManager();
 
+            // Initialize player progression (depends on SaveManager)
+            InitializePlayerProgressionManager();
+
             // Instantiate MonoBehaviour managers
             InstantiateGameManager();
             InitializeUIManager();
@@ -100,6 +103,31 @@ namespace HNR.Core
             else
             {
                 Debug.Log("[GameBootstrap] SaveManager found in scene.");
+            }
+        }
+
+        /// <summary>
+        /// Find or create PlayerProgressionManager.
+        /// Depends on SaveManager for persistence.
+        /// </summary>
+        private void InitializePlayerProgressionManager()
+        {
+            if (ServiceLocator.Has<PlayerProgressionManager>())
+            {
+                Debug.Log("[GameBootstrap] PlayerProgressionManager already registered.");
+                return;
+            }
+
+            var progressionManager = FindAnyObjectByType<PlayerProgressionManager>();
+            if (progressionManager == null)
+            {
+                var go = new GameObject("[PlayerProgressionManager]");
+                go.AddComponent<PlayerProgressionManager>();
+                Debug.Log("[GameBootstrap] PlayerProgressionManager created dynamically.");
+            }
+            else
+            {
+                Debug.Log("[GameBootstrap] PlayerProgressionManager found in scene.");
             }
         }
 

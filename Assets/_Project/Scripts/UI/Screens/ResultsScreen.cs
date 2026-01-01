@@ -555,6 +555,14 @@ namespace HNR.UI
                         Debug.Log($"[ResultsScreen] Boss defeated! Marked Zone {runManager.BattleMissionZone} as cleared on {runManager.BattleMissionDifficulty}");
                     }
 
+                    // Award XP for zone completion
+                    if (ServiceLocator.TryGet<PlayerProgressionManager>(out var playerProgress))
+                    {
+                        playerProgress.AwardZoneCompletion(
+                            runManager.BattleMissionZone,
+                            runManager.BattleMissionDifficulty);
+                    }
+
                     // End the run (clears team, etc.)
                     runManager.EndRun(true);
 

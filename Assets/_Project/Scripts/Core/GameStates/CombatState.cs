@@ -123,6 +123,13 @@ namespace HNR.Core.GameStates
             // Unsubscribe from combat end event
             EventBus.Unsubscribe<CombatEndedEvent>(OnCombatEnded);
 
+            // Auto-save run progress (before cleanup)
+            if (ServiceLocator.TryGet<IRunManager>(out var runManager) && runManager.IsRunActive)
+            {
+                runManager.SaveRun();
+                Debug.Log("[CombatState] Run auto-saved on combat exit");
+            }
+
             // Cleanup status effects
             if (ServiceLocator.TryGet<StatusEffectManager>(out var statusMgr))
             {

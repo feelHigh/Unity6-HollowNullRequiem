@@ -160,21 +160,15 @@ namespace HNR.UI
 
         private void LoadPlayerData()
         {
-            // Load player data from save
-            // For now, display placeholder values
+            // Load player progression from PlayerProgressionManager
             int playerLevel = 1;
             string playerNickname = "Commander";
             float xpProgress = 0f;
 
-            // Try to load from save
-            if (ServiceLocator.TryGet<ISaveManager>(out var saveManager))
+            if (ServiceLocator.TryGet<Progression.PlayerProgressionManager>(out var playerProgress))
             {
-                var metaData = (saveManager as Progression.SaveManager)?.LoadMeta();
-                if (metaData != null)
-                {
-                    // Could derive level from total runs or enemies defeated
-                    playerLevel = Mathf.Max(1, metaData.TotalRunsCompleted + 1);
-                }
+                playerLevel = playerProgress.GetLevel();
+                xpProgress = playerProgress.GetXPProgress();
             }
 
             // Update UI
