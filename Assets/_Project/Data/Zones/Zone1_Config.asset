@@ -15,16 +15,16 @@ MonoBehaviour:
   _zoneNumber: 1
   _zoneName: The Hollow Depths
   _zoneDescription: Entry to the Null Rift. Weaker enemies test your resolve.
-  _rowCount: 5
-  _minNodesPerRow: 2
-  _maxNodesPerRow: 3
+  _columnCount: 5
+  _minNodesPerColumn: 2
+  _maxNodesPerColumn: 4
   _combatWeight: 50
   _eliteWeight: 5
   _shopWeight: 12
   _echoWeight: 18
   _sanctuaryWeight: 10
   _treasureWeight: 5
-  _eliteMinRow: 3
+  _eliteMinColumn: 3
   _guaranteedShop: 1
   _guaranteedSanctuary: 1
   _combatEncounters:
@@ -43,4 +43,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: bcfae4392e97ae44399bd942e8cbc070, type: 2}
   _horizontalSpacing: 200
   _verticalSpacing: 150
-  _nodeJitter: 20
+  _nodeJitter: 0

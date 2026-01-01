@@ -38,10 +38,10 @@ namespace HNR.Map
                 Seed = seed
             };
 
-            // Phase 1: Generate nodes row by row
+            // Phase 1: Generate nodes column by column (horizontal steps)
             GenerateNodes(mapData);
 
-            // Phase 2: Create connections between rows
+            // Phase 2: Create connections between columns
             GenerateConnections(mapData);
 
             // Phase 3: Ensure all nodes are reachable
@@ -69,45 +69,45 @@ namespace HNR.Map
 
         private void GenerateNodes(MapData mapData)
         {
-            for (int row = 0; row < _config.RowCount; row++)
+            for (int col = 0; col < _config.ColumnCount; col++)
             {
-                int nodeCount = GetNodeCountForRow(row);
+                int nodeCount = GetNodeCountForColumn(col);
 
-                for (int col = 0; col < nodeCount; col++)
+                for (int row = 0; row < nodeCount; row++)
                 {
-                    var nodeType = DetermineNodeType(row);
-                    var node = MapNodeData.Create($"node_{row}_{col}", nodeType, row, col);
+                    var nodeType = DetermineNodeType(col);
+                    var node = MapNodeData.Create($"node_{col}_{row}", nodeType, col, row);
                     mapData.Nodes.Add(node);
                 }
             }
         }
 
-        private int GetNodeCountForRow(int row)
+        private int GetNodeCountForColumn(int col)
         {
-            // Start and Boss rows have exactly 1 node
-            if (row == 0 || row == _config.RowCount - 1)
+            // Start and Boss columns have exactly 1 node
+            if (col == 0 || col == _config.ColumnCount - 1)
                 return 1;
 
-            // Middle rows have variable node count
-            return _rng.Next(_config.MinNodesPerRow, _config.MaxNodesPerRow + 1);
+            // Middle columns have variable node count (vertical spread)
+            return _rng.Next(_config.MinNodesPerColumn, _config.MaxNodesPerColumn + 1);
         }
 
-        private NodeType DetermineNodeType(int row)
+        private NodeType DetermineNodeType(int col)
         {
-            // Fixed types for first and last rows
-            if (row == 0) return NodeType.Start;
+            // Fixed types for first and last columns
+            if (col == 0) return NodeType.Start;
 
-            // Last row: Boss if configured, otherwise Elite (serves as zone exit)
-            if (row == _config.RowCount - 1)
+            // Last column: Boss if configured, otherwise Elite (serves as zone exit)
+            if (col == _config.ColumnCount - 1)
             {
                 bool hasBoss = _config.BossEncounter != null;
                 var nodeType = hasBoss ? NodeType.Boss : NodeType.Elite;
-                Debug.Log($"[MapGenerator] Final row {row}: BossEncounter={_config.BossEncounter?.name ?? "null"}, NodeType={nodeType}");
+                Debug.Log($"[MapGenerator] Final column {col}: BossEncounter={_config.BossEncounter?.name ?? "null"}, NodeType={nodeType}");
                 return nodeType;
             }
 
             // Build weighted selection list
-            var weights = BuildWeightList(row);
+            var weights = BuildWeightList(col);
             int totalWeight = 0;
             foreach (var w in weights)
                 totalWeight += w.Weight;
@@ -129,10 +129,10 @@ namespace HNR.Map
             return NodeType.Combat;
         }
 
-        private List<NodeTypeWeight> BuildWeightList(int row)
+        private List<NodeTypeWeight> BuildWeightList(int col)
         {
             var weights = new List<NodeTypeWeight>();
-            bool canBeElite = row >= _config.EliteMinRow;
+            bool canBeElite = col >= _config.EliteMinColumn;
 
             // Add weights for each valid node type
             weights.Add(new NodeTypeWeight { Type = NodeType.Combat, Weight = _config.CombatWeight });
@@ -154,16 +154,16 @@ namespace HNR.Map
 
         private void GenerateConnections(MapData mapData)
         {
-            for (int row = 0; row < _config.RowCount - 1; row++)
+            for (int col = 0; col < _config.ColumnCount - 1; col++)
             {
-                var currentRow = mapData.GetRow(row);
-                var nextRow = mapData.GetRow(row + 1);
+                var currentCol = mapData.GetColumn(col);
+                var nextCol = mapData.GetColumn(col + 1);
 
-                foreach (var node in currentRow)
+                foreach (var node in currentCol)
                 {
-                    // Each node connects to 1-2 nodes in next row
-                    int connectionCount = nextRow.Count == 1 ? 1 : _rng.Next(1, 3);
-                    var shuffledNext = ShuffleList(new List<MapNodeData>(nextRow));
+                    // Each node connects to 1-2 nodes in next column
+                    int connectionCount = nextCol.Count == 1 ? 1 : _rng.Next(1, 3);
+                    var shuffledNext = ShuffleList(new List<MapNodeData>(nextCol));
 
                     for (int i = 0; i < Mathf.Min(connectionCount, shuffledNext.Count); i++)
                     {
@@ -181,17 +181,17 @@ namespace HNR.Map
         private void EnsureAllNodesReachable(MapData mapData)
         {
             // Ensure every node (except start) has at least one incoming connection
-            for (int row = 1; row < _config.RowCount; row++)
+            for (int col = 1; col < _config.ColumnCount; col++)
             {
-                var currentRow = mapData.GetRow(row);
-                var prevRow = mapData.GetRow(row - 1);
+                var currentCol = mapData.GetColumn(col);
+                var prevCol = mapData.GetColumn(col - 1);
 
-                foreach (var node in currentRow)
+                foreach (var node in currentCol)
                 {
-                    if (node.ConnectionsFrom.Count == 0 && prevRow.Count > 0)
+                    if (node.ConnectionsFrom.Count == 0 && prevCol.Count > 0)
                     {
-                        // Connect from a random previous node
-                        var randomPrev = prevRow[_rng.Next(prevRow.Count)];
+                        // Connect from a random previous column node
+                        var randomPrev = prevCol[_rng.Next(prevCol.Count)];
                         randomPrev.ConnectedNodeIds.Add(node.NodeId);
                         node.ConnectionsFrom.Add(randomPrev.NodeId);
                     }
@@ -223,8 +223,8 @@ namespace HNR.Map
         private List<MapNodeData> GetMiddleNodes(MapData mapData)
         {
             return mapData.Nodes.FindAll(n =>
-                n.Row > 0 &&
-                n.Row < _config.RowCount - 1);
+                n.Column > 0 &&
+                n.Column < _config.ColumnCount - 1);
         }
 
         private bool HasNodeType(MapData mapData, NodeType type)
@@ -248,37 +248,38 @@ namespace HNR.Map
         private void CalculatePositions(MapData mapData)
         {
             // Horizontal progression: Start on left, Boss on right
-            // Nodes within each "row" (column visually) are stacked vertically
+            // Nodes within each column are stacked vertically
             // Center the entire map so middle is at origin
 
-            float totalWidth = (_config.RowCount - 1) * _config.HorizontalSpacing;
+            float totalWidth = (_config.ColumnCount - 1) * _config.HorizontalSpacing;
             float offsetX = -totalWidth / 2f;
 
-            for (int row = 0; row < _config.RowCount; row++)
+            for (int col = 0; col < _config.ColumnCount; col++)
             {
-                var rowNodes = mapData.GetRow(row);
-                int count = rowNodes.Count;
+                var colNodes = mapData.GetColumn(col);
+                int count = colNodes.Count;
 
                 // X = horizontal progression (left to right), centered
-                float baseX = offsetX + (row * _config.HorizontalSpacing);
+                // All nodes in the same column share the same X position (no jitter)
+                float x = offsetX + (col * _config.HorizontalSpacing);
 
-                // Y = vertical spread within this column (centered)
+                // Y = fixed spacing between adjacent nodes, centered around y=0
+                // This ensures consistent gap between nodes regardless of node count
                 float columnHeight = (count - 1) * _config.VerticalSpacing;
-                float startY = -columnHeight / 2f;
+                float topY = columnHeight / 2f;
 
                 for (int i = 0; i < count; i++)
                 {
-                    float x = baseX;
-                    float y = startY + (i * _config.VerticalSpacing);
+                    // Position from top to bottom with fixed spacing
+                    float y = topY - (i * _config.VerticalSpacing);
 
-                    // Add jitter for visual variety (not on start/boss)
-                    if (row > 0 && row < _config.RowCount - 1)
+                    // Add vertical jitter only for visual variety (not on start/boss)
+                    if (col > 0 && col < _config.ColumnCount - 1)
                     {
-                        x += RandomJitter();
                         y += RandomJitter();
                     }
 
-                    rowNodes[i].Position = new Vector2(x, y);
+                    colNodes[i].Position = new Vector2(x, y);
                 }
             }
         }

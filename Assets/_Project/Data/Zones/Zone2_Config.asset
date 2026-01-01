@@ -15,16 +15,16 @@ MonoBehaviour:
   _zoneNumber: 2
   _zoneName: The Fractured Halls
   _zoneDescription: Deeper into the void. Stronger foes and greater corruption await.
-  _rowCount: 6
-  _minNodesPerRow: 2
-  _maxNodesPerRow: 4
+  _columnCount: 5
+  _minNodesPerColumn: 2
+  _maxNodesPerColumn: 4
   _combatWeight: 45
   _eliteWeight: 12
   _shopWeight: 10
   _echoWeight: 15
   _sanctuaryWeight: 12
   _treasureWeight: 6
-  _eliteMinRow: 2
+  _eliteMinColumn: 3
   _guaranteedShop: 1
   _guaranteedSanctuary: 1
   _combatEncounters:
@@ -44,4 +44,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: bcfae4392e97ae44399bd942e8cbc070, type: 2}
   _horizontalSpacing: 200
   _verticalSpacing: 150
-  _nodeJitter: 25
+  _nodeJitter: 0

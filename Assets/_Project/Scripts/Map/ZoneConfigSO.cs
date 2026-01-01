@@ -35,15 +35,15 @@ namespace HNR.Map
         // Layout Configuration
         // ============================================
 
-        [Header("Layout")]
-        [SerializeField, Range(3, 8), Tooltip("Number of rows (including start and boss)")]
-        private int _rowCount = 5;
+        [Header("Layout (Horizontal Map: Start on left → Boss on right)")]
+        [SerializeField, Range(3, 8), Tooltip("Number of columns/steps (including start and boss)")]
+        private int _columnCount = 5;
 
-        [SerializeField, Range(1, 4), Tooltip("Minimum nodes per row")]
-        private int _minNodesPerRow = 2;
+        [SerializeField, Range(1, 4), Tooltip("Minimum nodes per column (vertical spread)")]
+        private int _minNodesPerColumn = 2;
 
-        [SerializeField, Range(2, 5), Tooltip("Maximum nodes per row")]
-        private int _maxNodesPerRow = 4;
+        [SerializeField, Range(2, 5), Tooltip("Maximum nodes per column (vertical spread)")]
+        private int _maxNodesPerColumn = 4;
 
         // ============================================
         // Node Distribution Weights
@@ -73,8 +73,8 @@ namespace HNR.Map
         // ============================================
 
         [Header("Special Rules")]
-        [SerializeField, Range(1, 7), Tooltip("Minimum row for Elite nodes")]
-        private int _eliteMinRow = 3;
+        [SerializeField, Range(1, 7), Tooltip("Minimum column (step) for Elite nodes")]
+        private int _eliteMinColumn = 3;
 
         [SerializeField, Tooltip("Guarantee at least one shop per zone")]
         private bool _guaranteedShop = true;
@@ -133,14 +133,14 @@ namespace HNR.Map
         /// <summary>Zone description text.</summary>
         public string ZoneDescription => _zoneDescription;
 
-        /// <summary>Number of rows in the zone.</summary>
-        public int RowCount => _rowCount;
+        /// <summary>Number of columns/steps in the zone (horizontal progression).</summary>
+        public int ColumnCount => _columnCount;
 
-        /// <summary>Minimum nodes per row.</summary>
-        public int MinNodesPerRow => _minNodesPerRow;
+        /// <summary>Minimum nodes per column (vertical spread).</summary>
+        public int MinNodesPerColumn => _minNodesPerColumn;
 
-        /// <summary>Maximum nodes per row.</summary>
-        public int MaxNodesPerRow => _maxNodesPerRow;
+        /// <summary>Maximum nodes per column (vertical spread).</summary>
+        public int MaxNodesPerColumn => _maxNodesPerColumn;
 
         /// <summary>Combat node weight.</summary>
         public int CombatWeight => _combatWeight;
@@ -160,8 +160,8 @@ namespace HNR.Map
         /// <summary>Treasure weight.</summary>
         public int TreasureWeight => _treasureWeight;
 
-        /// <summary>Minimum row for elite encounters.</summary>
-        public int EliteMinRow => _eliteMinRow;
+        /// <summary>Minimum column (step) for elite encounters.</summary>
+        public int EliteMinColumn => _eliteMinColumn;
 
         /// <summary>Whether to guarantee at least one shop.</summary>
         public bool GuaranteedShop => _guaranteedShop;
@@ -254,7 +254,7 @@ namespace HNR.Map
         private void OnValidate()
         {
             _zoneNumber = Mathf.Clamp(_zoneNumber, 1, 3);
-            _minNodesPerRow = Mathf.Min(_minNodesPerRow, _maxNodesPerRow);
+            _minNodesPerColumn = Mathf.Min(_minNodesPerColumn, _maxNodesPerColumn);
 
             // Ensure string name matches zone number
             if (string.IsNullOrEmpty(_zoneName))

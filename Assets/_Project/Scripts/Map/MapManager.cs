@@ -170,41 +170,41 @@ namespace HNR.Map
         }
 
         /// <summary>
-        /// Checks if the given row is the last row of the map.
+        /// Checks if the given column is the last column (step) of the map.
         /// </summary>
-        private bool IsLastRow(int row)
+        private bool IsLastColumn(int column)
         {
             if (_currentMap == null) return false;
 
-            // Find the maximum row number in the map
-            int maxRow = 0;
+            // Find the maximum column number in the map
+            int maxColumn = 0;
             foreach (var node in _currentMap.Nodes)
             {
-                if (node.Row > maxRow) maxRow = node.Row;
+                if (node.Column > maxColumn) maxColumn = node.Column;
             }
 
-            return row == maxRow;
+            return column == maxColumn;
         }
 
         /// <summary>
-        /// Locks sibling nodes (same row, not visited) when committing to a path.
-        /// This prevents backtracking to other nodes in the same row after completing a node.
+        /// Locks sibling nodes (same column, not visited) when committing to a path.
+        /// This prevents backtracking to other nodes in the same column after completing a node.
         /// </summary>
         private void LockSiblingNodes(MapNodeData completedNode)
         {
             if (_currentMap == null) return;
 
-            int currentRow = completedNode.Row;
+            int currentColumn = completedNode.Column;
 
             foreach (var node in _currentMap.Nodes)
             {
-                // Lock sibling nodes in the same row that are still Available (not visited)
-                if (node.Row == currentRow &&
+                // Lock sibling nodes in the same column that are still Available (not visited)
+                if (node.Column == currentColumn &&
                     node.NodeId != completedNode.NodeId &&
                     node.State == NodeState.Available)
                 {
                     node.State = NodeState.Locked;
-                    Debug.Log($"[MapManager] Locked sibling node {node.NodeId} (row {currentRow})");
+                    Debug.Log($"[MapManager] Locked sibling node {node.NodeId} (column {currentColumn})");
                 }
             }
         }
@@ -228,7 +228,7 @@ namespace HNR.Map
 
             current.State = NodeState.Visited;
 
-            // Lock sibling nodes (same row) that weren't visited - player committed to this path
+            // Lock sibling nodes (same column) that weren't visited - player committed to this path
             LockSiblingNodes(current);
 
             EventBus.Publish(new NodeCompletedEvent(current));
@@ -244,11 +244,11 @@ namespace HNR.Map
 
             // Check for zone completion
             // Zone is complete when the boss is defeated, OR when completing
-            // the last row's Elite node (for zones without bosses)
+            // the last column's Elite node (for zones without bosses)
             bool isBossNode = current.Type == NodeType.Boss;
-            bool isLastRowElite = current.Type == NodeType.Elite && IsLastRow(current.Row);
+            bool isLastColumnElite = current.Type == NodeType.Elite && IsLastColumn(current.Column);
 
-            if (isBossNode || isLastRowElite)
+            if (isBossNode || isLastColumnElite)
             {
                 EventBus.Publish(new ZoneCompletedEvent(_currentMap.Zone));
                 Debug.Log($"[MapManager] Zone {_currentMap.Zone} completed!");
@@ -330,28 +330,28 @@ namespace HNR.Map
                 }
             }
 
-            // Get current node to determine which row the player is at
+            // Get current node to determine which column (step) the player is at
             var currentNode = _currentMap.GetNode(_currentMap.CurrentNodeId);
-            int currentRow = currentNode?.Row ?? 0;
+            int currentColumn = currentNode?.Column ?? 0;
 
-            Debug.Log($"[MapManager] Current node after restore: {currentNode?.NodeId}, Row={currentRow}, State={currentNode?.State}, Connections={currentNode?.ConnectedNodeIds.Count ?? 0}");
+            Debug.Log($"[MapManager] Current node after restore: {currentNode?.NodeId}, Column={currentColumn}, State={currentNode?.State}, Connections={currentNode?.ConnectedNodeIds.Count ?? 0}");
 
-            // In a roguelike map, only nodes in rows AFTER the current row can be available
-            // Nodes in previous rows or the same row (but not visited) are permanently locked
+            // In a roguelike map, only nodes in columns AFTER the current column can be available
+            // Nodes in previous columns or the same column (but not visited) are permanently locked
             foreach (var accessibleId in mapSaveData.AccessibleNodeIds)
             {
                 var node = _currentMap.GetNode(accessibleId);
                 if (node != null && node.State == NodeState.Locked)
                 {
-                    // Only restore as Available if the node is in a row ahead of current position
-                    if (node.Row > currentRow)
+                    // Only restore as Available if the node is in a column ahead of current position
+                    if (node.Column > currentColumn)
                     {
                         node.State = NodeState.Available;
-                        Debug.Log($"[MapManager] Restored accessible node: {accessibleId} (row {node.Row})");
+                        Debug.Log($"[MapManager] Restored accessible node: {accessibleId} (column {node.Column})");
                     }
                     else
                     {
-                        Debug.Log($"[MapManager] Skipped accessible node {accessibleId} (row {node.Row} <= current row {currentRow})");
+                        Debug.Log($"[MapManager] Skipped accessible node {accessibleId} (column {node.Column} <= current column {currentColumn})");
                     }
                 }
             }
@@ -362,7 +362,7 @@ namespace HNR.Map
                 foreach (var connectedId in currentNode.ConnectedNodeIds)
                 {
                     var connectedNode = _currentMap.GetNode(connectedId);
-                    if (connectedNode != null && connectedNode.State == NodeState.Locked && connectedNode.Row > currentRow)
+                    if (connectedNode != null && connectedNode.State == NodeState.Locked && connectedNode.Column > currentColumn)
                     {
                         connectedNode.State = NodeState.Available;
                         Debug.Log($"[MapManager] Unlocked forward node from current: {connectedId}");

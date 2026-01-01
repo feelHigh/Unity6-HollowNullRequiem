@@ -27,14 +27,14 @@ namespace HNR.Map
         public NodeType Type;
 
         // ============================================
-        // Position
+        // Position (Horizontal Map: Start on left → Boss on right)
         // ============================================
 
-        /// <summary>Row index (0 = start, last = boss).</summary>
-        public int Row;
-
-        /// <summary>Column index within the row.</summary>
+        /// <summary>Column index (horizontal step, 0 = start, last = boss).</summary>
         public int Column;
+
+        /// <summary>Row index within the column (vertical position).</summary>
+        public int Row;
 
         /// <summary>Visual position for UI rendering.</summary>
         public Vector2 Position;
@@ -86,15 +86,19 @@ namespace HNR.Map
         /// <summary>
         /// Creates a new node with the specified parameters.
         /// </summary>
-        public static MapNodeData Create(string nodeId, NodeType type, int row, int column)
+        /// <param name="nodeId">Unique identifier for this node.</param>
+        /// <param name="type">Type of encounter at this node.</param>
+        /// <param name="column">Column index (horizontal step, 0 = start, last = boss).</param>
+        /// <param name="row">Row index within the column (vertical position).</param>
+        public static MapNodeData Create(string nodeId, NodeType type, int column, int row)
         {
             return new MapNodeData
             {
                 NodeId = nodeId,
                 Type = type,
-                Row = row,
                 Column = column,
-                State = row == 0 ? NodeState.Current : NodeState.Locked
+                Row = row,
+                State = column == 0 ? NodeState.Current : NodeState.Locked
             };
         }
     }
@@ -138,11 +142,11 @@ namespace HNR.Map
         }
 
         /// <summary>
-        /// Gets all nodes in a specific row.
+        /// Gets all nodes in a specific column (horizontal step).
         /// </summary>
-        public List<MapNodeData> GetRow(int row)
+        public List<MapNodeData> GetColumn(int column)
         {
-            return Nodes.FindAll(n => n.Row == row);
+            return Nodes.FindAll(n => n.Column == column);
         }
 
         /// <summary>

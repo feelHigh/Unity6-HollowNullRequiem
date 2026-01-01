@@ -16,16 +16,16 @@ MonoBehaviour:
   _zoneName: The Null Heart
   _zoneDescription: The core of corruption. Only the strongest survive to face the
     Hollow King.
-  _rowCount: 7
-  _minNodesPerRow: 2
-  _maxNodesPerRow: 4
+  _columnCount: 5
+  _minNodesPerColumn: 2
+  _maxNodesPerColumn: 4
   _combatWeight: 40
   _eliteWeight: 18
   _shopWeight: 8
   _echoWeight: 12
   _sanctuaryWeight: 15
   _treasureWeight: 7
-  _eliteMinRow: 2
+  _eliteMinColumn: 3
   _guaranteedShop: 1
   _guaranteedSanctuary: 1
   _combatEncounters:
@@ -45,4 +45,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: bcfae4392e97ae44399bd942e8cbc070, type: 2}
   _horizontalSpacing: 200
   _verticalSpacing: 150
-  _nodeJitter: 30
+  _nodeJitter: 0
