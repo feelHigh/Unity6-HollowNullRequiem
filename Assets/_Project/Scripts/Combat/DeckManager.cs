@@ -40,6 +40,15 @@ namespace HNR.Combat
         /// <summary>Number of exhausted cards.</summary>
         public int ExhaustPileCount => _exhaustPile.Count;
 
+        /// <summary>Read-only access to draw pile for card modifiers.</summary>
+        public IReadOnlyList<CardInstance> DrawPile => _drawPile;
+
+        /// <summary>Read-only access to discard pile for card modifiers.</summary>
+        public IReadOnlyList<CardInstance> DiscardPile => _discardPile;
+
+        /// <summary>Read-only access to exhaust pile.</summary>
+        public IReadOnlyList<CardInstance> ExhaustPile => _exhaustPile;
+
         /// <summary>All cards currently in deck (draw + discard, excludes exhaust).</summary>
         public IEnumerable<CardInstance> AllCards => _drawPile.Concat(_discardPile);
 

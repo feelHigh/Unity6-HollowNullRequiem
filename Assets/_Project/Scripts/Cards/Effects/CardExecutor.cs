@@ -79,7 +79,13 @@ namespace HNR.Cards
 
                 // Corruption
                 { EffectType.CorruptionGain, new CorruptionEffect(true) },
-                { EffectType.CorruptionReduce, new CorruptionEffect(false) }
+                { EffectType.CorruptionReduce, new CorruptionEffect(false) },
+
+                // Card Manipulation (additional)
+                { EffectType.CopyCard, new CopyCardEffect() },
+
+                // Custom Effects (dispatched by CustomData key)
+                { EffectType.Custom, new CustomEffectHandler() }
             };
         }
 
