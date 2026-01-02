@@ -1,6 +1,7 @@
 // ============================================
 // PartyStatusSidebar.cs
 // Left sidebar showing party members with shared SE gauge
+// Uses Slider component for reliable gauge updates
 // ============================================
 
 using UnityEngine;
@@ -18,13 +19,14 @@ namespace HNR.UI.Combat
     /// <summary>
     /// Left sidebar showing party members with shared Soul Essence gauge.
     /// SE is a team-wide resource displayed as a single vertical gauge.
+    /// Uses Slider component for reliable visual updates.
     /// </summary>
     public class PartyStatusSidebar : MonoBehaviour
     {
-        [Header("Shared Soul Essence")]
-        [SerializeField] private Slider _sharedSEGauge;
+        [Header("Shared Soul Essence Slider")]
+        [SerializeField] private Slider _sharedSESlider;
         [SerializeField] private TMP_Text _sharedSEText;
-        [SerializeField] private Image _sharedSEFill;
+        [SerializeField] private Image _sharedSEFillImage;
         [SerializeField] private int _maxSE = 100;
 
         [Header("Layout")]
@@ -35,6 +37,19 @@ namespace HNR.UI.Combat
 
         private int _activeSlotIndex = -1;
         private bool _isArtReady;
+
+        private void Awake()
+        {
+            // Configure slider for SE display
+            if (_sharedSESlider != null)
+            {
+                _sharedSESlider.minValue = 0f;
+                _sharedSESlider.maxValue = 1f;
+                _sharedSESlider.value = 0f;
+                _sharedSESlider.interactable = false; // Display only, not interactive
+                Debug.Log("[PartyStatusSidebar] SE slider configured: min=0, max=1, value=0");
+            }
+        }
 
         private void OnEnable()
         {
@@ -60,21 +75,24 @@ namespace HNR.UI.Combat
             float normalized = _maxSE > 0 ? (float)current / _maxSE : 0f;
             bool isFull = normalized >= 1f;
 
-            if (_sharedSEGauge != null)
+            // Update Slider value
+            if (_sharedSESlider != null)
             {
-                _sharedSEGauge.value = normalized;
+                _sharedSESlider.value = normalized;
             }
 
+            // Update SE text display
             if (_sharedSEText != null)
             {
                 _sharedSEText.text = current.ToString();
             }
 
-            if (_sharedSEFill != null)
+            // Update fill image color
+            if (_sharedSEFillImage != null)
             {
                 // Gold when full (Art ready), Cyan otherwise
                 Color targetColor = isFull ? UIColors.SoulGold : UIColors.SoulCyan;
-                _sharedSEFill.color = targetColor;
+                _sharedSEFillImage.color = targetColor;
             }
 
             // Trigger pulse when Art becomes ready
@@ -90,11 +108,11 @@ namespace HNR.UI.Combat
         /// </summary>
         private void TriggerArtReadyFeedback()
         {
-            if (_sharedSEFill != null)
+            if (_sharedSESlider != null)
             {
                 var seq = DOTween.Sequence();
-                seq.Append(_sharedSEFill.transform.DOScale(1.1f, 0.15f));
-                seq.Append(_sharedSEFill.transform.DOScale(1f, 0.15f));
+                seq.Append(_sharedSESlider.transform.DOScale(1.1f, 0.15f));
+                seq.Append(_sharedSESlider.transform.DOScale(1f, 0.15f));
                 seq.SetLink(gameObject);
             }
 
@@ -127,6 +145,12 @@ namespace HNR.UI.Combat
             {
                 SetActiveSlot(0);
             }
+
+            // Reset SE gauge to 0 at combat start
+            // SE accumulates during combat and resets between combats
+            UpdateSharedSE(0);
+            _isArtReady = false;
+            Debug.Log("[PartyStatusSidebar] Initialized - SE gauge reset to 0");
         }
 
         /// <summary>

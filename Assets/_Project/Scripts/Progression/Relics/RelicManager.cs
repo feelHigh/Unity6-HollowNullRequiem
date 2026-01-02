@@ -10,6 +10,7 @@ using HNR.Core;
 using HNR.Core.Events;
 using HNR.Core.Interfaces;
 using HNR.Combat;
+using HNR.Map;
 
 namespace HNR.Progression
 {
@@ -109,8 +110,10 @@ namespace HNR.Progression
             EventBus.Subscribe<TurnStartedEvent>(OnTurnStarted);
             EventBus.Subscribe<CardPlayedEvent>(OnCardPlayed);
             EventBus.Subscribe<DamageDealtEvent>(OnDamageDealt);
+            EventBus.Subscribe<DamageTakenEvent>(OnDamageTaken);
             EventBus.Subscribe<NullStateEnteredEvent>(OnNullStateEntered);
             EventBus.Subscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
+            EventBus.Subscribe<EchoEventCompletedEvent>(OnEventComplete);
 
             _isSubscribed = true;
             Debug.Log("[RelicManager] Subscribed to events");
@@ -125,8 +128,10 @@ namespace HNR.Progression
             EventBus.Unsubscribe<TurnStartedEvent>(OnTurnStarted);
             EventBus.Unsubscribe<CardPlayedEvent>(OnCardPlayed);
             EventBus.Unsubscribe<DamageDealtEvent>(OnDamageDealt);
+            EventBus.Unsubscribe<DamageTakenEvent>(OnDamageTaken);
             EventBus.Unsubscribe<NullStateEnteredEvent>(OnNullStateEntered);
             EventBus.Unsubscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
+            EventBus.Unsubscribe<EchoEventCompletedEvent>(OnEventComplete);
 
             _isSubscribed = false;
         }
@@ -173,6 +178,22 @@ namespace HNR.Progression
         private void OnNullStateEntered(NullStateEnteredEvent evt)
         {
             TriggerRelics(RelicTrigger.OnNullStateEntered, evt);
+        }
+
+        private void OnDamageTaken(DamageTakenEvent evt)
+        {
+            // Only trigger if actual damage was taken (not fully blocked)
+            if (evt.Amount > 0)
+            {
+                TriggerRelics(RelicTrigger.OnDamageTaken, evt);
+                Debug.Log($"[RelicManager] Team took {evt.Amount} damage - triggering OnDamageTaken relics");
+            }
+        }
+
+        private void OnEventComplete(EchoEventCompletedEvent evt)
+        {
+            TriggerRelics(RelicTrigger.OnEventComplete, evt);
+            Debug.Log($"[RelicManager] Echo event completed - triggering OnEventComplete relics");
         }
 
         // ============================================

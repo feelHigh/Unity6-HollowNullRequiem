@@ -264,6 +264,29 @@ namespace HNR.Core.Events
     }
 
     /// <summary>
+    /// Published when the player's team takes damage from enemies.
+    /// Used for relic triggers that respond to incoming damage.
+    /// </summary>
+    public class DamageTakenEvent : GameEvent
+    {
+        /// <summary>The source of the damage (enemy or environmental).</summary>
+        public ICombatTarget Source { get; }
+
+        /// <summary>The amount of unblocked damage taken.</summary>
+        public int Amount { get; }
+
+        /// <summary>The amount of damage that was blocked.</summary>
+        public int BlockedAmount { get; }
+
+        public DamageTakenEvent(ICombatTarget source, int amount, int blockedAmount = 0)
+        {
+            Source = source;
+            Amount = amount;
+            BlockedAmount = blockedAmount;
+        }
+    }
+
+    /// <summary>
     /// Published when a combatant receives healing.
     /// </summary>
     public class HealingReceivedEvent : GameEvent

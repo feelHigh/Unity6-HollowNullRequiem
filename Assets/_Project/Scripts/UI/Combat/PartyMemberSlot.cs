@@ -76,6 +76,11 @@ namespace HNR.UI.Combat
         /// <param name="index">The slot index (0-2).</param>
         public void Initialize(RequiemInstance requiem, int index = 0)
         {
+            // Unsubscribe first to prevent duplicate subscriptions on re-initialization
+            EventBus.Unsubscribe<StatusAppliedEvent>(OnStatusApplied);
+            EventBus.Unsubscribe<StatusRemovedEvent>(OnStatusRemoved);
+            EventBus.Unsubscribe<SoulEssenceChangedEvent>(OnSEChanged);
+
             _requiem = requiem;
             _slotIndex = index;
 
@@ -94,7 +99,13 @@ namespace HNR.UI.Combat
                 _portraitFrame.color = UIColors.GetAspectColor(requiem.Data.SoulAspect);
             }
 
-            // Subscribe to status events (SE is now handled by PartyStatusSidebar)
+            // Reset Art-ready glow at combat start (SE starts at 0, so no Art available)
+            SetActive(false);
+
+            // Clear any leftover status icons from previous combat
+            ClearStatuses();
+
+            // Subscribe to events
             EventBus.Subscribe<StatusAppliedEvent>(OnStatusApplied);
             EventBus.Subscribe<StatusRemovedEvent>(OnStatusRemoved);
             EventBus.Subscribe<SoulEssenceChangedEvent>(OnSEChanged);
@@ -155,10 +166,20 @@ namespace HNR.UI.Combat
             if (combatManager != null)
             {
                 bool canActivate = combatManager.CanActivateArt(_requiem);
-                if (canActivate && !_requiem.HasUsedArtThisCombat)
+                bool notUsedYet = !_requiem.HasUsedArtThisCombat;
+
+                if (canActivate && notUsedYet)
                 {
                     SetActive(true);
                 }
+                else
+                {
+                    SetActive(false);
+                }
+            }
+            else
+            {
+                SetActive(false);
             }
         }
 

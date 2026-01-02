@@ -111,7 +111,7 @@ namespace HNR.Combat
                     enemy.Visual?.PlayAttack(attackType);
 
                     int damage = intent.Value > 0 ? intent.Value : (enemy.Data?.GetScaledDamage(1) ?? 5);
-                    DealDamageToTeam(damage, context);
+                    DealDamageToTeam(damage, context, enemy);
                     EventBus.Publish(new EnemyIntentExecutedEvent(enemy, intent));
                     break;
 
@@ -123,7 +123,7 @@ namespace HNR.Combat
                     int hits = intent.SecondaryValue > 0 ? intent.SecondaryValue : 1;
                     for (int i = 0; i < hits; i++)
                     {
-                        DealDamageToTeam(hitDamage, context);
+                        DealDamageToTeam(hitDamage, context, enemy);
                     }
                     EventBus.Publish(new EnemyIntentExecutedEvent(enemy, intent));
                     break;
@@ -191,8 +191,12 @@ namespace HNR.Combat
 
         /// <summary>
         /// Deal damage to the player's team, accounting for block.
+        /// Also adds corruption to a random Requiem based on unblocked damage.
         /// </summary>
-        private void DealDamageToTeam(int damage, CombatContext context)
+        /// <param name="damage">Raw damage amount</param>
+        /// <param name="context">Combat context</param>
+        /// <param name="source">The enemy dealing damage (for relic triggers)</param>
+        private void DealDamageToTeam(int damage, CombatContext context, EnemyInstance source = null)
         {
             int blocked = Mathf.Min(damage, context.TeamBlock);
             context.TeamBlock -= blocked;
@@ -203,16 +207,24 @@ namespace HNR.Combat
                 EventBus.Publish(new BlockChangedEvent(context.TeamBlock, context.TeamBlock + blocked));
             }
 
+            // Publish DamageTakenEvent for relic triggers (even if fully blocked)
+            EventBus.Publish(new DamageTakenEvent(source, remaining, blocked));
+
             if (remaining > 0)
             {
                 context.TeamHP -= remaining;
 
-                // Play hit animation on a random Requiem
+                // Play hit animation on a random Requiem and add corruption
                 if (context.Team != null && context.Team.Count > 0)
                 {
                     int targetIndex = Random.Range(0, context.Team.Count);
                     var hitRequiem = context.Team[targetIndex];
                     hitRequiem?.Visual?.PlayHit();
+
+                    // Add corruption based on damage taken (1 corruption per 5 damage, minimum 1)
+                    int corruptionGain = Mathf.Max(1, remaining / 5);
+                    hitRequiem?.AddCorruption(corruptionGain);
+                    Debug.Log($"[EnemyPhase] {hitRequiem?.Name} gains {corruptionGain} corruption from damage");
 
                     // Include position in event for damage number spawning
                     EventBus.Publish(new TeamHPChangedEvent(context.TeamHP, context.TeamMaxHP, -remaining, hitRequiem?.Position));

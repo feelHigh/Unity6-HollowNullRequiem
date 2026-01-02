@@ -498,6 +498,9 @@ namespace HNR.Editor
             // === ConfirmationDialog ===
             GameObject confirmationDialog = CreateConfirmationDialog(overlayContainer);
 
+            // === NullStateModal ===
+            GameObject nullStateModal = CreateNullStateModal(overlayContainer);
+
             // NOTE: No opaque background for Combat scene - we need to see world-space enemies
             // Camera background color provides the backdrop instead
 
@@ -516,13 +519,19 @@ namespace HNR.Editor
         {
             List<EditorBuildSettingsScene> scenes = new List<EditorBuildSettingsScene>();
 
+            // All 8 production scenes in correct game flow order:
+            // Boot -> MainMenu -> Bastion -> Missions -> BattleMission -> NullRift <-> Combat
+            // Requiems is accessible from Bastion as a character viewer
             string[] sceneOrder = new string[]
             {
-                $"{SCENES_PATH}/Boot.unity",
-                $"{SCENES_PATH}/MainMenu.unity",
-                $"{SCENES_PATH}/Bastion.unity",
-                $"{SCENES_PATH}/NullRift.unity",
-                $"{SCENES_PATH}/Combat.unity"
+                $"{SCENES_PATH}/Boot.unity",           // 0: Entry point, creates all managers
+                $"{SCENES_PATH}/MainMenu.unity",       // 1: Main menu
+                $"{SCENES_PATH}/Bastion.unity",        // 2: Hub area
+                $"{SCENES_PATH}/Missions.unity",       // 3: Mission type selection (Story/Battle)
+                $"{SCENES_PATH}/BattleMission.unity",  // 4: Zone/difficulty selection
+                $"{SCENES_PATH}/Requiems.unity",       // 5: Character viewer (from Bastion)
+                $"{SCENES_PATH}/NullRift.unity",       // 6: Map exploration (run state)
+                $"{SCENES_PATH}/Combat.unity"          // 7: Combat encounters
             };
 
             foreach (string scenePath in sceneOrder)
@@ -2065,6 +2074,11 @@ namespace HNR.Editor
             // ============================================
             GameObject partySidebar = CreatePartySidebar(bottomHUD);
 
+            // ============================================
+            // LEFT SIDEBAR - Relic Display (below party sidebar in TopHUD area)
+            // ============================================
+            GameObject relicDisplayBar = CreateRelicDisplayBar(screenObj);
+
             // Wire references
             SerializedObject screenSO = new SerializedObject(combatScreen);
             screenSO.FindProperty("_showGlobalHeader").boolValue = false;
@@ -2437,6 +2451,7 @@ namespace HNR.Editor
             // Find and wire child components
             var vitalityBar = combatScreenObj.GetComponentInChildren<SharedVitalityBar>(true);
             var partySidebar = combatScreenObj.GetComponentInChildren<PartyStatusSidebar>(true);
+            var relicDisplayBar = combatScreenObj.GetComponentInChildren<RelicDisplayBar>(true);
             var cardFan = combatScreenObj.GetComponentInChildren<CardFanLayout>(true);
             var apCounter = combatScreenObj.GetComponentInChildren<APCounterDisplay>(true);
             var execButton = combatScreenObj.GetComponentInChildren<ExecutionButton>(true);
@@ -2447,6 +2462,8 @@ namespace HNR.Editor
                 SetPropertyIfExists(so, "_vitalityBar", vitalityBar);
             if (partySidebar != null)
                 SetPropertyIfExists(so, "_partySidebar", partySidebar);
+            if (relicDisplayBar != null)
+                SetPropertyIfExists(so, "_relicDisplayBar", relicDisplayBar);
             if (cardFan != null)
                 SetPropertyIfExists(so, "_cardFanLayout", cardFan);
             if (apCounter != null)
@@ -2604,30 +2621,81 @@ namespace HNR.Editor
             Image hpBg = hpBarContainer.AddComponent<Image>();
             hpBg.color = new Color(0, 0, 0, 0.7f);
 
-            // HP Fill
-            GameObject hpFill = new GameObject("HealthFill");
-            hpFill.transform.SetParent(hpBarContainer.transform, false);
-            RectTransform fillRect = hpFill.AddComponent<RectTransform>();
-            fillRect.anchorMin = Vector2.zero;
-            fillRect.anchorMax = new Vector2(0.8f, 1); // 80% fill example
-            fillRect.offsetMin = new Vector2(2, 2);
-            fillRect.offsetMax = new Vector2(-2, -2);
-            Image fillImg = hpFill.AddComponent<Image>();
-            fillImg.color = new Color(0.18f, 0.8f, 0.44f); // Health green #2ECC71
+            // Damage Slider (behind health - shows linger effect)
+            GameObject damageSliderObj = new GameObject("DamageSlider");
+            damageSliderObj.transform.SetParent(hpBarContainer.transform, false);
+            RectTransform dmgSliderRect = damageSliderObj.AddComponent<RectTransform>();
+            dmgSliderRect.anchorMin = Vector2.zero;
+            dmgSliderRect.anchorMax = Vector2.one;
+            dmgSliderRect.offsetMin = new Vector2(2, 2);
+            dmgSliderRect.offsetMax = new Vector2(-2, -2);
 
-            // Damage linger fill (behind health)
-            GameObject damageFill = new GameObject("DamageFill");
-            damageFill.transform.SetParent(hpBarContainer.transform, false);
-            damageFill.transform.SetAsFirstSibling();
-            RectTransform dmgRect = damageFill.AddComponent<RectTransform>();
-            dmgRect.anchorMin = Vector2.zero;
-            dmgRect.anchorMax = new Vector2(0.85f, 1);
-            dmgRect.offsetMin = new Vector2(2, 2);
-            dmgRect.offsetMax = new Vector2(-2, -2);
-            Image dmgImg = damageFill.AddComponent<Image>();
-            dmgImg.color = new Color(1f, 0.27f, 0.27f); // Corruption glow #FF4444
+            Slider damageSlider = damageSliderObj.AddComponent<Slider>();
+            damageSlider.direction = Slider.Direction.LeftToRight;
+            damageSlider.minValue = 0f;
+            damageSlider.maxValue = 1f;
+            damageSlider.value = 1f;
+            damageSlider.interactable = false;
 
-            // HP Text
+            // Damage Fill Area
+            GameObject dmgFillAreaObj = new GameObject("Fill Area");
+            dmgFillAreaObj.transform.SetParent(damageSliderObj.transform, false);
+            RectTransform dmgFillAreaRect = dmgFillAreaObj.AddComponent<RectTransform>();
+            dmgFillAreaRect.anchorMin = Vector2.zero;
+            dmgFillAreaRect.anchorMax = Vector2.one;
+            dmgFillAreaRect.offsetMin = Vector2.zero;
+            dmgFillAreaRect.offsetMax = Vector2.zero;
+
+            // Damage Fill
+            GameObject dmgFillObj = new GameObject("Fill");
+            dmgFillObj.transform.SetParent(dmgFillAreaObj.transform, false);
+            RectTransform dmgFillRect = dmgFillObj.AddComponent<RectTransform>();
+            dmgFillRect.anchorMin = Vector2.zero;
+            dmgFillRect.anchorMax = Vector2.one;
+            dmgFillRect.offsetMin = Vector2.zero;
+            dmgFillRect.offsetMax = Vector2.zero;
+            Image dmgFillImg = dmgFillObj.AddComponent<Image>();
+            dmgFillImg.color = new Color(1f, 0.27f, 0.27f); // Corruption glow #FF4444
+            damageSlider.fillRect = dmgFillRect;
+
+            // Health Slider (in front of damage)
+            GameObject healthSliderObj = new GameObject("HealthSlider");
+            healthSliderObj.transform.SetParent(hpBarContainer.transform, false);
+            RectTransform hpSliderRect = healthSliderObj.AddComponent<RectTransform>();
+            hpSliderRect.anchorMin = Vector2.zero;
+            hpSliderRect.anchorMax = Vector2.one;
+            hpSliderRect.offsetMin = new Vector2(2, 2);
+            hpSliderRect.offsetMax = new Vector2(-2, -2);
+
+            Slider healthSlider = healthSliderObj.AddComponent<Slider>();
+            healthSlider.direction = Slider.Direction.LeftToRight;
+            healthSlider.minValue = 0f;
+            healthSlider.maxValue = 1f;
+            healthSlider.value = 1f;
+            healthSlider.interactable = false;
+
+            // Health Fill Area
+            GameObject hpFillAreaObj = new GameObject("Fill Area");
+            hpFillAreaObj.transform.SetParent(healthSliderObj.transform, false);
+            RectTransform hpFillAreaRect = hpFillAreaObj.AddComponent<RectTransform>();
+            hpFillAreaRect.anchorMin = Vector2.zero;
+            hpFillAreaRect.anchorMax = Vector2.one;
+            hpFillAreaRect.offsetMin = Vector2.zero;
+            hpFillAreaRect.offsetMax = Vector2.zero;
+
+            // Health Fill
+            GameObject hpFillObj = new GameObject("Fill");
+            hpFillObj.transform.SetParent(hpFillAreaObj.transform, false);
+            RectTransform hpFillRect = hpFillObj.AddComponent<RectTransform>();
+            hpFillRect.anchorMin = Vector2.zero;
+            hpFillRect.anchorMax = Vector2.one;
+            hpFillRect.offsetMin = Vector2.zero;
+            hpFillRect.offsetMax = Vector2.zero;
+            Image hpFillImg = hpFillObj.AddComponent<Image>();
+            hpFillImg.color = new Color(0.18f, 0.8f, 0.44f); // Health green #2ECC71
+            healthSlider.fillRect = hpFillRect;
+
+            // HP Text (on top of sliders)
             GameObject hpText = CreateText(hpBarContainer, "HPText", "210 / 210", 11);
             RectTransform hpTextRect = hpText.GetComponent<RectTransform>();
             hpTextRect.anchorMin = Vector2.zero;
@@ -2691,8 +2759,10 @@ namespace HNR.Editor
             // Add SharedVitalityBar component and wire references
             var vitalityComponent = barObj.AddComponent<SharedVitalityBar>();
             SerializedObject so = new SerializedObject(vitalityComponent);
-            so.FindProperty("_healthFill").objectReferenceValue = fillImg;
-            so.FindProperty("_damageFill").objectReferenceValue = dmgImg;
+            so.FindProperty("_healthSlider").objectReferenceValue = healthSlider;
+            so.FindProperty("_healthFillImage").objectReferenceValue = hpFillImg;
+            so.FindProperty("_damageSlider").objectReferenceValue = damageSlider;
+            so.FindProperty("_damageFillImage").objectReferenceValue = dmgFillImg;
             so.FindProperty("_hpText").objectReferenceValue = hpTmp;
             so.FindProperty("_blockContainer").objectReferenceValue = blockContainer;
             so.FindProperty("_shieldIcon").objectReferenceValue = shieldImg;
@@ -2715,6 +2785,7 @@ namespace HNR.Editor
         /// <summary>
         /// Creates a PortraitCorruptionSlot inline for the SharedVitalityBar.
         /// Uses Mask component to crop portrait sprite (show face only, not shrunk).
+        /// Uses Slider component for reliable corruption gauge updates.
         /// </summary>
         private static GameObject CreatePortraitCorruptionSlotInline(GameObject parent, int index)
         {
@@ -2779,26 +2850,53 @@ namespace HNR.Editor
             Image corruptBgImg = corruptBgObj.AddComponent<Image>();
             corruptBgImg.color = new Color(0.15f, 0.15f, 0.2f, 0.9f);
 
-            // Corruption bar fill
-            GameObject corruptFillObj = new GameObject("CorruptionFill");
-            corruptFillObj.transform.SetParent(slotObj.transform, false);
-            RectTransform corruptFillRect = corruptFillObj.AddComponent<RectTransform>();
-            corruptFillRect.anchorMin = new Vector2(0, 0);
-            corruptFillRect.anchorMax = new Vector2(1, 0.16f);
-            corruptFillRect.offsetMin = new Vector2(1, 1);
-            corruptFillRect.offsetMax = new Vector2(-1, -1);
-            Image corruptFillImg = corruptFillObj.AddComponent<Image>();
-            corruptFillImg.color = new Color(0.2f, 0.8f, 0.2f, 1f); // Start green (safe)
-            corruptFillImg.type = Image.Type.Filled;
-            corruptFillImg.fillMethod = Image.FillMethod.Horizontal;
-            corruptFillImg.fillAmount = 0f;
+            // Corruption Slider container
+            GameObject corruptSliderObj = new GameObject("CorruptionSlider");
+            corruptSliderObj.transform.SetParent(slotObj.transform, false);
+            RectTransform corruptSliderRect = corruptSliderObj.AddComponent<RectTransform>();
+            corruptSliderRect.anchorMin = new Vector2(0, 0);
+            corruptSliderRect.anchorMax = new Vector2(1, 0.16f);
+            corruptSliderRect.offsetMin = new Vector2(1, 1);
+            corruptSliderRect.offsetMax = new Vector2(-1, -1);
+
+            // Slider component
+            Slider corruptSlider = corruptSliderObj.AddComponent<Slider>();
+            corruptSlider.direction = Slider.Direction.LeftToRight;
+            corruptSlider.minValue = 0f;
+            corruptSlider.maxValue = 1f;
+            corruptSlider.value = 0f;
+            corruptSlider.interactable = false;
+
+            // Fill Area for slider
+            GameObject fillAreaObj = new GameObject("Fill Area");
+            fillAreaObj.transform.SetParent(corruptSliderObj.transform, false);
+            RectTransform fillAreaRect = fillAreaObj.AddComponent<RectTransform>();
+            fillAreaRect.anchorMin = Vector2.zero;
+            fillAreaRect.anchorMax = Vector2.one;
+            fillAreaRect.offsetMin = Vector2.zero;
+            fillAreaRect.offsetMax = Vector2.zero;
+
+            // Fill image for slider
+            GameObject fillObj = new GameObject("Fill");
+            fillObj.transform.SetParent(fillAreaObj.transform, false);
+            RectTransform fillRect = fillObj.AddComponent<RectTransform>();
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+            Image fillImg = fillObj.AddComponent<Image>();
+            fillImg.color = new Color(0.2f, 0.8f, 0.2f, 1f); // Start green (safe)
+
+            // Wire slider fill rect
+            corruptSlider.fillRect = fillRect;
 
             // Add PortraitCorruptionSlot component and wire
             var slotComponent = slotObj.AddComponent<PortraitCorruptionSlot>();
             SerializedObject so = new SerializedObject(slotComponent);
             so.FindProperty("_portrait").objectReferenceValue = portraitImg;
             so.FindProperty("_portraitFrame").objectReferenceValue = frameImg;
-            so.FindProperty("_corruptionFill").objectReferenceValue = corruptFillImg;
+            so.FindProperty("_corruptionSlider").objectReferenceValue = corruptSlider;
+            so.FindProperty("_corruptionFillImage").objectReferenceValue = fillImg;
             so.FindProperty("_corruptionBackground").objectReferenceValue = corruptBgImg;
             so.FindProperty("_fillSpeed").floatValue = 5f;
             so.FindProperty("_smoothTransition").boolValue = true;
@@ -2876,6 +2974,7 @@ namespace HNR.Editor
         /// <summary>
         /// Creates the party status sidebar with shared SE gauge on the left.
         /// Styled after Chaos Zero Nightmare - vertical SE gauge + portrait stack.
+        /// Uses Slider component for reliable SE gauge updates.
         /// Now created as child of BottomCommandCenter for proper click interaction.
         /// </summary>
         private static GameObject CreatePartySidebar(GameObject parent)
@@ -2906,7 +3005,7 @@ namespace HNR.Editor
             mainLayout.childControlWidth = false;
 
             // ============================================
-            // Shared SE Gauge (vertical bar, full height on left)
+            // Shared SE Gauge (vertical Slider, full height on left)
             // ============================================
             GameObject seGaugeContainer = new GameObject("SharedSEGauge");
             seGaugeContainer.transform.SetParent(sidebar.transform, false);
@@ -2922,19 +3021,48 @@ namespace HNR.Editor
             Image seBg = seGaugeContainer.AddComponent<Image>();
             seBg.color = new Color(0.08f, 0.08f, 0.12f, 0.9f);
 
-            // SE Fill (vertical fill from bottom to top) - uses stretch anchors
-            GameObject seFillObj = new GameObject("SEFill");
-            seFillObj.transform.SetParent(seGaugeContainer.transform, false);
+            // SE Slider (vertical fill from bottom to top)
+            GameObject seSliderObj = new GameObject("SESlider");
+            seSliderObj.transform.SetParent(seGaugeContainer.transform, false);
+            RectTransform seSliderRect = seSliderObj.AddComponent<RectTransform>();
+            seSliderRect.anchorMin = new Vector2(0, 0);
+            seSliderRect.anchorMax = new Vector2(1, 1); // Full stretch
+            seSliderRect.offsetMin = new Vector2(3, 16); // Margin for SE text at bottom
+            seSliderRect.offsetMax = new Vector2(-3, -16); // Margin for SE label at top
+
+            // Slider component configured for vertical bottom-to-top
+            Slider seSlider = seSliderObj.AddComponent<Slider>();
+            seSlider.direction = Slider.Direction.BottomToTop;
+            seSlider.minValue = 0f;
+            seSlider.maxValue = 1f;
+            seSlider.value = 0f;
+            seSlider.interactable = false;
+
+            // Fill Area for slider
+            GameObject seFillAreaObj = new GameObject("Fill Area");
+            seFillAreaObj.transform.SetParent(seSliderObj.transform, false);
+            RectTransform seFillAreaRect = seFillAreaObj.AddComponent<RectTransform>();
+            seFillAreaRect.anchorMin = Vector2.zero;
+            seFillAreaRect.anchorMax = Vector2.one;
+            seFillAreaRect.offsetMin = Vector2.zero;
+            seFillAreaRect.offsetMax = Vector2.zero;
+
+            // Fill image for slider
+            GameObject seFillObj = new GameObject("Fill");
+            seFillObj.transform.SetParent(seFillAreaObj.transform, false);
             RectTransform seFillRect = seFillObj.AddComponent<RectTransform>();
-            seFillRect.anchorMin = new Vector2(0, 0);
-            seFillRect.anchorMax = new Vector2(1, 0.5f); // 50% fill example
-            seFillRect.offsetMin = new Vector2(3, 16); // Margin for SE text at bottom
-            seFillRect.offsetMax = new Vector2(-3, -16); // Margin for SE label at top
+            seFillRect.anchorMin = Vector2.zero;
+            seFillRect.anchorMax = Vector2.one;
+            seFillRect.offsetMin = Vector2.zero;
+            seFillRect.offsetMax = Vector2.zero;
             Image seFillImg = seFillObj.AddComponent<Image>();
             seFillImg.color = new Color(0f, 0.83f, 0.89f); // Soul cyan
 
+            // Wire slider fill rect
+            seSlider.fillRect = seFillRect;
+
             // SE Text at bottom (shows current SE value)
-            GameObject seTextObj = CreateText(seGaugeContainer, "SEText", "50", 10);
+            GameObject seTextObj = CreateText(seGaugeContainer, "SEText", "0", 10);
             RectTransform seTextRect = seTextObj.GetComponent<RectTransform>();
             seTextRect.anchorMin = new Vector2(0, 0);
             seTextRect.anchorMax = new Vector2(1, 0);
@@ -2993,12 +3121,13 @@ namespace HNR.Editor
                 }
             }
 
-            // Add PartyStatusSidebar component and wire shared SE gauge
+            // Add PartyStatusSidebar component and wire shared SE slider
             var sidebarComponent = sidebar.AddComponent<PartyStatusSidebar>();
             SerializedObject so = new SerializedObject(sidebarComponent);
 
-            // Wire shared SE gauge
-            so.FindProperty("_sharedSEFill").objectReferenceValue = seFillImg;
+            // Wire shared SE slider
+            so.FindProperty("_sharedSESlider").objectReferenceValue = seSlider;
+            so.FindProperty("_sharedSEFillImage").objectReferenceValue = seFillImg;
             so.FindProperty("_sharedSEText").objectReferenceValue = seTmp;
 
             // Wire member slots array
@@ -3748,6 +3877,196 @@ namespace HNR.Editor
 
             overlay.SetActive(false);
             return overlay;
+        }
+
+        /// <summary>
+        /// Creates the NullStateModal overlay for when a Requiem enters Null State.
+        /// Shows effects and requires player confirmation to continue.
+        /// </summary>
+        private static GameObject CreateNullStateModal(GameObject parent)
+        {
+            GameObject overlay = new GameObject("NullStateModal");
+            overlay.transform.SetParent(parent.transform, false);
+
+            RectTransform overlayRect = overlay.AddComponent<RectTransform>();
+            overlayRect.anchorMin = Vector2.zero;
+            overlayRect.anchorMax = Vector2.one;
+            overlayRect.sizeDelta = Vector2.zero;
+
+            CanvasGroup canvasGroup = overlay.AddComponent<CanvasGroup>();
+            canvasGroup.alpha = 0f;
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
+
+            // Dark background with corruption vignette
+            Image bgImage = overlay.AddComponent<Image>();
+            bgImage.color = new Color(0f, 0f, 0f, 0.9f);
+
+            // Main content panel (centered)
+            GameObject contentPanel = new GameObject("ContentPanel");
+            contentPanel.transform.SetParent(overlay.transform, false);
+            RectTransform contentRect = contentPanel.AddComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0.5f, 0.5f);
+            contentRect.anchorMax = new Vector2(0.5f, 0.5f);
+            contentRect.sizeDelta = new Vector2(400, 350);
+
+            Image contentBg = contentPanel.AddComponent<Image>();
+            contentBg.color = new Color(0.12f, 0.05f, 0.1f, 0.98f);
+
+            VerticalLayoutGroup contentLayout = contentPanel.AddComponent<VerticalLayoutGroup>();
+            contentLayout.padding = new RectOffset(20, 20, 20, 20);
+            contentLayout.spacing = 12f;
+            contentLayout.childAlignment = TextAnchor.UpperCenter;
+            contentLayout.childForceExpandWidth = true;
+            contentLayout.childForceExpandHeight = false;
+
+            // Title "NULL STATE"
+            GameObject title = CreateText(contentPanel, "Title", "NULL STATE", 32);
+            var titleTmp = title.GetComponent<TMP_Text>();
+            titleTmp.fontStyle = TMPro.FontStyles.Bold;
+            titleTmp.color = new Color(0.77f, 0.12f, 0.23f); // Null state red
+
+            // Requiem name text
+            GameObject requiemName = CreateText(contentPanel, "RequiemName", "Unknown Requiem", 24);
+            var nameTmp = requiemName.GetComponent<TMP_Text>();
+            nameTmp.fontStyle = TMPro.FontStyles.Bold;
+
+            // Portrait placeholder
+            GameObject portraitFrame = new GameObject("PortraitFrame");
+            portraitFrame.transform.SetParent(contentPanel.transform, false);
+            var portraitLayout = portraitFrame.AddComponent<LayoutElement>();
+            portraitLayout.preferredHeight = 80;
+            portraitLayout.preferredWidth = 80;
+            Image portraitFrameImg = portraitFrame.AddComponent<Image>();
+            portraitFrameImg.color = new Color(0.77f, 0.12f, 0.23f);
+
+            GameObject portrait = new GameObject("Portrait");
+            portrait.transform.SetParent(portraitFrame.transform, false);
+            RectTransform portraitRect = portrait.AddComponent<RectTransform>();
+            portraitRect.anchorMin = new Vector2(0.1f, 0.1f);
+            portraitRect.anchorMax = new Vector2(0.9f, 0.9f);
+            portraitRect.sizeDelta = Vector2.zero;
+            Image portraitImg = portrait.AddComponent<Image>();
+            portraitImg.color = new Color(0.3f, 0.1f, 0.15f);
+
+            // Effects text
+            GameObject effects = CreateText(contentPanel, "Effects", "-33% Current HP\n+50% Damage", 18);
+            effects.GetComponent<TMP_Text>().alignment = TextAlignmentOptions.Center;
+
+            // Art name
+            GameObject artName = CreateText(contentPanel, "ArtName", "REQUIEM ART: Infernal Cascade", 14);
+            var artTmp = artName.GetComponent<TMP_Text>();
+            artTmp.fontStyle = TMPro.FontStyles.Italic;
+            artTmp.color = new Color(0f, 0.83f, 0.89f);
+
+            // Disclaimer
+            GameObject disclaimer = CreateText(contentPanel, "Disclaimer", "Corruption resets to 50% after combat", 11);
+            disclaimer.GetComponent<TMP_Text>().color = new Color(0.6f, 0.5f, 0.55f);
+
+            // Unleash button
+            GameObject unleashBtn = CreateMenuButton(contentPanel, "UnleashButton", "UNLEASH");
+            Image btnImg = unleashBtn.GetComponent<Image>();
+            btnImg.color = new Color(0.77f, 0.12f, 0.23f, 0.9f);
+            unleashBtn.GetComponentInChildren<TMP_Text>().fontStyle = TMPro.FontStyles.Bold;
+
+            // Add NullStateModal component and wire references
+            var modal = overlay.AddComponent<NullStateModal>();
+            var so = new SerializedObject(modal);
+            so.FindProperty("_overlay").objectReferenceValue = canvasGroup;
+            so.FindProperty("_backgroundPanel").objectReferenceValue = bgImage;
+            so.FindProperty("_requiemPortrait").objectReferenceValue = portraitImg;
+            so.FindProperty("_portraitFrame").objectReferenceValue = portraitFrameImg;
+            so.FindProperty("_requiemNameText").objectReferenceValue = requiemName.GetComponent<TMP_Text>();
+            so.FindProperty("_titleText").objectReferenceValue = title.GetComponent<TMP_Text>();
+            so.FindProperty("_effectsText").objectReferenceValue = effects.GetComponent<TMP_Text>();
+            so.FindProperty("_artNameText").objectReferenceValue = artName.GetComponent<TMP_Text>();
+            so.FindProperty("_disclaimerText").objectReferenceValue = disclaimer.GetComponent<TMP_Text>();
+            so.FindProperty("_unleashButton").objectReferenceValue = unleashBtn.GetComponent<Button>();
+            so.FindProperty("_unleashButtonText").objectReferenceValue = unleashBtn.GetComponentInChildren<TMP_Text>();
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            // Keep active for event subscription
+            return overlay;
+        }
+
+        /// <summary>
+        /// Creates the RelicDisplayBar for showing owned relics in combat.
+        /// Positioned in left sidebar area above PartySidebar.
+        /// </summary>
+        private static GameObject CreateRelicDisplayBar(GameObject parent)
+        {
+            GameObject barObj = new GameObject("RelicDisplayBar");
+            barObj.transform.SetParent(parent.transform, false);
+
+            RectTransform rect = barObj.AddComponent<RectTransform>();
+            // Position at top-left, below TopHUD
+            rect.anchorMin = new Vector2(0, 0.35f);
+            rect.anchorMax = new Vector2(0, 0.87f);
+            rect.pivot = new Vector2(0, 0.5f);
+            rect.anchoredPosition = new Vector2(8, 0);
+            rect.sizeDelta = new Vector2(50, 0); // 50px wide, stretches vertically
+
+            Image bg = barObj.AddComponent<Image>();
+            bg.color = new Color(0.08f, 0.06f, 0.12f, 0.7f);
+
+            // Relic container with vertical layout
+            GameObject relicContainer = new GameObject("RelicContainer");
+            relicContainer.transform.SetParent(barObj.transform, false);
+            RectTransform containerRect = relicContainer.AddComponent<RectTransform>();
+            containerRect.anchorMin = Vector2.zero;
+            containerRect.anchorMax = Vector2.one;
+            containerRect.offsetMin = new Vector2(4, 4);
+            containerRect.offsetMax = new Vector2(-4, -4);
+
+            VerticalLayoutGroup layout = relicContainer.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 4f;
+            layout.padding = new RectOffset(2, 2, 2, 2);
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            // Tooltip panel (hidden by default)
+            GameObject tooltipPanel = new GameObject("TooltipPanel");
+            tooltipPanel.transform.SetParent(barObj.transform, false);
+            RectTransform tooltipRect = tooltipPanel.AddComponent<RectTransform>();
+            tooltipRect.anchorMin = new Vector2(1, 0.5f);
+            tooltipRect.anchorMax = new Vector2(1, 0.5f);
+            tooltipRect.pivot = new Vector2(0, 0.5f);
+            tooltipRect.anchoredPosition = new Vector2(8, 0);
+            tooltipRect.sizeDelta = new Vector2(200, 80);
+
+            Image tooltipBg = tooltipPanel.AddComponent<Image>();
+            tooltipBg.color = new Color(0.1f, 0.08f, 0.15f, 0.95f);
+
+            VerticalLayoutGroup tooltipLayout = tooltipPanel.AddComponent<VerticalLayoutGroup>();
+            tooltipLayout.padding = new RectOffset(8, 8, 6, 6);
+            tooltipLayout.spacing = 4f;
+            tooltipLayout.childForceExpandWidth = true;
+            tooltipLayout.childForceExpandHeight = false;
+
+            // Tooltip content
+            GameObject tooltipName = CreateText(tooltipPanel, "TooltipName", "Relic Name", 14);
+            tooltipName.GetComponent<TMP_Text>().fontStyle = TMPro.FontStyles.Bold;
+
+            GameObject tooltipDesc = CreateText(tooltipPanel, "TooltipDescription", "Relic description goes here.", 11);
+            tooltipDesc.GetComponent<TMP_Text>().alignment = TextAlignmentOptions.TopLeft;
+
+            GameObject tooltipRarity = CreateText(tooltipPanel, "TooltipRarity", "Common", 10);
+            tooltipRarity.GetComponent<TMP_Text>().fontStyle = TMPro.FontStyles.Italic;
+
+            tooltipPanel.SetActive(false);
+
+            // Add RelicDisplayBar component and wire references
+            var relicBar = barObj.AddComponent<RelicDisplayBar>();
+            var so = new SerializedObject(relicBar);
+            so.FindProperty("_relicContainer").objectReferenceValue = relicContainer.transform;
+            so.FindProperty("_tooltipPanel").objectReferenceValue = tooltipPanel;
+            so.FindProperty("_tooltipName").objectReferenceValue = tooltipName.GetComponent<TMP_Text>();
+            so.FindProperty("_tooltipDescription").objectReferenceValue = tooltipDesc.GetComponent<TMP_Text>();
+            so.FindProperty("_tooltipRarity").objectReferenceValue = tooltipRarity.GetComponent<TMP_Text>();
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            return barObj;
         }
 
         /// <summary>

@@ -41,6 +41,9 @@ namespace HNR.UI.Screens
         [SerializeField, Tooltip("Party member slots with EP gauges")]
         private PartyStatusSidebar _partySidebar;
 
+        [SerializeField, Tooltip("Relic display bar showing owned relics")]
+        private RelicDisplayBar _relicDisplayBar;
+
         // ============================================
         // Bottom Command Center
         // ============================================
@@ -446,6 +449,26 @@ namespace HNR.UI.Screens
             if (_partySidebar != null)
             {
                 _partySidebar.Initialize(_context.Team.ToArray());
+            }
+            else
+            {
+                Debug.LogWarning("[CombatScreen] PartyStatusSidebar not found - SE gauge and Art activation UI will not display");
+            }
+
+            // Initialize relic display
+            if (_relicDisplayBar != null)
+            {
+                _relicDisplayBar.Initialize();
+            }
+            else
+            {
+                // Try to auto-find
+                _relicDisplayBar = FindAnyObjectByType<RelicDisplayBar>(FindObjectsInactive.Include);
+                if (_relicDisplayBar != null)
+                {
+                    _relicDisplayBar.Initialize();
+                    Debug.Log("[CombatScreen] Auto-found RelicDisplayBar");
+                }
             }
 
             SpawnEnemyUIs();

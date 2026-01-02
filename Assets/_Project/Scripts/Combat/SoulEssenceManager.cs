@@ -175,10 +175,11 @@ namespace HNR.Combat
 
             int previousSE = _turnManager.Context.SoulEssence;
             _turnManager.Context.SoulEssence += amount;
+            int delta = _turnManager.Context.SoulEssence - previousSE;
 
             EventBus.Publish(new SoulEssenceChangedEvent(
                 _turnManager.Context.SoulEssence,
-                previousSE
+                delta  // Positive delta for SE gain
             ));
 
             Debug.Log($"[SoulEssenceManager] +{amount} SE ({source}). Total: {_turnManager.Context.SoulEssence}");
@@ -196,10 +197,11 @@ namespace HNR.Combat
 
             int previousSE = _turnManager.Context.SoulEssence;
             _turnManager.Context.SoulEssence -= amount;
+            int delta = _turnManager.Context.SoulEssence - previousSE;
 
             EventBus.Publish(new SoulEssenceChangedEvent(
                 _turnManager.Context.SoulEssence,
-                previousSE
+                delta  // Negative delta for SE spent
             ));
 
             Debug.Log($"[SoulEssenceManager] Spent {amount} SE. Remaining: {_turnManager.Context.SoulEssence}");

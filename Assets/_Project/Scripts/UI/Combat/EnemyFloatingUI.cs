@@ -1,6 +1,7 @@
 // ============================================
 // EnemyFloatingUI.cs
 // World-space UI for enemies with HP and intent
+// Uses Slider component for reliable gauge updates
 // ============================================
 
 using System.Collections.Generic;
@@ -18,14 +19,16 @@ namespace HNR.UI.Combat
     /// <summary>
     /// World-space UI floating above enemies with HP bar and diamond intent indicator.
     /// Billboards to camera for consistent visibility.
+    /// Uses Slider component for reliable HP bar updates.
     /// </summary>
     public class EnemyFloatingUI : MonoBehaviour
     {
         [Header("Anchoring")]
         [SerializeField] private Vector3 _offset = new(0, 3f, 0);
 
-        [Header("Health Bar")]
-        [SerializeField] private Image _hpBarFill;
+        [Header("Health Slider")]
+        [SerializeField] private Slider _hpSlider;
+        [SerializeField] private Image _hpFillImage;
         [SerializeField] private Image _hpBarBackground;
         [SerializeField] private TMP_Text _hpText;
 
@@ -83,14 +86,14 @@ namespace HNR.UI.Combat
         /// </summary>
         private void AutoWireReferences()
         {
-            // Find HPBarContainer -> HPFill, HPBackground, HPText
+            // Find HPBarContainer -> HPSlider, HPBackground, HPText
             var hpContainer = transform.Find("HPBarContainer");
             if (hpContainer != null)
             {
-                if (_hpBarFill == null)
+                if (_hpSlider == null)
                 {
-                    var fillTransform = hpContainer.Find("HPFill");
-                    _hpBarFill = fillTransform?.GetComponent<Image>();
+                    var sliderTransform = hpContainer.Find("HPSlider");
+                    _hpSlider = sliderTransform?.GetComponent<Slider>();
                 }
                 if (_hpBarBackground == null)
                 {
@@ -132,7 +135,7 @@ namespace HNR.UI.Combat
 
         /// <summary>
         /// Ensures Image components can render without assigned sprites.
-        /// Creates a simple white sprite and configures Image types.
+        /// Creates a simple white sprite and configures Slider/Image types.
         /// </summary>
         private void EnsureImageRendering()
         {
@@ -148,16 +151,19 @@ namespace HNR.UI.Combat
                 _whiteSprite.name = "WhiteSprite";
             }
 
-            // Configure HP bar fill
-            if (_hpBarFill != null)
+            // Configure HP slider
+            if (_hpSlider != null)
             {
-                if (_hpBarFill.sprite == null)
-                {
-                    _hpBarFill.sprite = _whiteSprite;
-                }
-                _hpBarFill.type = Image.Type.Filled;
-                _hpBarFill.fillMethod = Image.FillMethod.Horizontal;
-                _hpBarFill.fillOrigin = 0; // Left origin
+                _hpSlider.minValue = 0f;
+                _hpSlider.maxValue = 1f;
+                _hpSlider.value = 1f;
+                _hpSlider.interactable = false;
+            }
+
+            // Configure HP fill image color (if available)
+            if (_hpFillImage != null && _hpFillImage.sprite == null)
+            {
+                _hpFillImage.sprite = _whiteSprite;
             }
 
             // Configure HP bar background
@@ -183,7 +189,7 @@ namespace HNR.UI.Combat
             _worldAnchor = enemy.transform;
             _mainCamera = Camera.main;
 
-            Debug.Log($"[EnemyFloatingUI] Initialize for {enemy.Name}: _hpBarFill={(_hpBarFill != null ? "OK" : "NULL")}, _hpText={(_hpText != null ? "OK" : "NULL")}, childCount={transform.childCount}");
+            Debug.Log($"[EnemyFloatingUI] Initialize for {enemy.Name}: _hpSlider={(_hpSlider != null ? "OK" : "NULL")}, _hpText={(_hpText != null ? "OK" : "NULL")}, childCount={transform.childCount}");
 
             UpdateHealth(enemy.CurrentHP, enemy.MaxHP);
 
@@ -261,13 +267,18 @@ namespace HNR.UI.Combat
 
         private void UpdateHealth(int current, int max)
         {
-            if (_hpBarFill != null)
-            {
-                float ratio = max > 0 ? (float)current / max : 0;
-                _hpBarFill.fillAmount = ratio;
+            float ratio = max > 0 ? (float)current / max : 0;
 
-                // Color based on health percentage
-                _hpBarFill.color = ratio switch
+            // Update slider value
+            if (_hpSlider != null)
+            {
+                _hpSlider.value = ratio;
+            }
+
+            // Update fill color based on health percentage
+            if (_hpFillImage != null)
+            {
+                _hpFillImage.color = ratio switch
                 {
                     < 0.25f => UIColors.CorruptionGlow,
                     < 0.5f => UIColors.SoulGold,

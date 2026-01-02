@@ -129,7 +129,11 @@ namespace HNR.UI
 
         private void Awake()
         {
-            // Start hidden
+            // Subscribe to Null State entry events BEFORE disabling
+            // This ensures we receive events even when visually hidden
+            EventBus.Subscribe<NullStateEnteredEvent>(OnNullStateEntered);
+
+            // Start hidden (but keep subscribed to events)
             if (_overlay != null)
             {
                 _overlay.alpha = 0f;
@@ -137,12 +141,30 @@ namespace HNR.UI
                 _overlay.blocksRaycasts = false;
             }
 
-            gameObject.SetActive(false);
+            // Keep GameObject active to receive events, just visually hidden
+            // gameObject.SetActive(false); // Don't disable - need to receive events
         }
 
         private void OnDestroy()
         {
+            // Unsubscribe from events
+            EventBus.Unsubscribe<NullStateEnteredEvent>(OnNullStateEntered);
             _pulseSequence?.Kill();
+        }
+
+        // ============================================
+        // Event Handler
+        // ============================================
+
+        /// <summary>
+        /// Called when a Requiem enters Null State during combat.
+        /// </summary>
+        private void OnNullStateEntered(NullStateEnteredEvent evt)
+        {
+            if (evt?.Requiem == null) return;
+
+            Debug.Log($"[NullStateModal] Received NullStateEnteredEvent for {evt.Requiem.Name}");
+            Show(evt.Requiem, null);
         }
 
         // ============================================
@@ -162,7 +184,7 @@ namespace HNR.UI
             _onUnleash = onUnleash;
             _isShowing = true;
 
-            gameObject.SetActive(true);
+            // GameObject stays active for event listening, just show visuals
             UpdateDisplay();
             SetupButton();
             PlayShowAnimation();
@@ -382,12 +404,6 @@ namespace HNR.UI
 
         private void PlayHideAnimation()
         {
-            if (_overlay == null)
-            {
-                gameObject.SetActive(false);
-                return;
-            }
-
             // Stop pulses
             _pulseSequence?.Kill();
 
@@ -397,14 +413,16 @@ namespace HNR.UI
                 _corruptionParticles.Stop();
             }
 
-            // Fade out
+            if (_overlay == null) return;
+
+            // Fade out (keep GameObject active for future events)
             _overlay.DOFade(0f, _fadeInDuration * 0.5f)
                 .SetUpdate(true)
                 .OnComplete(() =>
                 {
                     _overlay.interactable = false;
                     _overlay.blocksRaycasts = false;
-                    gameObject.SetActive(false);
+                    // Don't disable - need to stay subscribed to events
                 });
         }
 

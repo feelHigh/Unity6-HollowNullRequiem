@@ -1,6 +1,7 @@
 // ============================================
 // PortraitCorruptionSlot.cs
 // Combined portrait with corruption bar display
+// Uses Slider component for reliable gauge updates
 // ============================================
 
 using UnityEngine;
@@ -14,6 +15,7 @@ namespace HNR.UI.Combat
     /// <summary>
     /// Displays a Requiem portrait with a horizontal corruption bar below.
     /// Used in SharedVitalityBar to show per-character corruption levels.
+    /// Uses Slider component for reliable visual updates.
     /// </summary>
     public class PortraitCorruptionSlot : MonoBehaviour
     {
@@ -21,8 +23,9 @@ namespace HNR.UI.Combat
         [SerializeField] private Image _portrait;
         [SerializeField] private Image _portraitFrame;
 
-        [Header("Corruption Bar")]
-        [SerializeField] private Image _corruptionFill;
+        [Header("Corruption Slider")]
+        [SerializeField] private Slider _corruptionSlider;
+        [SerializeField] private Image _corruptionFillImage;
         [SerializeField] private Image _corruptionBackground;
 
         [Header("Animation")]
@@ -38,6 +41,16 @@ namespace HNR.UI.Combat
         private void Awake()
         {
             _corruptionGradient = CreateCorruptionGradient();
+
+            // Configure slider for corruption display
+            if (_corruptionSlider != null)
+            {
+                _corruptionSlider.minValue = 0f;
+                _corruptionSlider.maxValue = 1f;
+                _corruptionSlider.value = 0f;
+                _corruptionSlider.interactable = false; // Display only, not interactive
+                Debug.Log("[PortraitCorruptionSlot] Corruption slider configured: min=0, max=1, value=0");
+            }
         }
 
         private void OnDestroy()
@@ -56,6 +69,11 @@ namespace HNR.UI.Combat
         /// <param name="requiem">The Requiem to track.</param>
         public void Initialize(RequiemInstance requiem)
         {
+            // Unsubscribe first to prevent duplicate subscriptions on re-initialization
+            EventBus.Unsubscribe<CorruptionChangedEvent>(OnCorruptionChanged);
+            EventBus.Unsubscribe<NullStateEnteredEvent>(OnNullStateEntered);
+            EventBus.Unsubscribe<NullStateExitedEvent>(OnNullStateExited);
+
             _requiem = requiem;
 
             // Set portrait sprite
@@ -70,7 +88,7 @@ namespace HNR.UI.Combat
                 _portraitFrame.color = UIColors.GetAspectColor(requiem.Data.SoulAspect);
             }
 
-            // Initialize corruption display
+            // Initialize corruption display from current Requiem state
             _currentFill = requiem.Corruption / 100f;
             _targetFill = _currentFill;
             _isInNullState = requiem.InNullState;
@@ -94,10 +112,10 @@ namespace HNR.UI.Combat
             }
 
             // Null State pulse animation
-            if (_isInNullState && _corruptionFill != null)
+            if (_isInNullState && _corruptionFillImage != null)
             {
                 float pulse = (Mathf.Sin(Time.time * 3f) + 1f) * 0.5f;
-                _corruptionFill.color = Color.Lerp(
+                _corruptionFillImage.color = Color.Lerp(
                     new Color(0.6f, 0f, 0.6f),  // Base purple
                     new Color(1f, 0f, 1f),      // Bright purple pulse
                     pulse
@@ -142,24 +160,29 @@ namespace HNR.UI.Combat
 
         private void UpdateCorruptionVisual(float normalizedValue)
         {
-            if (_corruptionFill != null)
+            // Update slider value
+            if (_corruptionSlider != null)
             {
-                _corruptionFill.fillAmount = normalizedValue;
+                _corruptionSlider.value = normalizedValue;
+            }
 
+            // Update fill image color
+            if (_corruptionFillImage != null)
+            {
                 // Only update color if not in Null State (Null State has pulse animation)
                 if (!_isInNullState)
                 {
-                    _corruptionFill.color = _corruptionGradient.Evaluate(normalizedValue);
+                    _corruptionFillImage.color = _corruptionGradient.Evaluate(normalizedValue);
                 }
             }
         }
 
         private void TriggerCorruptionGainFeedback()
         {
-            // Flash the corruption bar
-            if (_corruptionFill != null)
+            // Flash the corruption slider
+            if (_corruptionSlider != null)
             {
-                _corruptionFill.transform.DOPunchScale(Vector3.one * 0.1f, 0.2f, 2).SetLink(gameObject);
+                _corruptionSlider.transform.DOPunchScale(Vector3.one * 0.1f, 0.2f, 2).SetLink(gameObject);
             }
 
             // Shake portrait slightly
@@ -172,11 +195,11 @@ namespace HNR.UI.Combat
         private void TriggerNullStateFeedback()
         {
             // Flash bright purple
-            if (_corruptionFill != null)
+            if (_corruptionFillImage != null)
             {
                 var seq = DOTween.Sequence();
-                seq.Append(_corruptionFill.DOColor(new Color(1f, 0f, 1f), 0.1f));
-                seq.Append(_corruptionFill.DOColor(new Color(0.6f, 0f, 0.6f), 0.1f));
+                seq.Append(_corruptionFillImage.DOColor(new Color(1f, 0f, 1f), 0.1f));
+                seq.Append(_corruptionFillImage.DOColor(new Color(0.6f, 0f, 0.6f), 0.1f));
                 seq.SetLoops(3);
                 seq.SetLink(gameObject);
             }

@@ -399,12 +399,38 @@ namespace HNR.Characters
         }
 
         /// <summary>
-        /// Set corruption value directly (for save/load restoration).
+        /// Set corruption value directly (for save/load restoration or post-combat reset).
+        /// Publishes appropriate events if transitioning in/out of Null State.
         /// </summary>
         public void SetCorruption(int corruption)
         {
+            bool wasInNullState = _inNullState;
+            int previousCorruption = _corruption;
+
             _corruption = Mathf.Clamp(corruption, 0, 100);
             _inNullState = _corruption >= 100;
+
+            // Publish corruption changed event if value changed
+            if (_corruption != previousCorruption)
+            {
+                EventBus.Publish(new CorruptionChangedEvent(this, previousCorruption, _corruption));
+            }
+
+            // Handle Null State transitions
+            if (wasInNullState && !_inNullState)
+            {
+                // Exiting Null State (e.g., post-combat reset to 50)
+                ResetNullStateModifiers();
+                EventBus.Publish(new NullStateExitedEvent(this));
+                Debug.Log($"[RequiemInstance] {Name} exited Null State via SetCorruption");
+            }
+            else if (!wasInNullState && _inNullState)
+            {
+                // Entering Null State via direct set (rare, but handle it)
+                EventBus.Publish(new NullStateEnteredEvent(this));
+                ApplyNullStateEffects();
+                Debug.Log($"[RequiemInstance] {Name} entered Null State via SetCorruption");
+            }
         }
 
         /// <summary>

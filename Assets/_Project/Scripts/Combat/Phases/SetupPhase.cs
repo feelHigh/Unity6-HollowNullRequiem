@@ -26,6 +26,17 @@ namespace HNR.Combat
             context.TurnNumber = 0;
             context.TeamBlock = 0;
             context.IsPlayerTurn = true;
+            context.SoulEssence = 0;
+
+            // Reset Art usage flags for all Requiems (allows Art use in each combat)
+            foreach (var requiem in context.Team)
+            {
+                if (requiem != null)
+                {
+                    requiem.HasUsedArtThisCombat = false;
+                }
+            }
+            Debug.Log($"[SetupPhase] Reset Art usage flags for {context.Team.Count} Requiems");
 
             // Collect all cards from RunManager's deck (includes starting cards + rewards)
             var teamCards = new List<CardDataSO>();

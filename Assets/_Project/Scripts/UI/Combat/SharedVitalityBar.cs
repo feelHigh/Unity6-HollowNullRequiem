@@ -1,6 +1,7 @@
 // ============================================
 // SharedVitalityBar.cs
 // Wide HP bar with embedded party portraits
+// Uses Slider component for reliable gauge updates
 // Layout with damage linger effect
 // ============================================
 
@@ -20,6 +21,7 @@ namespace HNR.UI.Combat
     /// <summary>
     /// Wide HP bar with embedded party portraits.
     /// Shows team HP with damage linger effect and block indicator.
+    /// Uses Slider component for reliable visual updates.
     /// </summary>
     public class SharedVitalityBar : MonoBehaviour
     {
@@ -34,10 +36,11 @@ namespace HNR.UI.Combat
         [SerializeField] private float _portraitSize = 48f;
         [SerializeField] private float _portraitSpacing = 8f;
 
-        [Header("Health Display")]
-        [SerializeField] private Image _healthFill;
-        [SerializeField] private Image _damageFill;
-        [SerializeField] private Image _healPreview;
+        [Header("Health Slider")]
+        [SerializeField] private Slider _healthSlider;
+        [SerializeField] private Image _healthFillImage;
+        [SerializeField] private Slider _damageSlider;
+        [SerializeField] private Image _damageFillImage;
         [SerializeField] private TMP_Text _hpText;
 
         [Header("Block Indicator")]
@@ -53,7 +56,6 @@ namespace HNR.UI.Combat
         [Header("Colors")]
         [SerializeField] private Color _healthColor;
         [SerializeField] private Color _damageColor;
-        [SerializeField] private Color _healColor;
         [SerializeField] private Color _blockColor = new Color(0.2f, 0.6f, 0.86f, 1f); // #3498DB cyan
 
         private float _targetHealthFill;
@@ -63,30 +65,52 @@ namespace HNR.UI.Combat
         {
             _healthColor = UIColors.SoulCyan;
             _damageColor = UIColors.CorruptionGlow;
-            _healColor = UIColors.NatureAspect;
 
             // Auto-wire references if not set in Inspector
             AutoWireReferences();
 
-            if (_healthFill != null) _healthFill.color = _healthColor;
-            if (_damageFill != null) _damageFill.color = _damageColor;
-            if (_healPreview != null) _healPreview.color = _healColor;
+            // Configure sliders
+            ConfigureSliders();
+
+            if (_healthFillImage != null) _healthFillImage.color = _healthColor;
+            if (_damageFillImage != null) _damageFillImage.color = _damageColor;
             if (_shieldIcon != null) _shieldIcon.color = _blockColor;
             if (_blockText != null) _blockText.color = _blockColor;
         }
 
+        private void ConfigureSliders()
+        {
+            if (_healthSlider != null)
+            {
+                _healthSlider.minValue = 0f;
+                _healthSlider.maxValue = 1f;
+                _healthSlider.value = 1f;
+                _healthSlider.interactable = false;
+                Debug.Log("[SharedVitalityBar] Health slider configured");
+            }
+
+            if (_damageSlider != null)
+            {
+                _damageSlider.minValue = 0f;
+                _damageSlider.maxValue = 1f;
+                _damageSlider.value = 1f;
+                _damageSlider.interactable = false;
+                Debug.Log("[SharedVitalityBar] Damage slider configured");
+            }
+        }
+
         private void AutoWireReferences()
         {
-            // Auto-wire health bar elements
-            if (_healthFill == null)
+            // Auto-wire health slider elements
+            if (_healthSlider == null)
             {
-                var healthFillT = transform.Find("HPBarContainer/HealthFill");
-                _healthFill = healthFillT?.GetComponent<Image>();
+                var healthSliderT = transform.Find("HPBarContainer/HealthSlider");
+                _healthSlider = healthSliderT?.GetComponent<Slider>();
             }
-            if (_damageFill == null)
+            if (_damageSlider == null)
             {
-                var damageFillT = transform.Find("HPBarContainer/DamageFill");
-                _damageFill = damageFillT?.GetComponent<Image>();
+                var damageSliderT = transform.Find("HPBarContainer/DamageSlider");
+                _damageSlider = damageSliderT?.GetComponent<Slider>();
             }
             if (_hpText == null)
             {
@@ -112,22 +136,23 @@ namespace HNR.UI.Combat
             }
 
             // Log wiring status
-            Debug.Log($"[SharedVitalityBar] Auto-wired: _healthFill={(_healthFill != null ? "OK" : "NULL")}, " +
-                      $"_blockContainer={(_blockContainer != null ? "OK" : "NULL")}, " +
-                      $"_shieldIcon={(_shieldIcon != null ? "OK" : "NULL")}, " +
-                      $"_blockText={(_blockText != null ? "OK" : "NULL")}");
+            Debug.Log($"[SharedVitalityBar] Auto-wired: _healthSlider={(_healthSlider != null ? "OK" : "NULL")}, " +
+                      $"_damageSlider={(_damageSlider != null ? "OK" : "NULL")}, " +
+                      $"_blockContainer={(_blockContainer != null ? "OK" : "NULL")}");
         }
 
-        private void Start()
+        private void OnEnable()
         {
             EventBus.Subscribe<TeamHPChangedEvent>(OnTeamHPChanged);
             EventBus.Subscribe<BlockChangedEvent>(OnBlockChanged);
+            Debug.Log("[SharedVitalityBar] Subscribed to HP and Block events");
         }
 
-        private void OnDestroy()
+        private void OnDisable()
         {
             EventBus.Unsubscribe<TeamHPChangedEvent>(OnTeamHPChanged);
             EventBus.Unsubscribe<BlockChangedEvent>(OnBlockChanged);
+            Debug.Log("[SharedVitalityBar] Unsubscribed from HP and Block events");
         }
 
         /// <summary>
@@ -175,14 +200,14 @@ namespace HNR.UI.Combat
         public void UpdateHealth(int current, int max, int delta = 0)
         {
             float newFill = max > 0 ? (float)current / max : 0;
-            Debug.Log($"[SharedVitalityBar] UpdateHealth: {current}/{max}, newFill={newFill:F2}, _healthFill={(_healthFill != null ? "OK" : "NULL")}");
+            Debug.Log($"[SharedVitalityBar] UpdateHealth: {current}/{max}, newFill={newFill:F2}, _healthSlider={(_healthSlider != null ? "OK" : "NULL")}");
 
             // Damage taken - trigger linger effect
             if (newFill < _targetHealthFill)
             {
-                if (_damageFill != null)
+                if (_damageSlider != null)
                 {
-                    _damageFill.fillAmount = _healthFill != null ? _healthFill.fillAmount : _targetHealthFill;
+                    _damageSlider.value = _healthSlider != null ? _healthSlider.value : _targetHealthFill;
                 }
 
                 if (_damageLingerCoroutine != null)
@@ -231,19 +256,15 @@ namespace HNR.UI.Combat
 
         /// <summary>
         /// Shows a preview of incoming healing on the bar.
+        /// Note: Heal preview not implemented with slider system - consider future enhancement.
         /// </summary>
         /// <param name="healAmount">Amount of healing to preview.</param>
         /// <param name="currentHP">Current HP.</param>
         /// <param name="maxHP">Maximum HP.</param>
         public void ShowHealPreview(int healAmount, int currentHP, int maxHP)
         {
-            if (_healPreview == null || maxHP <= 0) return;
-
-            float currentFill = (float)currentHP / maxHP;
-            float previewFill = Mathf.Min(1f, (float)(currentHP + healAmount) / maxHP);
-
-            _healPreview.fillAmount = previewFill;
-            _healPreview.gameObject.SetActive(true);
+            // Heal preview visualization could be added as a third slider layer if needed
+            Debug.Log($"[SharedVitalityBar] ShowHealPreview: +{healAmount} HP");
         }
 
         /// <summary>
@@ -251,18 +272,16 @@ namespace HNR.UI.Combat
         /// </summary>
         public void HideHealPreview()
         {
-            if (_healPreview != null)
-            {
-                _healPreview.gameObject.SetActive(false);
-            }
+            // Heal preview visualization could be added as a third slider layer if needed
         }
 
         private void Update()
         {
-            if (_healthFill != null)
+            // Smoothly update health slider toward target
+            if (_healthSlider != null)
             {
-                _healthFill.fillAmount = Mathf.MoveTowards(
-                    _healthFill.fillAmount, _targetHealthFill, _fillSpeed * Time.deltaTime);
+                _healthSlider.value = Mathf.MoveTowards(
+                    _healthSlider.value, _targetHealthFill, _fillSpeed * Time.deltaTime);
             }
         }
 
@@ -270,10 +289,11 @@ namespace HNR.UI.Combat
         {
             yield return new WaitForSeconds(_damageLingerTime);
 
-            while (_damageFill != null && _damageFill.fillAmount > targetFill)
+            // Smoothly reduce damage slider to match health
+            while (_damageSlider != null && _damageSlider.value > targetFill)
             {
-                _damageFill.fillAmount = Mathf.MoveTowards(
-                    _damageFill.fillAmount, targetFill, _fillSpeed * Time.deltaTime);
+                _damageSlider.value = Mathf.MoveTowards(
+                    _damageSlider.value, targetFill, _fillSpeed * Time.deltaTime);
                 yield return null;
             }
 
@@ -298,8 +318,8 @@ namespace HNR.UI.Combat
         {
             _targetHealthFill = maxHP > 0 ? (float)currentHP / maxHP : 0;
 
-            if (_healthFill != null) _healthFill.fillAmount = _targetHealthFill;
-            if (_damageFill != null) _damageFill.fillAmount = _targetHealthFill;
+            if (_healthSlider != null) _healthSlider.value = _targetHealthFill;
+            if (_damageSlider != null) _damageSlider.value = _targetHealthFill;
             if (_hpText != null) _hpText.text = $"{currentHP} / {maxHP}";
 
             UpdateBlock(block);

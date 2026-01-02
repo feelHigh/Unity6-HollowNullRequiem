@@ -35,18 +35,31 @@ namespace HNR.UI.Combat
         private int _currentAP;
         private Sequence _glowSequence;
 
-        private void Start()
+        private void Awake()
         {
             _fullColor = UIColors.SoulCyan;
             _emptyColor = UIColors.PanelGray;
             _insufficientColor = UIColors.CorruptionGlow;
+        }
 
-            StartGlowAnimation();
+        private void OnEnable()
+        {
             EventBus.Subscribe<APChangedEvent>(OnAPChanged);
             EventBus.Subscribe<CombatStartedEvent>(OnCombatStarted);
+            Debug.Log("[APCounterDisplay] Subscribed to AP and CombatStarted events");
+
+            StartGlowAnimation();
 
             // Initialize with current AP if combat already active
             InitializeFromContext();
+        }
+
+        private void OnDisable()
+        {
+            EventBus.Unsubscribe<APChangedEvent>(OnAPChanged);
+            EventBus.Unsubscribe<CombatStartedEvent>(OnCombatStarted);
+            _glowSequence?.Kill();
+            Debug.Log("[APCounterDisplay] Unsubscribed from AP and CombatStarted events");
         }
 
         private void OnCombatStarted(CombatStartedEvent evt)
@@ -66,13 +79,6 @@ namespace HNR.UI.Combat
                 // Default display before combat starts
                 SetAP(3, 3);
             }
-        }
-
-        private void OnDestroy()
-        {
-            EventBus.Unsubscribe<APChangedEvent>(OnAPChanged);
-            EventBus.Unsubscribe<CombatStartedEvent>(OnCombatStarted);
-            _glowSequence?.Kill();
         }
 
         private void StartGlowAnimation()

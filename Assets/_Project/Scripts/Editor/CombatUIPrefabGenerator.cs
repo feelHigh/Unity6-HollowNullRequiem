@@ -28,7 +28,7 @@ namespace HNR.Editor
 
         /// <summary>
         /// Generates the PortraitCorruptionSlot prefab for SharedVitalityBar.
-        /// Shows character portrait with a horizontal corruption bar below.
+        /// Shows character portrait with a horizontal corruption slider below.
         /// </summary>
         public static void GeneratePortraitCorruptionSlot()
         {
@@ -50,7 +50,6 @@ namespace HNR.Editor
             frameRect.offsetMax = Vector2.zero;
             var frameImage = frameGO.AddComponent<Image>();
             frameImage.color = new Color(0.4f, 0.4f, 0.5f, 1f); // Default gray frame
-            // Note: Assign circular frame sprite in Inspector for proper look
 
             // ============================================
             // Portrait Image
@@ -64,7 +63,6 @@ namespace HNR.Editor
             var portraitImage = portraitGO.AddComponent<Image>();
             portraitImage.color = Color.white;
             portraitImage.preserveAspect = true;
-            // Note: Assign circular mask for proper look
 
             // ============================================
             // Corruption Bar Background
@@ -79,19 +77,40 @@ namespace HNR.Editor
             corruptBgImage.color = new Color(0.15f, 0.15f, 0.2f, 0.9f);
 
             // ============================================
-            // Corruption Bar Fill
+            // Corruption Slider
             // ============================================
-            var corruptFillGO = CreateChild(root, "CorruptionFill");
-            var corruptFillRect = corruptFillGO.GetComponent<RectTransform>();
-            corruptFillRect.anchorMin = new Vector2(0, 0);
-            corruptFillRect.anchorMax = new Vector2(1, 0.15f);
-            corruptFillRect.offsetMin = new Vector2(1, 1);
-            corruptFillRect.offsetMax = new Vector2(-1, -1);
-            var corruptFillImage = corruptFillGO.AddComponent<Image>();
-            corruptFillImage.color = new Color(0.2f, 0.8f, 0.2f, 1f); // Start green (safe)
-            corruptFillImage.type = Image.Type.Filled;
-            corruptFillImage.fillMethod = Image.FillMethod.Horizontal;
-            corruptFillImage.fillAmount = 0f; // Start at 0 corruption
+            var corruptSliderGO = CreateChild(root, "CorruptionSlider");
+            var corruptSliderRect = corruptSliderGO.GetComponent<RectTransform>();
+            corruptSliderRect.anchorMin = new Vector2(0, 0);
+            corruptSliderRect.anchorMax = new Vector2(1, 0.15f);
+            corruptSliderRect.offsetMin = new Vector2(1, 1);
+            corruptSliderRect.offsetMax = new Vector2(-1, -1);
+
+            var corruptSlider = corruptSliderGO.AddComponent<Slider>();
+            corruptSlider.direction = Slider.Direction.LeftToRight;
+            corruptSlider.minValue = 0f;
+            corruptSlider.maxValue = 1f;
+            corruptSlider.value = 0f;
+            corruptSlider.interactable = false;
+
+            // Fill Area
+            var fillAreaGO = CreateChild(corruptSliderGO, "Fill Area");
+            var fillAreaRect = fillAreaGO.GetComponent<RectTransform>();
+            fillAreaRect.anchorMin = Vector2.zero;
+            fillAreaRect.anchorMax = Vector2.one;
+            fillAreaRect.offsetMin = Vector2.zero;
+            fillAreaRect.offsetMax = Vector2.zero;
+
+            // Fill
+            var fillGO = CreateChild(fillAreaGO, "Fill");
+            var fillRect = fillGO.GetComponent<RectTransform>();
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+            var fillImage = fillGO.AddComponent<Image>();
+            fillImage.color = new Color(0.2f, 0.8f, 0.2f, 1f); // Start green (safe)
+            corruptSlider.fillRect = fillRect;
 
             // ============================================
             // Add PortraitCorruptionSlot Component
@@ -102,7 +121,8 @@ namespace HNR.Editor
             var so = new SerializedObject(slotComponent);
             so.FindProperty("_portrait").objectReferenceValue = portraitImage;
             so.FindProperty("_portraitFrame").objectReferenceValue = frameImage;
-            so.FindProperty("_corruptionFill").objectReferenceValue = corruptFillImage;
+            so.FindProperty("_corruptionSlider").objectReferenceValue = corruptSlider;
+            so.FindProperty("_corruptionFillImage").objectReferenceValue = fillImage;
             so.FindProperty("_corruptionBackground").objectReferenceValue = corruptBgImage;
             so.FindProperty("_fillSpeed").floatValue = 5f;
             so.FindProperty("_smoothTransition").boolValue = true;
@@ -169,18 +189,39 @@ namespace HNR.Editor
             var hpBgImage = hpBgGO.AddComponent<Image>();
             hpBgImage.color = new Color(0.15f, 0.15f, 0.2f, 0.9f);
 
-            // HP Bar Fill
-            var hpFillGO = CreateChild(hpContainer, "HPFill");
+            // HP Slider
+            var hpSliderGO = CreateChild(hpContainer, "HPSlider");
+            var hpSliderRect = hpSliderGO.GetComponent<RectTransform>();
+            hpSliderRect.anchorMin = Vector2.zero;
+            hpSliderRect.anchorMax = Vector2.one;
+            hpSliderRect.offsetMin = new Vector2(2, 2);
+            hpSliderRect.offsetMax = new Vector2(-2, -2);
+
+            var hpSlider = hpSliderGO.AddComponent<Slider>();
+            hpSlider.direction = Slider.Direction.LeftToRight;
+            hpSlider.minValue = 0f;
+            hpSlider.maxValue = 1f;
+            hpSlider.value = 1f;
+            hpSlider.interactable = false;
+
+            // HP Fill Area
+            var hpFillAreaGO = CreateChild(hpSliderGO, "Fill Area");
+            var hpFillAreaRect = hpFillAreaGO.GetComponent<RectTransform>();
+            hpFillAreaRect.anchorMin = Vector2.zero;
+            hpFillAreaRect.anchorMax = Vector2.one;
+            hpFillAreaRect.offsetMin = Vector2.zero;
+            hpFillAreaRect.offsetMax = Vector2.zero;
+
+            // HP Fill
+            var hpFillGO = CreateChild(hpFillAreaGO, "Fill");
             var hpFillRect = hpFillGO.GetComponent<RectTransform>();
             hpFillRect.anchorMin = Vector2.zero;
             hpFillRect.anchorMax = Vector2.one;
-            hpFillRect.offsetMin = new Vector2(2, 2);
-            hpFillRect.offsetMax = new Vector2(-2, -2);
+            hpFillRect.offsetMin = Vector2.zero;
+            hpFillRect.offsetMax = Vector2.zero;
             var hpFillImage = hpFillGO.AddComponent<Image>();
             hpFillImage.color = new Color(0.9f, 0.2f, 0.2f, 1f);
-            hpFillImage.type = Image.Type.Filled;
-            hpFillImage.fillMethod = Image.FillMethod.Horizontal;
-            hpFillImage.fillAmount = 1f;
+            hpSlider.fillRect = hpFillRect;
 
             // HP Text
             var hpTextGO = CreateChild(hpContainer, "HPText");
@@ -265,7 +306,8 @@ namespace HNR.Editor
             // Wire up references via SerializedObject
             var so = new SerializedObject(enemyFloatingUI);
             so.FindProperty("_offset").vector3Value = new Vector3(0, 3f, 0);
-            so.FindProperty("_hpBarFill").objectReferenceValue = hpFillImage;
+            so.FindProperty("_hpSlider").objectReferenceValue = hpSlider;
+            so.FindProperty("_hpFillImage").objectReferenceValue = hpFillImage;
             so.FindProperty("_hpBarBackground").objectReferenceValue = hpBgImage;
             so.FindProperty("_hpText").objectReferenceValue = hpText;
             so.FindProperty("_intentContainer").objectReferenceValue = intentContainerRect;
