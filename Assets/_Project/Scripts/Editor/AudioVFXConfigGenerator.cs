@@ -444,5 +444,114 @@ namespace HNR.Editor
                 AssetDatabase.Refresh();
             }
         }
+
+        // ============================================
+        // CFXR Prefab Wiring
+        // ============================================
+
+        private const string CFXR_PATH = "Assets/ThirdParty/JMO Assets/Cartoon FX Remaster/CFXR Prefabs";
+
+        /// <summary>
+        /// Wires CFXR prefabs to VFXConfig.asset entries with optimal effect selections.
+        /// </summary>
+        public static void WireCFXRPrefabsToVFXConfig()
+        {
+            string assetPath = $"{CONFIG_PATH}/VFXConfig.asset";
+            var config = AssetDatabase.LoadAssetAtPath<VFXConfigSO>(assetPath);
+
+            if (config == null)
+            {
+                Debug.LogError($"[AudioVFXConfigGenerator] VFXConfig.asset not found at {assetPath}");
+                return;
+            }
+
+            SerializedObject so = new SerializedObject(config);
+
+            // Wire Hit Effects (Aspect-based damage impacts)
+            WireVFXListWithCFXR(so, "_hitEntries", new Dictionary<string, (string prefabPath, Color color)>
+            {
+                { "hit_flame", ($"{CFXR_PATH}/Impacts/CFXR Hit A (Red).prefab", new Color(1f, 0.42f, 0.21f)) },
+                { "hit_shadow", ($"{CFXR_PATH}/Impacts/CFXR Hit B 3D (Blue).prefab", new Color(0.29f, 0.05f, 0.31f)) },
+                { "hit_nature", ($"{CFXR_PATH}/Impacts/Variants/CFXR Hit B 3D (Green).prefab", new Color(0.18f, 0.35f, 0.15f)) },
+                { "hit_arcane", ($"{CFXR_PATH}/Electric/CFXR Lightning Impact.prefab", new Color(0.36f, 0.17f, 0.44f)) },
+                { "hit_light", ($"{CFXR_PATH}/Impacts/CFXR Hit D 3D (Yellow).prefab", new Color(0.96f, 0.82f, 0.25f)) },
+            });
+
+            // Wire Combat Effects
+            WireVFXListWithCFXR(so, "_combatEntries", new Dictionary<string, (string prefabPath, Color color)>
+            {
+                { "vfx_slash", ($"{CFXR_PATH}/Impacts/Variants/CFXR Slash (Cross, Blue).prefab", Color.white) },
+                { "vfx_shield", ($"{CFXR_PATH}/Electric/CFXR Electric Barrier (HDR).prefab", new Color(0f, 0.83f, 0.89f)) },
+                { "vfx_heal", ($"{CFXR_PATH}/Misc/CFXR Magical Source.prefab", new Color(0.18f, 0.55f, 0.18f)) },
+            });
+
+            // Wire Status Effects
+            WireVFXListWithCFXR(so, "_statusEntries", new Dictionary<string, (string prefabPath, Color color)>
+            {
+                { "vfx_buff", ($"{CFXR_PATH}/Electric/Variants/CFXR Electrified 1 (Green).prefab", new Color(0.5f, 1f, 0.5f)) },
+                { "vfx_debuff", ($"{CFXR_PATH}/Electric/Variants/CFXR Electrified 1 (Purple).prefab", new Color(0.8f, 0.3f, 0.3f)) },
+                { "vfx_corruption", ($"{CFXR_PATH}/Misc/CFXR Portal.prefab", new Color(0.5f, 0.1f, 0.3f)) },
+            });
+
+            // Wire Special Effects
+            WireVFXListWithCFXR(so, "_specialEntries", new Dictionary<string, (string prefabPath, Color color)>
+            {
+                { "vfx_null_burst", ($"{CFXR_PATH}/Explosions/CFXR Explosion 3 Bigger.prefab", new Color(0.8f, 0.5f, 1f)) },
+                { "vfx_requiem_art", ($"{CFXR_PATH}/Explosions/CFXR Explosion 3 Bigger.prefab", Color.white) },
+                { "vfx_requiem_art_kira", ($"{CFXR_PATH}/Fire/CFXR Fire Breath.prefab", new Color(1f, 0.5f, 0.2f)) },
+                { "vfx_requiem_art_mordren", ($"{CFXR_PATH}/Electric/Variants/CFXR Electric Barrier Simple (HDR, Purple).prefab", new Color(0.29f, 0.05f, 0.31f)) },
+                { "vfx_requiem_art_elara", ($"{CFXR_PATH}/Misc/CFXR Flash.prefab", new Color(1f, 0.95f, 0.7f)) },
+                { "vfx_requiem_art_thornwick", ($"{CFXR_PATH}/Misc/CFXR Magical Source.prefab", new Color(0.4f, 0.7f, 0.4f)) },
+            });
+
+            // Wire Card Effects
+            WireVFXListWithCFXR(so, "_cardEntries", new Dictionary<string, (string prefabPath, Color color)>
+            {
+                { "vfx_card_draw", ($"{CFXR_PATH}/Misc/CFXR Magic Poof.prefab", new Color(0.7f, 0.9f, 1f)) },
+                { "vfx_card_play", ($"{CFXR_PATH}/Impacts/Variants/CFXR Impact Contrast (HDR).prefab", Color.white) },
+            });
+
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(config);
+            AssetDatabase.SaveAssets();
+
+            Debug.Log("[AudioVFXConfigGenerator] Successfully wired CFXR prefabs to VFXConfig.asset");
+            EditorUtility.DisplayDialog("VFX Config Updated",
+                "Successfully wired CFXR prefabs to VFXConfig.asset!\n\n" +
+                "Hit Effects: 5 entries\n" +
+                "Combat Effects: 3 entries\n" +
+                "Status Effects: 3 entries\n" +
+                "Special Effects: 6 entries\n" +
+                "Card Effects: 2 entries",
+                "OK");
+        }
+
+        private static void WireVFXListWithCFXR(SerializedObject so, string listPropertyName,
+            Dictionary<string, (string prefabPath, Color color)> effectMappings)
+        {
+            var listProp = so.FindProperty(listPropertyName);
+
+            for (int i = 0; i < listProp.arraySize; i++)
+            {
+                var element = listProp.GetArrayElementAtIndex(i);
+                string effectId = element.FindPropertyRelative("EffectId").stringValue;
+
+                if (effectMappings.TryGetValue(effectId, out var mapping))
+                {
+                    // Load prefab
+                    var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(mapping.prefabPath);
+                    if (prefab != null)
+                    {
+                        element.FindPropertyRelative("Prefab").objectReferenceValue = prefab;
+                        element.FindPropertyRelative("DefaultColor").colorValue = mapping.color;
+                        Debug.Log($"[AudioVFXConfigGenerator] Wired {effectId} -> {mapping.prefabPath}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[AudioVFXConfigGenerator] Prefab not found: {mapping.prefabPath}");
+                    }
+                }
+            }
+        }
     }
 }

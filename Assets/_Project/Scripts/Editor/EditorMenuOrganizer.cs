@@ -317,6 +317,12 @@ namespace HNR.Editor
             AudioVFXConfigGenerator.GenerateAllConfigs();
         }
 
+        [MenuItem("HNR/3. Audio & VFX/Wire CFXR Prefabs to VFX Config", priority = 73)]
+        public static void WireCFXRPrefabsToVFXConfig()
+        {
+            AudioVFXConfigGenerator.WireCFXRPrefabsToVFXConfig();
+        }
+
         // ============================================
         // 4. Scenes (priority 100-139)
         // ============================================

@@ -14,159 +14,140 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _hitEntries:
   - EffectId: hit_flame
-    Prefab: {fileID: 3167277449991530658, guid: 7a6d3b6be3a242946b26ceb9d46aa81a, type: 3}
+    Prefab: {fileID: 4021103657954561961, guid: 5c755f9bc5253ea418e919994537dcc7, type: 3}
     Category: 0
     PreWarmCount: 5
     MaxActive: 10
-    DefaultColor: {r: 1, g: 0.5, b: 0.2, a: 1}
+    DefaultColor: {r: 1, g: 0.42, b: 0.21, a: 1}
     DefaultScale: 1
-    SourcePath: CFXR Prefabs/Fire/CFXR Fire.prefab
   - EffectId: hit_shadow
-    Prefab: {fileID: 2096203125917942726, guid: 306c79bb31d084a40ab51403c0503a16, type: 3}
+    Prefab: {fileID: 6131278079450256903, guid: dd1b345f20b13e24b9f184d4917ad726, type: 3}
     Category: 0
     PreWarmCount: 5
     MaxActive: 10
-    DefaultColor: {r: 0.3, g: 0.2, b: 0.4, a: 1}
+    DefaultColor: {r: 0.29, g: 0.05, b: 0.31, a: 1}
     DefaultScale: 1
-    SourcePath: CFXR Prefabs/Impacts/CFXR Hit A (Blue).prefab
   - EffectId: hit_nature
-    Prefab: {fileID: 6878627136300108859, guid: 8a5761e94dca5384c813a866ce13d5de, type: 3}
+    Prefab: {fileID: 2230199235582439938, guid: 086965b92ce1be7418524db6cacccb4c, type: 3}
     Category: 0
     PreWarmCount: 5
     MaxActive: 10
-    DefaultColor: {r: 0.3, g: 0.8, b: 0.3, a: 1}
+    DefaultColor: {r: 0.18, g: 0.35, b: 0.15, a: 1}
     DefaultScale: 1
-    SourcePath: CFXR Prefabs/Impacts/CFXR Hit B 3D (Green).prefab
   - EffectId: hit_arcane
-    Prefab: {fileID: 7522780585212520881, guid: 5495bac8b6692564e8fb82f4364bfd02, type: 3}
+    Prefab: {fileID: 7849791404790678207, guid: 42913e44bd86c194f80b76492e6fe2fd, type: 3}
     Category: 0
     PreWarmCount: 5
     MaxActive: 10
-    DefaultColor: {r: 0.6, g: 0.3, b: 0.9, a: 1}
+    DefaultColor: {r: 0.36, g: 0.17, b: 0.44, a: 1}
     DefaultScale: 1
-    SourcePath: CFXR Prefabs/Electric/CFXR Lightning Impact.prefab
   - EffectId: hit_light
-    Prefab: {fileID: 368592708271347739, guid: 53c23869da4c1794688e35b643dc8e8c, type: 3}
+    Prefab: {fileID: 5880797563127281583, guid: 265d3a5ba69981a4698ceabcedf368b0, type: 3}
     Category: 0
     PreWarmCount: 5
     MaxActive: 10
-    DefaultColor: {r: 1, g: 0.95, b: 0.7, a: 1}
+    DefaultColor: {r: 0.96, g: 0.82, b: 0.25, a: 1}
     DefaultScale: 1
-    SourcePath: CFXR Prefabs/Impacts/CFXR Hit D 3D (Yellow).prefab
   _combatEntries:
   - EffectId: vfx_slash
-    Prefab: {fileID: 892975496991404680, guid: eb27b122bde11b0488d391ab6d4d99ef, type: 3}
+    Prefab: {fileID: 7003377300528424769, guid: 434df53c94dcf9649a3b8fcd8896f152, type: 3}
     Category: 1
     PreWarmCount: 3
     MaxActive: 5
     DefaultColor: {r: 1, g: 1, b: 1, a: 1}
     DefaultScale: 1
-    SourcePath: CFXR Prefabs/Impacts/CFXR Slash (Blue).prefab
   - EffectId: vfx_shield
-    Prefab: {fileID: 121348175791514470, guid: 0f6aa9c9ad61e0f4dae1cc983a84cfcf, type: 3}
+    Prefab: {fileID: 675161360108791972, guid: 585567686b71fe5458e91550e1154860, type: 3}
     Category: 1
     PreWarmCount: 2
     MaxActive: 3
-    DefaultColor: {r: 0.4, g: 0.6, b: 1, a: 1}
+    DefaultColor: {r: 0, g: 0.83, b: 0.89, a: 1}
     DefaultScale: 1
-    SourcePath: CFXR Prefabs/Misc/CFXR Magic Poof.prefab
   - EffectId: vfx_heal
-    Prefab: {fileID: 6897037637021248401, guid: 4abf9863f773d124fb1547ffd9394e3b, type: 3}
+    Prefab: {fileID: 3031766928850544864, guid: a8cb176ac2d6504459d1fb8e59257cda, type: 3}
     Category: 1
     PreWarmCount: 2
     MaxActive: 3
-    DefaultColor: {r: 0.4, g: 1, b: 0.5, a: 1}
+    DefaultColor: {r: 0.18, g: 0.55, b: 0.18, a: 1}
     DefaultScale: 1
-    SourcePath: CFXR Prefabs/Misc/CFXR Magical Source.prefab
   _statusEntries:
   - EffectId: vfx_buff
-    Prefab: {fileID: 2609537190744198935, guid: e7ff900c90c9021428b0da1913eb19f2, type: 3}
+    Prefab: {fileID: 1918286296985047376, guid: 3e866612bf9a2c942b69aae5596ad203, type: 3}
     Category: 2
     PreWarmCount: 2
     MaxActive: 4
     DefaultColor: {r: 0.5, g: 1, b: 0.5, a: 1}
     DefaultScale: 1
-    SourcePath: 
   - EffectId: vfx_debuff
-    Prefab: {fileID: 6594520481525488764, guid: 7086eb9257621e240bf6eb770e624545, type: 3}
+    Prefab: {fileID: 4685290749308025161, guid: e129180041c3e1043b592468f69fbb4a, type: 3}
     Category: 2
     PreWarmCount: 2
     MaxActive: 4
     DefaultColor: {r: 0.8, g: 0.3, b: 0.3, a: 1}
     DefaultScale: 1
-    SourcePath: 
   - EffectId: vfx_corruption
-    Prefab: {fileID: 1281997715530611200, guid: 5b7bfc3fb45ac9243880c76ef60203bf, type: 3}
+    Prefab: {fileID: 4903989986093316332, guid: 142b394e21edf1c42947ec16dc7a523c, type: 3}
     Category: 2
     PreWarmCount: 3
     MaxActive: 5
     DefaultColor: {r: 0.5, g: 0.1, b: 0.3, a: 1}
     DefaultScale: 1
-    SourcePath: CFXR Prefabs/Misc/CFXR Portal.prefab
   _specialEntries:
   - EffectId: vfx_null_burst
-    Prefab: {fileID: 4528070213089186509, guid: cc31a9f5b2f087f4a939c188e5ee8394, type: 3}
+    Prefab: {fileID: 8650938231098632368, guid: 6ba1454cd4061fa449ba3e22578c5d5d, type: 3}
     Category: 3
     PreWarmCount: 1
     MaxActive: 2
-    DefaultColor: {r: 0.8, g: 0.7, b: 1, a: 1}
+    DefaultColor: {r: 0.8, g: 0.5, b: 1, a: 1}
     DefaultScale: 1
-    SourcePath: CFXR Prefabs/Explosions/CFXR Explosion 2.prefab
   - EffectId: vfx_requiem_art
-    Prefab: {fileID: 1158821983679669024, guid: f479716882ce8b24ea0e16d9071166be, type: 3}
+    Prefab: {fileID: 8650938231098632368, guid: 6ba1454cd4061fa449ba3e22578c5d5d, type: 3}
     Category: 3
     PreWarmCount: 1
     MaxActive: 2
     DefaultColor: {r: 1, g: 1, b: 1, a: 1}
     DefaultScale: 1
-    SourcePath: CFXR Prefabs/Explosions/CFXR Explosion 2 Bigger.prefab
   - EffectId: vfx_requiem_art_kira
-    Prefab: {fileID: 1158821983679669024, guid: f479716882ce8b24ea0e16d9071166be, type: 3}
+    Prefab: {fileID: 8764043878647920493, guid: c4ed38c72957f2241ad144a1614956d9, type: 3}
     Category: 3
     PreWarmCount: 1
     MaxActive: 2
     DefaultColor: {r: 1, g: 0.5, b: 0.2, a: 1}
     DefaultScale: 1
-    SourcePath: CFXR Prefabs/Fire/CFXR Fire.prefab
   - EffectId: vfx_requiem_art_mordren
-    Prefab: {fileID: 1158821983679669024, guid: f479716882ce8b24ea0e16d9071166be, type: 3}
+    Prefab: {fileID: 875812205484638495, guid: 61b0f4c0b10522f4e97b63e159c84b62, type: 3}
     Category: 3
     PreWarmCount: 1
     MaxActive: 2
-    DefaultColor: {r: 0.3, g: 0.2, b: 0.5, a: 1}
+    DefaultColor: {r: 0.29, g: 0.05, b: 0.31, a: 1}
     DefaultScale: 1
-    SourcePath: CFXR Prefabs/Misc/CFXR Portal.prefab
   - EffectId: vfx_requiem_art_elara
-    Prefab: {fileID: 1158821983679669024, guid: f479716882ce8b24ea0e16d9071166be, type: 3}
+    Prefab: {fileID: 7177991128484655659, guid: 59a35ab9f68edff40b6e5332bed330f5, type: 3}
     Category: 3
     PreWarmCount: 1
     MaxActive: 2
     DefaultColor: {r: 1, g: 0.95, b: 0.7, a: 1}
     DefaultScale: 1
-    SourcePath: CFXR Prefabs/Misc/CFXR Magical Source.prefab
   - EffectId: vfx_requiem_art_thornwick
-    Prefab: {fileID: 1158821983679669024, guid: f479716882ce8b24ea0e16d9071166be, type: 3}
+    Prefab: {fileID: 3031766928850544864, guid: a8cb176ac2d6504459d1fb8e59257cda, type: 3}
     Category: 3
     PreWarmCount: 1
     MaxActive: 2
-    DefaultColor: {r: 0.4, g: 0.7, b: 0.3, a: 1}
+    DefaultColor: {r: 0.4, g: 0.7, b: 0.4, a: 1}
     DefaultScale: 1
-    SourcePath: CFXR Prefabs/Misc/CFXR Magic Poof.prefab
   _cardEntries:
   - EffectId: vfx_card_draw
-    Prefab: {fileID: 3314628521005630545, guid: 2f50aade083c8a0498c43bebf4fed3cf, type: 3}
+    Prefab: {fileID: 9157105887711914197, guid: c4f829cb7dd4b864caf8832ec5b1ee55, type: 3}
     Category: 4
     PreWarmCount: 2
     MaxActive: 4
     DefaultColor: {r: 0.7, g: 0.9, b: 1, a: 1}
     DefaultScale: 1
-    SourcePath: 
   - EffectId: vfx_card_play
-    Prefab: {fileID: 909012761604998192, guid: b26d50a6085324d4b80849160365623c, type: 3}
+    Prefab: {fileID: 2995373718814594993, guid: 178913616cd0e0346a64d1a4efff2f71, type: 3}
     Category: 4
     PreWarmCount: 2
     MaxActive: 4
     DefaultColor: {r: 1, g: 1, b: 1, a: 1}
     DefaultScale: 1
-    SourcePath: 
   _uiEntries: []
