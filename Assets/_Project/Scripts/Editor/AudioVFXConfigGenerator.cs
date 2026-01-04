@@ -29,13 +29,15 @@ namespace HNR.Editor
         public static void GenerateAllConfigs()
         {
             GenerateAudioConfig();
+            GenerateVFXConfig();
             GenerateVFXPrefabs();
 
             EditorUtility.DisplayDialog("Audio & VFX Config Generated",
                 "Created:\n" +
                 "- AudioConfig.asset with placeholder entries\n" +
+                "- VFXConfig.asset with effect configurations\n" +
                 "- VFX prefabs with VFXInstance components\n\n" +
-                "Assign actual AudioClips and ParticleSystems to complete setup.",
+                "Assign actual AudioClips and CFXR prefabs to complete setup.",
                 "OK");
         }
 
@@ -122,6 +124,85 @@ namespace HNR.Editor
             AssetDatabase.SaveAssets();
 
             Debug.Log($"[AudioVFXConfigGenerator] Created AudioConfig at {assetPath}");
+        }
+
+        public static void GenerateVFXConfig()
+        {
+            EnsureDirectoryExists($"{CONFIG_PATH}/placeholder.asset");
+
+            string assetPath = $"{CONFIG_PATH}/VFXConfig.asset";
+
+            // Check if already exists
+            var existing = AssetDatabase.LoadAssetAtPath<VFXConfigSO>(assetPath);
+            if (existing != null)
+            {
+                if (!EditorUtility.DisplayDialog("VFXConfig Exists",
+                    "VFXConfig.asset already exists. Overwrite?",
+                    "Yes", "No"))
+                {
+                    return;
+                }
+                AssetDatabase.DeleteAsset(assetPath);
+            }
+
+            // Create new VFXConfigSO
+            var config = ScriptableObject.CreateInstance<VFXConfigSO>();
+
+            // Use SerializedObject to populate lists
+            SerializedObject so = new SerializedObject(config);
+
+            // Hit effect entries (by Soul Aspect)
+            PopulateVFXList(so, "_hitEntries", new[]
+            {
+                ("hit_flame", VFXCategory.Hit, 5, 10, new Color(1f, 0.5f, 0.2f)),
+                ("hit_shadow", VFXCategory.Hit, 5, 10, new Color(0.3f, 0.2f, 0.4f)),
+                ("hit_nature", VFXCategory.Hit, 5, 10, new Color(0.3f, 0.8f, 0.3f)),
+                ("hit_arcane", VFXCategory.Hit, 5, 10, new Color(0.6f, 0.3f, 0.9f)),
+                ("hit_light", VFXCategory.Hit, 5, 10, new Color(1f, 0.95f, 0.7f)),
+            });
+
+            // Combat effect entries
+            PopulateVFXList(so, "_combatEntries", new[]
+            {
+                ("vfx_slash", VFXCategory.Combat, 3, 5, Color.white),
+                ("vfx_shield", VFXCategory.Combat, 2, 3, new Color(0.4f, 0.6f, 1f)),
+                ("vfx_heal", VFXCategory.Combat, 2, 3, new Color(0.4f, 1f, 0.5f)),
+            });
+
+            // Status effect entries
+            PopulateVFXList(so, "_statusEntries", new[]
+            {
+                ("vfx_buff", VFXCategory.Status, 2, 4, new Color(0.5f, 1f, 0.5f)),
+                ("vfx_debuff", VFXCategory.Status, 2, 4, new Color(0.8f, 0.3f, 0.3f)),
+                ("vfx_corruption", VFXCategory.Status, 3, 5, new Color(0.5f, 0.1f, 0.3f)),
+            });
+
+            // Special effect entries
+            PopulateVFXList(so, "_specialEntries", new[]
+            {
+                ("vfx_null_burst", VFXCategory.Special, 1, 2, new Color(0.8f, 0.7f, 1f)),
+                ("vfx_requiem_art", VFXCategory.Special, 1, 2, Color.white),
+                // Character-specific Requiem Art VFX
+                ("vfx_requiem_art_kira", VFXCategory.Special, 1, 2, new Color(1f, 0.5f, 0.2f)),
+                ("vfx_requiem_art_mordren", VFXCategory.Special, 1, 2, new Color(0.3f, 0.2f, 0.5f)),
+                ("vfx_requiem_art_elara", VFXCategory.Special, 1, 2, new Color(1f, 0.95f, 0.7f)),
+                ("vfx_requiem_art_thornwick", VFXCategory.Special, 1, 2, new Color(0.4f, 0.7f, 0.3f)),
+            });
+
+            // Card effect entries
+            PopulateVFXList(so, "_cardEntries", new[]
+            {
+                ("vfx_card_draw", VFXCategory.Card, 2, 4, new Color(0.7f, 0.9f, 1f)),
+                ("vfx_card_play", VFXCategory.Card, 2, 4, Color.white),
+            });
+
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            // Save asset
+            AssetDatabase.CreateAsset(config, assetPath);
+            AssetDatabase.SaveAssets();
+
+            Debug.Log($"[AudioVFXConfigGenerator] Created VFXConfig at {assetPath}");
         }
 
         public static void GenerateVFXPrefabs()
@@ -309,6 +390,34 @@ namespace HNR.Editor
                 element.FindPropertyRelative("Pitch").floatValue = 1f;
                 element.FindPropertyRelative("Loop").boolValue = loop;
                 // Clip remains null - to be assigned manually
+            }
+        }
+
+        private static void PopulateVFXList(SerializedObject so, string propertyName,
+            (string effectId, VFXCategory category, int preWarm, int maxActive, Color defaultColor)[] entries)
+        {
+            var listProp = so.FindProperty(propertyName);
+            listProp.ClearArray();
+
+            for (int i = 0; i < entries.Length; i++)
+            {
+                var (effectId, category, preWarm, maxActive, defaultColor) = entries[i];
+
+                listProp.InsertArrayElementAtIndex(i);
+                var element = listProp.GetArrayElementAtIndex(i);
+
+                element.FindPropertyRelative("EffectId").stringValue = effectId;
+                element.FindPropertyRelative("Category").enumValueIndex = (int)category;
+                element.FindPropertyRelative("PreWarmCount").intValue = preWarm;
+                element.FindPropertyRelative("MaxActive").intValue = maxActive;
+
+                // Set default color
+                var colorProp = element.FindPropertyRelative("DefaultColor");
+                colorProp.colorValue = defaultColor;
+
+                element.FindPropertyRelative("DefaultScale").floatValue = 1f;
+
+                // Prefab must be assigned manually in the Inspector
             }
         }
 

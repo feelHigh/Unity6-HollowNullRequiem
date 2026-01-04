@@ -67,12 +67,32 @@ namespace HNR.Audio
 
         private void Awake()
         {
-            _audioManager = ServiceLocator.Get<IAudioManager>();
+            // Use TryGet to avoid errors if AudioManager isn't available yet
+            ServiceLocator.TryGet(out _audioManager);
+        }
+
+        private void Start()
+        {
+            // Retry in Start if not found in Awake (timing issues)
+            EnsureAudioManager();
+        }
+
+        /// <summary>
+        /// Ensures the audio manager reference is valid, attempting to fetch if null.
+        /// </summary>
+        private bool EnsureAudioManager()
+        {
+            if (_audioManager != null) return true;
+
+            ServiceLocator.TryGet(out _audioManager);
 
             if (_audioManager == null)
             {
-                Debug.LogWarning("[CombatAudioController] IAudioManager not found in ServiceLocator");
+                Debug.LogWarning("[CombatAudioController] IAudioManager not found in ServiceLocator. Audio will be disabled.");
+                return false;
             }
+
+            return true;
         }
 
         private void OnEnable()
@@ -141,6 +161,9 @@ namespace HNR.Audio
 
         private void OnCombatStarted(CombatStartedEvent evt)
         {
+            // Try to get audio manager if not available yet (late initialization)
+            EnsureAudioManager();
+
             // Determine if boss fight by checking enemy types
             _isBossFight = false;
             if (evt.Enemies != null)

@@ -16,6 +16,7 @@ using HNR.Combat;
 using HNR.Cards;
 using HNR.Characters;
 using HNR.VFX;
+using HNR.Audio;
 using HNR.Progression;
 using HNR.UI;
 using HNR.UI.Screens;
@@ -121,7 +122,13 @@ namespace HNR.Editor
             // === EventSystem ===
             CreateEventSystem();
 
-            // === Bootstrap (creates all managers) ===
+            // === AudioManager with AudioConfigSO (must be root for DontDestroyOnLoad) ===
+            // AudioManager uses DontDestroyOnLoad and must be at root level
+            GameObject audioManagerObj = new GameObject("[AudioManager]");
+            var audioManager = audioManagerObj.AddComponent<AudioManager>();
+            WireAudioManager(audioManager);
+
+            // === Bootstrap (creates remaining managers) ===
             GameObject bootstrapObj = new GameObject("[Bootstrap]");
             bootstrapObj.AddComponent<GameBootstrap>();
 
@@ -362,6 +369,16 @@ namespace HNR.Editor
             GameObject vfxPoolManagerObj = new GameObject("VFXPoolManager");
             vfxPoolManagerObj.transform.SetParent(managersParent.transform);
             var vfxPoolManager = vfxPoolManagerObj.AddComponent<VFXPoolManager>();
+
+            // === Combat VFX Controller (event-driven VFX spawning) ===
+            GameObject combatVFXControllerObj = new GameObject("CombatVFXController");
+            combatVFXControllerObj.transform.SetParent(managersParent.transform);
+            combatVFXControllerObj.AddComponent<CombatVFXController>();
+
+            // === Combat Audio Controller (event-driven audio) ===
+            GameObject combatAudioControllerObj = new GameObject("CombatAudioController");
+            combatAudioControllerObj.transform.SetParent(managersParent.transform);
+            combatAudioControllerObj.AddComponent<CombatAudioController>();
 
             GameObject relicManagerObj = new GameObject("RelicManager");
             relicManagerObj.transform.SetParent(managersParent.transform);
@@ -2380,13 +2397,46 @@ namespace HNR.Editor
         // ============================================
 
         /// <summary>
-        /// Wires VFX prefabs to the VFXPoolManager.
+        /// Wires VFXConfigSO to the VFXPoolManager.
+        /// Uses centralized VFXConfigSO for VFX configuration.
+        /// Falls back to direct prefab wiring if VFXConfigSO not found.
         /// </summary>
         private static void WireVFXPoolManager(VFXPoolManager vfxPoolManager)
         {
             if (vfxPoolManager == null) return;
 
             SerializedObject so = new SerializedObject(vfxPoolManager);
+
+            // Try to load VFXConfigSO first (preferred approach)
+            const string VFX_CONFIG_PATH = "Assets/_Project/Data/Config/VFXConfig.asset";
+            var vfxConfig = AssetDatabase.LoadAssetAtPath<VFXConfigSO>(VFX_CONFIG_PATH);
+
+            if (vfxConfig != null)
+            {
+                // Wire VFXConfigSO
+                so.FindProperty("_vfxConfig").objectReferenceValue = vfxConfig;
+
+                // Clear direct pool configs since VFXConfigSO takes priority
+                so.FindProperty("_poolConfigs").arraySize = 0;
+
+                so.ApplyModifiedPropertiesWithoutUndo();
+                Debug.Log($"[ProductionSceneSetupGenerator] Wired VFXPoolManager with VFXConfigSO ({vfxConfig.TotalEntryCount} effects)");
+            }
+            else
+            {
+                // Fallback: Wire individual prefabs directly
+                Debug.LogWarning("[ProductionSceneSetupGenerator] VFXConfigSO not found at " + VFX_CONFIG_PATH +
+                    ". Run 'HNR > 3. Audio & VFX > Generate VFX Config' first. Using fallback direct wiring.");
+
+                WireVFXPoolManagerFallback(so);
+            }
+        }
+
+        /// <summary>
+        /// Fallback method for wiring VFX prefabs directly when VFXConfigSO is not available.
+        /// </summary>
+        private static void WireVFXPoolManagerFallback(SerializedObject so)
+        {
             var configsProp = so.FindProperty("_poolConfigs");
 
             // Define VFX pool configurations
@@ -2433,7 +2483,33 @@ namespace HNR.Editor
             }
 
             so.ApplyModifiedPropertiesWithoutUndo();
-            Debug.Log($"[ProductionSceneSetupGenerator] Wired VFXPoolManager with {validCount} VFX prefabs");
+            Debug.Log($"[ProductionSceneSetupGenerator] Wired VFXPoolManager with {validCount} VFX prefabs (fallback mode)");
+        }
+
+        /// <summary>
+        /// Wires AudioConfigSO to the AudioManager.
+        /// </summary>
+        private static void WireAudioManager(AudioManager audioManager)
+        {
+            if (audioManager == null) return;
+
+            const string AUDIO_CONFIG_PATH = "Assets/_Project/Data/Config/AudioConfig.asset";
+            var audioConfig = AssetDatabase.LoadAssetAtPath<AudioConfigSO>(AUDIO_CONFIG_PATH);
+
+            SerializedObject so = new SerializedObject(audioManager);
+
+            if (audioConfig != null)
+            {
+                so.FindProperty("_audioConfig").objectReferenceValue = audioConfig;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                Debug.Log($"[ProductionSceneSetupGenerator] Wired AudioManager with AudioConfigSO ({audioConfig.TotalEntryCount} entries)");
+            }
+            else
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] AudioConfigSO not found at " + AUDIO_CONFIG_PATH +
+                    ". Run 'HNR > 3. Audio & VFX > Generate Audio Config' first.");
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
         }
 
         /// <summary>

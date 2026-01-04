@@ -34,7 +34,11 @@ namespace HNR.VFX
     /// Specialized for named effect types rather than generic type-based pooling.
     /// </summary>
     /// <remarks>
-    /// Pool configuration per TDD 10:
+    /// Pool configuration can be provided via:
+    /// 1. VFXConfigSO asset (recommended for centralized management)
+    /// 2. Direct _poolConfigs list (legacy/override)
+    ///
+    /// Pool sizing per TDD 10:
     /// - hit_flame/shadow/nature/arcane/light: 5 pre-warm, 10 max
     /// - vfx_slash: 3 pre-warm, 5 max
     /// - vfx_shield/heal: 2 pre-warm, 3 max
@@ -47,8 +51,12 @@ namespace HNR.VFX
         // Serialized Fields
         // ============================================
 
-        [Header("Pool Configuration")]
-        [SerializeField, Tooltip("VFX pool configurations")]
+        [Header("Configuration Source")]
+        [SerializeField, Tooltip("Centralized VFX configuration (recommended). If set, overrides _poolConfigs.")]
+        private VFXConfigSO _vfxConfig;
+
+        [Header("Pool Configuration (Legacy/Override)")]
+        [SerializeField, Tooltip("Direct pool configurations. Used if _vfxConfig is not set.")]
         private List<VFXPoolConfig> _poolConfigs = new();
 
         [SerializeField, Tooltip("Root transform for pooled objects")]
@@ -93,10 +101,14 @@ namespace HNR.VFX
 
         /// <summary>
         /// Initialize all configured pools and pre-warm instances.
+        /// Loads from VFXConfigSO if set, otherwise uses direct _poolConfigs.
         /// </summary>
         public void Initialize()
         {
-            foreach (var config in _poolConfigs)
+            // Get configurations from VFXConfigSO or fall back to direct list
+            var configs = GetEffectiveConfigs();
+
+            foreach (var config in configs)
             {
                 if (string.IsNullOrEmpty(config.EffectId))
                 {
@@ -373,6 +385,73 @@ namespace HNR.VFX
 
             instance.EffectId = config.EffectId;
             return instance;
+        }
+
+        /// <summary>
+        /// Get effective pool configurations from VFXConfigSO or direct list.
+        /// </summary>
+        private List<VFXPoolConfig> GetEffectiveConfigs()
+        {
+            // Priority: VFXConfigSO > direct _poolConfigs
+            if (_vfxConfig != null)
+            {
+                Debug.Log($"[VFXPoolManager] Loading {_vfxConfig.TotalEntryCount} effects from VFXConfig asset");
+                return _vfxConfig.ToPoolConfigs();
+            }
+
+            // Fall back to direct configuration
+            if (_poolConfigs.Count > 0)
+            {
+                Debug.Log($"[VFXPoolManager] Using {_poolConfigs.Count} direct pool configurations");
+                return _poolConfigs;
+            }
+
+            Debug.LogWarning("[VFXPoolManager] No VFX configurations found. Assign VFXConfigSO or add pool configs.");
+            return new List<VFXPoolConfig>();
+        }
+
+        // ============================================
+        // Configuration Management
+        // ============================================
+
+        /// <summary>
+        /// Get the current VFXConfigSO reference.
+        /// </summary>
+        public VFXConfigSO VFXConfig => _vfxConfig;
+
+        /// <summary>
+        /// Set VFXConfigSO at runtime and reinitialize pools.
+        /// </summary>
+        /// <param name="config">VFXConfigSO to use</param>
+        /// <param name="reinitialize">Whether to clear and reinitialize pools</param>
+        public void SetVFXConfig(VFXConfigSO config, bool reinitialize = true)
+        {
+            _vfxConfig = config;
+
+            if (reinitialize)
+            {
+                ClearAll();
+                Initialize();
+            }
+        }
+
+        /// <summary>
+        /// Load VFXConfigSO from Resources path.
+        /// </summary>
+        /// <param name="resourcePath">Path relative to Resources folder (e.g., "Data/Config/VFXConfig")</param>
+        /// <returns>True if loaded successfully</returns>
+        public bool LoadVFXConfigFromResources(string resourcePath = "Data/Config/VFXConfig")
+        {
+            var config = Resources.Load<VFXConfigSO>(resourcePath);
+            if (config != null)
+            {
+                SetVFXConfig(config);
+                Debug.Log($"[VFXPoolManager] Loaded VFXConfig from Resources: {resourcePath}");
+                return true;
+            }
+
+            Debug.LogWarning($"[VFXPoolManager] Failed to load VFXConfig from Resources: {resourcePath}");
+            return false;
         }
 
         // ============================================

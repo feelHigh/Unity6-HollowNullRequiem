@@ -6,5 +6,10 @@
   <Project Path="Unity.RenderPipelines.Universal.Runtime.csproj" />
   <Project Path="Lofelt.NiceVibrations.csproj" />
   <Project Path="Lofelt.NiceVibrations.Demo.csproj" />
+  <Project Path="ToonyColorsPro.Demo.Editor.csproj" />
   <Project Path="Lofelt.NiceVibrations.Editor.csproj" />
+  <Project Path="CFXRRuntime.csproj" />
+  <Project Path="CFXREditor.csproj" />
+  <Project Path="KinoBloom.Runtime.csproj" />
+  <Project Path="CFXRDemo.csproj" />
 </Solution>

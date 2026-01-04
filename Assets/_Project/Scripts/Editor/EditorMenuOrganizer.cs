@@ -296,13 +296,25 @@ namespace HNR.Editor
         }
 
         // ============================================
-        // 3. Audio (priority 70-79)
+        // 3. Audio & VFX (priority 70-79)
         // ============================================
 
-        [MenuItem("HNR/3. Audio/Generate Audio Config", priority = 70)]
+        [MenuItem("HNR/3. Audio & VFX/Generate Audio Config", priority = 70)]
         public static void GenerateAudioConfig()
         {
             AudioVFXConfigGenerator.GenerateAudioConfig();
+        }
+
+        [MenuItem("HNR/3. Audio & VFX/Generate VFX Config", priority = 71)]
+        public static void GenerateVFXConfig()
+        {
+            AudioVFXConfigGenerator.GenerateVFXConfig();
+        }
+
+        [MenuItem("HNR/3. Audio & VFX/Generate All Configs", priority = 72)]
+        public static void GenerateAllAudioVFXConfigs()
+        {
+            AudioVFXConfigGenerator.GenerateAllConfigs();
         }
 
         // ============================================

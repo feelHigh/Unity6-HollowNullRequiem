@@ -72,8 +72,11 @@ namespace HNR.Characters
         [SerializeField, Tooltip("Icon displayed on SE bar (64x64)")]
         private Sprite _icon;
 
-        [SerializeField, Tooltip("VFX prefab spawned on activation")]
-        private GameObject _vfxPrefab;
+        [SerializeField, Tooltip("VFX effect ID from VFXConfigSO (default: vfx_requiem_art)")]
+        private string _vfxEffectId = "vfx_requiem_art";
+
+        [SerializeField, Tooltip("Override VFX prefab. If set, overrides VFXConfigSO lookup.")]
+        private GameObject _vfxPrefabOverride;
 
         [SerializeField, Tooltip("Screen flash color on activation")]
         private Color _flashColor = Color.white;
@@ -86,10 +89,13 @@ namespace HNR.Characters
         // ============================================
 
         [Header("Audio")]
-        [SerializeField, Tooltip("Sound effect on activation")]
-        private AudioClip _activationSound;
+        [SerializeField, Tooltip("Audio ID from AudioConfigSO (default: requiem_art)")]
+        private string _activationSoundId = "requiem_art";
 
-        [SerializeField, Tooltip("Voice line on activation")]
+        [SerializeField, Tooltip("Override activation sound. If set, overrides AudioConfigSO lookup.")]
+        private AudioClip _activationSoundOverride;
+
+        [SerializeField, Tooltip("Voice line on activation (always direct reference)")]
         private AudioClip _voiceLine;
 
         // ============================================
@@ -120,8 +126,14 @@ namespace HNR.Characters
         /// <summary>Icon for SE bar display.</summary>
         public Sprite Icon => _icon;
 
-        /// <summary>VFX prefab to spawn.</summary>
-        public GameObject VFXPrefab => _vfxPrefab;
+        /// <summary>VFX effect ID for VFXConfigSO lookup.</summary>
+        public string VFXEffectId => _vfxEffectId;
+
+        /// <summary>Override VFX prefab (null means use VFXConfigSO).</summary>
+        public GameObject VFXPrefabOverride => _vfxPrefabOverride;
+
+        /// <summary>Whether this art has a VFX override prefab.</summary>
+        public bool HasVFXOverride => _vfxPrefabOverride != null;
 
         /// <summary>Screen flash color.</summary>
         public Color FlashColor => _flashColor;
@@ -129,8 +141,14 @@ namespace HNR.Characters
         /// <summary>Duration of visual effects.</summary>
         public float EffectDuration => _effectDuration;
 
-        /// <summary>Activation sound effect.</summary>
-        public AudioClip ActivationSound => _activationSound;
+        /// <summary>Audio ID for AudioConfigSO lookup.</summary>
+        public string ActivationSoundId => _activationSoundId;
+
+        /// <summary>Override activation sound (null means use AudioConfigSO).</summary>
+        public AudioClip ActivationSoundOverride => _activationSoundOverride;
+
+        /// <summary>Whether this art has an audio override.</summary>
+        public bool HasAudioOverride => _activationSoundOverride != null;
 
         /// <summary>Voice line on activation.</summary>
         public AudioClip VoiceLine => _voiceLine;

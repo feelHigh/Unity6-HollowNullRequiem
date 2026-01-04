@@ -246,8 +246,6 @@ namespace HNR.Combat
 
         private void PlayArtVFX(RequiemArtDataSO art, RequiemInstance requiem, ICombatTarget target)
         {
-            if (art.VFXPrefab == null) return;
-
             // Determine spawn position
             Vector3 spawnPos = Vector3.zero;
             if (target != null && target is MonoBehaviour mb)
@@ -259,17 +257,37 @@ namespace HNR.Combat
                 spawnPos = requiem.transform.position;
             }
 
-            // Try to use VFX pool
-            if (ServiceLocator.TryGet<VFXPoolManager>(out var vfxPool))
+            // Priority: Override prefab > VFXConfigSO lookup
+            if (art.HasVFXOverride)
             {
-                // For arts, we instantiate directly since they may be unique
-                var vfx = Instantiate(art.VFXPrefab, spawnPos, Quaternion.identity);
+                // Use override prefab directly
+                var vfx = Instantiate(art.VFXPrefabOverride, spawnPos, Quaternion.identity);
                 Destroy(vfx, art.EffectDuration + 1f);
+                Debug.Log($"[RequiemArtExecutor] Using VFX override prefab for {art.ArtName}");
+            }
+            else if (ServiceLocator.TryGet<VFXPoolManager>(out var vfxPool))
+            {
+                // Use VFXConfigSO via pool manager
+                string effectId = !string.IsNullOrEmpty(art.VFXEffectId) ? art.VFXEffectId : "vfx_requiem_art";
+                var instance = vfxPool.Spawn(effectId, spawnPos, Quaternion.identity);
+
+                if (instance != null)
+                {
+                    // Apply art-specific color if flash color is set
+                    if (art.FlashColor != Color.clear && art.FlashColor != Color.white)
+                    {
+                        instance.SetColor(art.FlashColor);
+                    }
+                    Debug.Log($"[RequiemArtExecutor] Spawned VFX '{effectId}' from VFXConfigSO");
+                }
+                else
+                {
+                    Debug.LogWarning($"[RequiemArtExecutor] VFX effect '{effectId}' not found in VFXConfigSO");
+                }
             }
             else
             {
-                var vfx = Instantiate(art.VFXPrefab, spawnPos, Quaternion.identity);
-                Destroy(vfx, art.EffectDuration + 1f);
+                Debug.LogWarning("[RequiemArtExecutor] No VFX available - VFXPoolManager not found and no override set");
             }
 
             // Screen flash
@@ -282,16 +300,33 @@ namespace HNR.Combat
 
         private void PlayArtAudio(RequiemArtDataSO art)
         {
-            // Play activation sound using Unity's built-in method for AudioClip
-            if (art.ActivationSound != null)
+            Vector3 audioPos = Camera.main != null ? Camera.main.transform.position : Vector3.zero;
+
+            // Priority: Override sound > AudioConfigSO lookup
+            if (art.HasAudioOverride)
             {
-                AudioSource.PlayClipAtPoint(art.ActivationSound, Camera.main != null ? Camera.main.transform.position : Vector3.zero);
+                // Use override audio directly
+                AudioSource.PlayClipAtPoint(art.ActivationSoundOverride, audioPos);
+                Debug.Log($"[RequiemArtExecutor] Using audio override for {art.ArtName}");
+            }
+            else if (!string.IsNullOrEmpty(art.ActivationSoundId))
+            {
+                // Use AudioConfigSO via AudioManager
+                if (ServiceLocator.TryGet<HNR.Core.Interfaces.IAudioManager>(out var audioManager))
+                {
+                    audioManager.PlaySFX(art.ActivationSoundId);
+                    Debug.Log($"[RequiemArtExecutor] Playing audio '{art.ActivationSoundId}' from AudioConfigSO");
+                }
+                else
+                {
+                    Debug.LogWarning($"[RequiemArtExecutor] AudioManager not found for sound '{art.ActivationSoundId}'");
+                }
             }
 
-            // Play voice line
+            // Play voice line (always direct reference)
             if (art.VoiceLine != null)
             {
-                AudioSource.PlayClipAtPoint(art.VoiceLine, Camera.main != null ? Camera.main.transform.position : Vector3.zero);
+                AudioSource.PlayClipAtPoint(art.VoiceLine, audioPos);
             }
         }
     }
