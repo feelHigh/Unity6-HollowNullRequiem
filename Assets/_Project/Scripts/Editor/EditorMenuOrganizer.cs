@@ -157,13 +157,19 @@ namespace HNR.Editor
         // 2. Prefabs (priority 30-49)
         // ============================================
 
-        [MenuItem("HNR/2. Prefabs/UI/Card Prefab", priority = 30)]
+        [MenuItem("HNR/2. Prefabs/UI/CardBase Prefab (Template)", priority = 30)]
+        public static void GenerateCardBasePrefab()
+        {
+            CardBasePrefabGenerator.GenerateCardBasePrefab();
+        }
+
+        [MenuItem("HNR/2. Prefabs/UI/Card Prefab", priority = 31)]
         public static void GenerateCardPrefab()
         {
             CardPrefabGenerator.GenerateCardPrefab();
         }
 
-        [MenuItem("HNR/2. Prefabs/UI/CombatCard Prefab", priority = 30)]
+        [MenuItem("HNR/2. Prefabs/UI/CombatCard Prefab", priority = 32)]
         public static void GenerateCombatCardPrefab()
         {
             CombatCardPrefabGenerator.GenerateCombatCardPrefab();

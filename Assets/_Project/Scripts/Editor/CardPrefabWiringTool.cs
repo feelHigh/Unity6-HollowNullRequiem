@@ -43,7 +43,6 @@ namespace HNR.Editor
 
             // Save current scene
             var currentScenePath = SceneManager.GetActiveScene().path;
-            bool sceneChanged = false;
 
             // Open NullRift scene
             var nullRiftScene = EditorSceneManager.OpenScene(NULLRIFT_SCENE_PATH, OpenSceneMode.Single);

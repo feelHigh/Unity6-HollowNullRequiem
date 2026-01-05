@@ -16,6 +16,17 @@ namespace HNR.Editor
     /// Generates CombatCard.prefab based on CardBase.prefab visuals.
     /// Copies visual properties (sprites, colors) from CardBase.
     /// Regenerate after modifying CardBase to apply changes.
+    ///
+    /// Structure mirrors CardBase with responsive anchors:
+    /// - CardFrame: Outer border (stretched)
+    /// - CardBackground: Mask shape with Mask component (stretched)
+    ///   └── CardArt: Full background art (stretched, masked)
+    /// - CostFrame: Frame around cost (top-left, anchored)
+    ///   └── CostBackground
+    ///      └── CostText
+    /// - NameTextBackground: Semi-transparent bar (top-center, anchored)
+    ///   └── CardNameText
+    /// - DescriptionText (bottom, anchored)
     /// </summary>
     public static class CombatCardPrefabGenerator
     {
@@ -51,9 +62,9 @@ namespace HNR.Editor
             // Create CombatCard prefab
             GameObject cardRoot = new GameObject("CombatCard");
 
-            // Add RectTransform (smaller than CardBase for combat)
+            // Add RectTransform (smaller than CardBase for combat, 5:7 ratio)
             RectTransform rootRect = cardRoot.AddComponent<RectTransform>();
-            rootRect.sizeDelta = new Vector2(160, 220);
+            rootRect.sizeDelta = new Vector2(160, 224);
 
             // Add CanvasGroup for alpha control
             cardRoot.AddComponent<CanvasGroup>();
@@ -62,15 +73,14 @@ namespace HNR.Editor
             var combatCard = cardRoot.AddComponent<CombatCard>();
 
             // === Create visual elements with STRETCH anchors for proper scaling ===
-            // This allows cards to scale properly when placed in different layout contexts
 
-            // Glow Outline (combat-specific, behind everything) - stretch larger than parent
+            // Glow Outline (combat-specific, behind everything)
             GameObject glowOutlineObj = CreateStretchedChildImage(cardRoot, "GlowOutline", -5, -5, -5, -5);
             glowOutlineObj.transform.SetAsFirstSibling();
             Image glowOutlineImage = glowOutlineObj.GetComponent<Image>();
-            glowOutlineImage.color = new Color(0.8f, 0.6f, 0.2f, 0f); // Start invisible
+            glowOutlineImage.color = new Color(0.8f, 0.6f, 0.2f, 0f);
 
-            // Rarity Glow (combat-specific) - stretch slightly smaller than glow
+            // Rarity Glow (combat-specific)
             GameObject rarityGlowObj = CreateStretchedChildImage(cardRoot, "RarityGlow", -2, -2, -2, -2);
             rarityGlowObj.transform.SetSiblingIndex(1);
             Image rarityImage = rarityGlowObj.GetComponent<Image>();
@@ -84,37 +94,51 @@ namespace HNR.Editor
             frameImage.type = baseVisuals.frameType;
             frameImage.raycastTarget = true;
 
-            // Card Background - stretch with small padding
+            // Card Background - stretch with small padding, add Mask for CardArt
             GameObject bgObj = CreateStretchedChildImage(cardRoot, "CardBackground", 4, 4, 4, 4);
             Image bgImage = bgObj.GetComponent<Image>();
             bgImage.sprite = baseVisuals.bgSprite;
             bgImage.color = baseVisuals.bgColor;
             bgImage.type = baseVisuals.bgType;
             bgImage.raycastTarget = false;
+            // Add Mask component
+            Mask bgMask = bgObj.AddComponent<Mask>();
+            bgMask.showMaskGraphic = true;
 
-            // Card Art - use relative anchors
-            GameObject artObj = CreateChildImage(cardRoot, "CardArt", Vector2.zero);
-            RectTransform artRect = artObj.GetComponent<RectTransform>();
-            artRect.anchorMin = new Vector2(0.05f, 0.4f);
-            artRect.anchorMax = new Vector2(0.95f, 0.92f);
-            artRect.sizeDelta = Vector2.zero;
-            artRect.anchoredPosition = Vector2.zero;
+            // Card Art - child of CardBackground, stretches to fill (masked)
+            GameObject artObj = CreateStretchedChildImage(bgObj, "CardArt", 0, 0, 0, 0);
             Image artImage = artObj.GetComponent<Image>();
             artImage.sprite = baseVisuals.artSprite;
             artImage.color = baseVisuals.artColor;
             artImage.type = baseVisuals.artType;
-            artImage.preserveAspect = baseVisuals.artPreserveAspect;
+            artImage.preserveAspect = false;
             artImage.raycastTarget = false;
 
-            // Cost Background - anchor to top-left with relative size
-            GameObject costBg = CreateChildImage(cardRoot, "CostBackground", Vector2.zero);
+            // === LAYOUT MATCHED TO CARDBASE PROPORTIONS (200x280) ===
+            // All anchors calculated from CardBase pixel positions for visual consistency
+
+            // Cost Frame - matches CardBase: pos(2,-2), size 48x48
+            // Proportions: left 1%, right 25%, bottom 82.1%, top 99.3%
+            GameObject costFrame = CreateChildImage(cardRoot, "CostFrame", Vector2.zero);
+            RectTransform costFrameRect = costFrame.GetComponent<RectTransform>();
+            costFrameRect.anchorMin = new Vector2(0.01f, 0.821f);
+            costFrameRect.anchorMax = new Vector2(0.25f, 0.993f);
+            costFrameRect.pivot = new Vector2(0.5f, 0.5f);
+            costFrameRect.sizeDelta = Vector2.zero;
+            costFrameRect.offsetMin = Vector2.zero;
+            costFrameRect.offsetMax = Vector2.zero;
+            Image costFrameImage = costFrame.GetComponent<Image>();
+            costFrameImage.sprite = baseVisuals.costFrameSprite;
+            costFrameImage.color = baseVisuals.costFrameColor;
+            costFrameImage.type = baseVisuals.costFrameType;
+            costFrameImage.raycastTarget = false;
+
+            // Cost Background - child of CostFrame, inset by ~8% (matches 4px on 48px)
+            GameObject costBg = CreateStretchedChildImage(costFrame, "CostBackground", 0.08f, 0.08f, 0.08f, 0.08f);
             RectTransform costBgRect = costBg.GetComponent<RectTransform>();
-            costBgRect.anchorMin = new Vector2(0, 0.82f);
-            costBgRect.anchorMax = new Vector2(0.22f, 1);
-            costBgRect.pivot = new Vector2(0, 1);
-            costBgRect.sizeDelta = Vector2.zero;
-            costBgRect.offsetMin = new Vector2(4, 0);
-            costBgRect.offsetMax = new Vector2(0, -4);
+            // Convert padding to proper inset
+            costBgRect.offsetMin = new Vector2(3, 3);
+            costBgRect.offsetMax = new Vector2(-3, -3);
             Image costBgImage = costBg.GetComponent<Image>();
             costBgImage.sprite = baseVisuals.costBgSprite;
             costBgImage.color = baseVisuals.costBgColor;
@@ -138,66 +162,82 @@ namespace HNR.Editor
             costText.fontSizeMax = 20;
             if (baseVisuals.costFont != null) costText.font = baseVisuals.costFont;
 
-            // Type Icon - anchor to top-right with relative size
+            // Type Icon - COMBAT-SPECIFIC: positioned below CostFrame
+            // Small icon area below cost for card type indicator
             GameObject typeIcon = CreateChildImage(cardRoot, "TypeIcon", Vector2.zero);
             RectTransform typeRect = typeIcon.GetComponent<RectTransform>();
-            typeRect.anchorMin = new Vector2(0.82f, 0.88f);
-            typeRect.anchorMax = new Vector2(0.97f, 0.97f);
-            typeRect.pivot = new Vector2(1, 1);
+            typeRect.anchorMin = new Vector2(0.04f, 0.71f);
+            typeRect.anchorMax = new Vector2(0.16f, 0.80f);
+            typeRect.pivot = new Vector2(0.5f, 0.5f);
             typeRect.sizeDelta = Vector2.zero;
             typeRect.offsetMin = Vector2.zero;
             typeRect.offsetMax = Vector2.zero;
             Image typeImage = typeIcon.GetComponent<Image>();
             typeImage.color = Color.white;
 
-            // Name Text - anchor to middle area with auto-sizing
-            GameObject nameObj = CreateChildText(cardRoot, "CardNameText", "Card Name", 14);
+            // Name Text Background - matches CardBase: pos(54,-10), size 140x32
+            // Proportions: left 27%, right 97%, bottom 85%, top 96.4%
+            GameObject nameBgObj = CreateChildImage(cardRoot, "NameTextBackground", Vector2.zero);
+            RectTransform nameBgRect = nameBgObj.GetComponent<RectTransform>();
+            nameBgRect.anchorMin = new Vector2(0.27f, 0.85f);
+            nameBgRect.anchorMax = new Vector2(0.97f, 0.964f);
+            nameBgRect.pivot = new Vector2(0.5f, 0.5f);
+            nameBgRect.sizeDelta = Vector2.zero;
+            nameBgRect.offsetMin = Vector2.zero;
+            nameBgRect.offsetMax = Vector2.zero;
+            Image nameBgImage = nameBgObj.GetComponent<Image>();
+            nameBgImage.sprite = baseVisuals.nameBgSprite;
+            nameBgImage.color = baseVisuals.nameBgColor;
+            nameBgImage.raycastTarget = false;
+
+            // Name Text - child of NameTextBackground with auto-sizing
+            GameObject nameObj = CreateChildText(nameBgObj, "CardNameText", "Card Name", 12);
             RectTransform nameRect = nameObj.GetComponent<RectTransform>();
-            nameRect.anchorMin = new Vector2(0.05f, 0.3f);
-            nameRect.anchorMax = new Vector2(0.95f, 0.4f);
+            nameRect.anchorMin = Vector2.zero;
+            nameRect.anchorMax = Vector2.one;
             nameRect.sizeDelta = Vector2.zero;
-            nameRect.offsetMin = Vector2.zero;
-            nameRect.offsetMax = Vector2.zero;
+            nameRect.offsetMin = new Vector2(3, 2);
+            nameRect.offsetMax = new Vector2(-3, -2);
             TextMeshProUGUI nameText = nameObj.GetComponent<TextMeshProUGUI>();
             nameText.alignment = TextAlignmentOptions.Center;
             nameText.color = baseVisuals.nameTextColor;
             nameText.fontStyle = FontStyles.Bold;
             nameText.enableAutoSizing = true;
             nameText.fontSizeMin = 6;
-            nameText.fontSizeMax = 14;
+            nameText.fontSizeMax = 12;
             if (baseVisuals.nameFont != null) nameText.font = baseVisuals.nameFont;
 
-            // Description Text - anchor to bottom area with auto-sizing
-            GameObject descObj = CreateChildText(cardRoot, "DescriptionText", "Deal 6 damage.", 11);
+            // Description Text Background - matches CardBase: pos(0,5), size 190x65
+            // Proportions: left 2.5%, right 97.5%, bottom 1.8%, top 25%
+            GameObject descBgObj = CreateChildImage(cardRoot, "DescriptionTextBackground", Vector2.zero);
+            RectTransform descBgRect = descBgObj.GetComponent<RectTransform>();
+            descBgRect.anchorMin = new Vector2(0.025f, 0.018f);
+            descBgRect.anchorMax = new Vector2(0.975f, 0.25f);
+            descBgRect.pivot = new Vector2(0.5f, 0.5f);
+            descBgRect.sizeDelta = Vector2.zero;
+            descBgRect.offsetMin = Vector2.zero;
+            descBgRect.offsetMax = Vector2.zero;
+            Image descBgImage = descBgObj.GetComponent<Image>();
+            descBgImage.sprite = baseVisuals.descBgSprite;
+            descBgImage.color = baseVisuals.descBgColor;
+            descBgImage.raycastTarget = false;
+
+            // Description Text - child of DescriptionTextBackground with auto-sizing
+            GameObject descObj = CreateChildText(descBgObj, "DescriptionText", "Deal 6 damage.", 10);
             RectTransform descRect = descObj.GetComponent<RectTransform>();
-            descRect.anchorMin = new Vector2(0.05f, 0.08f);
-            descRect.anchorMax = new Vector2(0.95f, 0.28f);
+            descRect.anchorMin = Vector2.zero;
+            descRect.anchorMax = Vector2.one;
             descRect.sizeDelta = Vector2.zero;
-            descRect.offsetMin = Vector2.zero;
-            descRect.offsetMax = Vector2.zero;
+            descRect.offsetMin = new Vector2(4, 3);
+            descRect.offsetMax = new Vector2(-4, -3);
             TextMeshProUGUI descText = descObj.GetComponent<TextMeshProUGUI>();
             descText.alignment = TextAlignmentOptions.Center;
             descText.color = baseVisuals.descTextColor;
             descText.textWrappingMode = TextWrappingModes.Normal;
             descText.enableAutoSizing = true;
             descText.fontSizeMin = 6;
-            descText.fontSizeMax = 11;
+            descText.fontSizeMax = 10;
             if (baseVisuals.descFont != null) descText.font = baseVisuals.descFont;
-
-            // Owner Portrait Container - anchor to bottom-center
-            GameObject ownerContainer = new GameObject("OwnerPortraitContainer");
-            ownerContainer.transform.SetParent(cardRoot.transform, false);
-            RectTransform ownerContainerRect = ownerContainer.AddComponent<RectTransform>();
-            ownerContainerRect.anchorMin = new Vector2(0.35f, 0);
-            ownerContainerRect.anchorMax = new Vector2(0.65f, 0.12f);
-            ownerContainerRect.pivot = new Vector2(0.5f, 0);
-            ownerContainerRect.sizeDelta = Vector2.zero;
-            ownerContainerRect.offsetMin = Vector2.zero;
-            ownerContainerRect.offsetMax = Vector2.zero;
-
-            GameObject ownerPortrait = CreateStretchedChildImage(ownerContainer, "OwnerPortrait", 0, 0, 0, 0);
-            Image ownerImage = ownerPortrait.GetComponent<Image>();
-            ownerImage.color = new Color(0.5f, 0.5f, 0.5f, 1f);
 
             // Selection Highlight - stretch larger than parent
             GameObject selectionHighlight = CreateStretchedChildImage(cardRoot, "SelectionHighlight", -4, -4, -4, -4);
@@ -227,8 +267,6 @@ namespace HNR.Editor
             so.FindProperty("_cardArt").objectReferenceValue = artImage;
             so.FindProperty("_cardFrame").objectReferenceValue = frameImage;
             so.FindProperty("_rarityGlow").objectReferenceValue = rarityImage;
-            so.FindProperty("_ownerPortrait").objectReferenceValue = ownerImage;
-            so.FindProperty("_ownerPortraitContainer").objectReferenceValue = ownerContainer;
             so.FindProperty("_glowOutline").objectReferenceValue = glowOutlineImage;
             so.FindProperty("_selectionHighlight").objectReferenceValue = selectionHighlight;
             so.FindProperty("_unplayableOverlay").objectReferenceValue = unplayableGroup;
@@ -278,63 +316,99 @@ namespace HNR.Editor
                     visuals.bgColor = img.color;
                     visuals.bgType = img.type;
                 }
+
+                // CardArt is now child of CardBackground
+                var art = bg.Find("CardArt");
+                if (art != null)
+                {
+                    var artImg = art.GetComponent<Image>();
+                    if (artImg != null)
+                    {
+                        visuals.artSprite = artImg.sprite;
+                        visuals.artColor = artImg.color;
+                        visuals.artType = artImg.type;
+                    }
+                }
             }
 
-            // CardArt
-            var art = root.Find("CardArt");
-            if (art != null)
+            // CostFrame
+            var costFrame = root.Find("CostFrame");
+            if (costFrame != null)
             {
-                var img = art.GetComponent<Image>();
+                var img = costFrame.GetComponent<Image>();
                 if (img != null)
                 {
-                    visuals.artSprite = img.sprite;
-                    visuals.artColor = img.color;
-                    visuals.artType = img.type;
-                    visuals.artPreserveAspect = img.preserveAspect;
+                    visuals.costFrameSprite = img.sprite;
+                    visuals.costFrameColor = img.color;
+                    visuals.costFrameType = img.type;
+                }
+
+                // CostBackground is child of CostFrame
+                var costBg = costFrame.Find("CostBackground");
+                if (costBg != null)
+                {
+                    var bgImg = costBg.GetComponent<Image>();
+                    if (bgImg != null)
+                    {
+                        visuals.costBgSprite = bgImg.sprite;
+                        visuals.costBgColor = bgImg.color;
+                        visuals.costBgType = bgImg.type;
+                    }
+
+                    var costText = costBg.GetComponentInChildren<TextMeshProUGUI>();
+                    if (costText != null)
+                    {
+                        visuals.costTextColor = costText.color;
+                        visuals.costFont = costText.font;
+                    }
                 }
             }
 
-            // CostBackground
-            var costBg = root.Find("CostBackground");
-            if (costBg != null)
+            // NameTextBackground
+            var nameBg = root.Find("NameTextBackground");
+            if (nameBg != null)
             {
-                var img = costBg.GetComponent<Image>();
+                var img = nameBg.GetComponent<Image>();
                 if (img != null)
                 {
-                    visuals.costBgSprite = img.sprite;
-                    visuals.costBgColor = img.color;
-                    visuals.costBgType = img.type;
+                    visuals.nameBgSprite = img.sprite;
+                    visuals.nameBgColor = img.color;
                 }
 
-                var costText = costBg.GetComponentInChildren<TextMeshProUGUI>();
-                if (costText != null)
+                // NameText is child of NameTextBackground
+                var nameT = nameBg.Find("NameText");
+                if (nameT != null)
                 {
-                    visuals.costTextColor = costText.color;
-                    visuals.costFont = costText.font;
-                }
-            }
-
-            // NameText
-            var nameT = root.Find("NameText");
-            if (nameT != null)
-            {
-                var tmp = nameT.GetComponent<TextMeshProUGUI>();
-                if (tmp != null)
-                {
-                    visuals.nameTextColor = tmp.color;
-                    visuals.nameFont = tmp.font;
+                    var tmp = nameT.GetComponent<TextMeshProUGUI>();
+                    if (tmp != null)
+                    {
+                        visuals.nameTextColor = tmp.color;
+                        visuals.nameFont = tmp.font;
+                    }
                 }
             }
 
-            // DescriptionText
-            var descT = root.Find("DescriptionText");
-            if (descT != null)
+            // DescriptionTextBackground
+            var descBg = root.Find("DescriptionTextBackground");
+            if (descBg != null)
             {
-                var tmp = descT.GetComponent<TextMeshProUGUI>();
-                if (tmp != null)
+                var img = descBg.GetComponent<Image>();
+                if (img != null)
                 {
-                    visuals.descTextColor = tmp.color;
-                    visuals.descFont = tmp.font;
+                    visuals.descBgSprite = img.sprite;
+                    visuals.descBgColor = img.color;
+                }
+
+                // DescriptionText is child of DescriptionTextBackground
+                var descT = descBg.Find("DescriptionText");
+                if (descT != null)
+                {
+                    var tmp = descT.GetComponent<TextMeshProUGUI>();
+                    if (tmp != null)
+                    {
+                        visuals.descTextColor = tmp.color;
+                        visuals.descFont = tmp.font;
+                    }
                 }
             }
 
@@ -410,14 +484,20 @@ namespace HNR.Editor
             public Sprite artSprite;
             public Color artColor;
             public Image.Type artType;
-            public bool artPreserveAspect;
+            public Sprite costFrameSprite;
+            public Color costFrameColor;
+            public Image.Type costFrameType;
             public Sprite costBgSprite;
             public Color costBgColor;
             public Image.Type costBgType;
             public Color costTextColor;
             public TMP_FontAsset costFont;
+            public Sprite nameBgSprite;
+            public Color nameBgColor;
             public Color nameTextColor;
             public TMP_FontAsset nameFont;
+            public Sprite descBgSprite;
+            public Color descBgColor;
             public Color descTextColor;
             public TMP_FontAsset descFont;
             public Sprite glowSprite;
