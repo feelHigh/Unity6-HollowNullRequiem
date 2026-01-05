@@ -388,6 +388,11 @@ namespace HNR.Editor
             combatBootstrapObj.transform.SetParent(managersParent.transform);
             var combatBootstrap = combatBootstrapObj.AddComponent<CombatBootstrap>();
 
+            // === Auto-Battle Controller ===
+            GameObject autoBattleObj = new GameObject("AutoBattleController");
+            autoBattleObj.transform.SetParent(managersParent.transform);
+            autoBattleObj.AddComponent<AutoBattleController>();
+
             // === World Space UI Containers ===
             // These are plain transforms for world-space floating UIs (not under screen-space canvas)
             GameObject worldSpaceUIParent = new GameObject("--- WORLD SPACE UI ---");
@@ -517,6 +522,9 @@ namespace HNR.Editor
 
             // === NullStateModal ===
             GameObject nullStateModal = CreateNullStateModal(overlayContainer);
+
+            // === SettingsOverlay (for combat settings with pause) ===
+            CreateSettingsOverlay(overlayContainer.transform);
 
             // NOTE: No opaque background for Combat scene - we need to see world-space enemies
             // Camera background color provides the backdrop instead
@@ -2159,6 +2167,23 @@ namespace HNR.Editor
             rect.anchorMax = new Vector2(0.85f, 0.35f);
             rect.sizeDelta = Vector2.zero;
 
+            // Add CardFanLayout component for card display and management
+            var cardFanLayout = container.AddComponent<CardFanLayout>();
+
+            // Configure CardFanLayout positioning for the HandContainer area
+            // HandContainer occupies bottom 35% of screen (anchors 0-0.35 vertically)
+            // Formula: y = cos(angle) * radius - radius + center.y
+            // For center card (angle=0): y = center.y
+            // So center.y=100 places center card 100px above container center
+            SerializedObject fanSO = new SerializedObject(cardFanLayout);
+            fanSO.FindProperty("_fanAngle").floatValue = 30f;           // Default fan spread
+            fanSO.FindProperty("_fanRadius").floatValue = 500f;         // Arc radius
+            fanSO.FindProperty("_fanCenter").vector2Value = new Vector2(0, 80f);  // Cards positioned above center
+            fanSO.FindProperty("_cardSize").vector2Value = new Vector2(140, 190);   // Original card size
+            fanSO.FindProperty("_hoverLiftY").floatValue = 50f;         // Original hover lift
+            fanSO.FindProperty("_hoverScale").floatValue = 1.2f;        // Original hover scale
+            fanSO.ApplyModifiedPropertiesWithoutUndo();
+
             return container;
         }
 
@@ -2528,10 +2553,13 @@ namespace HNR.Editor
             var vitalityBar = combatScreenObj.GetComponentInChildren<SharedVitalityBar>(true);
             var partySidebar = combatScreenObj.GetComponentInChildren<PartyStatusSidebar>(true);
             var relicDisplayBar = combatScreenObj.GetComponentInChildren<RelicDisplayBar>(true);
-            var cardFan = combatScreenObj.GetComponentInChildren<CardFanLayout>(true);
             var apCounter = combatScreenObj.GetComponentInChildren<APCounterDisplay>(true);
             var execButton = combatScreenObj.GetComponentInChildren<ExecutionButton>(true);
             var sysMenu = combatScreenObj.GetComponentInChildren<SystemMenuBar>(true);
+
+            // CardFanLayout is on HandContainer (sibling of ScreenContainer), find it at canvas level
+            var canvas = combatScreenObj.GetComponentInParent<Canvas>();
+            var cardFan = canvas != null ? canvas.GetComponentInChildren<CardFanLayout>(true) : null;
 
             // Wire if found
             if (vitalityBar != null)
@@ -3007,13 +3035,32 @@ namespace HNR.Editor
             var iconConfig = LoadIconConfig();
 
             // Settings button - use sprite if available
-            CreateSystemMenuButton(menuBar, "SettingsBtn", "\u2699", new Color(0.1f, 0.08f, 0.15f), iconConfig?.SettingsIcon);
+            GameObject settingsBtn = CreateSystemMenuButton(menuBar, "SettingsBtn", "\u2699", new Color(0.1f, 0.08f, 0.15f), iconConfig?.SettingsIcon);
 
             // Auto button (text only)
-            CreateSystemMenuButton(menuBar, "AutoBtn", "\u25B6", new Color(0.1f, 0.08f, 0.15f));
+            GameObject autoBtn = CreateSystemMenuButton(menuBar, "AutoBtn", "\u25B6", new Color(0.1f, 0.08f, 0.15f));
 
-            // Speed button (text only)
-            GameObject speedBtn = CreateSystemMenuButton(menuBar, "SpeedBtn", "1.5x", new Color(0.1f, 0.08f, 0.15f));
+            // Speed button (text only) - start with "1x" to match initial state
+            GameObject speedBtn = CreateSystemMenuButton(menuBar, "SpeedBtn", "1x", new Color(0.1f, 0.08f, 0.15f));
+
+            // Add SystemMenuBar component and wire references
+            var sysMenuBar = menuBar.AddComponent<SystemMenuBar>();
+            SerializedObject so = new SerializedObject(sysMenuBar);
+
+            // Wire speed toggle
+            so.FindProperty("_speedToggle").objectReferenceValue = speedBtn.GetComponent<Button>();
+            var speedLabel = speedBtn.GetComponentInChildren<TMP_Text>(true);
+            if (speedLabel != null)
+                so.FindProperty("_speedLabel").objectReferenceValue = speedLabel;
+
+            // Wire auto-battle toggle
+            so.FindProperty("_autoBattleToggle").objectReferenceValue = autoBtn.GetComponent<Button>();
+            so.FindProperty("_autoBattleIcon").objectReferenceValue = autoBtn.GetComponent<Image>();
+
+            // Wire settings button
+            so.FindProperty("_settingsButton").objectReferenceValue = settingsBtn.GetComponent<Button>();
+
+            so.ApplyModifiedPropertiesWithoutUndo();
 
             return menuBar;
         }

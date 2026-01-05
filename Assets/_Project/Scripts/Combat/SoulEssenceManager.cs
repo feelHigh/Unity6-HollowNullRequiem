@@ -26,6 +26,7 @@ namespace HNR.Combat
         private const int DAMAGE_THRESHOLD_FOR_SE = 10;
         private const int SE_PER_DAMAGE_DEALT = 1;
         private const int SE_PER_DAMAGE_TAKEN = 2;
+        private const int MAX_SE = 100;
 
         // ============================================
         // References
@@ -174,15 +175,15 @@ namespace HNR.Combat
             if (_turnManager?.Context == null) return;
 
             int previousSE = _turnManager.Context.SoulEssence;
-            _turnManager.Context.SoulEssence += amount;
-            int delta = _turnManager.Context.SoulEssence - previousSE;
+            int newSE = Mathf.Min(previousSE + amount, MAX_SE);
+            _turnManager.Context.SoulEssence = newSE;
 
-            EventBus.Publish(new SoulEssenceChangedEvent(
-                _turnManager.Context.SoulEssence,
-                delta  // Positive delta for SE gain
-            ));
-
-            Debug.Log($"[SoulEssenceManager] +{amount} SE ({source}). Total: {_turnManager.Context.SoulEssence}");
+            int delta = newSE - previousSE;
+            if (delta > 0)
+            {
+                EventBus.Publish(new SoulEssenceChangedEvent(newSE, delta));
+                Debug.Log($"[SoulEssenceManager] +{delta} SE ({source}). Total: {newSE}/{MAX_SE}");
+            }
         }
 
         /// <summary>

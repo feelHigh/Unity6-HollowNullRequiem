@@ -12,6 +12,7 @@ using HNR.Core.Events;
 using HNR.Cards;
 using HNR.Characters;
 using HNR.Characters.Visuals;
+using HNR.UI.Combat;
 
 namespace HNR.Combat
 {
@@ -342,6 +343,65 @@ namespace HNR.Combat
             EventBus.Publish(new CardPlayedEvent(instance, target));
 
             Debug.Log($"[TurnManager] Played card: {instance.Data.CardName} (Cost: {instance.CurrentCost}, AP remaining: {_context.CurrentAP})");
+            return true;
+        }
+
+        /// <summary>
+        /// Attempt to play a CombatCard on a target (for auto-battle).
+        /// </summary>
+        /// <param name="combatCard">The CombatCard UI component</param>
+        /// <param name="target">Target for the card (can be null)</param>
+        /// <returns>True if card was played successfully</returns>
+        public bool TryPlayCard(CombatCard combatCard, ICombatTarget target)
+        {
+            if (CurrentPhase != CombatPhase.PlayerPhase) return false;
+            if (combatCard?.CardData == null) return false;
+
+            var instance = combatCard.CardData;
+            if (!instance.CanPlay(_context.CurrentAP)) return false;
+
+            // Spend AP
+            _context.CurrentAP -= instance.CurrentCost;
+            EventBus.Publish(new APChangedEvent(_context.CurrentAP, _context.MaxAP));
+
+            // Trigger animation on the card owner's visual
+            PlayCardAnimation(instance);
+
+            // Execute effects
+            if (ServiceLocator.TryGet<CardExecutor>(out var executor))
+            {
+                var targetType = instance.Data.TargetType;
+                if (targetType == TargetType.AllEnemies || targetType == TargetType.AllAllies)
+                {
+                    var ts = ServiceLocator.TryGet<TargetingSystem>(out var targeting) ? targeting : null;
+                    var allTargets = ts?.GetAllTargets(targetType) ?? new List<ICombatTarget>();
+                    executor.Execute(instance, allTargets);
+                }
+                else
+                {
+                    executor.Execute(instance, target);
+                }
+            }
+
+            // Remove from CardFanLayout
+            if (ServiceLocator.TryGet<CardFanLayout>(out var fanLayout))
+            {
+                fanLayout.RemoveCard(combatCard, true);
+            }
+
+            // Handle card after play: Power cards exhaust, others discard
+            if (instance.Data.CardType == CardType.Power)
+            {
+                _context.DeckManager?.Exhaust(instance);
+                Debug.Log($"[TurnManager] Power card exhausted: {instance.Data.CardName}");
+            }
+            else
+            {
+                _context.DeckManager?.Discard(instance);
+            }
+
+            EventBus.Publish(new CardPlayedEvent(instance, target));
+            Debug.Log($"[TurnManager] Auto-played card: {instance.Data.CardName} (Cost: {instance.CurrentCost}, AP remaining: {_context.CurrentAP})");
             return true;
         }
 

@@ -3,9 +3,12 @@
 // Discard hand, process end-of-turn effects
 // ============================================
 
+using System.Collections.Generic;
 using UnityEngine;
 using HNR.Core;
 using HNR.Core.Events;
+using HNR.Cards;
+using HNR.UI.Combat;
 
 namespace HNR.Combat
 {
@@ -24,13 +27,41 @@ namespace HNR.Combat
             _processComplete = false;
             Debug.Log("[EndPhase] Processing end of player turn");
 
-            // Discard remaining hand
-            var handCards = context.HandManager?.GetHandInstances();
-            if (handCards != null && handCards.Count > 0)
+            // Discard remaining hand - try CardFanLayout first (new system), then HandManager (legacy)
+            bool cardsDiscarded = false;
+
+            // Try CardFanLayout (CombatCard-based system)
+            if (ServiceLocator.TryGet<CardFanLayout>(out var cardFanLayout) && cardFanLayout.Cards.Count > 0)
             {
-                context.DeckManager?.DiscardAll(handCards);
-                context.HandManager?.ClearHand();
-                Debug.Log($"[EndPhase] Discarded {handCards.Count} cards");
+                var cardInstances = new List<CardInstance>();
+                foreach (var combatCard in cardFanLayout.Cards)
+                {
+                    if (combatCard?.CardData != null)
+                    {
+                        cardInstances.Add(combatCard.CardData);
+                    }
+                }
+
+                if (cardInstances.Count > 0)
+                {
+                    context.DeckManager?.DiscardAll(cardInstances);
+                    Debug.Log($"[EndPhase] Discarded {cardInstances.Count} cards from CardFanLayout");
+                }
+
+                cardFanLayout.ClearHand();
+                cardsDiscarded = true;
+            }
+
+            // Fallback: HandManager (legacy Card-based system)
+            if (!cardsDiscarded)
+            {
+                var handCards = context.HandManager?.GetHandInstances();
+                if (handCards != null && handCards.Count > 0)
+                {
+                    context.DeckManager?.DiscardAll(handCards);
+                    context.HandManager?.ClearHand();
+                    Debug.Log($"[EndPhase] Discarded {handCards.Count} cards from HandManager");
+                }
             }
 
             // Tick card modifiers (reduce durations, remove expired)

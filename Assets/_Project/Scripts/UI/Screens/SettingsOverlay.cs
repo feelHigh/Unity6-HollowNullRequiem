@@ -8,7 +8,9 @@ using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
 using HNR.Core;
+using HNR.Core.Events;
 using HNR.Core.Interfaces;
+using HNR.Combat;
 
 namespace HNR.UI.Screens
 {
@@ -289,6 +291,9 @@ namespace HNR.UI.Screens
                 }
                 gameObject.SetActive(false);
                 _isShowing = false;
+
+                // Publish close event for combat pause restoration
+                EventBus.Publish(new SettingsClosedEvent());
             });
 
             // Use SetUpdate(true) to animate even when Time.timeScale = 0

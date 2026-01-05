@@ -146,9 +146,13 @@ namespace HNR.UI.Combat
         private Vector2 _originalPosition;
         private Quaternion _originalRotation;
         private Vector3 _originalScale;
+        private Vector2 _dragOffset; // Offset between pointer and card center when drag started
         private bool _isDragging;
         private bool _isPlayable = true;
         private ICombatTarget _currentTarget;
+
+        // Threshold for playing non-targeting cards (how far above original Y position)
+        private const float PLAY_THRESHOLD_Y = 100f;
 
         // ============================================
         // Properties
@@ -350,6 +354,21 @@ namespace HNR.UI.Combat
             _originalRotation = _rectTransform.localRotation;
             _originalScale = transform.localScale;
 
+            // Calculate drag offset (difference between pointer and card center)
+            if (_canvas != null)
+            {
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    _canvas.transform as RectTransform,
+                    eventData.position,
+                    _canvas.worldCamera,
+                    out var pointerLocalPos);
+                _dragOffset = _originalPosition - pointerLocalPos;
+            }
+            else
+            {
+                _dragOffset = Vector2.zero;
+            }
+
             // Disable raycast blocking while dragging
             _canvasGroup.blocksRaycasts = false;
 
@@ -367,6 +386,24 @@ namespace HNR.UI.Combat
             // Bring to front
             transform.SetAsLastSibling();
 
+            // Begin targeting mode to show highlights on valid targets
+            if (_cardData != null)
+            {
+                Debug.Log($"[CombatCard] Attempting to begin targeting for {_cardData.Data?.CardName}, TargetType: {_cardData.Data?.TargetType}");
+                if (ServiceLocator.TryGet<TargetingSystem>(out var targetingSystem))
+                {
+                    targetingSystem.BeginTargeting(_cardData);
+                }
+                else
+                {
+                    Debug.LogWarning("[CombatCard] TargetingSystem not found in ServiceLocator!");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[CombatCard] _cardData is null in OnBeginDrag!");
+            }
+
             // Fire events
             OnSelected?.Invoke(this);
 
@@ -377,7 +414,7 @@ namespace HNR.UI.Combat
         {
             if (!_isDragging) return;
 
-            // Move card to pointer position
+            // Move card to pointer position with offset so card follows naturally
             if (_canvas != null)
             {
                 RectTransformUtility.ScreenPointToLocalPointInRectangle(
@@ -386,7 +423,7 @@ namespace HNR.UI.Combat
                     _canvas.worldCamera,
                     out var localPoint);
 
-                _rectTransform.anchoredPosition = localPoint;
+                _rectTransform.anchoredPosition = localPoint + _dragOffset;
             }
             else
             {
@@ -411,19 +448,48 @@ namespace HNR.UI.Combat
                 _targetingLine.gameObject.SetActive(false);
             }
 
+            // End targeting mode (hides highlights on all targets)
+            if (ServiceLocator.TryGet<TargetingSystem>(out var targetingSystem))
+            {
+                targetingSystem.CancelTargeting(false); // Don't publish cancel event
+            }
+
             // Check if we have a valid target
+            bool cardPlayed = false;
+
             if (_currentTarget != null && IsValidTarget(_currentTarget))
             {
-                // Successful play - notify listeners
-                Debug.Log($"[CombatCard] Play card on target: {_currentTarget.Name}");
-                OnDragComplete?.Invoke(this, _currentTarget);
+                // Attempt to play on specific target
+                Debug.Log($"[CombatCard] Attempting to play card on target: {_currentTarget.Name}");
 
-                // Publish event for TurnManager
-                EventBus.Publish(new CardTargetConfirmedEvent(_currentTarget));
+                if (ServiceLocator.TryGet<TurnManager>(out var turnManager))
+                {
+                    cardPlayed = turnManager.TryPlayCard(this, _currentTarget);
+                    if (cardPlayed)
+                    {
+                        OnDragComplete?.Invoke(this, _currentTarget);
+                    }
+                }
             }
-            else
+            else if (CanPlayWithoutTarget() && IsDraggedAboveThreshold())
             {
-                // Return to original position
+                // Card doesn't require specific target and was dragged far enough
+                Debug.Log($"[CombatCard] Attempting to play non-targeting card: {_cardData?.Data?.CardName}");
+
+                if (ServiceLocator.TryGet<TurnManager>(out var turnManager))
+                {
+                    cardPlayed = turnManager.TryPlayCard(this, null);
+                    if (cardPlayed)
+                    {
+                        OnDragComplete?.Invoke(this, null);
+                    }
+                }
+            }
+
+            // Return to original position if card wasn't played (insufficient AP, wrong phase, etc.)
+            if (!cardPlayed)
+            {
+                Debug.Log($"[CombatCard] Card not played, returning to hand");
                 ReturnToOriginalPosition();
             }
 
@@ -544,6 +610,30 @@ namespace HNR.UI.Combat
             return targetType == TargetType.SingleEnemy ||
                    targetType == TargetType.AllEnemies ||
                    targetType == TargetType.Random;
+        }
+
+        /// <summary>
+        /// Check if the card can be played without selecting a specific target.
+        /// Cards with None, Self, AllEnemies, AllAllies target types don't require target selection.
+        /// </summary>
+        private bool CanPlayWithoutTarget()
+        {
+            if (_cardData?.Data == null) return false;
+
+            var targetType = _cardData.Data.TargetType;
+            return targetType == TargetType.None ||
+                   targetType == TargetType.Self ||
+                   targetType == TargetType.AllEnemies ||
+                   targetType == TargetType.AllAllies;
+        }
+
+        /// <summary>
+        /// Check if the card has been dragged far enough above its original position to trigger play.
+        /// </summary>
+        private bool IsDraggedAboveThreshold()
+        {
+            float dragDistance = _rectTransform.anchoredPosition.y - _originalPosition.y;
+            return dragDistance > PLAY_THRESHOLD_Y;
         }
 
         // ============================================

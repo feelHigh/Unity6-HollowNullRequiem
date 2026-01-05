@@ -8,6 +8,7 @@ using UnityEngine.UI;
 using TMPro;
 using HNR.Core.Events;
 using HNR.Combat;
+using HNR.UI.Screens;
 
 namespace HNR.UI.Combat
 {
@@ -29,9 +30,26 @@ namespace HNR.UI.Combat
         [SerializeField] private Button _settingsButton;
         [SerializeField] private Button _menuButton;
 
-        private readonly float[] _speedOptions = { 1f, 1.5f, 2f };
+        private readonly float[] _speedOptions = { 1f, 2f };
         private int _currentSpeedIndex = 0;
         private bool _autoBattleEnabled = false;
+        private float _previousTimeScale = 1f;
+
+        private void OnEnable()
+        {
+            EventBus.Subscribe<SettingsClosedEvent>(OnSettingsClosed);
+        }
+
+        private void OnDisable()
+        {
+            EventBus.Unsubscribe<SettingsClosedEvent>(OnSettingsClosed);
+        }
+
+        private void OnSettingsClosed(SettingsClosedEvent evt)
+        {
+            // Restore time scale respecting current speed setting
+            Time.timeScale = _speedOptions[_currentSpeedIndex];
+        }
 
         private void Start()
         {
@@ -104,7 +122,19 @@ namespace HNR.UI.Combat
 
         private void OpenSettings()
         {
-            EventBus.Publish(new OpenSettingsRequestEvent());
+            // Store current time scale and pause
+            _previousTimeScale = Time.timeScale;
+            Time.timeScale = 0f;
+
+            // Show SettingsOverlay
+            if (SettingsOverlay.Instance != null)
+            {
+                SettingsOverlay.Instance.Show();
+            }
+            else
+            {
+                SettingsOverlay.ShowSettings();
+            }
         }
 
         private void OpenMenu()

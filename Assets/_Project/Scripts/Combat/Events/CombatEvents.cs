@@ -370,4 +370,12 @@ namespace HNR.Combat
     {
         public OpenPauseMenuRequestEvent() { }
     }
+
+    /// <summary>
+    /// Published when settings overlay is closed.
+    /// </summary>
+    public class SettingsClosedEvent : GameEvent
+    {
+        public SettingsClosedEvent() { }
+    }
 }
