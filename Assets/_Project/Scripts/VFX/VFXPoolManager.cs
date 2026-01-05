@@ -159,24 +159,37 @@ namespace HNR.VFX
             }
 
             var config = _configLookup[effectId];
-            VFXInstance instance;
+            VFXInstance instance = null;
 
-            // Try to get from pool
-            if (_pools[effectId].Count > 0)
+            // Try to get valid instance from pool (skip destroyed objects)
+            while (_pools[effectId].Count > 0)
             {
-                instance = _pools[effectId].Dequeue();
+                var candidate = _pools[effectId].Dequeue();
+
+                // Check if the pooled object was destroyed (e.g., scene reload)
+                if (candidate == null || candidate.gameObject == null)
+                {
+                    Debug.LogWarning($"[VFXPoolManager] Removed destroyed instance from '{effectId}' pool");
+                    continue;
+                }
+
+                instance = candidate;
+                break;
             }
-            // Create new if under max active
-            else if (_activeCount[effectId] < config.MaxActive)
+
+            // If no valid instance from pool, create new if under max active
+            if (instance == null)
             {
-                instance = CreateInstance(config);
-                Debug.Log($"[VFXPoolManager] Pool empty, created new '{effectId}'");
-            }
-            // At max capacity - refuse spawn
-            else
-            {
-                Debug.LogWarning($"[VFXPoolManager] Max active reached for '{effectId}' ({config.MaxActive})");
-                return null;
+                if (_activeCount[effectId] < config.MaxActive)
+                {
+                    instance = CreateInstance(config);
+                    Debug.Log($"[VFXPoolManager] Pool empty, created new '{effectId}'");
+                }
+                else
+                {
+                    Debug.LogWarning($"[VFXPoolManager] Max active reached for '{effectId}' ({config.MaxActive})");
+                    return null;
+                }
             }
 
             // Position and activate
@@ -228,13 +241,24 @@ namespace HNR.VFX
         /// <param name="instance">Instance to return</param>
         public void Return(VFXInstance instance)
         {
-            if (instance == null) return;
+            // Null check for destroyed objects
+            if (instance == null || instance.gameObject == null) return;
 
             var effectId = instance.EffectId;
             if (string.IsNullOrEmpty(effectId) || !_pools.ContainsKey(effectId))
             {
                 Debug.LogWarning($"[VFXPoolManager] Cannot return unknown effect: {effectId}");
-                Destroy(instance.gameObject);
+                if (instance != null && instance.gameObject != null)
+                {
+                    Destroy(instance.gameObject);
+                }
+                return;
+            }
+
+            // Check if pool root still exists (may be destroyed on scene unload)
+            if (_poolRoot == null)
+            {
+                Debug.LogWarning($"[VFXPoolManager] Pool root destroyed, cannot return '{effectId}'");
                 return;
             }
 
@@ -259,7 +283,8 @@ namespace HNR.VFX
             var activeInstances = FindObjectsByType<VFXInstance>(FindObjectsSortMode.None);
             foreach (var instance in activeInstances)
             {
-                if (instance.gameObject.activeInHierarchy)
+                // Check for destroyed objects before accessing properties
+                if (instance != null && instance.gameObject != null && instance.gameObject.activeInHierarchy)
                 {
                     instance.Stop();
                 }
@@ -274,7 +299,8 @@ namespace HNR.VFX
             var activeInstances = FindObjectsByType<VFXInstance>(FindObjectsSortMode.None);
             foreach (var instance in activeInstances)
             {
-                if (instance.gameObject.activeInHierarchy)
+                // Check for destroyed objects before accessing properties
+                if (instance != null && instance.gameObject != null && instance.gameObject.activeInHierarchy)
                 {
                     Return(instance);
                 }
@@ -292,7 +318,8 @@ namespace HNR.VFX
                 while (kvp.Value.Count > 0)
                 {
                     var instance = kvp.Value.Dequeue();
-                    if (instance != null)
+                    // Check for both null reference and destroyed Unity object
+                    if (instance != null && instance.gameObject != null)
                     {
                         Destroy(instance.gameObject);
                     }
@@ -305,6 +332,43 @@ namespace HNR.VFX
             _activeCount.Clear();
 
             Debug.Log("[VFXPoolManager] Cleared all pools");
+        }
+
+        /// <summary>
+        /// Purge destroyed instances from all pools.
+        /// Call this after scene transitions or when pool corruption is suspected.
+        /// </summary>
+        public void PurgeDestroyedInstances()
+        {
+            int purgedCount = 0;
+
+            foreach (var kvp in _pools)
+            {
+                var effectId = kvp.Key;
+                var pool = kvp.Value;
+                var validInstances = new Queue<VFXInstance>();
+
+                while (pool.Count > 0)
+                {
+                    var instance = pool.Dequeue();
+                    if (instance != null && instance.gameObject != null)
+                    {
+                        validInstances.Enqueue(instance);
+                    }
+                    else
+                    {
+                        purgedCount++;
+                    }
+                }
+
+                // Replace pool with cleaned version
+                _pools[effectId] = validInstances;
+            }
+
+            if (purgedCount > 0)
+            {
+                Debug.Log($"[VFXPoolManager] Purged {purgedCount} destroyed instances from pools");
+            }
         }
 
         /// <summary>

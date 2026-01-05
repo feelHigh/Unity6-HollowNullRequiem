@@ -193,6 +193,10 @@ namespace HNR.VFX
 
             while (elapsed < _lifetime)
             {
+                // Check if this instance was destroyed during lifetime
+                if (this == null || gameObject == null)
+                    yield break;
+
                 // Check if particle system finished early
                 if (_particleSystem != null && !_particleSystem.IsAlive(true))
                     break;
@@ -200,6 +204,10 @@ namespace HNR.VFX
                 elapsed += Time.deltaTime;
                 yield return null;
             }
+
+            // Final check before returning to pool
+            if (this == null || gameObject == null)
+                yield break;
 
             // Return to pool via ServiceLocator
             if (ServiceLocator.TryGet<VFXPoolManager>(out var pool))
