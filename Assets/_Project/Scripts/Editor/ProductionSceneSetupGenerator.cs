@@ -2717,9 +2717,10 @@ namespace HNR.Editor
             RectTransform hpContainerRect = hpBarContainer.AddComponent<RectTransform>();
 
             var hpLayout = hpBarContainer.AddComponent<LayoutElement>();
-            hpLayout.minWidth = 200;
+            hpLayout.minWidth = 640;
+            hpLayout.preferredWidth = 640;
             hpLayout.preferredHeight = 24;
-            hpLayout.flexibleWidth = 1; // Expand to fill available width
+            hpLayout.flexibleWidth = -1; // Fixed width - do not expand/shrink
 
             // HP Bar background
             Image hpBg = hpBarContainer.AddComponent<Image>();
@@ -2812,12 +2813,17 @@ namespace HNR.Editor
             GameObject blockContainer = new GameObject("BlockContainer");
             blockContainer.transform.SetParent(hpRow.transform, false);
             var blockLayout = blockContainer.AddComponent<HorizontalLayoutGroup>();
-            blockLayout.spacing = 4f;
+            blockLayout.spacing = 2f; // Reduced spacing for tighter icon/text
             blockLayout.childAlignment = TextAnchor.MiddleCenter;
-            blockLayout.padding = new RectOffset(4, 4, 0, 0);
+            blockLayout.padding = new RectOffset(2, 2, 0, 0); // Reduced padding
+            blockLayout.childForceExpandWidth = false;
+            blockLayout.childForceExpandHeight = false;
+            blockLayout.childControlWidth = false;
+            blockLayout.childControlHeight = false;
 
             var blockLayoutElement = blockContainer.AddComponent<LayoutElement>();
-            blockLayoutElement.preferredWidth = 50;
+            blockLayoutElement.minWidth = 70;
+            blockLayoutElement.preferredWidth = 70;
             blockLayoutElement.preferredHeight = 28;
 
             // Shield icon
@@ -3037,11 +3043,11 @@ namespace HNR.Editor
             // Settings button - use sprite if available
             GameObject settingsBtn = CreateSystemMenuButton(menuBar, "SettingsBtn", "\u2699", new Color(0.1f, 0.08f, 0.15f), iconConfig?.SettingsIcon);
 
-            // Auto button (text only)
-            GameObject autoBtn = CreateSystemMenuButton(menuBar, "AutoBtn", "\u25B6", new Color(0.1f, 0.08f, 0.15f));
+            // Auto-battle button - use sprite if available (fallback to play emoji)
+            GameObject autoBtn = CreateSystemMenuButton(menuBar, "AutoBtn", "\u25B6", new Color(0.1f, 0.08f, 0.15f), iconConfig?.AutoBattleIcon);
 
-            // Speed button (text only) - start with "1x" to match initial state
-            GameObject speedBtn = CreateSystemMenuButton(menuBar, "SpeedBtn", "1x", new Color(0.1f, 0.08f, 0.15f));
+            // Speed button - use sprite if available (fallback to text "1x")
+            GameObject speedBtn = CreateSystemMenuButton(menuBar, "SpeedBtn", "1x", new Color(0.1f, 0.08f, 0.15f), iconConfig?.SpeedIcon);
 
             // Add SystemMenuBar component and wire references
             var sysMenuBar = menuBar.AddComponent<SystemMenuBar>();
@@ -3055,7 +3061,9 @@ namespace HNR.Editor
 
             // Wire auto-battle toggle
             so.FindProperty("_autoBattleToggle").objectReferenceValue = autoBtn.GetComponent<Button>();
-            so.FindProperty("_autoBattleIcon").objectReferenceValue = autoBtn.GetComponent<Image>();
+            // Wire the icon image (child "Label" contains the sprite/text) for proper color state feedback
+            var autoBattleIconImage = autoBtn.transform.Find("Label")?.GetComponent<Image>();
+            so.FindProperty("_autoBattleIcon").objectReferenceValue = autoBattleIconImage != null ? autoBattleIconImage : autoBtn.GetComponent<Image>();
 
             // Wire settings button
             so.FindProperty("_settingsButton").objectReferenceValue = settingsBtn.GetComponent<Button>();

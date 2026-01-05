@@ -33,6 +33,12 @@ namespace HNR.Editor
         [SerializeField, Tooltip("Settings button icon (replaces gear emoji)")]
         private Sprite _settingsIcon;
 
+        [SerializeField, Tooltip("Auto-battle button icon (replaces play emoji)")]
+        private Sprite _autoBattleIcon;
+
+        [SerializeField, Tooltip("Speed toggle button icon (optional, uses text by default)")]
+        private Sprite _speedIcon;
+
         // ============================================
         // Map Legend Icons
         // ============================================
@@ -103,6 +109,12 @@ namespace HNR.Editor
 
         /// <summary>Settings button icon sprite.</summary>
         public Sprite SettingsIcon => _settingsIcon;
+
+        /// <summary>Auto-battle button icon sprite.</summary>
+        public Sprite AutoBattleIcon => _autoBattleIcon;
+
+        /// <summary>Speed toggle button icon sprite (optional).</summary>
+        public Sprite SpeedIcon => _speedIcon;
 
         // ============================================
         // Properties - Map Legend
@@ -215,6 +227,8 @@ namespace HNR.Editor
 
             // System menu
             if (_settingsIcon == null) { Debug.LogWarning("[SceneIconConfig] Settings Icon not assigned"); valid = false; }
+            if (_autoBattleIcon == null) { Debug.LogWarning("[SceneIconConfig] Auto-Battle Icon not assigned"); valid = false; }
+            // Note: _speedIcon is optional, not validated
 
             // Map legend
             if (_combatNodeIcon == null) { Debug.LogWarning("[SceneIconConfig] Combat Node Icon not assigned"); valid = false; }
@@ -237,7 +251,7 @@ namespace HNR.Editor
 
             if (valid)
             {
-                Debug.Log("[SceneIconConfig] All 17 icons validated successfully");
+                Debug.Log("[SceneIconConfig] All 18 required icons validated successfully");
             }
 
             return valid;
@@ -252,6 +266,8 @@ namespace HNR.Editor
             if (_drawPileIcon != null) count++;
             if (_discardPileIcon != null) count++;
             if (_settingsIcon != null) count++;
+            if (_autoBattleIcon != null) count++;
+            if (_speedIcon != null) count++;
             if (_combatNodeIcon != null) count++;
             if (_eliteNodeIcon != null) count++;
             if (_shopNodeIcon != null) count++;
