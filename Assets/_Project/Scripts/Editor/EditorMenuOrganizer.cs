@@ -81,73 +81,98 @@ namespace HNR.Editor
             UpgradedCardsAssetGenerator.GenerateUpgradedCards();
         }
 
-        [MenuItem("HNR/1. Data Assets/Enemies & Encounters/Generate All", priority = 19)]
+        [MenuItem("HNR/1. Data Assets/Cards/Link Card Art (Random)", priority = 19)]
+        public static void LinkCardArtRandom()
+        {
+            CardArtLinker.LinkAllCardArt();
+        }
+
+        [MenuItem("HNR/1. Data Assets/Cards/Link Card Art (Seeded)", priority = 20)]
+        public static void LinkCardArtSeeded()
+        {
+            // Use consistent seed for reproducible art selection
+            CardArtLinker.LinkAllCardArt(42);
+        }
+
+        [MenuItem("HNR/1. Data Assets/Cards/Preview Card Art Linking", priority = 21)]
+        public static void PreviewCardArtLinking()
+        {
+            CardArtLinker.PreviewLinking();
+        }
+
+        [MenuItem("HNR/1. Data Assets/Cards/Clear All Card Art", priority = 22)]
+        public static void ClearAllCardArt()
+        {
+            CardArtLinker.ClearAllCardArt();
+        }
+
+        [MenuItem("HNR/1. Data Assets/Enemies & Encounters/Generate All", priority = 23)]
         public static void GenerateAllEncounterAssets()
         {
             EncounterAssetGenerator.GenerateAllAssets();
         }
 
-        [MenuItem("HNR/1. Data Assets/Enemies & Encounters/Enemies Only", priority = 20)]
+        [MenuItem("HNR/1. Data Assets/Enemies & Encounters/Enemies Only", priority = 24)]
         public static void GenerateEnemiesOnly()
         {
             PlaceholderAssetGenerator.GenerateEnemiesOnly();
         }
 
-        [MenuItem("HNR/1. Data Assets/Enemies & Encounters/Encounters Only", priority = 21)]
+        [MenuItem("HNR/1. Data Assets/Enemies & Encounters/Encounters Only", priority = 25)]
         public static void GenerateEncountersOnly()
         {
             EncounterAssetGenerator.GenerateEncountersMenuItem();
         }
 
-        [MenuItem("HNR/1. Data Assets/Events/Echo Events", priority = 22)]
+        [MenuItem("HNR/1. Data Assets/Events/Echo Events", priority = 26)]
         public static void GenerateEchoEvents()
         {
             EchoEventGenerator.GenerateTestEchoEvents();
         }
 
-        [MenuItem("HNR/1. Data Assets/Events/Zone Config", priority = 23)]
+        [MenuItem("HNR/1. Data Assets/Events/Zone Config", priority = 27)]
         public static void GenerateZoneConfig()
         {
             EchoEventGenerator.GenerateTestZoneConfig();
         }
 
-        [MenuItem("HNR/1. Data Assets/Relics", priority = 24)]
+        [MenuItem("HNR/1. Data Assets/Relics", priority = 28)]
         public static void GenerateRelicAssets()
         {
             RelicAssetGenerator.GenerateRelicAssets();
         }
 
-        [MenuItem("HNR/1. Data Assets/Production/Generate All Zone Data", priority = 25)]
+        [MenuItem("HNR/1. Data Assets/Production/Generate All Zone Data", priority = 29)]
         public static void GenerateAllZoneData()
         {
             ProductionDataGenerator.GenerateAllZoneData();
         }
 
-        [MenuItem("HNR/1. Data Assets/Production/Zone Configs Only", priority = 26)]
+        [MenuItem("HNR/1. Data Assets/Production/Zone Configs Only", priority = 30)]
         public static void GenerateZoneConfigsOnly()
         {
             ProductionDataGenerator.GenerateZoneConfigsOnly();
         }
 
-        [MenuItem("HNR/1. Data Assets/Production/Zone 2 & 3 Encounters", priority = 27)]
+        [MenuItem("HNR/1. Data Assets/Production/Zone 2 & 3 Encounters", priority = 31)]
         public static void GenerateZone2And3Encounters()
         {
             ProductionDataGenerator.GenerateZone2And3Encounters();
         }
 
-        [MenuItem("HNR/1. Data Assets/Production/Shop Config", priority = 28)]
+        [MenuItem("HNR/1. Data Assets/Production/Shop Config", priority = 32)]
         public static void GenerateShopConfig()
         {
             ProductionDataGenerator.GenerateShopConfig();
         }
 
-        [MenuItem("HNR/1. Data Assets/Config/Aspect Icon Config", priority = 29)]
+        [MenuItem("HNR/1. Data Assets/Config/Aspect Icon Config", priority = 33)]
         public static void GenerateAspectIconConfig()
         {
             AspectIconConfigGenerator.GenerateAspectIconConfig();
         }
 
-        [MenuItem("HNR/1. Data Assets/Config/Verify Aspect Icons", priority = 29)]
+        [MenuItem("HNR/1. Data Assets/Config/Verify Aspect Icons", priority = 34)]
         public static void VerifyAspectIconConfig()
         {
             AspectIconConfigGenerator.VerifyAspectIconConfig();
@@ -681,10 +706,10 @@ namespace HNR.Editor
 [EditorMenuOrganizer] HNR Production Menu Structure:
 
 HNR/
-├── 1. Data Assets/         (10-29)  - Content generation
+├── 1. Data Assets/         (10-34)  - Content generation
 │   ├── Generate All Placeholder Assets
 │   ├── Requiems/ (Kira, Mordren, Elara, Thornwick, Art)
-│   ├── Cards/ (Shared, Upgraded)
+│   ├── Cards/ (Shared, Upgraded, Link Card Art, Preview, Clear)
 │   ├── Enemies & Encounters/
 │   ├── Events/ (Echo Events, Zone Config)
 │   ├── Relics

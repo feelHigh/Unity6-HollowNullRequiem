@@ -33,5 +33,5 @@ MonoBehaviour:
     _duration: 1
     _customData: Thorns
   _upgradedVersion: {fileID: 0}
-  _cardArt: {fileID: 0}
+  _cardArt: {fileID: 21300000, guid: e42d27bb3bdfebc4c815ca6ace2ed312, type: 3}
   _borderColor: {r: 0.3, g: 0.5, b: 1, a: 1}

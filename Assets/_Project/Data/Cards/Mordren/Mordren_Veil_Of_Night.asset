@@ -29,5 +29,5 @@ MonoBehaviour:
     _duration: 0
     _customData: EnemyMissChance
   _upgradedVersion: {fileID: 0}
-  _cardArt: {fileID: 0}
+  _cardArt: {fileID: 21300000, guid: fbf709ba30bc3fe4183a89902c049cab, type: 3}
   _borderColor: {r: 0.6, g: 0.2, b: 0.8, a: 1}

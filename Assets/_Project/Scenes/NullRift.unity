@@ -2744,8 +2744,8 @@ MonoBehaviour:
   _upgradeIcon: {fileID: 0}
   _cardSelectionPanel: {fileID: 1163220289}
   _upgradeCardContainer: {fileID: 749683764}
-  _cardSlotPrefab: {fileID: 8064558223423722712, guid: d1cd66e6af9339d4c82b3bcf36d043d1, type: 3}
-  _cardPrefab: {fileID: 0}
+  _cardSlotPrefab: {fileID: 8244694170740947601, guid: d1cd66e6af9339d4c82b3bcf36d043d1, type: 3}
+  _cardPrefab: {fileID: 6926756964055669032, guid: d1cd66e6af9339d4c82b3bcf36d043d1, type: 3}
   _confirmUpgradeButton: {fileID: 1612952102}
   _cancelUpgradeButton: {fileID: 1022686406}
   _healPercentage: 0.3
@@ -7113,7 +7113,7 @@ MonoBehaviour:
   _skipButton: {fileID: 640687449}
   _deckViewerModal: {fileID: 1469594030}
   _outcomeCardContainer: {fileID: 1077525231}
-  _cardPrefab: {fileID: 2758844236605232287, guid: d1cd66e6af9339d4c82b3bcf36d043d1, type: 3}
+  _cardPrefab: {fileID: 6926756964055669032, guid: d1cd66e6af9339d4c82b3bcf36d043d1, type: 3}
 --- !u!1 &1036645214
 GameObject:
   m_ObjectHideFlags: 0
@@ -10288,7 +10288,7 @@ MonoBehaviour:
   _titleText: {fileID: 8215613}
   _instructionText: {fileID: 445527073}
   _cardContainer: {fileID: 1337637496}
-  _cardSlotPrefab: {fileID: 8064558223423722712, guid: d1cd66e6af9339d4c82b3bcf36d043d1, type: 3}
+  _cardSlotPrefab: {fileID: 8244694170740947601, guid: d1cd66e6af9339d4c82b3bcf36d043d1, type: 3}
   _scrollRect: {fileID: 1950842263}
   _confirmButton: {fileID: 705370044}
   _confirmButtonText: {fileID: 576649433}
@@ -14196,7 +14196,7 @@ MonoBehaviour:
   _treasureIcon: {fileID: 0}
   _glowOverlay: {fileID: 0}
   _cardRewardContainer: {fileID: 2051896153}
-  _cardRewardSlotPrefab: {fileID: 8064558223423722712, guid: d1cd66e6af9339d4c82b3bcf36d043d1, type: 3}
+  _cardRewardSlotPrefab: {fileID: 8244694170740947601, guid: d1cd66e6af9339d4c82b3bcf36d043d1, type: 3}
   _skipRewardButton: {fileID: 1732480397}
   _maxCardRewards: 3
   _continueButton: {fileID: 1747247983}

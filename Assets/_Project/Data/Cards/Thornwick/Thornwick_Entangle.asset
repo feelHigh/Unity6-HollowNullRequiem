@@ -33,5 +33,5 @@ MonoBehaviour:
     _duration: 2
     _customData: 
   _upgradedVersion: {fileID: 11400000, guid: dc02ad4d0e2e1be458f432663613031d, type: 2}
-  _cardArt: {fileID: 0}
+  _cardArt: {fileID: 21300000, guid: 878b3fbc5fde3f641a7e26c0e0c37b11, type: 3}
   _borderColor: {r: 0.2, g: 0.7, b: 0.3, a: 1}

@@ -29,5 +29,5 @@ MonoBehaviour:
     _duration: 0
     _customData: GuardBlockBonus
   _upgradedVersion: {fileID: 0}
-  _cardArt: {fileID: 0}
+  _cardArt: {fileID: 21300000, guid: 4cccabc9ae69a0646aadf7c147488915, type: 3}
   _borderColor: {r: 0.6, g: 0.2, b: 0.8, a: 1}

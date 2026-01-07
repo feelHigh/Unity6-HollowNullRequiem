@@ -29,5 +29,5 @@ MonoBehaviour:
     _duration: 0
     _customData: FlameDamageBoost
   _upgradedVersion: {fileID: 0}
-  _cardArt: {fileID: 0}
+  _cardArt: {fileID: 21300000, guid: acf2885a2e617fa44a2351c7014e0968, type: 3}
   _borderColor: {r: 0.6, g: 0.2, b: 0.8, a: 1}

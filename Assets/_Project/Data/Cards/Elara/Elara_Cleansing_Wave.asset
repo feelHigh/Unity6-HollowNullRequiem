@@ -33,5 +33,5 @@ MonoBehaviour:
     _duration: 0
     _customData: RemoveDebuffs
   _upgradedVersion: {fileID: 11400000, guid: 859d087096ef8e94a9ce171dcf664375, type: 2}
-  _cardArt: {fileID: 0}
+  _cardArt: {fileID: 21300000, guid: 4e8c85bb4ac85d9489a41f299f4ce335, type: 3}
   _borderColor: {r: 0.2, g: 0.7, b: 0.3, a: 1}

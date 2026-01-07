@@ -4176,7 +4176,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _cardContainer: {fileID: 787218168}
-  _cardItemPrefab: {fileID: 8064558223423722712, guid: d1cd66e6af9339d4c82b3bcf36d043d1, type: 3}
+  _cardItemPrefab: {fileID: 8244694170740947601, guid: d1cd66e6af9339d4c82b3bcf36d043d1, type: 3}
   _sectionTitle: {fileID: 0}
   _maxCardsToDisplay: 8
   _staggerDelay: 0.05

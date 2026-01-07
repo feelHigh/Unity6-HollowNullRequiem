@@ -627,7 +627,7 @@ MonoBehaviour:
   _drawSource: {fileID: 0}
   _selectedYOffset: 60
   _hoverScale: 1.15
-  _cardPrefab: {fileID: 2758844236605232287, guid: d1cd66e6af9339d4c82b3bcf36d043d1, type: 3}
+  _cardPrefab: {fileID: 6926756964055669032, guid: d1cd66e6af9339d4c82b3bcf36d043d1, type: 3}
 --- !u!1 &76618874
 GameObject:
   m_ObjectHideFlags: 0
@@ -8227,7 +8227,7 @@ MonoBehaviour:
   _rewardsContainer: {fileID: 0}
   _cardRewardTitle: {fileID: 166332954}
   _cardRewardContainer: {fileID: 859918764}
-  _cardRewardSlotPrefab: {fileID: 8064558223423722712, guid: d1cd66e6af9339d4c82b3bcf36d043d1, type: 3}
+  _cardRewardSlotPrefab: {fileID: 8244694170740947601, guid: d1cd66e6af9339d4c82b3bcf36d043d1, type: 3}
   _skipRewardButton: {fileID: 1336428721}
   _maxCardRewards: 3
   _continueButton: {fileID: 825324569}
@@ -9052,7 +9052,7 @@ MonoBehaviour:
   - {fileID: 1818845837}
   - {fileID: 705370042}
   - {fileID: 576649432}
-  _combatCardPrefab: {fileID: 513192894652115435, guid: 16ee86fa6c336494fbdd56a768191646, type: 3}
+  _combatCardPrefab: {fileID: 5587140162194769505, guid: 16ee86fa6c336494fbdd56a768191646, type: 3}
 --- !u!1 &903162897
 GameObject:
   m_ObjectHideFlags: 0
