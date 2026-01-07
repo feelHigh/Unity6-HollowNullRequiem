@@ -29,5 +29,5 @@ MonoBehaviour:
     _duration: 0
     _customData: AutoBlockPerTurn
   _upgradedVersion: {fileID: 0}
-  _cardArt: {fileID: 0}
+  _cardArt: {fileID: 21300000, guid: e4853f7a0eadd3f4c893de38103d0d30, type: 3}
   _borderColor: {r: 0.6, g: 0.2, b: 0.8, a: 1}

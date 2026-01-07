@@ -29,5 +29,5 @@ MonoBehaviour:
     _duration: 0
     _customData: DamageEqualsBlock
   _upgradedVersion: {fileID: 0}
-  _cardArt: {fileID: 0}
+  _cardArt: {fileID: 21300000, guid: e4de0015dbc1dd7468a67f110caed35c, type: 3}
   _borderColor: {r: 0.8, g: 0.2, b: 0.1, a: 1}
