@@ -18,7 +18,7 @@ namespace HNR.Editor.Config
         private const string FrameSpritePath = "Assets/ThirdParty/Layer Lab/GUI Pro-FantasyHero/ResourcesData/Sptites/Components/Frame";
         private const string LabelSpritePath = "Assets/ThirdParty/Layer Lab/GUI Pro-FantasyHero/ResourcesData/Sptites/Components/Label";
 
-        [MenuItem("HNR/Config/Generate Card Sprite Config", priority = 200)]
+        [MenuItem("HNR/5. Utilities/Config/Generate Card Sprite Config", priority = 230)]
         public static void GenerateCardSpriteConfig()
         {
             // Check if asset already exists
@@ -135,7 +135,7 @@ namespace HNR.Editor.Config
             return sprite;
         }
 
-        [MenuItem("HNR/Config/Validate Card Sprite Config", priority = 201)]
+        [MenuItem("HNR/5. Utilities/Config/Validate Card Sprite Config", priority = 231)]
         public static void ValidateCardSpriteConfig()
         {
             var config = AssetDatabase.LoadAssetAtPath<CardSpriteConfigSO>(ConfigPath);

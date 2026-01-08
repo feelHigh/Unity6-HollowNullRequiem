@@ -15,11 +15,12 @@ namespace HNR.Editor
     ///
     /// Menu Structure:
     /// HNR/
-    /// ├── 1. Data Assets/     (priority 10-29) - Content generation
-    /// ├── 2. Prefabs/         (priority 30-49) - UI, Character, and VFX prefabs
-    /// ├── 3. Audio/           (priority 70-79) - Audio configuration
-    /// ├── 4. Scenes/          (priority 100-139) - Scene setup and UI wiring
-    /// └── 5. Utilities/       (priority 200+) - Verification, fixes, finalization
+    /// ├── 1. Data Assets/     (priority 10-32) - Content generation
+    /// ├── 2. Prefabs/         (priority 30-51) - UI, Character, and VFX prefabs
+    /// ├── 3. Audio & VFX/     (priority 70-73) - Audio/VFX configuration
+    /// ├── 4. Scenes/          (priority 100-130) - Scene setup and UI wiring
+    /// └── 5. Utilities/       (priority 200+) - Verification, fixes, config, finalization
+    ///     └── Config/         (priority 215+) - Aspect Icons, Card Sprite Config
     /// </summary>
     public static class EditorMenuOrganizer
     {
@@ -164,18 +165,6 @@ namespace HNR.Editor
         public static void GenerateShopConfig()
         {
             ProductionDataGenerator.GenerateShopConfig();
-        }
-
-        [MenuItem("HNR/1. Data Assets/Config/Aspect Icon Config", priority = 33)]
-        public static void GenerateAspectIconConfig()
-        {
-            AspectIconConfigGenerator.GenerateAspectIconConfig();
-        }
-
-        [MenuItem("HNR/1. Data Assets/Config/Verify Aspect Icons", priority = 34)]
-        public static void VerifyAspectIconConfig()
-        {
-            AspectIconConfigGenerator.VerifyAspectIconConfig();
         }
 
         // ============================================
@@ -706,41 +695,44 @@ namespace HNR.Editor
 [EditorMenuOrganizer] HNR Production Menu Structure:
 
 HNR/
-├── 1. Data Assets/         (10-34)  - Content generation
+├── 1. Data Assets/         (10-32)  - Content generation
 │   ├── Generate All Placeholder Assets
 │   ├── Requiems/ (Kira, Mordren, Elara, Thornwick, Art)
 │   ├── Cards/ (Shared, Upgraded, Link Card Art, Preview, Clear)
 │   ├── Enemies & Encounters/
 │   ├── Events/ (Echo Events, Zone Config)
 │   ├── Relics
-│   └── Production/ (Zone Data, Zone Configs, Zone 2&3 Encounters)
+│   └── Production/ (Zone Data, Zone Configs, Zone 2&3, Shop Config)
 │
-├── 2. Prefabs/             (30-49)  - UI, Character, and VFX prefabs
-│   ├── UI/ (Card, DamageNumber, EnemySlotUI, Meta-Game, Combat UI)
+├── 2. Prefabs/             (30-51)  - UI, Character, VFX prefabs
+│   ├── UI/ (CardBase, Card, CombatCard, DamageNumber, EnemySlotUI, Meta-Game, Combat UI)
 │   ├── Characters/ (Visual Prefabs, Setup Requiem/Enemy Visuals, Link to Data)
 │   ├── VFX/ (Generate VFX Prefabs, VFXPoolManager Config)
+│   ├── Icons/ (Scene Icons)
 │   ├── Create All Prefabs
 │   └── Link Visual Prefabs to Data
 │
-├── 3. Audio/               (70-79)  - Audio configuration
-│   └── Generate Audio Config
+├── 3. Audio & VFX/         (70-73)  - Audio/VFX configuration
+│   ├── Generate Audio Config
+│   ├── Generate VFX Config
+│   ├── Generate All Configs
+│   └── Wire CFXR Prefabs to VFX Config
 │
-├── 4. Scenes/              (100-139) - Scene setup and UI wiring
+├── 4. Scenes/              (100-130) - Scene setup and UI wiring
 │   ├── Setup All Scenes
 │   ├── 1-8. Setup Individual Scenes
 │   ├── Wire UI/ (All, Combat, NullRift)
 │   └── Configure Build Settings
 │
-└── 5. Utilities/           (200+)   - Verification, fixes, finalization
+└── 5. Utilities/           (200+)   - Verification, fixes, config, finalization
     ├── Complete Production Finalization
     ├── Run Full Setup
-    ├── Verify Relic Assets
-    ├── Verify Enemy Visuals
-    ├── Fix Enemy Visual Prefabs
-    ├── Fix Combat Scene Background
-    ├── Fix EnemyInstance Prefab Wiring
+    ├── Verify Relic/Enemy Assets
+    ├── Fix/ (Enemy Visual Prefabs, Combat Scene, EnemyInstance)
     ├── Show Menu Organization
     ├── Wire Card Prefab References
+    ├── Reset Battle Mission Progress
+    ├── Config/ (Aspect Icons, Card Sprite Config)
     └── Missing Scripts/ (Find, Remove)
 
 Build/ (separate menu)
@@ -808,6 +800,27 @@ Build/ (separate menu)
                 "If not, they'll apply next time you enter Play mode.",
                 "OK");
         }
+
+        // ============================================
+        // 5. Utilities/Config (priority 215-219)
+        // Note: CardSpriteConfig items are in CardSpriteConfigGenerator.cs (230-231)
+        // ============================================
+
+        [MenuItem("HNR/5. Utilities/Config/Aspect Icon Config", priority = 215)]
+        public static void GenerateAspectIconConfig()
+        {
+            AspectIconConfigGenerator.GenerateAspectIconConfig();
+        }
+
+        [MenuItem("HNR/5. Utilities/Config/Verify Aspect Icons", priority = 216)]
+        public static void VerifyAspectIconConfig()
+        {
+            AspectIconConfigGenerator.VerifyAspectIconConfig();
+        }
+
+        // ============================================
+        // 5. Utilities/Missing Scripts (priority 220+)
+        // ============================================
 
         [MenuItem("HNR/5. Utilities/Missing Scripts/Find in HeroEditor", priority = 220)]
         public static void FindMissingScriptsInHeroEditor()
