@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 307f1004c7e045542a8f5be5fd23bc6c, type: 3}
+  m_Name: CardSpriteConfig
+  m_EditorClassIdentifier: 
+  _strikeFrames:
+    Background: {fileID: 21300000, guid: ef443883340c54de8a884f79062e37b4, type: 3}
+    Border: {fileID: 21300000, guid: be84d21d4dbae4b53bd30031288b14e0, type: 3}
+    BorderGem: {fileID: 21300000, guid: ca125fe485c024c7da757931864f831c, type: 3}
+    TintColor: {r: 0.8, g: 0.2, b: 0.2, a: 1}
+  _guardFrames:
+    Background: {fileID: 21300000, guid: 6ef919a88c7534eadb57df129a2ed8d8, type: 3}
+    Border: {fileID: 21300000, guid: 6102077e488234504a39c3ca02e641f7, type: 3}
+    BorderGem: {fileID: 21300000, guid: db1cd23af3bdb4d0093b94d58fa3a87b, type: 3}
+    TintColor: {r: 0.2, g: 0.4, b: 0.8, a: 1}
+  _skillFrames:
+    Background: {fileID: 21300000, guid: 83b2576d0ef1141c09d8b1858a4eddef, type: 3}
+    Border: {fileID: 21300000, guid: fe3a8301450654208af3addf3b85c41c, type: 3}
+    BorderGem: {fileID: 21300000, guid: 2969dd168804649af8819c660085c05c, type: 3}
+    TintColor: {r: 0.2, g: 0.7, b: 0.3, a: 1}
+  _powerFrames:
+    Background: {fileID: 21300000, guid: 8dea355958a3f4bfa88e7610253ee9e9, type: 3}
+    Border: {fileID: 21300000, guid: fbaa656e1295544cf938731394b5578f, type: 3}
+    BorderGem: {fileID: 21300000, guid: a825dfde0315646da943b3602f74a538, type: 3}
+    TintColor: {r: 0.6, g: 0.2, b: 0.7, a: 1}
+  _specialFrames:
+    Background: {fileID: 21300000, guid: 13681252af4ef48e790ebc5df2f7dc7b, type: 3}
+    Border: {fileID: 21300000, guid: fd544271bef754a36aa1ad7a34240c7e, type: 3}
+    BorderGem: {fileID: 21300000, guid: 9e8b89634b15c49f09f70ce9ab2c1411, type: 3}
+    TintColor: {r: 0.8, g: 0.8, b: 0.2, a: 1}
+  _costFrameBg: {fileID: 21300000, guid: 3b957012ea4ee4767857de13e106d431, type: 3}
+  _costFrameBorder: {fileID: 21300000, guid: 1c1fffa5d739c468cbb4a0510a78ec42, type: 3}
+  _costFrameGradient: {fileID: 21300000, guid: 4de9c7c0e34cb498aa3526c7c8cb75a1, type: 3}
+  _costFrameInnerBorder: {fileID: 21300000, guid: c05582ea9e3d34e0bbd0d35c0c7ef3d8, type: 3}

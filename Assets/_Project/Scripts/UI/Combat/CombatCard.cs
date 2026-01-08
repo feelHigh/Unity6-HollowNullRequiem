@@ -14,6 +14,7 @@ using HNR.Core.Events;
 using HNR.Core.Interfaces;
 using HNR.Cards;
 using HNR.Combat;
+using HNR.UI.Config;
 
 namespace HNR.UI.Combat
 {
@@ -54,11 +55,42 @@ namespace HNR.UI.Combat
         [SerializeField, Tooltip("Card illustration")]
         private Image _cardArt;
 
-        [SerializeField, Tooltip("Card frame/border")]
+        [SerializeField, Tooltip("Card frame/border (legacy - use _cardBorder for new prefabs)")]
         private Image _cardFrame;
+
+        [SerializeField, Tooltip("Card border layer (Border or BorderGem based on rarity)")]
+        private Image _cardBorder;
+
+        [SerializeField, Tooltip("Card background/mask layer")]
+        private Image _cardBackground;
 
         [SerializeField, Tooltip("Rarity glow effect")]
         private Image _rarityGlow;
+
+        // ============================================
+        // Cost Frame Elements (Layered Sprites)
+        // ============================================
+
+        [Header("Cost Frame Elements")]
+        [SerializeField, Tooltip("Cost frame background layer")]
+        private Image _costBg;
+
+        [SerializeField, Tooltip("Cost frame border layer")]
+        private Image _costBorder;
+
+        [SerializeField, Tooltip("Cost frame gradient layer")]
+        private Image _costGradient;
+
+        [SerializeField, Tooltip("Cost frame inner border layer")]
+        private Image _costInnerBorder;
+
+        // ============================================
+        // Sprite Configuration
+        // ============================================
+
+        [Header("Sprite Configuration")]
+        [SerializeField, Tooltip("Card sprite configuration asset")]
+        private CardSpriteConfigSO _spriteConfig;
 
         // ============================================
         // Owner Indicator
@@ -268,11 +300,11 @@ namespace HNR.UI.Combat
                 _typeIcon.sprite = GetTypeSprite(cardData.CardType);
             }
 
-            // Frame color based on type
-            if (_cardFrame != null)
-            {
-                _cardFrame.color = GetFrameColor(cardData.CardType);
-            }
+            // Apply frame sprites from config (or fallback to legacy tinting)
+            ApplyFrameSprites(cardData);
+
+            // Apply cost frame sprites
+            ApplyCostFrameSprites(cardData);
 
             // Rarity glow
             if (_rarityGlow != null)
@@ -307,6 +339,76 @@ namespace HNR.UI.Combat
             if (_selectionHighlight != null)
             {
                 _selectionHighlight.SetActive(false);
+            }
+        }
+
+        /// <summary>
+        /// Apply frame sprites from config or fallback to legacy color tinting.
+        /// </summary>
+        private void ApplyFrameSprites(CardDataSO cardData)
+        {
+            if (_spriteConfig != null)
+            {
+                // New sprite-based approach: pre-colored sprites, no tinting needed
+                if (_cardBackground != null)
+                {
+                    _cardBackground.sprite = _spriteConfig.GetBackgroundSprite(cardData.CardType);
+                    _cardBackground.color = Color.white;
+                }
+
+                if (_cardBorder != null)
+                {
+                    _cardBorder.sprite = _spriteConfig.GetBorderSprite(cardData.CardType, cardData.Rarity);
+                    _cardBorder.color = Color.white;
+                }
+
+                // Also update legacy frame if present (for backwards compatibility)
+                if (_cardFrame != null)
+                {
+                    _cardFrame.color = Color.white;
+                }
+            }
+            else
+            {
+                // Legacy fallback: tint white sprite with type color
+                if (_cardFrame != null)
+                {
+                    _cardFrame.color = GetFrameColor(cardData.CardType);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Apply cost frame sprites with type-based tinting.
+        /// </summary>
+        private void ApplyCostFrameSprites(CardDataSO cardData)
+        {
+            if (_spriteConfig == null) return;
+
+            Color costTint = _spriteConfig.GetCostFrameTint(cardData.CardType);
+
+            if (_costBg != null)
+            {
+                _costBg.sprite = _spriteConfig.CostFrameBg;
+                _costBg.color = costTint;
+            }
+
+            if (_costBorder != null)
+            {
+                _costBorder.sprite = _spriteConfig.CostFrameBorder;
+                _costBorder.color = costTint;
+            }
+
+            if (_costGradient != null)
+            {
+                _costGradient.sprite = _spriteConfig.CostFrameGradient;
+                _costGradient.color = costTint;
+            }
+
+            if (_costInnerBorder != null)
+            {
+                _costInnerBorder.sprite = _spriteConfig.CostFrameInnerBorder;
+                _costInnerBorder.color = costTint;
             }
         }
 
