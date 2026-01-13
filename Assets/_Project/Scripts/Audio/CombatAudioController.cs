@@ -8,6 +8,7 @@ using HNR.Core;
 using HNR.Core.Interfaces;
 using HNR.Core.Events;
 using HNR.Combat;
+using HNR.Map;
 
 namespace HNR.Audio
 {
@@ -52,6 +53,8 @@ namespace HNR.Audio
         [Header("Music")]
         [SerializeField] private string _combatMusic = "combat_theme";
         [SerializeField] private string _bossMusic = "boss_theme";
+        [SerializeField] private string _zone1EliteMusic = "zone1_elite_theme";
+        [SerializeField] private string _zone2EliteMusic = "zone2_elite_theme";
         [SerializeField] private float _musicFadeTime = 2f;
 
         // ============================================
@@ -178,10 +181,38 @@ namespace HNR.Audio
                 }
             }
 
-            string music = _isBossFight ? _bossMusic : _combatMusic;
+            // Get node type, zone, and final node flag from CombatBootstrap
+            var nodeType = CombatBootstrap.PendingNodeType;
+            int zone = CombatBootstrap.PendingZone;
+            bool isFinalNode = CombatBootstrap.IsFinalNode;
+
+            // Determine music based on zone and whether this is the final node
+            string music = DetermineCombatMusic(zone, isFinalNode);
             _audioManager?.PlayMusic(music, _musicFadeTime);
 
-            Debug.Log($"[CombatAudioController] Combat started - Boss: {_isBossFight}");
+            Debug.Log($"[CombatAudioController] Combat started - Boss: {_isBossFight}, NodeType: {nodeType}, Zone: {zone}, FinalNode: {isFinalNode}, Music: {music}");
+        }
+
+        /// <summary>
+        /// Determines which music track to play based on zone and whether this is the final node.
+        /// Zone finale themes only play on the final node of each zone.
+        /// </summary>
+        private string DetermineCombatMusic(int zone, bool isFinalNode)
+        {
+            // Zone finale themes only play on the final node of each zone
+            if (isFinalNode)
+            {
+                return zone switch
+                {
+                    1 => _zone1EliteMusic,
+                    2 => _zone2EliteMusic,
+                    // Zone 3+ uses boss theme
+                    _ => _bossMusic
+                };
+            }
+
+            // All other combat encounters use default combat music
+            return _combatMusic;
         }
 
         private void OnCombatEnded(CombatEndedEvent evt)

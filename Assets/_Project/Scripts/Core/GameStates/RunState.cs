@@ -9,6 +9,7 @@ using DG.Tweening;
 using HNR.Core.Interfaces;
 using HNR.Map;
 using HNR.UI;
+using HNR.Progression;
 
 namespace HNR.Core.GameStates
 {
@@ -108,6 +109,26 @@ namespace HNR.Core.GameStates
 
             // Show MapScreen
             ShowMapScreen();
+
+            // Play zone-appropriate music
+            PlayZoneMusic(runManager?.CurrentZone ?? 1);
+        }
+
+        private void PlayZoneMusic(int zone)
+        {
+            if (ServiceLocator.TryGet<IAudioManager>(out var audioManager))
+            {
+                string musicId = zone switch
+                {
+                    1 => "music_zone1",
+                    2 => "music_zone2",
+                    3 => "music_zone3",
+                    _ => "music_zone1"
+                };
+
+                audioManager.PlayMusic(musicId);
+                Debug.Log($"[RunState] Playing zone {zone} music: {musicId}");
+            }
         }
 
         private void ShowMapScreen()

@@ -15,20 +15,26 @@ namespace HNR.Audio
     /// </summary>
     public enum AudioCategory
     {
-        /// <summary>Background music tracks (menu_theme, combat_theme, boss_theme).</summary>
+        /// <summary>Background music tracks (menu, bastion, combat, boss, zones).</summary>
         Music,
 
-        /// <summary>UI interaction sounds (click, hover, confirm, cancel, error).</summary>
-        UI,
-
-        /// <summary>Combat feedback sounds (card_draw, card_play, damage_hit, block, heal).</summary>
+        /// <summary>Combat feedback sounds (damage_hit, critical_hit, heal, enemy_attack, enemy_defeated).</summary>
         Combat,
 
-        /// <summary>Ambient/atmosphere sounds (corruption_pulse, null_state_trigger).</summary>
-        Ambient,
+        /// <summary>Status effect sounds (burn, poison, weakness, vulnerability, strength, regen, tick).</summary>
+        Status,
 
-        /// <summary>Character voice lines.</summary>
-        Voice
+        /// <summary>Requiem Art sounds (art_activate, art_kira, art_mordren, art_elara, art_thornwick).</summary>
+        Arts,
+
+        /// <summary>Element/Aspect attack sounds (flame, shadow, light, nature).</summary>
+        Elements,
+
+        /// <summary>Shop and reward sounds (purchase, relic_acquire, card_acquire, void_shards_gain).</summary>
+        Shop,
+
+        /// <summary>Stingers and alerts (victory, defeat, low_health).</summary>
+        Stingers
     }
 
     /// <summary>
@@ -54,6 +60,24 @@ namespace HNR.Audio
 
         [Tooltip("Whether this clip should loop")]
         public bool Loop;
+
+        /// <summary>
+        /// Create an AudioEntry with default settings.
+        /// </summary>
+        public AudioEntry() { }
+
+        /// <summary>
+        /// Create an AudioEntry with specified values.
+        /// </summary>
+        public AudioEntry(string id, AudioClip clip, AudioCategory category, float volume = 1f, bool loop = false)
+        {
+            Id = id;
+            Clip = clip;
+            Category = category;
+            Volume = volume;
+            Pitch = 1f;
+            Loop = loop;
+        }
     }
 
     /// <summary>
@@ -61,11 +85,13 @@ namespace HNR.Audio
     /// </summary>
     /// <remarks>
     /// Audio categories:
-    /// - Music: menu_theme, combat_theme, boss_theme
-    /// - UI: click, hover, confirm, cancel, error
-    /// - Combat: card_draw, card_play, damage_hit, block, heal
-    /// - Ambient: corruption_pulse, null_state_trigger
-    /// - Voice: Character voice lines
+    /// - Music: menu, bastion, combat, boss, zones, shop, sanctuary
+    /// - Combat: damage_hit, critical_hit, heal, enemy_attack, enemy_defeated
+    /// - Status: burn, poison, weakness, vulnerability, strength, regen, tick
+    /// - Arts: art_activate, art_kira, art_mordren, art_elara, art_thornwick
+    /// - Elements: flame_attack, shadow_attack, light_attack, nature_attack
+    /// - Shop: purchase, relic_acquire, card_acquire, void_shards_gain
+    /// - Stingers: victory, defeat, low_health
     /// </remarks>
     [CreateAssetMenu(fileName = "AudioConfig", menuName = "HNR/Config/Audio Config")]
     public class AudioConfigSO : ScriptableObject
@@ -74,25 +100,33 @@ namespace HNR.Audio
         // Serialized Fields
         // ============================================
 
-        [Header("Music")]
+        [Header("Music (9 tracks)")]
         [SerializeField, Tooltip("Background music tracks")]
         private List<AudioEntry> _musicEntries = new();
 
-        [Header("UI Sounds")]
-        [SerializeField, Tooltip("UI interaction sounds")]
-        private List<AudioEntry> _uiEntries = new();
-
-        [Header("Combat Sounds")]
+        [Header("Combat SFX (5 sounds)")]
         [SerializeField, Tooltip("Combat feedback sounds")]
         private List<AudioEntry> _combatEntries = new();
 
-        [Header("Ambient Sounds")]
-        [SerializeField, Tooltip("Ambient/atmosphere sounds")]
-        private List<AudioEntry> _ambientEntries = new();
+        [Header("Status Effect SFX (7 sounds)")]
+        [SerializeField, Tooltip("Status effect application sounds")]
+        private List<AudioEntry> _statusEntries = new();
 
-        [Header("Voice Lines")]
-        [SerializeField, Tooltip("Character voice lines")]
-        private List<AudioEntry> _voiceEntries = new();
+        [Header("Requiem Arts SFX (5 sounds)")]
+        [SerializeField, Tooltip("Ultimate ability sounds")]
+        private List<AudioEntry> _artsEntries = new();
+
+        [Header("Element Attack SFX (4 sounds)")]
+        [SerializeField, Tooltip("Elemental aspect attack sounds")]
+        private List<AudioEntry> _elementsEntries = new();
+
+        [Header("Shop & Reward SFX (4 sounds)")]
+        [SerializeField, Tooltip("Shop and reward sounds")]
+        private List<AudioEntry> _shopEntries = new();
+
+        [Header("Stingers & Alerts (3 sounds)")]
+        [SerializeField, Tooltip("Victory, defeat, and alert stingers")]
+        private List<AudioEntry> _stingersEntries = new();
 
         // ============================================
         // Private Fields
@@ -107,17 +141,23 @@ namespace HNR.Audio
         /// <summary>All music entries.</summary>
         public IReadOnlyList<AudioEntry> MusicEntries => _musicEntries;
 
-        /// <summary>All UI sound entries.</summary>
-        public IReadOnlyList<AudioEntry> UIEntries => _uiEntries;
-
         /// <summary>All combat sound entries.</summary>
         public IReadOnlyList<AudioEntry> CombatEntries => _combatEntries;
 
-        /// <summary>All ambient sound entries.</summary>
-        public IReadOnlyList<AudioEntry> AmbientEntries => _ambientEntries;
+        /// <summary>All status effect sound entries.</summary>
+        public IReadOnlyList<AudioEntry> StatusEntries => _statusEntries;
 
-        /// <summary>All voice line entries.</summary>
-        public IReadOnlyList<AudioEntry> VoiceEntries => _voiceEntries;
+        /// <summary>All Requiem Art sound entries.</summary>
+        public IReadOnlyList<AudioEntry> ArtsEntries => _artsEntries;
+
+        /// <summary>All element attack sound entries.</summary>
+        public IReadOnlyList<AudioEntry> ElementsEntries => _elementsEntries;
+
+        /// <summary>All shop and reward sound entries.</summary>
+        public IReadOnlyList<AudioEntry> ShopEntries => _shopEntries;
+
+        /// <summary>All stinger and alert sound entries.</summary>
+        public IReadOnlyList<AudioEntry> StingersEntries => _stingersEntries;
 
         // ============================================
         // Lookup Methods
@@ -154,10 +194,12 @@ namespace HNR.Audio
             return category switch
             {
                 AudioCategory.Music => _musicEntries,
-                AudioCategory.UI => _uiEntries,
                 AudioCategory.Combat => _combatEntries,
-                AudioCategory.Ambient => _ambientEntries,
-                AudioCategory.Voice => _voiceEntries,
+                AudioCategory.Status => _statusEntries,
+                AudioCategory.Arts => _artsEntries,
+                AudioCategory.Elements => _elementsEntries,
+                AudioCategory.Shop => _shopEntries,
+                AudioCategory.Stingers => _stingersEntries,
                 _ => Enumerable.Empty<AudioEntry>()
             };
         }
@@ -178,10 +220,61 @@ namespace HNR.Audio
         /// </summary>
         public int TotalEntryCount =>
             _musicEntries.Count +
-            _uiEntries.Count +
             _combatEntries.Count +
-            _ambientEntries.Count +
-            _voiceEntries.Count;
+            _statusEntries.Count +
+            _artsEntries.Count +
+            _elementsEntries.Count +
+            _shopEntries.Count +
+            _stingersEntries.Count;
+
+        // ============================================
+        // Editor Support Methods
+        // ============================================
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// Clear all entries (editor only).
+        /// </summary>
+        public void ClearAllEntries()
+        {
+            _musicEntries.Clear();
+            _combatEntries.Clear();
+            _statusEntries.Clear();
+            _artsEntries.Clear();
+            _elementsEntries.Clear();
+            _shopEntries.Clear();
+            _stingersEntries.Clear();
+            _lookup = null;
+        }
+
+        /// <summary>
+        /// Add an entry to the appropriate category list (editor only).
+        /// </summary>
+        public void AddEntry(AudioEntry entry)
+        {
+            var list = GetEditableList(entry.Category);
+            list?.Add(entry);
+            _lookup = null;
+        }
+
+        /// <summary>
+        /// Get the editable list for a category (editor only).
+        /// </summary>
+        public List<AudioEntry> GetEditableList(AudioCategory category)
+        {
+            return category switch
+            {
+                AudioCategory.Music => _musicEntries,
+                AudioCategory.Combat => _combatEntries,
+                AudioCategory.Status => _statusEntries,
+                AudioCategory.Arts => _artsEntries,
+                AudioCategory.Elements => _elementsEntries,
+                AudioCategory.Shop => _shopEntries,
+                AudioCategory.Stingers => _stingersEntries,
+                _ => null
+            };
+        }
+#endif
 
         // ============================================
         // Private Methods
@@ -194,10 +287,12 @@ namespace HNR.Audio
             _lookup = new Dictionary<string, AudioEntry>();
 
             AddToLookup(_musicEntries);
-            AddToLookup(_uiEntries);
             AddToLookup(_combatEntries);
-            AddToLookup(_ambientEntries);
-            AddToLookup(_voiceEntries);
+            AddToLookup(_statusEntries);
+            AddToLookup(_artsEntries);
+            AddToLookup(_elementsEntries);
+            AddToLookup(_shopEntries);
+            AddToLookup(_stingersEntries);
         }
 
         private void AddToLookup(List<AudioEntry> entries)
@@ -221,7 +316,7 @@ namespace HNR.Audio
         }
 
         // ============================================
-        // Editor Support
+        // Unity Callbacks
         // ============================================
 
         private void OnValidate()

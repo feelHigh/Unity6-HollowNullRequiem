@@ -14,6 +14,7 @@ using HNR.Core.Events;
 using HNR.Characters;
 using HNR.Cards;
 using HNR.Map;
+using HNR.Progression;
 
 namespace HNR.UI
 {
@@ -145,6 +146,12 @@ namespace HNR.UI
             _choiceMade = false;
 
             PlayShowAnimation();
+
+            // Play sanctuary theme music
+            if (ServiceLocator.TryGet<IAudioManager>(out var audioManager))
+            {
+                audioManager.PlayMusic("sanctuary_theme");
+            }
 
             Debug.Log("[SanctuaryScreen] Sanctuary screen shown");
         }

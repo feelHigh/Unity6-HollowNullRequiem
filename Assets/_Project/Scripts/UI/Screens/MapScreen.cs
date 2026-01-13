@@ -14,6 +14,7 @@ using HNR.Combat;
 using HNR.UI;
 using HNR.UI.Screens;
 using HNR.UI.Components;
+using HNR.Progression;
 
 namespace HNR.Map
 {
@@ -97,6 +98,28 @@ namespace HNR.Map
             if (_mapManager?.CurrentMap != null)
             {
                 RenderMap(_mapManager.CurrentMap);
+            }
+
+            // Restore zone music (when returning from shop/sanctuary/etc.)
+            PlayZoneMusic();
+        }
+
+        private void PlayZoneMusic()
+        {
+            int zone = _mapManager?.CurrentZone ?? 1;
+
+            if (ServiceLocator.TryGet<IAudioManager>(out var audioManager))
+            {
+                string musicId = zone switch
+                {
+                    1 => "music_zone1",
+                    2 => "music_zone2",
+                    3 => "music_zone3",
+                    _ => "music_zone1"
+                };
+
+                audioManager.PlayMusic(musicId);
+                Debug.Log($"[MapScreen] Playing zone {zone} music: {musicId}");
             }
         }
 
@@ -372,7 +395,9 @@ namespace HNR.Map
 
             // Set pending combat data for CombatBootstrap
             int zone = _mapManager?.CurrentZone ?? 1;
-            CombatBootstrap.SetPendingCombat(node.Encounter, zone);
+            bool isPreBoss = IsPreBossColumn(node);
+            bool isFinalNode = IsFinalColumn(node);
+            CombatBootstrap.SetPendingCombat(node.Encounter, zone, node.Type, isPreBoss, isFinalNode);
 
             // Transition to combat state
             if (ServiceLocator.TryGet<IGameManager>(out var gameManager))
@@ -559,6 +584,62 @@ namespace HNR.Map
                 3 => "The Null Core",
                 _ => "Unknown Zone"
             };
+        }
+
+        /// <summary>
+        /// Checks if the node is in the pre-boss column (the column right before the boss).
+        /// Used to trigger elite theme music for final encounters before boss.
+        /// </summary>
+        private bool IsPreBossColumn(MapNodeData node)
+        {
+            if (_mapManager?.CurrentMap == null || node == null)
+                return false;
+
+            // Find the maximum column (boss column)
+            int maxColumn = 0;
+            foreach (var mapNode in _mapManager.CurrentMap.Nodes)
+            {
+                if (mapNode.Column > maxColumn)
+                    maxColumn = mapNode.Column;
+            }
+
+            // Pre-boss column is maxColumn - 1
+            bool isPreBoss = node.Column == maxColumn - 1;
+
+            if (isPreBoss)
+            {
+                Debug.Log($"[MapScreen] Node {node.NodeId} is in pre-boss column {node.Column} (boss at {maxColumn})");
+            }
+
+            return isPreBoss;
+        }
+
+        /// <summary>
+        /// Checks if the node is in the final column of the zone (the last column).
+        /// Used to trigger zone finale themes (elite/boss themes).
+        /// </summary>
+        private bool IsFinalColumn(MapNodeData node)
+        {
+            if (_mapManager?.CurrentMap == null || node == null)
+                return false;
+
+            // Find the maximum column (final column)
+            int maxColumn = 0;
+            foreach (var mapNode in _mapManager.CurrentMap.Nodes)
+            {
+                if (mapNode.Column > maxColumn)
+                    maxColumn = mapNode.Column;
+            }
+
+            // Final column is maxColumn
+            bool isFinal = node.Column == maxColumn;
+
+            if (isFinal)
+            {
+                Debug.Log($"[MapScreen] Node {node.NodeId} is in final column {node.Column}");
+            }
+
+            return isFinal;
         }
     }
 }

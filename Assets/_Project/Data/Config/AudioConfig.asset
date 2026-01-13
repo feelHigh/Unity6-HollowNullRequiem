@@ -13,193 +13,243 @@ MonoBehaviour:
   m_Name: AudioConfig
   m_EditorClassIdentifier: 
   _musicEntries:
-  - Id: menu_theme
-    Clip: {fileID: 0}
+  - Id: music_main_menu
+    Clip: {fileID: 8300000, guid: 91f024417b889b746ad7de48d2a3b53e, type: 3}
     Category: 0
-    Volume: 1
+    Volume: 0.8
     Pitch: 1
     Loop: 1
-  - Id: bastion_theme
-    Clip: {fileID: 0}
+  - Id: music_bastion
+    Clip: {fileID: 8300000, guid: c48f1c583f31d474088c134de1ff6493, type: 3}
     Category: 0
-    Volume: 1
+    Volume: 0.8
+    Pitch: 1
+    Loop: 1
+  - Id: music_zone1
+    Clip: {fileID: 8300000, guid: 7af0da8b941833c4aabf575140398202, type: 3}
+    Category: 0
+    Volume: 0.8
+    Pitch: 1
+    Loop: 1
+  - Id: music_zone2
+    Clip: {fileID: 8300000, guid: d04643ab0065ef3418f7eb8653d4e3a8, type: 3}
+    Category: 0
+    Volume: 0.8
+    Pitch: 1
+    Loop: 1
+  - Id: music_zone3
+    Clip: {fileID: 8300000, guid: 0c9307fc9161fc24fa9976a32d1ec43c, type: 3}
+    Category: 0
+    Volume: 0.8
     Pitch: 1
     Loop: 1
   - Id: combat_theme
-    Clip: {fileID: 0}
+    Clip: {fileID: 8300000, guid: dbe74c68aaf82b745b2fa7950f642d59, type: 3}
     Category: 0
-    Volume: 1
+    Volume: 0.8
     Pitch: 1
     Loop: 1
   - Id: boss_theme
-    Clip: {fileID: 0}
+    Clip: {fileID: 8300000, guid: cab5d38ad51187c4888cb752495e4258, type: 3}
     Category: 0
-    Volume: 1
+    Volume: 0.8
     Pitch: 1
     Loop: 1
-  - Id: victory_theme
-    Clip: {fileID: 0}
+  - Id: zone1_elite_theme
+    Clip: {fileID: 8300000, guid: 2761674147e4ae542a468c64cfc5082d, type: 3}
     Category: 0
-    Volume: 1
+    Volume: 0.8
     Pitch: 1
-    Loop: 0
-  - Id: defeat_theme
-    Clip: {fileID: 0}
+    Loop: 1
+  - Id: zone2_elite_theme
+    Clip: {fileID: 8300000, guid: 94b914c286abb074b96c0d5a2b2cc3cc, type: 3}
     Category: 0
-    Volume: 1
+    Volume: 0.8
     Pitch: 1
-    Loop: 0
-  _uiEntries:
-  - Id: ui_click
-    Clip: {fileID: 0}
-    Category: 1
-    Volume: 1
+    Loop: 1
+  - Id: shop_theme
+    Clip: {fileID: 8300000, guid: 74de0af64caa72e4d909c06ddadbd52d, type: 3}
+    Category: 0
+    Volume: 0.8
     Pitch: 1
-    Loop: 0
-  - Id: ui_hover
-    Clip: {fileID: 0}
-    Category: 1
-    Volume: 1
+    Loop: 1
+  - Id: sanctuary_theme
+    Clip: {fileID: 8300000, guid: 780e6c0cae7fa0d4a89dba65d6eecaed, type: 3}
+    Category: 0
+    Volume: 0.8
     Pitch: 1
-    Loop: 0
-  - Id: ui_confirm
-    Clip: {fileID: 0}
-    Category: 1
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-  - Id: ui_cancel
-    Clip: {fileID: 0}
-    Category: 1
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-  - Id: ui_error
-    Clip: {fileID: 0}
-    Category: 1
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-  - Id: ui_navigate
-    Clip: {fileID: 0}
-    Category: 1
-    Volume: 1
-    Pitch: 1
-    Loop: 0
+    Loop: 1
   _combatEntries:
-  - Id: card_draw
-    Clip: {fileID: 0}
-    Category: 2
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-  - Id: card_play
-    Clip: {fileID: 0}
-    Category: 2
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-  - Id: card_discard
-    Clip: {fileID: 0}
-    Category: 2
-    Volume: 1
-    Pitch: 1
-    Loop: 0
   - Id: damage_hit
-    Clip: {fileID: 0}
-    Category: 2
+    Clip: {fileID: 8300000, guid: a8c309085ac349644940abe97a235c4a, type: 3}
+    Category: 1
     Volume: 1
     Pitch: 1
     Loop: 0
-  - Id: damage_critical
-    Clip: {fileID: 0}
-    Category: 2
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-  - Id: block_gain
-    Clip: {fileID: 0}
-    Category: 2
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-  - Id: block_break
-    Clip: {fileID: 0}
-    Category: 2
+  - Id: critical_hit
+    Clip: {fileID: 8300000, guid: 901ba3996c657ae469f04f76f2fc0f9b, type: 3}
+    Category: 1
     Volume: 1
     Pitch: 1
     Loop: 0
   - Id: heal
-    Clip: {fileID: 0}
-    Category: 2
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-  - Id: buff_apply
-    Clip: {fileID: 0}
-    Category: 2
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-  - Id: debuff_apply
-    Clip: {fileID: 0}
-    Category: 2
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-  - Id: turn_start
-    Clip: {fileID: 0}
-    Category: 2
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-  - Id: turn_end
-    Clip: {fileID: 0}
-    Category: 2
+    Clip: {fileID: 8300000, guid: c8b69a7f0382ce04cba1378aa2b6108e, type: 3}
+    Category: 1
     Volume: 1
     Pitch: 1
     Loop: 0
   - Id: enemy_attack
-    Clip: {fileID: 0}
+    Clip: {fileID: 8300000, guid: 6748cca480428a843a6fcf4f732e245e, type: 3}
+    Category: 1
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: enemy_defeated
+    Clip: {fileID: 8300000, guid: 4b1e566ea368e484caa2f9fcfd05c79e, type: 3}
+    Category: 1
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  _statusEntries:
+  - Id: status_burn
+    Clip: {fileID: 8300000, guid: df8ef7c018dd7fd47a223c23acc88c9f, type: 3}
     Category: 2
     Volume: 1
     Pitch: 1
     Loop: 0
-  - Id: enemy_die
-    Clip: {fileID: 0}
+  - Id: status_poison
+    Clip: {fileID: 8300000, guid: 30a27451d1e720449a6dcc5cb61c5e09, type: 3}
     Category: 2
     Volume: 1
     Pitch: 1
     Loop: 0
-  - Id: requiem_art
-    Clip: {fileID: 0}
+  - Id: status_weakness
+    Clip: {fileID: 8300000, guid: fbc96756fc0a77949b7d8910f966ba33, type: 3}
     Category: 2
     Volume: 1
     Pitch: 1
     Loop: 0
-  _ambientEntries:
-  - Id: corruption_pulse
-    Clip: {fileID: 0}
+  - Id: status_vulnerability
+    Clip: {fileID: 8300000, guid: 86cb4751769bdc0478e9f93d2870f3ed, type: 3}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: status_strength
+    Clip: {fileID: 8300000, guid: 29378cb6aea97114a8ce6c84df8db4a0, type: 3}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: status_regen
+    Clip: {fileID: 8300000, guid: 215a10bd25bb771459427fba175767d8, type: 3}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: status_tick
+    Clip: {fileID: 8300000, guid: f91ae08b9b77bea438a77bfb0c42365e, type: 3}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  _artsEntries:
+  - Id: art_activate
+    Clip: {fileID: 8300000, guid: c074163d58cfe124c9a04047ca0511be, type: 3}
     Category: 3
     Volume: 1
     Pitch: 1
     Loop: 0
-  - Id: null_state_trigger
-    Clip: {fileID: 0}
+  - Id: art_kira
+    Clip: {fileID: 8300000, guid: 1b39106ec24bdc04a99d7259b55ecee4, type: 3}
     Category: 3
     Volume: 1
     Pitch: 1
     Loop: 0
-  - Id: void_ambient
-    Clip: {fileID: 0}
+  - Id: art_mordren
+    Clip: {fileID: 8300000, guid: 939a5c8c5b1c45b4897efbdf70b5d0a2, type: 3}
     Category: 3
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: art_elara
+    Clip: {fileID: 8300000, guid: 514ce9dffcd38714c8533871c2e3ab2d, type: 3}
+    Category: 3
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: art_thornwick
+    Clip: {fileID: 8300000, guid: de6dd40ced9e7984bb4a4599effde7df, type: 3}
+    Category: 3
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  _elementsEntries:
+  - Id: flame_attack
+    Clip: {fileID: 8300000, guid: d05ee89b685d3134da9c11477d380284, type: 3}
+    Category: 4
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: shadow_attack
+    Clip: {fileID: 8300000, guid: 9e8fa1e2b33236d458f8f0e5ab1d82ab, type: 3}
+    Category: 4
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: light_attack
+    Clip: {fileID: 8300000, guid: f4863dc816245364d8d511d3c55cdf5c, type: 3}
+    Category: 4
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: nature_attack
+    Clip: {fileID: 8300000, guid: a2a4fcfaf1d525e458ac0454f54c4caa, type: 3}
+    Category: 4
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  _shopEntries:
+  - Id: purchase
+    Clip: {fileID: 8300000, guid: 71159fbf927dc3e419ff96ace126e30f, type: 3}
+    Category: 5
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: relic_acquire
+    Clip: {fileID: 8300000, guid: 665074e3e8ca43041a6e49b882af5ded, type: 3}
+    Category: 5
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: card_acquire
+    Clip: {fileID: 8300000, guid: 739e05d92a847bd4bab7d72bc47014be, type: 3}
+    Category: 5
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: void_shards_gain
+    Clip: {fileID: 8300000, guid: 9396a71a8df76d24c82a38460b7419bb, type: 3}
+    Category: 5
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  _stingersEntries:
+  - Id: victory
+    Clip: {fileID: 8300000, guid: 3b0ae53548b926e49933f5f7f495e5e1, type: 3}
+    Category: 6
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: defeat
+    Clip: {fileID: 8300000, guid: 0ee411427ba90ab46b91d17c7bf7ad56, type: 3}
+    Category: 6
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: low_health
+    Clip: {fileID: 8300000, guid: d8a5d9d7c9fea1f4890afeb0b0051c1b, type: 3}
+    Category: 6
     Volume: 1
     Pitch: 1
     Loop: 1
-  - Id: combat_ambient
-    Clip: {fileID: 0}
-    Category: 3
-    Volume: 1
-    Pitch: 1
-    Loop: 1
-  _voiceEntries: []

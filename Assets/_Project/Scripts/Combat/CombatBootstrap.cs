@@ -10,6 +10,7 @@ using HNR.Core;
 using HNR.Core.Events;
 using HNR.Core.Interfaces;
 using HNR.Characters;
+using HNR.Map;
 using HNR.UI;
 using HNR.UI.Screens;
 
@@ -27,17 +28,45 @@ namespace HNR.Combat
 
         private static EncounterDataSO _pendingEncounter;
         private static int _pendingZone = 1;
+        private static NodeType _pendingNodeType = NodeType.Combat;
+        private static bool _isPreBossEncounter;
+        private static bool _isFinalNode;
         private static bool _hasPendingCombat;
+
+        /// <summary>
+        /// Gets the node type of the pending/current combat encounter.
+        /// </summary>
+        public static NodeType PendingNodeType => _pendingNodeType;
+
+        /// <summary>
+        /// Gets the zone of the pending/current combat encounter.
+        /// </summary>
+        public static int PendingZone => _pendingZone;
+
+        /// <summary>
+        /// Whether this encounter is in the pre-boss column (last combat before boss).
+        /// Used for playing elite themes regardless of actual node type.
+        /// </summary>
+        public static bool IsPreBossEncounter => _isPreBossEncounter;
+
+        /// <summary>
+        /// Whether this encounter is the final node of the zone (last column).
+        /// Used for playing zone finale themes (elite/boss themes).
+        /// </summary>
+        public static bool IsFinalNode => _isFinalNode;
 
         /// <summary>
         /// Sets the pending combat encounter data before loading Combat scene.
         /// </summary>
-        public static void SetPendingCombat(EncounterDataSO encounter, int zone)
+        public static void SetPendingCombat(EncounterDataSO encounter, int zone, NodeType nodeType = NodeType.Combat, bool isPreBoss = false, bool isFinalNode = false)
         {
             _pendingEncounter = encounter;
             _pendingZone = zone;
+            _pendingNodeType = nodeType;
+            _isPreBossEncounter = isPreBoss;
+            _isFinalNode = isFinalNode;
             _hasPendingCombat = true;
-            Debug.Log($"[CombatBootstrap] Pending combat set: {encounter?.EncounterName ?? "null"}, Zone {zone}");
+            Debug.Log($"[CombatBootstrap] Pending combat set: {encounter?.EncounterName ?? "null"}, Zone {zone}, NodeType {nodeType}, PreBoss {isPreBoss}, FinalNode {isFinalNode}");
         }
 
         /// <summary>
@@ -47,6 +76,9 @@ namespace HNR.Combat
         {
             _pendingEncounter = null;
             _pendingZone = 1;
+            _pendingNodeType = NodeType.Combat;
+            _isPreBossEncounter = false;
+            _isFinalNode = false;
             _hasPendingCombat = false;
         }
 

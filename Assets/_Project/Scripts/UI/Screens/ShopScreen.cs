@@ -135,6 +135,12 @@ namespace HNR.UI
             ClearSelection();
             RefreshServiceButtons();
 
+            // Play shop theme music
+            if (ServiceLocator.TryGet<IAudioManager>(out var audioManager))
+            {
+                audioManager.PlayMusic("shop_theme");
+            }
+
             Debug.Log("[ShopScreen] Shop screen opened");
         }
 

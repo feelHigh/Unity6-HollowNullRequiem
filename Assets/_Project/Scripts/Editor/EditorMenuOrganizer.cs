@@ -319,25 +319,43 @@ namespace HNR.Editor
         // 3. Audio & VFX (priority 70-79)
         // ============================================
 
-        [MenuItem("HNR/3. Audio & VFX/Generate Audio Config", priority = 70)]
+        [MenuItem("HNR/3. Audio & VFX/Setup Audio Config (Auto-Link)", priority = 70)]
+        public static void SetupAudioConfig()
+        {
+            AudioConfigSetup.SetupAudioConfig();
+        }
+
+        [MenuItem("HNR/3. Audio & VFX/Verify Audio Config", priority = 71)]
+        public static void VerifyAudioConfig()
+        {
+            AudioConfigSetup.VerifyAudioConfig();
+        }
+
+        [MenuItem("HNR/3. Audio & VFX/List Audio Files", priority = 72)]
+        public static void ListAudioFiles()
+        {
+            AudioConfigSetup.ListAudioFiles();
+        }
+
+        [MenuItem("HNR/3. Audio & VFX/Generate Empty Audio Config", priority = 73)]
         public static void GenerateAudioConfig()
         {
             AudioVFXConfigGenerator.GenerateAudioConfig();
         }
 
-        [MenuItem("HNR/3. Audio & VFX/Generate VFX Config", priority = 71)]
+        [MenuItem("HNR/3. Audio & VFX/Generate VFX Config", priority = 74)]
         public static void GenerateVFXConfig()
         {
             AudioVFXConfigGenerator.GenerateVFXConfig();
         }
 
-        [MenuItem("HNR/3. Audio & VFX/Generate All Configs", priority = 72)]
+        [MenuItem("HNR/3. Audio & VFX/Generate All Configs", priority = 75)]
         public static void GenerateAllAudioVFXConfigs()
         {
             AudioVFXConfigGenerator.GenerateAllConfigs();
         }
 
-        [MenuItem("HNR/3. Audio & VFX/Wire CFXR Prefabs to VFX Config", priority = 73)]
+        [MenuItem("HNR/3. Audio & VFX/Wire CFXR Prefabs to VFX Config", priority = 76)]
         public static void WireCFXRPrefabsToVFXConfig()
         {
             AudioVFXConfigGenerator.WireCFXRPrefabsToVFXConfig();

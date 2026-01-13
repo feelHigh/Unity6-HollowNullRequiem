@@ -52,7 +52,7 @@ namespace HNR.Editor
             if (existing != null)
             {
                 if (!EditorUtility.DisplayDialog("AudioConfig Exists",
-                    "AudioConfig.asset already exists. Overwrite?",
+                    "AudioConfig.asset already exists. Overwrite with empty config?",
                     "Yes", "No"))
                 {
                     return;
@@ -60,70 +60,15 @@ namespace HNR.Editor
                 AssetDatabase.DeleteAsset(assetPath);
             }
 
-            // Create new AudioConfigSO
+            // Create new empty AudioConfigSO
             var config = ScriptableObject.CreateInstance<AudioConfigSO>();
 
-            // Use SerializedObject to populate lists
-            SerializedObject so = new SerializedObject(config);
-
-            // Music entries
-            PopulateAudioList(so, "_musicEntries", new[]
-            {
-                ("menu_theme", AudioCategory.Music, true),
-                ("bastion_theme", AudioCategory.Music, true),
-                ("combat_theme", AudioCategory.Music, true),
-                ("boss_theme", AudioCategory.Music, true),
-                ("victory_theme", AudioCategory.Music, false),
-                ("defeat_theme", AudioCategory.Music, false)
-            });
-
-            // UI entries
-            PopulateAudioList(so, "_uiEntries", new[]
-            {
-                ("ui_click", AudioCategory.UI, false),
-                ("ui_hover", AudioCategory.UI, false),
-                ("ui_confirm", AudioCategory.UI, false),
-                ("ui_cancel", AudioCategory.UI, false),
-                ("ui_error", AudioCategory.UI, false),
-                ("ui_navigate", AudioCategory.UI, false)
-            });
-
-            // Combat entries
-            PopulateAudioList(so, "_combatEntries", new[]
-            {
-                ("card_draw", AudioCategory.Combat, false),
-                ("card_play", AudioCategory.Combat, false),
-                ("card_discard", AudioCategory.Combat, false),
-                ("damage_hit", AudioCategory.Combat, false),
-                ("damage_critical", AudioCategory.Combat, false),
-                ("block_gain", AudioCategory.Combat, false),
-                ("block_break", AudioCategory.Combat, false),
-                ("heal", AudioCategory.Combat, false),
-                ("buff_apply", AudioCategory.Combat, false),
-                ("debuff_apply", AudioCategory.Combat, false),
-                ("turn_start", AudioCategory.Combat, false),
-                ("turn_end", AudioCategory.Combat, false),
-                ("enemy_attack", AudioCategory.Combat, false),
-                ("enemy_die", AudioCategory.Combat, false),
-                ("requiem_art", AudioCategory.Combat, false)
-            });
-
-            // Ambient entries
-            PopulateAudioList(so, "_ambientEntries", new[]
-            {
-                ("corruption_pulse", AudioCategory.Ambient, false),
-                ("null_state_trigger", AudioCategory.Ambient, false),
-                ("void_ambient", AudioCategory.Ambient, true),
-                ("combat_ambient", AudioCategory.Ambient, true)
-            });
-
-            so.ApplyModifiedPropertiesWithoutUndo();
-
-            // Save asset
+            // Save asset (empty - use AudioConfigSetup.SetupAudioConfig to auto-link files)
             AssetDatabase.CreateAsset(config, assetPath);
             AssetDatabase.SaveAssets();
 
-            Debug.Log($"[AudioVFXConfigGenerator] Created AudioConfig at {assetPath}");
+            Debug.Log($"[AudioVFXConfigGenerator] Created empty AudioConfig at {assetPath}");
+            Debug.Log("[AudioVFXConfigGenerator] Use 'HNR > 3. Audio & VFX > Setup Audio Config (Auto-Link)' to populate with audio files");
         }
 
         public static void GenerateVFXConfig()
@@ -370,28 +315,6 @@ namespace HNR.Editor
         // ============================================
         // Helper Methods
         // ============================================
-
-        private static void PopulateAudioList(SerializedObject so, string propertyName,
-            (string id, AudioCategory category, bool loop)[] entries)
-        {
-            var listProp = so.FindProperty(propertyName);
-            listProp.ClearArray();
-
-            for (int i = 0; i < entries.Length; i++)
-            {
-                var (id, category, loop) = entries[i];
-
-                listProp.InsertArrayElementAtIndex(i);
-                var element = listProp.GetArrayElementAtIndex(i);
-
-                element.FindPropertyRelative("Id").stringValue = id;
-                element.FindPropertyRelative("Category").enumValueIndex = (int)category;
-                element.FindPropertyRelative("Volume").floatValue = 1f;
-                element.FindPropertyRelative("Pitch").floatValue = 1f;
-                element.FindPropertyRelative("Loop").boolValue = loop;
-                // Clip remains null - to be assigned manually
-            }
-        }
 
         private static void PopulateVFXList(SerializedObject so, string propertyName,
             (string effectId, VFXCategory category, int preWarm, int maxActive, Color defaultColor)[] entries)
