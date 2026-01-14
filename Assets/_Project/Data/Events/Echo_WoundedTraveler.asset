@@ -16,7 +16,7 @@ MonoBehaviour:
   _eventTitle: Wounded Traveler
   _narrative: A fellow wanderer lies wounded by the path. Their eyes plead for help,
     but the corruption spreading through their veins tells another story.
-  _backgroundImage: {fileID: 0}
+  _backgroundImage: {fileID: -7738117470717306996, guid: df3a460b51658194092c3541be3f3e57, type: 3}
   _choices:
   - _choiceText: Heal them (Lose 15 HP)
     _outcomeText: Your sacrifice purifies their wounds. They gift you an ancient

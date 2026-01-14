@@ -16,7 +16,7 @@ MonoBehaviour:
   _eventTitle: Abandoned Cache
   _narrative: You discover a rusted lockbox half-buried in the corrupted soil. Strange
     whispers emanate from within, promising treasure... or something else.
-  _backgroundImage: {fileID: 0}
+  _backgroundImage: {fileID: -2691352472437820425, guid: 0d08f1ebb0871ab45a062d4d7bea30c2, type: 3}
   _choices:
   - _choiceText: Force it open
     _outcomeText: The lock shatters. Gold coins spill out, glinting with an otherworldly

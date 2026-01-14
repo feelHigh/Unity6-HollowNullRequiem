@@ -16,7 +16,7 @@ MonoBehaviour:
   _eventTitle: Ancient Shrine
   _narrative: A forgotten shrine stands untouched by corruption. The altar glows
     with residual divine energy, offering blessings to those who would pray.
-  _backgroundImage: {fileID: 0}
+  _backgroundImage: {fileID: -8411073679454477631, guid: 415937d39c55cf04096c1d516a2af8f4, type: 3}
   _choices:
   - _choiceText: Pray for healing
     _outcomeText: Warm light envelops you, mending wounds and soothing pain.

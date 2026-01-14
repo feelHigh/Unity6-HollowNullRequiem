@@ -238,7 +238,7 @@ MonoBehaviour:
   - Id: victory
     Clip: {fileID: 8300000, guid: 3b0ae53548b926e49933f5f7f495e5e1, type: 3}
     Category: 6
-    Volume: 1
+    Volume: 0.4
     Pitch: 1
     Loop: 0
   - Id: defeat

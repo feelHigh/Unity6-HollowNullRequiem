@@ -16,7 +16,7 @@ MonoBehaviour:
   _eventTitle: Shadow Merchant
   _narrative: A cloaked figure materializes from the shadows. 'I deal in trades most
     peculiar,' they whisper. 'What would you give... to gain?'
-  _backgroundImage: {fileID: 0}
+  _backgroundImage: {fileID: -3393564833719961086, guid: 480ae22dbfbb20841b9810f41231851e, type: 3}
   _choices:
   - _choiceText: Trade HP for gold (Lose 20 HP)
     _outcomeText: Blood is the currency of the desperate. The merchant seems pleased.

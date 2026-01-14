@@ -15,6 +15,7 @@ using HNR.Characters;
 using HNR.Cards;
 using HNR.Map;
 using HNR.Progression;
+using HNR.UI;
 
 namespace HNR.UI
 {
@@ -37,6 +38,29 @@ namespace HNR.UI
 
         [SerializeField, Tooltip("Icon/illustration for sanctuary")]
         private Image _sanctuaryIcon;
+
+        // ============================================
+        // Campfire & Visual Elements
+        // ============================================
+
+        [Header("Campfire & Visuals")]
+        [SerializeField, Tooltip("Campfire UI Image (apply campfire sprite here)")]
+        private Image _campfireImage;
+
+        [SerializeField, Tooltip("Controller for world-space Requiem visuals")]
+        private SanctuaryVisualController _visualController;
+
+        [SerializeField, Tooltip("Container for visual anchor positions (legacy - not used)")]
+        private RectTransform _visualAnchorsContainer;
+
+        [SerializeField, Tooltip("Left Requiem visual anchor position (legacy - not used)")]
+        private RectTransform _leftVisualAnchor;
+
+        [SerializeField, Tooltip("Center/Back Requiem visual anchor position (legacy - not used)")]
+        private RectTransform _centerVisualAnchor;
+
+        [SerializeField, Tooltip("Right Requiem visual anchor position (legacy - not used)")]
+        private RectTransform _rightVisualAnchor;
 
         // ============================================
         // Choice Buttons
@@ -147,6 +171,12 @@ namespace HNR.UI
 
             PlayShowAnimation();
 
+            // Show Requiem visuals in world-space
+            if (_visualController != null)
+            {
+                _visualController.ShowVisuals();
+            }
+
             // Play sanctuary theme music
             if (ServiceLocator.TryGet<IAudioManager>(out var audioManager))
             {
@@ -159,6 +189,12 @@ namespace HNR.UI
         public override void OnHide()
         {
             base.OnHide();
+
+            // Hide Requiem visuals
+            if (_visualController != null)
+            {
+                _visualController.HideVisuals();
+            }
 
             ClearUpgradeCardSlots();
             DOTween.Kill(this);

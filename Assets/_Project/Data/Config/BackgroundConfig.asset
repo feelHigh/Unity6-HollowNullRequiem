@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e2096ed21c62bf349ade658835e83ff2, type: 3}
+  m_Name: BackgroundConfig
+  m_EditorClassIdentifier: 
+  _mainMenuBackground: {fileID: 4672523273133219309, guid: 0245f3a744f80be468c58ca44d7b7652, type: 3}
+  _bastionBackground: {fileID: -1141895858183603088, guid: 7d8f6c44ea3705a4a96e47fc094d4612, type: 3}
+  _missionsBackground: {fileID: -4978390562337660909, guid: 8047817dcaa151b468360e0146983a96, type: 3}
+  _battleMissionBackground: {fileID: -3894075805774800095, guid: d5a75e30e6459074f9dd82cb4f33334e, type: 3}
+  _requiemsBackground: {fileID: 8770818548788908939, guid: 82652722c6fba524b9d81ad61e605832, type: 3}
+  _nullRiftZone1Background: {fileID: -1845134551194621754, guid: afbb7badeba7b6741ace243e99f0441d, type: 3}
+  _nullRiftZone2Background: {fileID: 5016000196811002478, guid: 89057353872990d438d96a984b5980a1, type: 3}
+  _nullRiftZone3Background: {fileID: -1089970030645476801, guid: c4c998e7d51910f4f8851f7a051615dc, type: 3}
+  _combatNormalBackground: {fileID: -6165157779383437791, guid: aa130f43f6c2f2848b100a10a2c65041, type: 3}
+  _combatEliteBackground: {fileID: -3579912083077801254, guid: 5886186691ac6734ca22fb3553a99504, type: 3}
+  _combatBossBackground: {fileID: 2143170485677104241, guid: 44e70109bac0b6349a39e009b1790381, type: 3}
+  _sanctuaryBackground: {fileID: 208501425453735209, guid: 5cec6b1dd5f741049b16953cc619bf8c, type: 3}
+  _shopBackground: {fileID: -8804988126394330590, guid: 34f8d65f6fff0c84a8b38c49d90f39b2, type: 3}
+  _campfireSprite: {fileID: -2129459566656321190, guid: fba2213ac30f200408d81a5fe86f594e, type: 3}
+  _mainMenuFallbackColor: {r: 0.05, g: 0.02, b: 0.1, a: 1}
+  _bastionFallbackColor: {r: 0.08, g: 0.05, b: 0.12, a: 1}
+  _missionsFallbackColor: {r: 0.08, g: 0.08, b: 0.12, a: 1}
+  _battleMissionFallbackColor: {r: 0.08, g: 0.08, b: 0.12, a: 1}
+  _requiemsFallbackColor: {r: 0.08, g: 0.08, b: 0.12, a: 1}
+  _nullRiftFallbackColor: {r: 0.03, g: 0.01, b: 0.08, a: 1}
+  _sanctuaryFallbackColor: {r: 0.15, g: 0.08, b: 0.05, a: 1}
+  _shopFallbackColor: {r: 0.08, g: 0.08, b: 0.1, a: 1}
+  _combatFallbackColor: {r: 0.02, g: 0.01, b: 0.05, a: 1}

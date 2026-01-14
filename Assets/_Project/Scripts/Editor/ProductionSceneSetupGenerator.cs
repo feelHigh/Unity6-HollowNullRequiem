@@ -40,9 +40,12 @@ namespace HNR.Editor
         private const string SCENES_PATH = "Assets/_Project/Scenes";
         private const string PREFABS_PATH = "Assets/_Project/Prefabs";
         private const string ICON_CONFIG_PATH = "Assets/_Project/Data/Config/SceneIconConfig.asset";
+        private const string BACKGROUND_CONFIG_PATH = "Assets/_Project/Data/Config/BackgroundConfig.asset";
 
         // Cached icon config for current generation run
         private static SceneIconConfigSO _iconConfig;
+        // Cached background config for current generation run
+        private static BackgroundConfigSO _backgroundConfig;
 
         /// <summary>
         /// Loads the scene icon configuration asset.
@@ -67,6 +70,32 @@ namespace HNR.Editor
         private static void ClearIconConfigCache()
         {
             _iconConfig = null;
+        }
+
+        /// <summary>
+        /// Loads the background configuration asset.
+        /// </summary>
+        /// <returns>The background config or null if not found</returns>
+        private static BackgroundConfigSO LoadBackgroundConfig()
+        {
+            if (_backgroundConfig == null)
+            {
+                _backgroundConfig = AssetDatabase.LoadAssetAtPath<BackgroundConfigSO>(BACKGROUND_CONFIG_PATH);
+                if (_backgroundConfig == null)
+                {
+                    Debug.LogWarning("[ProductionSceneSetupGenerator] BackgroundConfig not found at " + BACKGROUND_CONFIG_PATH + ". Using color fallback. Create via 'Create > HNR > Config > Background Config'.");
+                }
+            }
+            return _backgroundConfig;
+        }
+
+        /// <summary>
+        /// Clears all cached configs (call after scene generation batch completes).
+        /// </summary>
+        private static void ClearAllConfigCaches()
+        {
+            _iconConfig = null;
+            _backgroundConfig = null;
         }
 
         // ============================================
@@ -167,7 +196,7 @@ namespace HNR.Editor
             GameObject overlayContainer = CreateUIContainer(canvasObj, "OverlayContainer");
 
             // === Background ===
-            CreateBackground(canvasObj, new Color(0.05f, 0.02f, 0.1f));
+            CreateSpriteBackground(canvasObj, "MainMenu", new Color(0.05f, 0.02f, 0.1f));
 
             // Save scene
             string scenePath = $"{SCENES_PATH}/MainMenu.unity";
@@ -209,7 +238,7 @@ namespace HNR.Editor
             CreateSettingsOverlay(canvasObj.transform);
 
             // === Background ===
-            CreateBackground(canvasObj, new Color(0.08f, 0.05f, 0.12f));
+            CreateSpriteBackground(canvasObj, "Bastion", new Color(0.08f, 0.05f, 0.12f));
 
             // Save scene
             string scenePath = $"{SCENES_PATH}/Bastion.unity";
@@ -254,6 +283,62 @@ namespace HNR.Editor
             nodeEventHandlerObj.transform.SetParent(managersParent.transform);
             var nodeEventHandler = nodeEventHandlerObj.AddComponent<NodeEventHandler>();
 
+            // === Sanctuary World-Space Setup (like Combat scene) ===
+            // Uses world-space background and Requiem positioning
+            // UI canvas is transparent, allowing world-space objects to show through
+            GameObject sanctuaryVisualsParent = new GameObject("--- SANCTUARY VISUALS ---");
+
+            // Create world-space background for Sanctuary (like Combat's WorldBackground)
+            // This is shown/hidden when Sanctuary screen shows/hides
+            GameObject sanctuaryWorldBgObj = new GameObject("SanctuaryWorldBackground");
+            sanctuaryWorldBgObj.transform.SetParent(sanctuaryVisualsParent.transform);
+            sanctuaryWorldBgObj.transform.position = new Vector3(0, 0, 10f); // Behind everything
+            var sanctuaryBgRenderer = sanctuaryWorldBgObj.AddComponent<SpriteRenderer>();
+            sanctuaryBgRenderer.sortingOrder = -1000; // Render behind everything
+            sanctuaryBgRenderer.drawMode = SpriteDrawMode.Sliced;
+            sanctuaryBgRenderer.size = new Vector2(24f, 14f); // Cover camera view
+
+            // Load and assign Sanctuary background sprite from config
+            var bgConfig = LoadBackgroundConfig();
+            if (bgConfig?.SanctuaryBackground != null)
+            {
+                sanctuaryBgRenderer.sprite = bgConfig.SanctuaryBackground;
+                Debug.Log("[ProductionSceneSetupGenerator] Assigned Sanctuary background to world-space SpriteRenderer");
+            }
+            else
+            {
+                sanctuaryBgRenderer.color = new Color(0.05f, 0.08f, 0.06f); // Greenish dark fallback
+            }
+            sanctuaryWorldBgObj.SetActive(false); // Start hidden
+
+            // Create world-space slots for Requiem visuals (in camera view)
+            // Positions calibrated for orthographic camera with size ~5
+            // Y positions lowered to place Requiems near bottom of screen
+            GameObject leftSlot = new GameObject("SanctuarySlot_Left");
+            leftSlot.transform.SetParent(sanctuaryVisualsParent.transform);
+            leftSlot.transform.position = new Vector3(-3f, -4f, 0f);
+
+            GameObject centerSlot = new GameObject("SanctuarySlot_Center");
+            centerSlot.transform.SetParent(sanctuaryVisualsParent.transform);
+            centerSlot.transform.position = new Vector3(0f, -3.5f, 0f);
+
+            GameObject rightSlot = new GameObject("SanctuarySlot_Right");
+            rightSlot.transform.SetParent(sanctuaryVisualsParent.transform);
+            rightSlot.transform.position = new Vector3(3f, -4f, 0f);
+
+            // Create SanctuaryVisualController
+            GameObject sanctuaryVisualControllerObj = new GameObject("SanctuaryVisualController");
+            sanctuaryVisualControllerObj.transform.SetParent(managersParent.transform);
+            var sanctuaryVisualController = sanctuaryVisualControllerObj.AddComponent<SanctuaryVisualController>();
+
+            // Wire slot and world background references to controller
+            SerializedObject visualControllerSO = new SerializedObject(sanctuaryVisualController);
+            visualControllerSO.FindProperty("_leftSlot").objectReferenceValue = leftSlot.transform;
+            visualControllerSO.FindProperty("_centerSlot").objectReferenceValue = centerSlot.transform;
+            visualControllerSO.FindProperty("_rightSlot").objectReferenceValue = rightSlot.transform;
+            visualControllerSO.FindProperty("_worldBackground").objectReferenceValue = sanctuaryBgRenderer;
+            visualControllerSO.ApplyModifiedPropertiesWithoutUndo();
+
             // === Main Canvas ===
             GameObject canvasObj = CreateMainCanvas("NullRiftCanvas");
 
@@ -274,6 +359,16 @@ namespace HNR.Editor
 
             // === SanctuaryScreen (overlay) ===
             GameObject sanctuaryScreen = CreateSanctuaryScreen(overlayContainer);
+
+            // Wire SanctuaryVisualController to SanctuaryScreen and wire RawImage to controller
+            var sanctuaryScreenComp = sanctuaryScreen.GetComponent<SanctuaryScreen>();
+            if (sanctuaryScreenComp != null)
+            {
+                var sanctuaryScreenSO = new SerializedObject(sanctuaryScreenComp);
+                sanctuaryScreenSO.FindProperty("_visualController").objectReferenceValue = sanctuaryVisualController;
+                sanctuaryScreenSO.ApplyModifiedPropertiesWithoutUndo();
+                Debug.Log("[ProductionSceneSetupGenerator] Wired SanctuaryVisualController to SanctuaryScreen");
+            }
 
             // === TreasureScreen (overlay) ===
             GameObject treasureScreen = CreateTreasureScreen(overlayContainer);
@@ -300,7 +395,17 @@ namespace HNR.Editor
             }
 
             // === Background ===
-            CreateBackground(canvasObj, new Color(0.03f, 0.01f, 0.08f));
+            GameObject zoneBackgroundObj = CreateZoneBackground(canvasObj, 1, new Color(0.03f, 0.01f, 0.08f));
+
+            // Wire ZoneBackground to SanctuaryVisualController so it can be hidden when Sanctuary shows
+            var zoneBackgroundImage = zoneBackgroundObj.GetComponent<Image>();
+            if (zoneBackgroundImage != null && sanctuaryVisualController != null)
+            {
+                SerializedObject visualControllerSO2 = new SerializedObject(sanctuaryVisualController);
+                visualControllerSO2.FindProperty("_zoneBackground").objectReferenceValue = zoneBackgroundImage;
+                visualControllerSO2.ApplyModifiedPropertiesWithoutUndo();
+                Debug.Log("[ProductionSceneSetupGenerator] Wired ZoneBackground to SanctuaryVisualController");
+            }
 
             // Save scene
             string scenePath = $"{SCENES_PATH}/NullRift.unity";
@@ -392,6 +497,30 @@ namespace HNR.Editor
             GameObject autoBattleObj = new GameObject("AutoBattleController");
             autoBattleObj.transform.SetParent(managersParent.transform);
             autoBattleObj.AddComponent<AutoBattleController>();
+
+            // === Combat Background Controller ===
+            GameObject combatBgControllerObj = new GameObject("CombatBackgroundController");
+            combatBgControllerObj.transform.SetParent(managersParent.transform);
+            var combatBgController = combatBgControllerObj.AddComponent<CombatBackgroundController>();
+
+            // === World-Space Background ===
+            // Background SpriteRenderer placed behind all world-space elements
+            GameObject worldBgObj = new GameObject("WorldBackground");
+            worldBgObj.transform.position = new Vector3(0, 0, 10f); // Behind everything
+            var bgRenderer = worldBgObj.AddComponent<SpriteRenderer>();
+            bgRenderer.sortingOrder = -1000; // Render behind everything
+            bgRenderer.drawMode = SpriteDrawMode.Sliced;
+            bgRenderer.size = new Vector2(24f, 14f); // Cover camera view
+
+            // Wire CombatBackgroundController
+            var bgConfig = LoadBackgroundConfig();
+            SerializedObject combatBgSO = new SerializedObject(combatBgController);
+            combatBgSO.FindProperty("_backgroundRenderer").objectReferenceValue = bgRenderer;
+            if (bgConfig != null)
+            {
+                combatBgSO.FindProperty("_backgroundConfig").objectReferenceValue = bgConfig;
+            }
+            combatBgSO.ApplyModifiedPropertiesWithoutUndo();
 
             // === World Space UI Containers ===
             // These are plain transforms for world-space floating UIs (not under screen-space canvas)
@@ -657,6 +786,86 @@ namespace HNR.Editor
             Image img = bg.AddComponent<Image>();
             img.color = color;
             img.raycastTarget = false;
+        }
+
+        /// <summary>
+        /// Creates a background with sprite support, falling back to color if sprite not available.
+        /// </summary>
+        /// <param name="canvas">Parent canvas GameObject</param>
+        /// <param name="sceneName">Scene name for background lookup</param>
+        /// <param name="fallbackColor">Color to use if sprite not available</param>
+        /// <returns>The background GameObject</returns>
+        private static GameObject CreateSpriteBackground(GameObject canvas, string sceneName, Color fallbackColor)
+        {
+            GameObject bg = new GameObject("Background");
+            bg.transform.SetParent(canvas.transform, false);
+            bg.transform.SetAsFirstSibling();
+
+            RectTransform rect = bg.AddComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.sizeDelta = Vector2.zero;
+
+            Image img = bg.AddComponent<Image>();
+            img.raycastTarget = false;
+
+            var bgConfig = LoadBackgroundConfig();
+            Sprite bgSprite = bgConfig?.GetSceneBackground(sceneName);
+
+            if (bgSprite != null)
+            {
+                img.sprite = bgSprite;
+                img.color = Color.white;
+                img.preserveAspect = false; // Stretch to fill
+                Debug.Log($"[ProductionSceneSetupGenerator] Applied sprite background for {sceneName}");
+            }
+            else
+            {
+                img.color = fallbackColor;
+                Debug.Log($"[ProductionSceneSetupGenerator] Using fallback color for {sceneName} background (sprite not assigned)");
+            }
+
+            return bg;
+        }
+
+        /// <summary>
+        /// Creates a background specifically for NullRift with zone support.
+        /// </summary>
+        /// <param name="canvas">Parent canvas GameObject</param>
+        /// <param name="defaultZone">Default zone number (1-3)</param>
+        /// <param name="fallbackColor">Fallback color if sprite not available</param>
+        /// <returns>The background GameObject</returns>
+        private static GameObject CreateZoneBackground(GameObject canvas, int defaultZone, Color fallbackColor)
+        {
+            GameObject bg = new GameObject("ZoneBackground");
+            bg.transform.SetParent(canvas.transform, false);
+            bg.transform.SetAsFirstSibling();
+
+            RectTransform rect = bg.AddComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.sizeDelta = Vector2.zero;
+
+            Image img = bg.AddComponent<Image>();
+            img.raycastTarget = false;
+
+            var bgConfig = LoadBackgroundConfig();
+            Sprite bgSprite = bgConfig?.GetZoneBackground(defaultZone);
+
+            if (bgSprite != null)
+            {
+                img.sprite = bgSprite;
+                img.color = Color.white;
+                img.preserveAspect = false;
+                Debug.Log($"[ProductionSceneSetupGenerator] Applied Zone {defaultZone} background sprite");
+            }
+            else
+            {
+                img.color = fallbackColor;
+                Debug.Log($"[ProductionSceneSetupGenerator] Using fallback color for Zone {defaultZone} background");
+            }
+
+            return bg;
         }
 
         private static void WireZoneConfigs(MapManager mapManager)
@@ -1523,35 +1732,122 @@ namespace HNR.Editor
             var sanctuaryScreen = screenObj.AddComponent<SanctuaryScreen>();
             screenObj.SetActive(false);
 
-            // Background
-            Image bg = screenObj.AddComponent<Image>();
-            bg.color = new Color(0.05f, 0.08f, 0.06f, 0.98f); // Greenish dark
+            // NO opaque background Image - world-space background shows through transparent UI
+            // Background is handled by SanctuaryWorldBackground SpriteRenderer
+            var bgConfig = LoadBackgroundConfig();
 
-            // Title
-            GameObject titleObj = CreateText(screenObj, "Title", "SANCTUARY", 32);
+            // === Campfire UI Image (rendered in UI layer, in front of world-space Requiems) ===
+            GameObject campfireObj = new GameObject("CampfireImage");
+            campfireObj.transform.SetParent(screenObj.transform, false);
+            RectTransform campfireRect = campfireObj.AddComponent<RectTransform>();
+            campfireRect.anchorMin = new Vector2(0.5f, 0.08f);
+            campfireRect.anchorMax = new Vector2(0.5f, 0.08f);
+            campfireRect.pivot = new Vector2(0.5f, 0f);
+            campfireRect.sizeDelta = new Vector2(200, 200);
+            Image campfireImage = campfireObj.AddComponent<Image>();
+            campfireImage.raycastTarget = false;
+            // Assign campfire sprite from BackgroundConfig if available
+            if (bgConfig?.CampfireSprite != null)
+            {
+                campfireImage.sprite = bgConfig.CampfireSprite;
+                campfireImage.color = Color.white;
+            }
+            else
+            {
+                campfireImage.color = new Color(1f, 0.5f, 0.2f, 0.8f); // Orange placeholder
+            }
+
+            // Note: No RequiemVisualsDisplay RawImage needed - Requiems render in world-space
+            // like Combat scene, and show through the transparent UI canvas
+
+            // Legacy visual anchors container (not used, but kept for SanctuaryScreen field compatibility)
+            GameObject visualAnchorsContainer = new GameObject("VisualAnchors_Legacy");
+            visualAnchorsContainer.transform.SetParent(screenObj.transform, false);
+            RectTransform visualAnchorsRect = visualAnchorsContainer.AddComponent<RectTransform>();
+            visualAnchorsRect.anchorMin = new Vector2(0.1f, 0.15f);
+            visualAnchorsRect.anchorMax = new Vector2(0.9f, 0.55f);
+            visualAnchorsRect.sizeDelta = Vector2.zero;
+            visualAnchorsContainer.SetActive(false); // Hidden - legacy
+
+            // Left visual anchor (legacy)
+            GameObject leftAnchor = new GameObject("LeftVisualAnchor");
+            leftAnchor.transform.SetParent(visualAnchorsContainer.transform, false);
+            RectTransform leftRect = leftAnchor.AddComponent<RectTransform>();
+            leftRect.anchorMin = new Vector2(0.15f, 0.2f);
+            leftRect.anchorMax = new Vector2(0.15f, 0.2f);
+            leftRect.sizeDelta = new Vector2(150, 200);
+
+            // Center/Back visual anchor (legacy)
+            GameObject centerAnchor = new GameObject("CenterVisualAnchor");
+            centerAnchor.transform.SetParent(visualAnchorsContainer.transform, false);
+            RectTransform centerRect = centerAnchor.AddComponent<RectTransform>();
+            centerRect.anchorMin = new Vector2(0.5f, 0.4f);
+            centerRect.anchorMax = new Vector2(0.5f, 0.4f);
+            centerRect.sizeDelta = new Vector2(150, 200);
+
+            // Right visual anchor
+            GameObject rightAnchor = new GameObject("RightVisualAnchor");
+            rightAnchor.transform.SetParent(visualAnchorsContainer.transform, false);
+            RectTransform rightRect = rightAnchor.AddComponent<RectTransform>();
+            rightRect.anchorMin = new Vector2(0.85f, 0.2f);
+            rightRect.anchorMax = new Vector2(0.85f, 0.2f);
+            rightRect.sizeDelta = new Vector2(150, 200);
+
+            // === Title with semi-transparent background ===
+            GameObject titleContainer = new GameObject("TitleContainer");
+            titleContainer.transform.SetParent(screenObj.transform, false);
+            RectTransform titleContainerRect = titleContainer.AddComponent<RectTransform>();
+            titleContainerRect.anchorMin = new Vector2(0.5f, 0.86f);
+            titleContainerRect.anchorMax = new Vector2(0.5f, 0.92f);
+            titleContainerRect.sizeDelta = new Vector2(350, 0);
+
+            // Title background (black 50% alpha)
+            Image titleBg = titleContainer.AddComponent<Image>();
+            titleBg.color = new Color(0f, 0f, 0f, 0.5f);
+            titleBg.raycastTarget = false;
+
+            // Title text
+            GameObject titleObj = CreateText(titleContainer, "Title", "SANCTUARY", 32);
             RectTransform titleRect = titleObj.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0.5f, 0.88f);
-            titleRect.anchorMax = new Vector2(0.5f, 0.88f);
-            titleRect.sizeDelta = new Vector2(300, 50);
+            titleRect.anchorMin = Vector2.zero;
+            titleRect.anchorMax = Vector2.one;
+            titleRect.sizeDelta = Vector2.zero;
+            titleRect.offsetMin = new Vector2(10, 5);
+            titleRect.offsetMax = new Vector2(-10, -5);
             var titleText = titleObj.GetComponent<TMP_Text>();
             titleText.color = new Color(0.18f, 0.8f, 0.44f); // Health green
             titleText.fontStyle = FontStyles.Bold;
 
-            // Description
-            GameObject descObj = CreateText(screenObj, "Description", "A moment of respite in the Null Rift...", 16);
+            // === Description with semi-transparent background ===
+            GameObject descContainer = new GameObject("DescriptionContainer");
+            descContainer.transform.SetParent(screenObj.transform, false);
+            RectTransform descContainerRect = descContainer.AddComponent<RectTransform>();
+            descContainerRect.anchorMin = new Vector2(0.5f, 0.76f);
+            descContainerRect.anchorMax = new Vector2(0.5f, 0.84f);
+            descContainerRect.sizeDelta = new Vector2(520, 0);
+
+            // Description background (black 50% alpha)
+            Image descBg = descContainer.AddComponent<Image>();
+            descBg.color = new Color(0f, 0f, 0f, 0.5f);
+            descBg.raycastTarget = false;
+
+            // Description text
+            GameObject descObj = CreateText(descContainer, "Description", "A moment of respite in the Null Rift...", 16);
             RectTransform descRect = descObj.GetComponent<RectTransform>();
-            descRect.anchorMin = new Vector2(0.5f, 0.78f);
-            descRect.anchorMax = new Vector2(0.5f, 0.78f);
-            descRect.sizeDelta = new Vector2(500, 40);
+            descRect.anchorMin = Vector2.zero;
+            descRect.anchorMax = Vector2.one;
+            descRect.sizeDelta = Vector2.zero;
+            descRect.offsetMin = new Vector2(15, 8);
+            descRect.offsetMax = new Vector2(-15, -8);
             var descText = descObj.GetComponent<TMP_Text>();
             descText.color = new Color(0.7f, 0.7f, 0.7f);
 
-            // Choice buttons container
+            // Choice buttons container - repositioned lower to accommodate visuals
             GameObject choicesContainer = new GameObject("ChoicesContainer");
             choicesContainer.transform.SetParent(screenObj.transform, false);
             RectTransform choicesRect = choicesContainer.AddComponent<RectTransform>();
-            choicesRect.anchorMin = new Vector2(0.15f, 0.25f);
-            choicesRect.anchorMax = new Vector2(0.85f, 0.7f);
+            choicesRect.anchorMin = new Vector2(0.15f, 0.58f);
+            choicesRect.anchorMax = new Vector2(0.85f, 0.75f);
             choicesRect.sizeDelta = Vector2.zero;
 
             HorizontalLayoutGroup choicesLayout = choicesContainer.AddComponent<HorizontalLayoutGroup>();
@@ -1677,6 +1973,13 @@ namespace HNR.Editor
             so.FindProperty("_confirmUpgradeButton").objectReferenceValue = confirmUpgradeBtn.GetComponent<Button>();
             so.FindProperty("_cancelUpgradeButton").objectReferenceValue = cancelUpgradeBtn.GetComponent<Button>();
 
+            // Wire campfire and visual anchor references
+            so.FindProperty("_campfireImage").objectReferenceValue = campfireImage;
+            so.FindProperty("_visualAnchorsContainer").objectReferenceValue = visualAnchorsRect;
+            so.FindProperty("_leftVisualAnchor").objectReferenceValue = leftRect;
+            so.FindProperty("_centerVisualAnchor").objectReferenceValue = centerRect;
+            so.FindProperty("_rightVisualAnchor").objectReferenceValue = rightRect;
+
             // Wire Card prefab for proper card display (implements ICardDisplay)
             var cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Cards/Card.prefab");
             if (cardPrefab != null)
@@ -1734,13 +2037,55 @@ namespace HNR.Editor
             var iconLayout = icon.AddComponent<LayoutElement>();
             iconLayout.preferredHeight = 60;
 
-            // Title
-            GameObject titleObj = CreateText(choice, "Title", title, 18);
+            // Title with semi-transparent background for readability
+            GameObject titleContainer = new GameObject("TitleContainer");
+            titleContainer.transform.SetParent(choice.transform, false);
+            var titleContainerRect = titleContainer.AddComponent<RectTransform>();
+            titleContainerRect.sizeDelta = new Vector2(0, 30);
+
+            // Title background (black 50% alpha)
+            Image titleBg = titleContainer.AddComponent<Image>();
+            titleBg.color = new Color(0f, 0f, 0f, 0.5f);
+            titleBg.raycastTarget = false;
+
+            var titleLayoutElem = titleContainer.AddComponent<LayoutElement>();
+            titleLayoutElem.preferredHeight = 30;
+            titleLayoutElem.flexibleWidth = 1;
+
+            // Title text
+            GameObject titleObj = CreateText(titleContainer, "Title", title, 18);
+            RectTransform titleRect = titleObj.GetComponent<RectTransform>();
+            titleRect.anchorMin = Vector2.zero;
+            titleRect.anchorMax = Vector2.one;
+            titleRect.sizeDelta = Vector2.zero;
+            titleRect.offsetMin = new Vector2(8, 2);
+            titleRect.offsetMax = new Vector2(-8, -2);
             titleObj.GetComponent<TMP_Text>().color = color;
             titleObj.GetComponent<TMP_Text>().fontStyle = TMPro.FontStyles.Bold;
 
-            // Description
-            GameObject descObj = CreateText(choice, "Desc", desc, 12);
+            // Description with semi-transparent background for readability
+            GameObject descContainer = new GameObject("DescContainer");
+            descContainer.transform.SetParent(choice.transform, false);
+            var descContainerRect = descContainer.AddComponent<RectTransform>();
+            descContainerRect.sizeDelta = new Vector2(0, 24);
+
+            // Description background (black 50% alpha)
+            Image descBgImg = descContainer.AddComponent<Image>();
+            descBgImg.color = new Color(0f, 0f, 0f, 0.5f);
+            descBgImg.raycastTarget = false;
+
+            var descLayoutElem = descContainer.AddComponent<LayoutElement>();
+            descLayoutElem.preferredHeight = 24;
+            descLayoutElem.flexibleWidth = 1;
+
+            // Description text
+            GameObject descObj = CreateText(descContainer, "Desc", desc, 12);
+            RectTransform descRect = descObj.GetComponent<RectTransform>();
+            descRect.anchorMin = Vector2.zero;
+            descRect.anchorMax = Vector2.one;
+            descRect.sizeDelta = Vector2.zero;
+            descRect.offsetMin = new Vector2(8, 2);
+            descRect.offsetMax = new Vector2(-8, -2);
             descObj.GetComponent<TMP_Text>().color = new Color(0.7f, 0.7f, 0.7f);
 
             return choice;
@@ -4432,7 +4777,7 @@ namespace HNR.Editor
             CreateEventSystem();
 
             var canvas = CreateMainCanvas("MissionsCanvas");
-            CreateBackground(canvas, new Color(0.08f, 0.08f, 0.12f));
+            CreateSpriteBackground(canvas, "Missions", new Color(0.08f, 0.08f, 0.12f));
             CreateMissionsScreen(canvas.transform);
             CreateSettingsOverlay(canvas.transform);
 
@@ -4534,7 +4879,7 @@ namespace HNR.Editor
             CreateEventSystem();
 
             var canvas = CreateMainCanvas("BattleMissionCanvas");
-            CreateBackground(canvas, new Color(0.08f, 0.08f, 0.12f));
+            CreateSpriteBackground(canvas, "BattleMission", new Color(0.08f, 0.08f, 0.12f));
             CreateBattleMissionScreen(canvas.transform);
 
             // Create overlay container for modals
@@ -4890,7 +5235,7 @@ namespace HNR.Editor
             CreateEventSystem();
 
             var canvas = CreateMainCanvas("RequiemsCanvas");
-            CreateBackground(canvas, new Color(0.08f, 0.08f, 0.12f));
+            CreateSpriteBackground(canvas, "Requiems", new Color(0.08f, 0.08f, 0.12f));
             CreateRequiemsScreen(canvas.transform);
             CreateSettingsOverlay(canvas.transform);
 

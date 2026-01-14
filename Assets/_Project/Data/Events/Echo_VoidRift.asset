@@ -16,7 +16,7 @@ MonoBehaviour:
   _eventTitle: Void Rift
   _narrative: A tear in reality crackles before you, raw void energy seeping through.
     Those who touch it are forever changed.
-  _backgroundImage: {fileID: 0}
+  _backgroundImage: {fileID: -3601323346506747913, guid: e042fc8336d61df429ee3f6769382b8a, type: 3}
   _choices:
   - _choiceText: Embrace the void
     _outcomeText: Power surges through you, but at a cost. Your maximum potential
