@@ -74,14 +74,6 @@ namespace HNR.UI.Config
         private Sprite _shopBackground;
 
         // ============================================
-        // Sanctuary Special Elements
-        // ============================================
-
-        [Header("Sanctuary Elements")]
-        [SerializeField, Tooltip("Campfire sprite for Sanctuary screen")]
-        private Sprite _campfireSprite;
-
-        // ============================================
         // Fallback Colors (used when sprites not assigned)
         // ============================================
 
@@ -145,7 +137,6 @@ namespace HNR.UI.Config
 
         public Sprite SanctuaryBackground => _sanctuaryBackground;
         public Sprite ShopBackground => _shopBackground;
-        public Sprite CampfireSprite => _campfireSprite;
 
         // ============================================
         // Fallback Color Accessors

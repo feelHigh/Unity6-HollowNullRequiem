@@ -407,6 +407,17 @@ namespace HNR.Editor
                 Debug.Log("[ProductionSceneSetupGenerator] Wired ZoneBackground to SanctuaryVisualController");
             }
 
+            // Add ZoneBackgroundController for dynamic zone-based backgrounds
+            var zoneBackgroundController = zoneBackgroundObj.AddComponent<ZoneBackgroundController>();
+            if (zoneBackgroundController != null)
+            {
+                SerializedObject zoneBgSo = new SerializedObject(zoneBackgroundController);
+                zoneBgSo.FindProperty("_backgroundImage").objectReferenceValue = zoneBackgroundImage;
+                zoneBgSo.FindProperty("_backgroundConfig").objectReferenceValue = bgConfig;
+                zoneBgSo.ApplyModifiedPropertiesWithoutUndo();
+                Debug.Log("[ProductionSceneSetupGenerator] Added ZoneBackgroundController with config wiring");
+            }
+
             // Save scene
             string scenePath = $"{SCENES_PATH}/NullRift.unity";
             EditorSceneManager.SaveScene(scene, scenePath);
@@ -1734,28 +1745,6 @@ namespace HNR.Editor
 
             // NO opaque background Image - world-space background shows through transparent UI
             // Background is handled by SanctuaryWorldBackground SpriteRenderer
-            var bgConfig = LoadBackgroundConfig();
-
-            // === Campfire UI Image (rendered in UI layer, in front of world-space Requiems) ===
-            GameObject campfireObj = new GameObject("CampfireImage");
-            campfireObj.transform.SetParent(screenObj.transform, false);
-            RectTransform campfireRect = campfireObj.AddComponent<RectTransform>();
-            campfireRect.anchorMin = new Vector2(0.5f, 0.08f);
-            campfireRect.anchorMax = new Vector2(0.5f, 0.08f);
-            campfireRect.pivot = new Vector2(0.5f, 0f);
-            campfireRect.sizeDelta = new Vector2(200, 200);
-            Image campfireImage = campfireObj.AddComponent<Image>();
-            campfireImage.raycastTarget = false;
-            // Assign campfire sprite from BackgroundConfig if available
-            if (bgConfig?.CampfireSprite != null)
-            {
-                campfireImage.sprite = bgConfig.CampfireSprite;
-                campfireImage.color = Color.white;
-            }
-            else
-            {
-                campfireImage.color = new Color(1f, 0.5f, 0.2f, 0.8f); // Orange placeholder
-            }
 
             // Note: No RequiemVisualsDisplay RawImage needed - Requiems render in world-space
             // like Combat scene, and show through the transparent UI canvas
@@ -1973,8 +1962,7 @@ namespace HNR.Editor
             so.FindProperty("_confirmUpgradeButton").objectReferenceValue = confirmUpgradeBtn.GetComponent<Button>();
             so.FindProperty("_cancelUpgradeButton").objectReferenceValue = cancelUpgradeBtn.GetComponent<Button>();
 
-            // Wire campfire and visual anchor references
-            so.FindProperty("_campfireImage").objectReferenceValue = campfireImage;
+            // Wire visual anchor references (legacy)
             so.FindProperty("_visualAnchorsContainer").objectReferenceValue = visualAnchorsRect;
             so.FindProperty("_leftVisualAnchor").objectReferenceValue = leftRect;
             so.FindProperty("_centerVisualAnchor").objectReferenceValue = centerRect;

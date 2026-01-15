@@ -40,13 +40,10 @@ namespace HNR.UI
         private Image _sanctuaryIcon;
 
         // ============================================
-        // Campfire & Visual Elements
+        // Visual Elements
         // ============================================
 
-        [Header("Campfire & Visuals")]
-        [SerializeField, Tooltip("Campfire UI Image (apply campfire sprite here)")]
-        private Image _campfireImage;
-
+        [Header("Visuals")]
         [SerializeField, Tooltip("Controller for world-space Requiem visuals")]
         private SanctuaryVisualController _visualController;
 

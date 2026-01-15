@@ -461,6 +461,12 @@ namespace HNR.UI
         {
             Debug.Log("[ResultsScreen] Continue clicked");
 
+            // Stop any playing SFX (victory stinger)
+            if (ServiceLocator.TryGet<IAudioManager>(out var audioManager))
+            {
+                audioManager.StopAllSFX();
+            }
+
             // Add selected card to deck if any
             if (_selectedCard != null)
             {

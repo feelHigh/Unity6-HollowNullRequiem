@@ -106,15 +106,6 @@ namespace HNR.Editor.Config
             {
                 Debug.Log("All screen backgrounds assigned");
             }
-
-            if (config.CampfireSprite == null)
-            {
-                Debug.LogWarning("Campfire sprite not assigned");
-            }
-            else
-            {
-                Debug.Log("Campfire sprite assigned");
-            }
         }
     }
 }
