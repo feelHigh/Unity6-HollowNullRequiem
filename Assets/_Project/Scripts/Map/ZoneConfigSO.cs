@@ -46,6 +46,37 @@ namespace HNR.Map
         private int _maxNodesPerColumn = 4;
 
         // ============================================
+        // Map Shape Pattern
+        // ============================================
+
+        [Header("Map Shape Pattern")]
+        [SerializeField, Tooltip("Pattern for node distribution across columns (Diamond creates organic branching)")]
+        private MapShapePattern _mapShapePattern = MapShapePattern.Diamond;
+
+        [SerializeField, Tooltip("Custom node counts per column (only used with Custom pattern). Length must match ColumnCount.")]
+        private int[] _customNodeDistribution;
+
+        [SerializeField, Range(3, 7), Tooltip("Maximum vertical slots available for node positioning")]
+        private int _maxVerticalSlots = 5;
+
+        // ============================================
+        // Connection Rules
+        // ============================================
+
+        [Header("Connection Rules")]
+        [SerializeField, Range(1, 3), Tooltip("Maximum slot distance for connections (1 = adjacent only, creates organic paths)")]
+        private int _maxRowDistance = 1;
+
+        [SerializeField, Tooltip("Prefer keeping paths separate (reduces merge frequency for more distinct routes)")]
+        private bool _preferSeparatePaths = false;
+
+        [SerializeField, Tooltip("Force merge points at specific columns (0-indexed, excluding start/end)")]
+        private int[] _forcedMergeColumns;
+
+        [SerializeField, Tooltip("Force diverge points at specific columns")]
+        private int[] _forcedDivergeColumns;
+
+        // ============================================
         // Node Distribution Weights
         // ============================================
 
@@ -190,6 +221,27 @@ namespace HNR.Map
         /// <summary>Position jitter amount.</summary>
         public float NodeJitter => _nodeJitter;
 
+        /// <summary>Map shape pattern for node distribution.</summary>
+        public MapShapePattern MapShapePattern => _mapShapePattern;
+
+        /// <summary>Custom node distribution array (for Custom pattern).</summary>
+        public int[] CustomNodeDistribution => _customNodeDistribution;
+
+        /// <summary>Maximum vertical slots for node positioning.</summary>
+        public int MaxVerticalSlots => _maxVerticalSlots;
+
+        /// <summary>Maximum slot distance for connections (1 = adjacent only).</summary>
+        public int MaxRowDistance => _maxRowDistance;
+
+        /// <summary>Whether to prefer keeping paths separate.</summary>
+        public bool PreferSeparatePaths => _preferSeparatePaths;
+
+        /// <summary>Columns that force path convergence.</summary>
+        public int[] ForcedMergeColumns => _forcedMergeColumns ?? System.Array.Empty<int>();
+
+        /// <summary>Columns that force path divergence.</summary>
+        public int[] ForcedDivergeColumns => _forcedDivergeColumns ?? System.Array.Empty<int>();
+
         // ============================================
         // Helper Methods
         // ============================================
@@ -228,6 +280,203 @@ namespace HNR.Map
         {
             return _combatWeight + _eliteWeight + _shopWeight +
                    _echoWeight + _sanctuaryWeight + _treasureWeight;
+        }
+
+        /// <summary>
+        /// Gets the node distribution array based on the selected pattern.
+        /// Returns an array where each index is a column and value is node count.
+        /// </summary>
+        public int[] GetNodeDistribution()
+        {
+            return _mapShapePattern switch
+            {
+                MapShapePattern.Diamond => GenerateDiamondDistribution(),
+                MapShapePattern.Hourglass => GenerateHourglassDistribution(),
+                MapShapePattern.WideDiamond => GenerateWideDiamondDistribution(),
+                MapShapePattern.Custom => GetCustomDistribution(),
+                _ => GenerateDiamondDistribution()
+            };
+        }
+
+        /// <summary>
+        /// Checks if a column is a forced merge point.
+        /// </summary>
+        public bool IsMergeColumn(int column)
+        {
+            if (_forcedMergeColumns == null) return false;
+            return System.Array.IndexOf(_forcedMergeColumns, column) >= 0;
+        }
+
+        /// <summary>
+        /// Checks if a column is a forced diverge point.
+        /// </summary>
+        public bool IsDivergeColumn(int column)
+        {
+            if (_forcedDivergeColumns == null) return false;
+            return System.Array.IndexOf(_forcedDivergeColumns, column) >= 0;
+        }
+
+        // ============================================
+        // Pattern Generators
+        // ============================================
+
+        /// <summary>
+        /// Diamond pattern: 1 → expand → peak → contract → 1
+        /// Creates classic roguelike branching with smooth expansion/contraction.
+        /// </summary>
+        private int[] GenerateDiamondDistribution()
+        {
+            var dist = new int[_columnCount];
+            dist[0] = 1; // Start node
+            dist[_columnCount - 1] = 1; // End node
+
+            if (_columnCount <= 2) return dist;
+
+            int midPoint = _columnCount / 2;
+            int maxNodes = Mathf.Min(_maxNodesPerColumn, _maxVerticalSlots);
+
+            for (int i = 1; i < _columnCount - 1; i++)
+            {
+                if (i <= midPoint)
+                {
+                    // Expansion phase: linearly increase toward midpoint
+                    float progress = (float)i / midPoint;
+                    dist[i] = Mathf.RoundToInt(Mathf.Lerp(2, maxNodes, progress));
+                }
+                else
+                {
+                    // Contraction phase: linearly decrease toward end
+                    float progress = (float)(i - midPoint) / (_columnCount - 1 - midPoint);
+                    dist[i] = Mathf.RoundToInt(Mathf.Lerp(maxNodes, 2, progress));
+                }
+                dist[i] = Mathf.Clamp(dist[i], _minNodesPerColumn, maxNodes);
+            }
+
+            return dist;
+        }
+
+        /// <summary>
+        /// Hourglass pattern: 1 → rapid expand → contract → 1
+        /// More aggressive branching early, faster convergence.
+        /// </summary>
+        private int[] GenerateHourglassDistribution()
+        {
+            var dist = new int[_columnCount];
+            dist[0] = 1;
+            dist[_columnCount - 1] = 1;
+
+            if (_columnCount <= 2) return dist;
+
+            int maxNodes = Mathf.Min(_maxNodesPerColumn, _maxVerticalSlots);
+
+            // Rapid expansion in first third, then gradual contraction
+            int expansionEnd = Mathf.Max(1, _columnCount / 3);
+
+            for (int i = 1; i < _columnCount - 1; i++)
+            {
+                if (i <= expansionEnd)
+                {
+                    // Rapid expansion to max
+                    float progress = (float)i / expansionEnd;
+                    dist[i] = Mathf.RoundToInt(Mathf.Lerp(2, maxNodes, progress));
+                }
+                else
+                {
+                    // Gradual contraction
+                    float progress = (float)(i - expansionEnd) / (_columnCount - 1 - expansionEnd);
+                    dist[i] = Mathf.RoundToInt(Mathf.Lerp(maxNodes, 2, progress));
+                }
+                dist[i] = Mathf.Clamp(dist[i], _minNodesPerColumn, maxNodes);
+            }
+
+            return dist;
+        }
+
+        /// <summary>
+        /// Wide diamond pattern: 1 → expand → wide plateau → contract → 1
+        /// Maintains max width for longer, more branching opportunities.
+        /// </summary>
+        private int[] GenerateWideDiamondDistribution()
+        {
+            var dist = new int[_columnCount];
+            dist[0] = 1;
+            dist[_columnCount - 1] = 1;
+
+            if (_columnCount <= 2) return dist;
+
+            int maxNodes = Mathf.Min(_maxNodesPerColumn, _maxVerticalSlots);
+
+            // Expand in first 25%, plateau for 50%, contract in last 25%
+            int expansionEnd = Mathf.Max(1, _columnCount / 4);
+            int contractionStart = _columnCount - 1 - expansionEnd;
+
+            for (int i = 1; i < _columnCount - 1; i++)
+            {
+                if (i <= expansionEnd)
+                {
+                    // Expansion phase
+                    float progress = (float)i / expansionEnd;
+                    dist[i] = Mathf.RoundToInt(Mathf.Lerp(2, maxNodes, progress));
+                }
+                else if (i >= contractionStart)
+                {
+                    // Contraction phase
+                    float progress = (float)(i - contractionStart) / (_columnCount - 1 - contractionStart);
+                    dist[i] = Mathf.RoundToInt(Mathf.Lerp(maxNodes, 2, progress));
+                }
+                else
+                {
+                    // Plateau phase - maintain max
+                    dist[i] = maxNodes;
+                }
+                dist[i] = Mathf.Clamp(dist[i], _minNodesPerColumn, maxNodes);
+            }
+
+            return dist;
+        }
+
+        /// <summary>
+        /// Gets the custom distribution, validating and adjusting as needed.
+        /// </summary>
+        private int[] GetCustomDistribution()
+        {
+            if (_customNodeDistribution == null || _customNodeDistribution.Length == 0)
+            {
+                Debug.LogWarning($"[ZoneConfigSO] Custom pattern selected but no distribution defined. Falling back to Diamond.");
+                return GenerateDiamondDistribution();
+            }
+
+            // If length doesn't match column count, pad or truncate
+            if (_customNodeDistribution.Length != _columnCount)
+            {
+                Debug.LogWarning($"[ZoneConfigSO] Custom distribution length ({_customNodeDistribution.Length}) doesn't match column count ({_columnCount}). Adjusting...");
+
+                var adjusted = new int[_columnCount];
+                adjusted[0] = 1; // Force start to 1
+                adjusted[_columnCount - 1] = 1; // Force end to 1
+
+                for (int i = 1; i < _columnCount - 1; i++)
+                {
+                    if (i < _customNodeDistribution.Length)
+                        adjusted[i] = Mathf.Clamp(_customNodeDistribution[i], 1, _maxVerticalSlots);
+                    else
+                        adjusted[i] = _minNodesPerColumn;
+                }
+                return adjusted;
+            }
+
+            // Ensure start and end are 1
+            var dist = (int[])_customNodeDistribution.Clone();
+            dist[0] = 1;
+            dist[_columnCount - 1] = 1;
+
+            // Clamp middle values
+            for (int i = 1; i < _columnCount - 1; i++)
+            {
+                dist[i] = Mathf.Clamp(dist[i], 1, _maxVerticalSlots);
+            }
+
+            return dist;
         }
 
         /// <summary>

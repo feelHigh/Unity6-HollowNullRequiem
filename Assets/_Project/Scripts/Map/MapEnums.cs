@@ -6,6 +6,38 @@
 namespace HNR.Map
 {
     /// <summary>
+    /// Predefined map shape patterns controlling node distribution across columns.
+    /// Creates organic diamond/hourglass shapes instead of random grids.
+    /// </summary>
+    public enum MapShapePattern
+    {
+        /// <summary>
+        /// Classic roguelike: 1 → expand → plateau → contract → 1
+        /// Example (7 cols): 1 → 2 → 3 → 4 → 3 → 2 → 1
+        /// Example (5 cols): 1 → 3 → 4 → 3 → 1
+        /// </summary>
+        Diamond,
+
+        /// <summary>
+        /// Aggressive expansion then sharp convergence.
+        /// Example: 1 → 4 → 4 → 3 → 2 → 1
+        /// </summary>
+        Hourglass,
+
+        /// <summary>
+        /// Wide middle plateau with gradual expansion/contraction.
+        /// Example: 1 → 2 → 3 → 4 → 4 → 4 → 3 → 2 → 1
+        /// </summary>
+        WideDiamond,
+
+        /// <summary>
+        /// Uses custom array from ZoneConfigSO.CustomNodeDistribution.
+        /// Allows complete control over node counts per column.
+        /// </summary>
+        Custom
+    }
+
+    /// <summary>
     /// Types of nodes that can appear on the map.
     /// </summary>
     public enum NodeType

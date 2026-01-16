@@ -67,24 +67,76 @@ namespace HNR.Map
         // Node Generation
         // ============================================
 
+        // Cached distribution for current generation
+        private int[] _nodeDistribution;
+
         private void GenerateNodes(MapData mapData)
         {
+            // Get node distribution from pattern
+            _nodeDistribution = _config.GetNodeDistribution();
+            int maxSlots = _config.MaxVerticalSlots;
+
             for (int col = 0; col < _config.ColumnCount; col++)
             {
-                int nodeCount = GetNodeCountForColumn(col);
+                int nodeCount = _nodeDistribution[col];
+
+                // Calculate which vertical slots this column's nodes occupy
+                int[] slots = CalculateSlotPositions(nodeCount, maxSlots, col);
 
                 for (int row = 0; row < nodeCount; row++)
                 {
                     var nodeType = DetermineNodeType(col);
                     var node = MapNodeData.Create($"node_{col}_{row}", nodeType, col, row);
+                    node.VerticalSlot = slots[row];
                     mapData.Nodes.Add(node);
                 }
             }
         }
 
+        /// <summary>
+        /// Calculates vertical slot positions for nodes in a column.
+        /// Distributes nodes evenly across available slots, centered.
+        /// </summary>
+        private int[] CalculateSlotPositions(int nodeCount, int maxSlots, int column)
+        {
+            var slots = new int[nodeCount];
+
+            if (nodeCount == 1)
+            {
+                // Single node centers in middle slot
+                slots[0] = maxSlots / 2;
+                return slots;
+            }
+
+            if (nodeCount >= maxSlots)
+            {
+                // Fill all slots
+                for (int i = 0; i < nodeCount; i++)
+                {
+                    slots[i] = i;
+                }
+                return slots;
+            }
+
+            // Spread nodes evenly across available slots, centered
+            // For 3 nodes in 5 slots: positions [1, 2, 3] (centered)
+            float spacing = (float)(maxSlots - 1) / (nodeCount - 1);
+
+            for (int i = 0; i < nodeCount; i++)
+            {
+                slots[i] = Mathf.RoundToInt(i * spacing);
+            }
+
+            return slots;
+        }
+
         private int GetNodeCountForColumn(int col)
         {
-            // Start and Boss columns have exactly 1 node
+            // Use distribution array if available
+            if (_nodeDistribution != null && col < _nodeDistribution.Length)
+                return _nodeDistribution[col];
+
+            // Fallback: Start and Boss columns have exactly 1 node
             if (col == 0 || col == _config.ColumnCount - 1)
                 return 1;
 
@@ -149,38 +201,210 @@ namespace HNR.Map
         }
 
         // ============================================
-        // Connection Generation
+        // Connection Generation (Adjacent-Slot Algorithm)
         // ============================================
 
         private void GenerateConnections(MapData mapData)
         {
+            int maxRowDistance = _config.MaxRowDistance;
+
             for (int col = 0; col < _config.ColumnCount - 1; col++)
             {
                 var currentCol = mapData.GetColumn(col);
                 var nextCol = mapData.GetColumn(col + 1);
 
+                bool isMergePoint = _config.IsMergeColumn(col + 1);
+                bool isDivergePoint = _config.IsDivergeColumn(col);
+
+                // Track incoming connections for load balancing
+                var incomingCounts = new Dictionary<string, int>();
+                foreach (var node in nextCol)
+                    incomingCounts[node.NodeId] = 0;
+
+                // Pass 1: Each node connects to at least one valid target
                 foreach (var node in currentCol)
                 {
-                    // Each node connects to 1-2 nodes in next column
-                    int connectionCount = nextCol.Count == 1 ? 1 : _rng.Next(1, 3);
-                    var shuffledNext = ShuffleList(new List<MapNodeData>(nextCol));
+                    var validTargets = GetValidTargets(node, nextCol, maxRowDistance);
 
-                    for (int i = 0; i < Mathf.Min(connectionCount, shuffledNext.Count); i++)
+                    if (validTargets.Count == 0)
                     {
-                        var targetNode = shuffledNext[i];
-                        if (!node.ConnectedNodeIds.Contains(targetNode.NodeId))
+                        // Fallback: Connect to closest node by slot
+                        var closest = FindClosestBySlot(node, nextCol);
+                        if (closest != null)
                         {
-                            node.ConnectedNodeIds.Add(targetNode.NodeId);
-                            targetNode.ConnectionsFrom.Add(node.NodeId);
+                            CreateConnection(node, closest, incomingCounts);
                         }
                     }
+                    else
+                    {
+                        // Connect to best adjacent target
+                        var bestTarget = SelectBestTarget(node, validTargets, incomingCounts, isDivergePoint);
+                        CreateConnection(node, bestTarget, incomingCounts);
+                    }
+                }
+
+                // Pass 2: Ensure all next-column nodes have at least one incoming connection
+                foreach (var nextNode in nextCol)
+                {
+                    if (incomingCounts[nextNode.NodeId] == 0)
+                    {
+                        var validSources = GetValidSources(nextNode, currentCol, maxRowDistance);
+                        if (validSources.Count > 0)
+                        {
+                            var source = validSources[_rng.Next(validSources.Count)];
+                            CreateConnection(source, nextNode, incomingCounts);
+                        }
+                        else
+                        {
+                            // Fallback: Use closest source
+                            var closest = FindClosestBySlot(nextNode, currentCol);
+                            if (closest != null)
+                            {
+                                CreateConnection(closest, nextNode, incomingCounts);
+                            }
+                        }
+                    }
+                }
+
+                // Pass 3: Add secondary connections for branching (if appropriate)
+                if (!_config.PreferSeparatePaths && !isMergePoint)
+                {
+                    AddSecondaryConnections(currentCol, nextCol, maxRowDistance, incomingCounts);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets valid target nodes based on vertical slot adjacency.
+        /// </summary>
+        private List<MapNodeData> GetValidTargets(MapNodeData source, List<MapNodeData> nextCol, int maxDistance)
+        {
+            var valid = new List<MapNodeData>();
+            foreach (var target in nextCol)
+            {
+                int slotDistance = Mathf.Abs(source.VerticalSlot - target.VerticalSlot);
+                if (slotDistance <= maxDistance)
+                {
+                    valid.Add(target);
+                }
+            }
+            return valid;
+        }
+
+        /// <summary>
+        /// Gets valid source nodes that can connect to this target.
+        /// </summary>
+        private List<MapNodeData> GetValidSources(MapNodeData target, List<MapNodeData> prevCol, int maxDistance)
+        {
+            var valid = new List<MapNodeData>();
+            foreach (var source in prevCol)
+            {
+                int slotDistance = Mathf.Abs(source.VerticalSlot - target.VerticalSlot);
+                if (slotDistance <= maxDistance)
+                {
+                    valid.Add(source);
+                }
+            }
+            return valid;
+        }
+
+        /// <summary>
+        /// Selects the best target considering connection distribution.
+        /// Prefers targets with fewer incoming connections for balanced paths.
+        /// </summary>
+        private MapNodeData SelectBestTarget(MapNodeData source, List<MapNodeData> targets,
+            Dictionary<string, int> incomingCounts, bool isDivergePoint)
+        {
+            if (targets.Count == 0) return null;
+            if (targets.Count == 1) return targets[0];
+
+            // Sort by incoming count (prefer less connected)
+            targets.Sort((a, b) => incomingCounts[a.NodeId].CompareTo(incomingCounts[b.NodeId]));
+
+            // If diverge point, strongly prefer unconnected targets
+            if (isDivergePoint)
+            {
+                var unconnected = targets.FindAll(t => incomingCounts[t.NodeId] == 0);
+                if (unconnected.Count > 0)
+                    return unconnected[_rng.Next(unconnected.Count)];
+            }
+
+            // Prefer separating paths if configured
+            if (_config.PreferSeparatePaths)
+            {
+                var lowConnection = targets.FindAll(t => incomingCounts[t.NodeId] <= 1);
+                if (lowConnection.Count > 0)
+                    return lowConnection[_rng.Next(lowConnection.Count)];
+            }
+
+            // Return one of the least-connected targets
+            int minCount = incomingCounts[targets[0].NodeId];
+            var minTargets = targets.FindAll(t => incomingCounts[t.NodeId] == minCount);
+            return minTargets[_rng.Next(minTargets.Count)];
+        }
+
+        /// <summary>
+        /// Finds the node closest to source by vertical slot.
+        /// </summary>
+        private MapNodeData FindClosestBySlot(MapNodeData source, List<MapNodeData> targetCol)
+        {
+            if (targetCol.Count == 0) return null;
+
+            MapNodeData closest = null;
+            int minDistance = int.MaxValue;
+
+            foreach (var target in targetCol)
+            {
+                int distance = Mathf.Abs(source.VerticalSlot - target.VerticalSlot);
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    closest = target;
+                }
+            }
+
+            return closest;
+        }
+
+        /// <summary>
+        /// Creates a connection between nodes and tracks incoming counts.
+        /// </summary>
+        private void CreateConnection(MapNodeData from, MapNodeData to, Dictionary<string, int> incomingCounts)
+        {
+            if (from == null || to == null) return;
+            if (from.ConnectedNodeIds.Contains(to.NodeId)) return;
+
+            from.ConnectedNodeIds.Add(to.NodeId);
+            to.ConnectionsFrom.Add(from.NodeId);
+            incomingCounts[to.NodeId]++;
+        }
+
+        /// <summary>
+        /// Adds secondary connections for branching diversity (30% chance per node).
+        /// </summary>
+        private void AddSecondaryConnections(List<MapNodeData> currentCol, List<MapNodeData> nextCol,
+            int maxRowDistance, Dictionary<string, int> incomingCounts)
+        {
+            foreach (var node in currentCol)
+            {
+                // 30% chance for additional connection
+                if (_rng.NextDouble() > 0.3) continue;
+                if (node.ConnectedNodeIds.Count >= 2) continue;
+
+                var validTargets = GetValidTargets(node, nextCol, maxRowDistance);
+                var unconnected = validTargets.FindAll(t => !node.ConnectedNodeIds.Contains(t.NodeId));
+
+                if (unconnected.Count > 0)
+                {
+                    var target = unconnected[_rng.Next(unconnected.Count)];
+                    CreateConnection(node, target, incomingCounts);
                 }
             }
         }
 
         private void EnsureAllNodesReachable(MapData mapData)
         {
-            // Ensure every node (except start) has at least one incoming connection
+            // Verify and repair any orphan nodes (should be rare with new algorithm)
             for (int col = 1; col < _config.ColumnCount; col++)
             {
                 var currentCol = mapData.GetColumn(col);
@@ -190,10 +414,14 @@ namespace HNR.Map
                 {
                     if (node.ConnectionsFrom.Count == 0 && prevCol.Count > 0)
                     {
-                        // Connect from a random previous column node
-                        var randomPrev = prevCol[_rng.Next(prevCol.Count)];
-                        randomPrev.ConnectedNodeIds.Add(node.NodeId);
-                        node.ConnectionsFrom.Add(randomPrev.NodeId);
+                        // Connect from closest node by slot
+                        var closest = FindClosestBySlot(node, prevCol);
+                        if (closest != null)
+                        {
+                            closest.ConnectedNodeIds.Add(node.NodeId);
+                            node.ConnectionsFrom.Add(closest.NodeId);
+                            Debug.LogWarning($"[MapGenerator] Repaired orphan node {node.NodeId} by connecting from {closest.NodeId}");
+                        }
                     }
                 }
             }
@@ -242,44 +470,45 @@ namespace HNR.Map
         }
 
         // ============================================
-        // Position Calculation
+        // Position Calculation (Slot-Based Layout)
         // ============================================
 
         private void CalculatePositions(MapData mapData)
         {
             // Horizontal progression: Start on left, Boss on right
-            // Nodes within each column are stacked vertically
+            // Vertical positioning based on VerticalSlot for consistent spacing
             // Center the entire map so middle is at origin
 
             float totalWidth = (_config.ColumnCount - 1) * _config.HorizontalSpacing;
             float offsetX = -totalWidth / 2f;
 
+            // Calculate total height based on max slots (not node count)
+            int maxSlots = _config.MaxVerticalSlots;
+            float slotHeight = _config.VerticalSpacing;
+            float totalHeight = (maxSlots - 1) * slotHeight;
+            float topY = totalHeight / 2f;
+
             for (int col = 0; col < _config.ColumnCount; col++)
             {
                 var colNodes = mapData.GetColumn(col);
-                int count = colNodes.Count;
 
                 // X = horizontal progression (left to right), centered
-                // All nodes in the same column share the same X position (no jitter)
-                float x = offsetX + (col * _config.HorizontalSpacing);
+                float baseX = offsetX + (col * _config.HorizontalSpacing);
 
-                // Y = fixed spacing between adjacent nodes, centered around y=0
-                // This ensures consistent gap between nodes regardless of node count
-                float columnHeight = (count - 1) * _config.VerticalSpacing;
-                float topY = columnHeight / 2f;
-
-                for (int i = 0; i < count; i++)
+                foreach (var node in colNodes)
                 {
-                    // Position from top to bottom with fixed spacing
-                    float y = topY - (i * _config.VerticalSpacing);
+                    // Y position based on vertical slot (consistent across all columns)
+                    float y = topY - (node.VerticalSlot * slotHeight);
 
-                    // Add vertical jitter only for visual variety (not on start/boss)
+                    // Add jitter for middle columns (visual variety)
+                    float x = baseX;
                     if (col > 0 && col < _config.ColumnCount - 1)
                     {
-                        y += RandomJitter();
+                        x += RandomJitter() * 0.3f; // Reduced horizontal jitter
+                        y += RandomJitter();         // Normal vertical jitter
                     }
 
-                    colNodes[i].Position = new Vector2(x, y);
+                    node.Position = new Vector2(x, y);
                 }
             }
         }

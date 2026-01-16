@@ -36,6 +36,13 @@ namespace HNR.Map
         /// <summary>Row index within the column (vertical position).</summary>
         public int Row;
 
+        /// <summary>
+        /// Vertical slot index for organic positioning (0 to MaxSlots-1).
+        /// Used for diamond/hourglass patterns where nodes occupy fixed vertical slots.
+        /// Different from Row - slots are fixed positions across all columns.
+        /// </summary>
+        public int VerticalSlot;
+
         /// <summary>Visual position for UI rendering.</summary>
         public Vector2 Position;
 
