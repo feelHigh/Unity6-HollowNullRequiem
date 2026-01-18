@@ -221,10 +221,20 @@ namespace HNR.Combat
                     var hitRequiem = context.Team[targetIndex];
                     hitRequiem?.Visual?.PlayHit();
 
-                    // Add corruption based on damage taken (1 corruption per 5 damage, minimum 1)
-                    int corruptionGain = Mathf.Max(1, remaining / 5);
-                    hitRequiem?.AddCorruption(corruptionGain);
-                    Debug.Log($"[EnemyPhase] {hitRequiem?.Name} gains {corruptionGain} corruption from damage");
+                    // Add corruption based on damage taken (configurable via CombatConfigSO)
+                    if (context.CombatConfig != null)
+                    {
+                        int corruptionGain = context.CombatConfig.CalculateCorruptionFromDamage(remaining);
+                        if (corruptionGain > 0)
+                        {
+                            hitRequiem?.AddCorruption(corruptionGain);
+                            Debug.Log($"[EnemyPhase] {hitRequiem?.Name} gains {corruptionGain} corruption from {remaining} damage");
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[EnemyPhase] CombatConfig is null - no corruption applied from damage. Assign CombatConfig to TurnManager.");
+                    }
 
                     // Include position in event for damage number spawning
                     EventBus.Publish(new TeamHPChangedEvent(context.TeamHP, context.TeamMaxHP, -remaining, hitRequiem?.Position));

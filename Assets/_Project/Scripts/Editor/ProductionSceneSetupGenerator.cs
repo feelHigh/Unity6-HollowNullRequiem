@@ -41,6 +41,7 @@ namespace HNR.Editor
         private const string PREFABS_PATH = "Assets/_Project/Prefabs";
         private const string ICON_CONFIG_PATH = "Assets/_Project/Data/Config/SceneIconConfig.asset";
         private const string BACKGROUND_CONFIG_PATH = "Assets/_Project/Data/Config/BackgroundConfig.asset";
+        private const string COMBAT_CONFIG_PATH = "Assets/_Project/Data/Config/CombatConfig.asset";
 
         // Cached icon config for current generation run
         private static SceneIconConfigSO _iconConfig;
@@ -444,7 +445,8 @@ namespace HNR.Editor
 
             GameObject turnManagerObj = new GameObject("TurnManager");
             turnManagerObj.transform.SetParent(managersParent.transform);
-            turnManagerObj.AddComponent<TurnManager>();
+            var turnManager = turnManagerObj.AddComponent<TurnManager>();
+            WireTurnManager(turnManager);
 
             GameObject deckManagerObj = new GameObject("DeckManager");
             deckManagerObj.transform.SetParent(managersParent.transform);
@@ -2866,6 +2868,31 @@ namespace HNR.Editor
             {
                 Debug.LogWarning("[ProductionSceneSetupGenerator] AudioConfigSO not found at " + AUDIO_CONFIG_PATH +
                     ". Run 'HNR > 3. Audio & VFX > Generate Audio Config' first.");
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
+        }
+
+        /// <summary>
+        /// Wires CombatConfigSO to the TurnManager.
+        /// </summary>
+        private static void WireTurnManager(TurnManager turnManager)
+        {
+            if (turnManager == null) return;
+
+            var combatConfig = AssetDatabase.LoadAssetAtPath<CombatConfigSO>(COMBAT_CONFIG_PATH);
+
+            SerializedObject so = new SerializedObject(turnManager);
+
+            if (combatConfig != null)
+            {
+                so.FindProperty("_combatConfig").objectReferenceValue = combatConfig;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                Debug.Log("[ProductionSceneSetupGenerator] Wired TurnManager with CombatConfigSO");
+            }
+            else
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] CombatConfigSO not found at " + COMBAT_CONFIG_PATH +
+                    ". Run 'HNR > 5. Utilities > Config > Generate Combat Config' first.");
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
         }

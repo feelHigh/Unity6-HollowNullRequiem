@@ -33,6 +33,10 @@ namespace HNR.Combat
         [SerializeField, Tooltip("Cards drawn at start of each turn")]
         private int _cardsPerTurn = 5;
 
+        [Header("Combat Config")]
+        [SerializeField, Tooltip("Combat configuration asset")]
+        private CombatConfigSO _combatConfig;
+
         [Header("Card Draw Animation")]
         [SerializeField, Tooltip("Delay between drawing each card")]
         private float _cardDrawDelay = 0.15f;
@@ -172,6 +176,16 @@ namespace HNR.Combat
             _context.MaxAP = _startingAP;
             _context.DeckManager = ServiceLocator.TryGet<DeckManager>(out var dm) ? dm : null;
             _context.HandManager = ServiceLocator.TryGet<HandManager>(out var hm) ? hm : null;
+            _context.CombatConfig = _combatConfig;
+
+            if (_combatConfig == null)
+            {
+                Debug.LogWarning("[TurnManager] CombatConfig is not assigned! Damage-based corruption will not be applied. Assign CombatConfig in the Inspector.");
+            }
+            else
+            {
+                Debug.Log($"[TurnManager] CombatConfig loaded: DamagePerCorruption={_combatConfig.DamagePerCorruption}, Min={_combatConfig.MinimumCorruptionPerHit}, Max={_combatConfig.MaximumCorruptionPerHit}");
+            }
 
             // Calculate team HP from all Requiems
             int totalHP = 0;

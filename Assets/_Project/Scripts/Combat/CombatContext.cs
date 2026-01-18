@@ -73,6 +73,9 @@ namespace HNR.Combat
         /// <summary>Reference to status effect management system.</summary>
         public StatusEffectManager StatusManager { get; set; }
 
+        /// <summary>Reference to combat configuration.</summary>
+        public CombatConfigSO CombatConfig { get; set; }
+
         // ============================================
         // Combat State Flags
         // ============================================
@@ -106,6 +109,7 @@ namespace HNR.Combat
             DeckManager = null;
             HandManager = null;
             StatusManager = null;
+            // Note: CombatConfig is not reset as it's a persistent reference
             CombatEnded = false;
             PlayerVictory = false;
         }
