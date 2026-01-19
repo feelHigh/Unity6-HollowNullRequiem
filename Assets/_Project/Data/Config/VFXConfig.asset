@@ -99,7 +99,7 @@ MonoBehaviour:
     PreWarmCount: 1
     MaxActive: 2
     DefaultColor: {r: 0.8, g: 0.5, b: 1, a: 1}
-    DefaultScale: 1
+    DefaultScale: 0.3
   - EffectId: vfx_requiem_art
     Prefab: {fileID: 8650938231098632368, guid: 6ba1454cd4061fa449ba3e22578c5d5d, type: 3}
     Category: 3

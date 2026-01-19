@@ -76,7 +76,7 @@ namespace HNR.Characters
         private string _vfxEffectId = "vfx_requiem_art";
 
         [SerializeField, Tooltip("Override VFX prefab. If set, overrides VFXConfigSO lookup.")]
-        private GameObject _vfxPrefabOverride;
+        private GameObject _vfxPrefab;
 
         [SerializeField, Tooltip("Screen flash color on activation")]
         private Color _flashColor = Color.white;
@@ -93,7 +93,7 @@ namespace HNR.Characters
         private string _activationSoundId = "requiem_art";
 
         [SerializeField, Tooltip("Override activation sound. If set, overrides AudioConfigSO lookup.")]
-        private AudioClip _activationSoundOverride;
+        private AudioClip _activationSound;
 
         [SerializeField, Tooltip("Voice line on activation (always direct reference)")]
         private AudioClip _voiceLine;
@@ -130,10 +130,10 @@ namespace HNR.Characters
         public string VFXEffectId => _vfxEffectId;
 
         /// <summary>Override VFX prefab (null means use VFXConfigSO).</summary>
-        public GameObject VFXPrefabOverride => _vfxPrefabOverride;
+        public GameObject VFXPrefabOverride => _vfxPrefab;
 
         /// <summary>Whether this art has a VFX override prefab.</summary>
-        public bool HasVFXOverride => _vfxPrefabOverride != null;
+        public bool HasVFXOverride => _vfxPrefab != null;
 
         /// <summary>Screen flash color.</summary>
         public Color FlashColor => _flashColor;
@@ -145,10 +145,10 @@ namespace HNR.Characters
         public string ActivationSoundId => _activationSoundId;
 
         /// <summary>Override activation sound (null means use AudioConfigSO).</summary>
-        public AudioClip ActivationSoundOverride => _activationSoundOverride;
+        public AudioClip ActivationSoundOverride => _activationSound;
 
         /// <summary>Whether this art has an audio override.</summary>
-        public bool HasAudioOverride => _activationSoundOverride != null;
+        public bool HasAudioOverride => _activationSound != null;
 
         /// <summary>Voice line on activation.</summary>
         public AudioClip VoiceLine => _voiceLine;

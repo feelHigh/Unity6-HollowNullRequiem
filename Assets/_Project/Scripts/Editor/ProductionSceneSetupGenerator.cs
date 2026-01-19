@@ -480,6 +480,11 @@ namespace HNR.Editor
             combatManagerObj.transform.SetParent(managersParent.transform);
             combatManagerObj.AddComponent<CombatManager>();
 
+            // === Requiem Art Executor (executes ultimate ability effects) ===
+            GameObject requiemArtExecutorObj = new GameObject("RequiemArtExecutor");
+            requiemArtExecutorObj.transform.SetParent(managersParent.transform);
+            requiemArtExecutorObj.AddComponent<RequiemArtExecutor>();
+
             GameObject corruptionManagerObj = new GameObject("CorruptionManager");
             corruptionManagerObj.transform.SetParent(managersParent.transform);
             corruptionManagerObj.AddComponent<CorruptionManager>();

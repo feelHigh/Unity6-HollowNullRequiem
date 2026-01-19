@@ -13,23 +13,34 @@ MonoBehaviour:
   m_Name: Thornwick_EarthenPrison
   m_EditorClassIdentifier: 
   _artName: Earthen Prison
-  _description: Stun all enemies for 2 turns. Gain 30 Block.
-  _flavorText: '"The earth itself rises to bind you."'
+  _description: Command the earth to rise and trap all enemies, stunning them and
+    making them vulnerable to follow-up attacks.
+  _flavorText: '"The earth itself rejects you!"'
   _seCost: 30
   _oncePerCombat: 1
   _targetType: 2
   _effects:
+  - _effectType: 0
+    _value: 12
+    _duration: 0
+    _customData: 
   - _effectType: 9
+    _value: 1
+    _duration: 1
+    _customData: 
+  - _effectType: 8
     _value: 1
     _duration: 2
     _customData: 
   - _effectType: 2
-    _value: 30
+    _value: 15
     _duration: 0
     _customData: 
   _icon: {fileID: 0}
+  _vfxEffectId: vfx_requiem_art_thornwick
   _vfxPrefab: {fileID: 0}
-  _flashColor: {r: 0.4, g: 0.3, b: 0.1, a: 1}
-  _effectDuration: 2
+  _flashColor: {r: 0.5, g: 0.35, b: 0.2, a: 0.8}
+  _effectDuration: 1.5
+  _activationSoundId: art_thornwick
   _activationSound: {fileID: 0}
   _voiceLine: {fileID: 0}

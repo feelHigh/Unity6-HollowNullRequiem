@@ -19,7 +19,7 @@ namespace HNR.Editor
     /// </summary>
     public static class RequiemArtAssetGenerator
     {
-        private const string ASSET_PATH = "Assets/_Project/Resources/Data/Characters/RequiemArts";
+        private const string ASSET_PATH = "Assets/_Project/Data/Characters/Arts";
 
         public static void GenerateAllRequiemArts()
         {
@@ -68,8 +68,12 @@ namespace HNR.Editor
             SetField(art, "_effects", effects);
 
             // Visuals
+            SetField(art, "_vfxEffectId", "vfx_requiem_art_kira");
             SetField(art, "_flashColor", new Color(1f, 0.4f, 0.1f, 0.8f)); // Orange flash
             SetField(art, "_effectDuration", 2f);
+
+            // Audio
+            SetField(art, "_activationSoundId", "art_kira");
 
             SaveAsset(art, "Kira_InfernosWrath");
         }
@@ -107,8 +111,12 @@ namespace HNR.Editor
             SetField(art, "_effects", effects);
 
             // Visuals
+            SetField(art, "_vfxEffectId", "vfx_requiem_art_mordren");
             SetField(art, "_flashColor", new Color(0.5f, 0.2f, 0.8f, 0.8f)); // Purple flash
             SetField(art, "_effectDuration", 1.8f);
+
+            // Audio
+            SetField(art, "_activationSoundId", "art_mordren");
 
             SaveAsset(art, "Mordren_SoulHarvest");
         }
@@ -145,8 +153,12 @@ namespace HNR.Editor
             SetField(art, "_effects", effects);
 
             // Visuals
+            SetField(art, "_vfxEffectId", "vfx_requiem_art_elara");
             SetField(art, "_flashColor", new Color(0.9f, 0.95f, 0.5f, 0.8f)); // Golden flash
             SetField(art, "_effectDuration", 2.2f);
+
+            // Audio
+            SetField(art, "_activationSoundId", "art_elara");
 
             SaveAsset(art, "Elara_DivineAegis");
         }
@@ -184,8 +196,12 @@ namespace HNR.Editor
             SetField(art, "_effects", effects);
 
             // Visuals
+            SetField(art, "_vfxEffectId", "vfx_requiem_art_thornwick");
             SetField(art, "_flashColor", new Color(0.5f, 0.35f, 0.2f, 0.8f)); // Brown/earth flash
             SetField(art, "_effectDuration", 1.5f);
+
+            // Audio
+            SetField(art, "_activationSoundId", "art_thornwick");
 
             SaveAsset(art, "Thornwick_EarthenPrison");
         }
@@ -230,11 +246,15 @@ namespace HNR.Editor
         {
             string path = $"{ASSET_PATH}/{fileName}.asset";
 
+            // Set the asset name to match the filename
+            art.name = fileName;
+
             // Check if asset already exists
             var existing = AssetDatabase.LoadAssetAtPath<RequiemArtDataSO>(path);
             if (existing != null)
             {
                 EditorUtility.CopySerialized(art, existing);
+                existing.name = fileName;  // Ensure existing asset name matches
                 EditorUtility.SetDirty(existing);
                 Object.DestroyImmediate(art);
                 Debug.Log($"[RequiemArtAssetGenerator] Updated {path}");

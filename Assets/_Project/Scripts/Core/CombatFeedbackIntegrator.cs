@@ -5,6 +5,7 @@
 
 using UnityEngine;
 using HNR.Core.Events;
+using HNR.Characters;
 using HNR.Combat;
 using HNR.VFX;
 using HNR.Audio;
@@ -94,6 +95,7 @@ namespace HNR.Core
             EventBus.Subscribe<CardPlayedEvent>(OnCardPlayed);
             EventBus.Subscribe<CombatEndedEvent>(OnCombatEnded);
             EventBus.Subscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
+            EventBus.Subscribe<RequiemArtActivatedEvent>(OnRequiemArtActivated);
         }
 
         private void OnDisable()
@@ -105,6 +107,7 @@ namespace HNR.Core
             EventBus.Unsubscribe<CardPlayedEvent>(OnCardPlayed);
             EventBus.Unsubscribe<CombatEndedEvent>(OnCombatEnded);
             EventBus.Unsubscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
+            EventBus.Unsubscribe<RequiemArtActivatedEvent>(OnRequiemArtActivated);
         }
 
         // ============================================
@@ -168,6 +171,31 @@ namespace HNR.Core
         private void OnEnemyDefeated(EnemyDefeatedEvent evt)
         {
             TriggerEnemyDefeatedFeedback(evt.Enemy?.Position ?? Vector3.zero);
+        }
+
+        private void OnRequiemArtActivated(RequiemArtActivatedEvent evt)
+        {
+            if (evt.Art == null) return;
+
+            // Screen flash using TransitionManager
+            if (ServiceLocator.TryGet<TransitionManager>(out var transitionMgr))
+            {
+                transitionMgr.FlashScreen(evt.Art.FlashColor, 0.3f);
+            }
+
+            // Heavy screen shake
+            if (_enableScreenShake)
+            {
+                _shakeController?.Shake(ShakeIntensity.Heavy);
+            }
+
+            // Heavy haptic feedback
+            if (_enableHaptics)
+            {
+                _hapticController?.HeavyImpact();
+            }
+
+            Debug.Log($"[CombatFeedbackIntegrator] Requiem Art feedback triggered for {evt.Requiem?.Name ?? "Unknown"}");
         }
 
         // ============================================

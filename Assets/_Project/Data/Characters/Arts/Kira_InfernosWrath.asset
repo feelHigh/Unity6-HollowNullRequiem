@@ -13,23 +13,30 @@ MonoBehaviour:
   m_Name: Kira_InfernosWrath
   m_EditorClassIdentifier: 
   _artName: Inferno's Wrath
-  _description: Deal 50 damage to all enemies. Apply 5 Burn to all.
-  _flavorText: '"Let them burn in the fires of my vengeance!"'
+  _description: Unleash a devastating flame that engulfs all enemies, dealing massive
+    damage and leaving them burning.
+  _flavorText: '"Let the flames consume all who stand against us!"'
   _seCost: 40
   _oncePerCombat: 1
   _targetType: 2
   _effects:
   - _effectType: 0
-    _value: 50
+    _value: 25
     _duration: 0
     _customData: 
   - _effectType: 5
-    _value: 5
+    _value: 8
     _duration: 3
     _customData: 
+  - _effectType: 8
+    _value: 1
+    _duration: 2
+    _customData: 
   _icon: {fileID: 0}
+  _vfxEffectId: vfx_requiem_art_kira
   _vfxPrefab: {fileID: 0}
-  _flashColor: {r: 1, g: 0.5, b: 0, a: 1}
+  _flashColor: {r: 1, g: 0.4, b: 0.1, a: 0.8}
   _effectDuration: 2
+  _activationSoundId: art_kira
   _activationSound: {fileID: 0}
   _voiceLine: {fileID: 0}

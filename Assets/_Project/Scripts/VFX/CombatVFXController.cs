@@ -88,6 +88,7 @@ namespace HNR.VFX
             EventBus.Subscribe<NullStateExitedEvent>(OnNullStateExited);
             EventBus.Subscribe<CombatEndedEvent>(OnCombatEnded);
             EventBus.Subscribe<CardPlayedEvent>(OnCardPlayed);
+            EventBus.Subscribe<RequiemArtActivatedEvent>(OnRequiemArtActivated);
         }
 
         private void OnDisable()
@@ -100,6 +101,7 @@ namespace HNR.VFX
             EventBus.Unsubscribe<NullStateExitedEvent>(OnNullStateExited);
             EventBus.Unsubscribe<CombatEndedEvent>(OnCombatEnded);
             EventBus.Unsubscribe<CardPlayedEvent>(OnCardPlayed);
+            EventBus.Unsubscribe<RequiemArtActivatedEvent>(OnRequiemArtActivated);
         }
 
         // ============================================
@@ -255,6 +257,34 @@ namespace HNR.VFX
             {
                 var instance = VFXPool?.Spawn(_slashEffectId, evt.Target.Position, Quaternion.identity);
                 instance?.SetColor(UIColors.GetAspectColor(_lastPlayedAspect));
+            }
+        }
+
+        private void OnRequiemArtActivated(RequiemArtActivatedEvent evt)
+        {
+            if (evt.Requiem == null || evt.Art == null) return;
+
+            // Get VFX effect ID (character-specific or generic fallback)
+            string effectId = !string.IsNullOrEmpty(evt.Art.VFXEffectId)
+                ? evt.Art.VFXEffectId
+                : "vfx_requiem_art";
+
+            // Spawn at requiem position
+            var instance = VFXPool?.Spawn(effectId, evt.Requiem.Position, Quaternion.identity);
+            if (instance != null)
+            {
+                // Apply art flash color if specified
+                if (evt.Art.FlashColor != Color.clear && evt.Art.FlashColor != Color.white)
+                {
+                    instance.SetColor(evt.Art.FlashColor);
+                }
+                instance.SetScale(1.5f);  // Scale up for ultimate ability
+
+                Debug.Log($"[CombatVFXController] Spawned {effectId} for {evt.Requiem.Name}'s Art at {evt.Requiem.Position}");
+            }
+            else
+            {
+                Debug.LogWarning($"[CombatVFXController] Failed to spawn VFX {effectId} for Requiem Art");
             }
         }
 

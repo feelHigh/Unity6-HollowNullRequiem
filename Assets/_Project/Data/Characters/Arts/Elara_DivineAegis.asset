@@ -13,23 +13,30 @@ MonoBehaviour:
   m_Name: Elara_DivineAegis
   m_EditorClassIdentifier: 
   _artName: Divine Aegis
-  _description: Grant 100 Block to all allies. Heal all allies for 10 HP.
-  _flavorText: '"The light shall be your shield."'
+  _description: Invoke sacred protection, healing the entire team significantly and
+    granting a powerful shield that absorbs incoming damage.
+  _flavorText: '"By the light, we are protected!"'
   _seCost: 45
   _oncePerCombat: 1
   _targetType: 4
   _effects:
-  - _effectType: 2
-    _value: 100
+  - _effectType: 3
+    _value: 20
     _duration: 0
     _customData: 
-  - _effectType: 3
-    _value: 10
+  - _effectType: 2
+    _value: 30
+    _duration: 0
+    _customData: 
+  - _effectType: 11
+    _value: 15
     _duration: 0
     _customData: 
   _icon: {fileID: 0}
+  _vfxEffectId: vfx_requiem_art_elara
   _vfxPrefab: {fileID: 0}
-  _flashColor: {r: 1, g: 1, b: 0.8, a: 1}
-  _effectDuration: 2.5
+  _flashColor: {r: 0.9, g: 0.95, b: 0.5, a: 0.8}
+  _effectDuration: 2.2
+  _activationSoundId: art_elara
   _activationSound: {fileID: 0}
   _voiceLine: {fileID: 0}

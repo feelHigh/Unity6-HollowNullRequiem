@@ -13,27 +13,34 @@ MonoBehaviour:
   m_Name: Mordren_SoulHarvest
   m_EditorClassIdentifier: 
   _artName: Soul Harvest
-  _description: Steal 20 HP from each enemy. Apply 3 Weakness to all enemies.
-  _flavorText: '"Your souls belong to the Void now."'
+  _description: Drain the life essence from all enemies, dealing shadow damage and
+    healing the team for a portion of damage dealt.
+  _flavorText: '"Your souls will sustain us."'
   _seCost: 35
   _oncePerCombat: 1
   _targetType: 2
   _effects:
   - _effectType: 0
-    _value: 20
+    _value: 18
     _duration: 0
-    _customData: Lifesteal
+    _customData: 
   - _effectType: 3
-    _value: 20
+    _value: 12
     _duration: 0
     _customData: 
   - _effectType: 7
-    _value: 3
-    _duration: 3
+    _value: 1
+    _duration: 2
+    _customData: 
+  - _effectType: 10
+    _value: 10
+    _duration: 0
     _customData: 
   _icon: {fileID: 0}
+  _vfxEffectId: vfx_requiem_art_mordren
   _vfxPrefab: {fileID: 0}
-  _flashColor: {r: 0.3, g: 0, b: 0.5, a: 1}
-  _effectDuration: 2
+  _flashColor: {r: 0.5, g: 0.2, b: 0.8, a: 0.8}
+  _effectDuration: 1.8
+  _activationSoundId: art_mordren
   _activationSound: {fileID: 0}
   _voiceLine: {fileID: 0}
