@@ -224,6 +224,7 @@ namespace HNR.Combat
         /// <summary>
         /// Gets the best playable card from hand based on priority.
         /// Priority: Strike (0) > Guard (1) > Skill (2) > Power (3)
+        /// Uses CombatCard.EffectiveCost to account for Null State AP reduction.
         /// </summary>
         private CombatCard GetBestPlayableCard()
         {
@@ -247,7 +248,9 @@ namespace HNR.Combat
             foreach (var card in _cardFanLayout.Cards)
             {
                 if (card?.CardData == null) continue;
-                if (!card.CardData.CanPlay(currentAP)) continue;
+
+                // Use EffectiveCost which accounts for Null State AP reduction
+                if (card.EffectiveCost > currentAP) continue;
 
                 int priority = GetCardPriority(card.CardData.Data.CardType);
                 if (priority < bestPriority)

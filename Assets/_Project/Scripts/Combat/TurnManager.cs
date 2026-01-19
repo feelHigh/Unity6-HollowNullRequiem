@@ -361,7 +361,8 @@ namespace HNR.Combat
         }
 
         /// <summary>
-        /// Attempt to play a CombatCard on a target (for auto-battle).
+        /// Attempt to play a CombatCard on a target (for auto-battle and manual play).
+        /// Uses CombatCard.EffectiveCost which accounts for Null State AP reduction.
         /// </summary>
         /// <param name="combatCard">The CombatCard UI component</param>
         /// <param name="target">Target for the card (can be null)</param>
@@ -372,10 +373,13 @@ namespace HNR.Combat
             if (combatCard?.CardData == null) return false;
 
             var instance = combatCard.CardData;
-            if (!instance.CanPlay(_context.CurrentAP)) return false;
 
-            // Spend AP
-            _context.CurrentAP -= instance.CurrentCost;
+            // Use effective cost which accounts for Null State AP reduction
+            int effectiveCost = combatCard.EffectiveCost;
+            if (effectiveCost > _context.CurrentAP) return false;
+
+            // Spend AP (using effective cost, not base cost)
+            _context.CurrentAP -= effectiveCost;
             EventBus.Publish(new APChangedEvent(_context.CurrentAP, _context.MaxAP));
 
             // Trigger animation on the card owner's visual
@@ -415,7 +419,7 @@ namespace HNR.Combat
             }
 
             EventBus.Publish(new CardPlayedEvent(instance, target));
-            Debug.Log($"[TurnManager] Auto-played card: {instance.Data.CardName} (Cost: {instance.CurrentCost}, AP remaining: {_context.CurrentAP})");
+            Debug.Log($"[TurnManager] Played card: {instance.Data.CardName} (EffectiveCost: {effectiveCost}, BaseCost: {instance.CurrentCost}, AP remaining: {_context.CurrentAP})");
             return true;
         }
 

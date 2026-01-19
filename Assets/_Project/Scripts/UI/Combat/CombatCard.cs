@@ -206,6 +206,28 @@ namespace HNR.UI.Combat
         /// <summary>True if card can be played (has enough AP).</summary>
         public bool IsPlayable => _isPlayable;
 
+        /// <summary>
+        /// Get the effective AP cost considering Null State reduction.
+        /// This is the actual cost that will be spent when playing the card.
+        /// </summary>
+        public int EffectiveCost
+        {
+            get
+            {
+                if (_cardData == null) return 0;
+
+                int baseCost = _cardData.CurrentCost;
+
+                // Apply Null State AP reduction if owner is in Null State
+                if (_ownerRequiem != null && _ownerRequiem.InNullState && baseCost > 0)
+                {
+                    return Mathf.Max(0, baseCost - 1);
+                }
+
+                return baseCost;
+            }
+        }
+
         // ============================================
         // Events
         // ============================================
@@ -442,6 +464,7 @@ namespace HNR.UI.Combat
 
         /// <summary>
         /// Update playability state based on available AP.
+        /// Accounts for Null State AP reduction when determining playability.
         /// </summary>
         /// <param name="availableAP">Current available Action Points</param>
         public void UpdatePlayability(int availableAP)
@@ -452,7 +475,8 @@ namespace HNR.UI.Combat
                 return;
             }
 
-            _isPlayable = _cardData.CanPlay(availableAP);
+            // Use effective cost which accounts for Null State AP reduction
+            _isPlayable = EffectiveCost <= availableAP;
 
             // Visual feedback for unplayable cards
             if (_canvasGroup != null)
