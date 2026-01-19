@@ -3,10 +3,12 @@
 // Spawns VFX for combat events
 // ============================================
 
+using System.Collections.Generic;
 using UnityEngine;
 using HNR.Core;
 using HNR.Core.Events;
 using HNR.Cards;
+using HNR.Characters;
 using HNR.Combat;
 using HNR.UI;
 
@@ -38,6 +40,9 @@ namespace HNR.VFX
         [SerializeField, Tooltip("Effect for Null State trigger")]
         private string _nullBurstEffectId = "vfx_null_burst";
 
+        [SerializeField, Tooltip("Persistent aura effect for Null State")]
+        private string _nullAuraEffectId = "vfx_null_aura";
+
         [Header("Hit Effect Prefix")]
         [SerializeField, Tooltip("Prefix for aspect-based hit effects (e.g., hit_flame)")]
         private string _hitEffectPrefix = "hit_";
@@ -48,15 +53,30 @@ namespace HNR.VFX
 
         private VFXPoolManager _vfxPool;
         private SoulAspect _lastPlayedAspect = SoulAspect.Flame;
+        private Dictionary<RequiemInstance, VFXInstance> _activeNullAuras = new();
+
+        // ============================================
+        // Properties
+        // ============================================
+
+        /// <summary>
+        /// Lazily get VFXPoolManager to handle script execution order issues.
+        /// </summary>
+        private VFXPoolManager VFXPool
+        {
+            get
+            {
+                if (_vfxPool == null)
+                {
+                    ServiceLocator.TryGet(out _vfxPool);
+                }
+                return _vfxPool;
+            }
+        }
 
         // ============================================
         // Unity Lifecycle
         // ============================================
-
-        private void Awake()
-        {
-            ServiceLocator.TryGet(out _vfxPool);
-        }
 
         private void OnEnable()
         {
@@ -65,6 +85,8 @@ namespace HNR.VFX
             EventBus.Subscribe<HealingReceivedEvent>(OnHealing);
             EventBus.Subscribe<CorruptionChangedEvent>(OnCorruptionChanged);
             EventBus.Subscribe<NullStateEnteredEvent>(OnNullStateEntered);
+            EventBus.Subscribe<NullStateExitedEvent>(OnNullStateExited);
+            EventBus.Subscribe<CombatEndedEvent>(OnCombatEnded);
             EventBus.Subscribe<CardPlayedEvent>(OnCardPlayed);
         }
 
@@ -75,6 +97,8 @@ namespace HNR.VFX
             EventBus.Unsubscribe<HealingReceivedEvent>(OnHealing);
             EventBus.Unsubscribe<CorruptionChangedEvent>(OnCorruptionChanged);
             EventBus.Unsubscribe<NullStateEnteredEvent>(OnNullStateEntered);
+            EventBus.Unsubscribe<NullStateExitedEvent>(OnNullStateExited);
+            EventBus.Unsubscribe<CombatEndedEvent>(OnCombatEnded);
             EventBus.Unsubscribe<CardPlayedEvent>(OnCardPlayed);
         }
 
@@ -88,7 +112,7 @@ namespace HNR.VFX
 
             // Get hit effect based on last played card's aspect
             string effectId = GetHitEffectId(_lastPlayedAspect);
-            var instance = _vfxPool?.Spawn(effectId, evt.Target.Position, Quaternion.identity);
+            var instance = VFXPool?.Spawn(effectId, evt.Target.Position, Quaternion.identity);
 
             if (instance != null)
             {
@@ -105,7 +129,7 @@ namespace HNR.VFX
         {
             if (evt.Target == null || evt.Amount <= 0) return;
 
-            var instance = _vfxPool?.Spawn(_shieldEffectId, evt.Target.Position, Quaternion.identity);
+            var instance = VFXPool?.Spawn(_shieldEffectId, evt.Target.Position, Quaternion.identity);
             instance?.SetColor(UIColors.SoulCyan);
         }
 
@@ -113,7 +137,7 @@ namespace HNR.VFX
         {
             if (evt.Target == null || evt.Amount <= 0) return;
 
-            var instance = _vfxPool?.Spawn(_healEffectId, evt.Target.Position, Quaternion.identity);
+            var instance = VFXPool?.Spawn(_healEffectId, evt.Target.Position, Quaternion.identity);
             instance?.SetColor(UIColors.NatureAspect);
         }
 
@@ -122,20 +146,101 @@ namespace HNR.VFX
             // Only spawn VFX when corruption is gained (not lost)
             if (evt.Requiem == null || evt.Delta <= 0) return;
 
-            var instance = _vfxPool?.SpawnAttached(_corruptionEffectId, evt.Requiem.transform);
+            var instance = VFXPool?.SpawnAttached(_corruptionEffectId, evt.Requiem.transform);
             instance?.SetColor(UIColors.HollowViolet);
         }
 
         private void OnNullStateEntered(NullStateEnteredEvent evt)
         {
-            if (evt.Requiem == null) return;
-
-            var instance = _vfxPool?.Spawn(_nullBurstEffectId, evt.Requiem.Position, Quaternion.identity);
-            if (instance != null)
+            if (evt.Requiem == null)
             {
-                instance.SetColor(UIColors.CorruptionGlow);
-                instance.SetScale(2f);
+                Debug.LogWarning("[CombatVFXController] NullStateEnteredEvent received with null Requiem");
+                return;
             }
+
+            Debug.Log($"[CombatVFXController] {evt.Requiem.Name} entered Null State at position {evt.Requiem.Position}");
+
+            // Check if VFXPool is available
+            if (VFXPool == null)
+            {
+                Debug.LogError("[CombatVFXController] VFXPoolManager not available! Cannot spawn VFX.");
+                return;
+            }
+
+            // Get requiem's theme color based on their Soul Aspect
+            Color requiemColor = evt.Requiem.Data?.AspectColor ?? UIColors.GetAspectColor(evt.Requiem.Data?.SoulAspect ?? SoulAspect.Flame);
+
+            // Spawn one-shot burst effect
+            var burst = VFXPool.Spawn(_nullBurstEffectId, evt.Requiem.Position, Quaternion.identity);
+            if (burst != null)
+            {
+                burst.SetColor(requiemColor);
+                burst.SetScale(2f);
+                Debug.Log($"[CombatVFXController] Spawned {_nullBurstEffectId} at {evt.Requiem.Position}");
+            }
+            else
+            {
+                Debug.LogWarning($"[CombatVFXController] Failed to spawn {_nullBurstEffectId}");
+            }
+
+            // Spawn persistent aura attached to character
+            var aura = VFXPool.SpawnAttached(_nullAuraEffectId, evt.Requiem.transform);
+            if (aura != null)
+            {
+                aura.SetPersistent(true);
+                _activeNullAuras[evt.Requiem] = aura;
+
+                // Color only the "Darkness" child particle system based on requiem's theme
+                ColorAuraDarknessChild(aura, requiemColor);
+                Debug.Log($"[CombatVFXController] Spawned {_nullAuraEffectId} attached to {evt.Requiem.Name}");
+            }
+            else
+            {
+                Debug.LogWarning($"[CombatVFXController] Failed to spawn {_nullAuraEffectId}");
+            }
+        }
+
+        /// <summary>
+        /// Colors the "Darkness" child particle system of the aura effect.
+        /// Keeps the rest of the prefab (Smoke, etc.) unchanged.
+        /// </summary>
+        private void ColorAuraDarknessChild(VFXInstance aura, Color color)
+        {
+            if (aura == null) return;
+
+            // Find the "Darkness" child object
+            Transform darknessChild = aura.transform.Find("Darkness");
+            if (darknessChild == null) return;
+
+            // Get ParticleSystem and modify start color
+            var ps = darknessChild.GetComponent<ParticleSystem>();
+            if (ps != null)
+            {
+                var main = ps.main;
+                main.startColor = color;
+            }
+        }
+
+        private void OnNullStateExited(NullStateExitedEvent evt)
+        {
+            if (evt.Requiem != null && _activeNullAuras.TryGetValue(evt.Requiem, out var aura))
+            {
+                VFXPool?.Return(aura);
+                _activeNullAuras.Remove(evt.Requiem);
+            }
+        }
+
+        private void OnCombatEnded(CombatEndedEvent evt)
+        {
+            // Clean up all active Null State auras
+            foreach (var aura in _activeNullAuras.Values)
+            {
+                if (aura != null)
+                {
+                    VFXPool?.Return(aura);
+                }
+            }
+            _activeNullAuras.Clear();
         }
 
         private void OnCardPlayed(CardPlayedEvent evt)
@@ -148,7 +253,7 @@ namespace HNR.VFX
             // Spawn slash effect for Strike cards with targets
             if (evt.Card.Data.CardType == CardType.Strike && evt.Target != null)
             {
-                var instance = _vfxPool?.Spawn(_slashEffectId, evt.Target.Position, Quaternion.identity);
+                var instance = VFXPool?.Spawn(_slashEffectId, evt.Target.Position, Quaternion.identity);
                 instance?.SetColor(UIColors.GetAspectColor(_lastPlayedAspect));
             }
         }
@@ -183,7 +288,7 @@ namespace HNR.VFX
         /// <param name="scale">Scale multiplier (default 1)</param>
         public void SpawnEffect(string effectId, Vector3 position, Color? color = null, float scale = 1f)
         {
-            var instance = _vfxPool?.Spawn(effectId, position, Quaternion.identity);
+            var instance = VFXPool?.Spawn(effectId, position, Quaternion.identity);
             if (instance != null)
             {
                 if (color.HasValue)
@@ -200,7 +305,7 @@ namespace HNR.VFX
         /// <param name="color">Optional color override</param>
         public void SpawnAttachedEffect(string effectId, Transform target, Color? color = null)
         {
-            var instance = _vfxPool?.SpawnAttached(effectId, target);
+            var instance = VFXPool?.SpawnAttached(effectId, target);
             if (instance != null && color.HasValue)
             {
                 instance.SetColor(color.Value);

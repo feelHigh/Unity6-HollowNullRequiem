@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: CombatConfig
   m_EditorClassIdentifier: 
   _enableDamageCorruption: 1
-  _damagePerCorruption: 20
-  _minimumCorruptionPerHit: 1
-  _maximumCorruptionPerHit: 0
+  _damagePerCorruption: 50
+  _minimumCorruptionPerHit: 20
+  _maximumCorruptionPerHit: 100

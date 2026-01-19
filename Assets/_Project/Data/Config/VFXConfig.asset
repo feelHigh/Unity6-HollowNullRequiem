@@ -135,6 +135,13 @@ MonoBehaviour:
     MaxActive: 2
     DefaultColor: {r: 0.4, g: 0.7, b: 0.4, a: 1}
     DefaultScale: 1
+  - EffectId: vfx_null_aura
+    Prefab: {fileID: 2618346695867805578, guid: 68491e83c23840646a20aac8b7b9630a, type: 3}
+    Category: 3
+    PreWarmCount: 3
+    MaxActive: 3
+    DefaultColor: {r: 0.5, g: 0.1, b: 0.5, a: 1}
+    DefaultScale: 1
   _cardEntries:
   - EffectId: vfx_card_draw
     Prefab: {fileID: 9157105887711914197, guid: c4f829cb7dd4b864caf8832ec5b1ee55, type: 3}

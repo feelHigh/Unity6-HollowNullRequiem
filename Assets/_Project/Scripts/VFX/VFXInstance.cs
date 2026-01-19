@@ -183,6 +183,23 @@ namespace HNR.VFX
             transform.localScale = Vector3.one * scale;
         }
 
+        /// <summary>
+        /// Set whether this VFX should persist (not auto-return).
+        /// Use for looping effects that need manual cleanup.
+        /// </summary>
+        /// <param name="persistent">True to disable auto-return</param>
+        public void SetPersistent(bool persistent)
+        {
+            _autoReturn = !persistent;
+
+            // Stop auto-return coroutine if making persistent
+            if (persistent && _lifetimeCoroutine != null)
+            {
+                StopCoroutine(_lifetimeCoroutine);
+                _lifetimeCoroutine = null;
+            }
+        }
+
         // ============================================
         // Private Methods
         // ============================================

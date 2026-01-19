@@ -457,8 +457,8 @@ namespace HNR.Editor
                 }
             }
 
-            // NameTextBackground
-            var nameBg = root.Find("NameTextBackground");
+            // NameTextBackground (nested: CardBackground/NameTextMask/NameTextBackground)
+            var nameBg = root.Find("CardBackground/NameTextMask/NameTextBackground");
             if (nameBg != null)
             {
                 var img = nameBg.GetComponent<Image>();
@@ -481,8 +481,8 @@ namespace HNR.Editor
                 }
             }
 
-            // DescriptionTextBackground
-            var descBg = root.Find("DescriptionTextBackground");
+            // DescriptionTextBackground (nested: CardBackground/DescriptionTextMask/DescriptionTextBackground)
+            var descBg = root.Find("CardBackground/DescriptionTextMask/DescriptionTextBackground");
             if (descBg != null)
             {
                 var img = descBg.GetComponent<Image>();

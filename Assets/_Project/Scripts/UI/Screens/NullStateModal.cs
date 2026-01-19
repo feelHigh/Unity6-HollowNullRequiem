@@ -122,6 +122,7 @@ namespace HNR.UI
         private bool _isShowing;
         private Sequence _pulseSequence;
         private System.Action _onUnleash;
+        private float _previousTimeScale = 1f;
 
         // ============================================
         // Unity Lifecycle
@@ -189,10 +190,11 @@ namespace HNR.UI
             SetupButton();
             PlayShowAnimation();
 
-            // Pause game
+            // Store current time scale and pause game
+            _previousTimeScale = Time.timeScale;
             Time.timeScale = 0f;
 
-            Debug.Log($"[NullStateModal] Showing Null State for {requiem?.Data?.RequiemName ?? "Unknown"}");
+            Debug.Log($"[NullStateModal] Showing Null State for {requiem?.Data?.RequiemName ?? "Unknown"} (previous timeScale: {_previousTimeScale})");
         }
 
         /// <summary>
@@ -205,10 +207,10 @@ namespace HNR.UI
             _isShowing = false;
             PlayHideAnimation();
 
-            // Resume game
-            Time.timeScale = 1f;
+            // Resume game at previous speed
+            Time.timeScale = _previousTimeScale;
 
-            Debug.Log("[NullStateModal] Null State modal hidden");
+            Debug.Log($"[NullStateModal] Null State modal hidden (restored timeScale: {_previousTimeScale})");
         }
 
         /// <summary>

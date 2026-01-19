@@ -3,10 +3,12 @@
 // Plays audio in response to combat events
 // ============================================
 
+using System.Collections.Generic;
 using UnityEngine;
 using HNR.Core;
 using HNR.Core.Interfaces;
 using HNR.Core.Events;
+using HNR.Characters;
 using HNR.Combat;
 using HNR.Map;
 
@@ -42,6 +44,9 @@ namespace HNR.Audio
         [SerializeField] private string _nullStateSFX = "null_state";
         [SerializeField] private string _statusAppliedSFX = "status_applied";
 
+        [Header("Null State Audio")]
+        [SerializeField] private string _nullStateAmbientId = "null_state_ambient";
+
         [Header("Enemy SFX")]
         [SerializeField] private string _enemyDefeatedSFX = "enemy_defeated";
         [SerializeField] private string _enemyAttackSFX = "enemy_attack";
@@ -63,6 +68,7 @@ namespace HNR.Audio
 
         private IAudioManager _audioManager;
         private bool _isBossFight;
+        private HashSet<RequiemInstance> _requiemsWithNullAudio = new();
 
         // ============================================
         // Lifecycle
@@ -121,6 +127,7 @@ namespace HNR.Audio
             // Status events
             EventBus.Subscribe<CorruptionChangedEvent>(OnCorruptionChanged);
             EventBus.Subscribe<NullStateEnteredEvent>(OnNullStateEntered);
+            EventBus.Subscribe<NullStateExitedEvent>(OnNullStateExited);
             EventBus.Subscribe<StatusAppliedEvent>(OnStatusApplied);
 
             // Enemy events
@@ -151,6 +158,7 @@ namespace HNR.Audio
             // Status events
             EventBus.Unsubscribe<CorruptionChangedEvent>(OnCorruptionChanged);
             EventBus.Unsubscribe<NullStateEnteredEvent>(OnNullStateEntered);
+            EventBus.Unsubscribe<NullStateExitedEvent>(OnNullStateExited);
             EventBus.Unsubscribe<StatusAppliedEvent>(OnStatusApplied);
 
             // Enemy events
@@ -220,6 +228,10 @@ namespace HNR.Audio
             string sfx = evt.Victory ? _victorySFX : _defeatSFX;
             _audioManager?.PlaySFX(sfx);
             _audioManager?.StopMusic(_musicFadeTime);
+
+            // Stop Null State ambient if playing
+            _audioManager?.StopAmbient(_nullStateAmbientId);
+            _requiemsWithNullAudio.Clear();
 
             Debug.Log($"[CombatAudioController] Combat ended - Victory: {evt.Victory}");
         }
@@ -314,7 +326,30 @@ namespace HNR.Audio
         private void OnNullStateEntered(NullStateEnteredEvent evt)
         {
             _audioManager?.PlaySFX(_nullStateSFX);
+
+            // Start ambient loop for this Requiem
+            if (evt.Requiem != null && !_requiemsWithNullAudio.Contains(evt.Requiem))
+            {
+                _audioManager?.PlayAmbient(_nullStateAmbientId);
+                _requiemsWithNullAudio.Add(evt.Requiem);
+            }
+
             Debug.Log($"[CombatAudioController] {evt.Requiem?.Name} entered Null State!");
+        }
+
+        private void OnNullStateExited(NullStateExitedEvent evt)
+        {
+            if (evt.Requiem != null)
+            {
+                _requiemsWithNullAudio.Remove(evt.Requiem);
+
+                // Only stop ambient if no other Requiems in Null State
+                if (_requiemsWithNullAudio.Count == 0)
+                {
+                    _audioManager?.StopAmbient(_nullStateAmbientId);
+                }
+            }
+            Debug.Log($"[CombatAudioController] {evt.Requiem?.Name} exited Null State");
         }
 
         private void OnStatusApplied(StatusAppliedEvent evt)

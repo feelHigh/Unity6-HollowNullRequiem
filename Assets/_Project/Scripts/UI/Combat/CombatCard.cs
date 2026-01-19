@@ -4,6 +4,7 @@
 // ============================================
 
 using System;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -13,6 +14,7 @@ using HNR.Core;
 using HNR.Core.Events;
 using HNR.Core.Interfaces;
 using HNR.Cards;
+using HNR.Characters;
 using HNR.Combat;
 using HNR.UI.Config;
 
@@ -70,6 +72,7 @@ namespace HNR.UI.Combat
         // ============================================
         // Cost Frame Elements (Layered Sprites)
         // ============================================
+
 
         [Header("Cost Frame Elements")]
         [SerializeField, Tooltip("Cost frame background layer")]
@@ -182,6 +185,7 @@ namespace HNR.UI.Combat
         private bool _isDragging;
         private bool _isPlayable = true;
         private ICombatTarget _currentTarget;
+        private RequiemInstance _ownerRequiem;
 
         // Threshold for playing non-targeting cards (how far above original Y position)
         private const float PLAY_THRESHOLD_Y = 100f;
@@ -258,7 +262,31 @@ namespace HNR.UI.Combat
             }
 
             _cardData = data;
+
+            // Find owner RequiemInstance if card has owner
+            _ownerRequiem = FindOwnerRequiem(data);
+
+            // Subscribe to Null State events
+            EventBus.Subscribe<NullStateEnteredEvent>(OnNullStateEntered);
+            EventBus.Subscribe<NullStateExitedEvent>(OnNullStateExited);
+
             UpdateVisuals();
+            UpdateNullStateCostDisplay();
+        }
+
+        /// <summary>
+        /// Find the RequiemInstance that owns this card.
+        /// </summary>
+        private RequiemInstance FindOwnerRequiem(CardInstance card)
+        {
+            if (card?.Data?.Owner == null) return null;
+
+            // Get team from TurnManager's CombatContext
+            if (ServiceLocator.TryGet<TurnManager>(out var tm) && tm.Context?.Team != null)
+            {
+                return tm.Context.Team.FirstOrDefault(r => r?.Data == card.Data.Owner);
+            }
+            return null;
         }
 
         /// <summary>
@@ -435,6 +463,51 @@ namespace HNR.UI.Combat
             if (_unplayableOverlay != null)
             {
                 _unplayableOverlay.alpha = _isPlayable ? 0f : 0.3f;
+            }
+        }
+
+        // ============================================
+        // Null State Cost Display
+        // ============================================
+
+        /// <summary>
+        /// Update the cost display to reflect Null State AP reduction.
+        /// </summary>
+        private void UpdateNullStateCostDisplay()
+        {
+            if (_costText == null) return;
+
+            bool ownerInNullState = _ownerRequiem?.InNullState ?? false;
+            int baseCost = _cardData?.Data?.APCost ?? 0;
+            int reducedCost = Mathf.Max(0, baseCost - 1);
+
+            if (ownerInNullState && baseCost > 0)
+            {
+                // Show reduced cost with purple color to indicate Null State bonus
+                _costText.text = reducedCost.ToString();
+                _costText.color = UIColors.HollowViolet;
+            }
+            else
+            {
+                // Normal display
+                _costText.text = (_cardData?.CurrentCost ?? 0).ToString();
+                _costText.color = Color.white;
+            }
+        }
+
+        private void OnNullStateEntered(NullStateEnteredEvent evt)
+        {
+            if (evt.Requiem == _ownerRequiem)
+            {
+                UpdateNullStateCostDisplay();
+            }
+        }
+
+        private void OnNullStateExited(NullStateExitedEvent evt)
+        {
+            if (evt.Requiem == _ownerRequiem)
+            {
+                UpdateNullStateCostDisplay();
             }
         }
 
@@ -830,10 +903,21 @@ namespace HNR.UI.Combat
             {
                 _unplayableOverlay.alpha = 0f;
             }
+
+            // Reset Null State cost display color
+            if (_costText != null)
+            {
+                _costText.color = Color.white;
+            }
         }
 
         public void OnReturnToPool()
         {
+            // Unsubscribe from Null State events
+            EventBus.Unsubscribe<NullStateEnteredEvent>(OnNullStateEntered);
+            EventBus.Unsubscribe<NullStateExitedEvent>(OnNullStateExited);
+            _ownerRequiem = null;
+
             gameObject.SetActive(false);
             _cardData = null;
 
