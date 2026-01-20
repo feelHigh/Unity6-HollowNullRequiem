@@ -14,7 +14,7 @@ namespace HNR.Audio
 {
     /// <summary>
     /// Full audio manager implementation with AudioMixer integration.
-    /// Features music crossfade, SFX pooling, and ambient sound management.
+    /// Features music crossfade, PlayOneShot SFX, and ambient sound management.
     /// </summary>
     public class AudioManager : MonoBehaviour, IAudioManager
     {
@@ -35,9 +35,6 @@ namespace HNR.Audio
 
         [SerializeField, Tooltip("Secondary music source for crossfade")]
         private AudioSource _musicSourceB;
-
-        [SerializeField, Tooltip("Number of pooled SFX sources")]
-        private int _sfxPoolSize = 8;
 
         [Header("Default Volumes")]
         [SerializeField, Range(0f, 1f)]
@@ -75,9 +72,8 @@ namespace HNR.Audio
         private AudioSource _currentMusicSource;
         private Coroutine _crossfadeCoroutine;
 
-        // SFX pool
-        private Queue<AudioSource> _sfxPool;
-        private List<AudioSource> _activeSFX;
+        // SFX sources (PlayOneShot approach - no pooling needed)
+        private AudioSource _sfxSource2D;  // For non-positional SFX
 
         // Ambient tracking
         private Dictionary<string, AudioSource> _ambientSources;
@@ -167,15 +163,8 @@ namespace HNR.Audio
 
             _currentMusicSource = _musicSourceA;
 
-            // Create SFX pool
-            _sfxPool = new Queue<AudioSource>();
-            _activeSFX = new List<AudioSource>();
-
-            for (int i = 0; i < _sfxPoolSize; i++)
-            {
-                var source = CreateAudioSource($"SFXSource_{i}");
-                _sfxPool.Enqueue(source);
-            }
+            // Create single 2D SFX source (uses PlayOneShot for unlimited concurrent sounds)
+            _sfxSource2D = CreateAudioSource("SFXSource2D");
 
             // Initialize ambient tracking
             _ambientSources = new Dictionary<string, AudioSource>();
@@ -336,16 +325,9 @@ namespace HNR.Audio
                 return;
             }
 
-            var source = GetSFXSource();
-            if (source == null) return;
-
-            source.clip = entry.Clip;
-            source.volume = entry.Volume;
-            source.pitch = entry.Pitch;
-            source.spatialBlend = 0f;
-            source.Play();
-
-            StartCoroutine(ReturnSFXAfterPlay(source, entry.Clip.length / entry.Pitch));
+            // PlayOneShot allows unlimited concurrent sounds on a single source
+            _sfxSource2D.pitch = entry.Pitch;
+            _sfxSource2D.PlayOneShot(entry.Clip, entry.Volume);
         }
 
         public void PlaySFXAtPosition(string id, Vector3 position)
@@ -359,54 +341,16 @@ namespace HNR.Audio
                 return;
             }
 
-            var source = GetSFXSource();
-            if (source == null) return;
-
-            source.transform.position = position;
-            source.clip = entry.Clip;
-            source.volume = entry.Volume;
-            source.pitch = entry.Pitch;
-            source.spatialBlend = 1f;
-            source.Play();
-
-            StartCoroutine(ReturnSFXAfterPlay(source, entry.Clip.length / entry.Pitch));
+            // PlayClipAtPoint creates a temporary GameObject that auto-destroys when done
+            // Volume is passed directly; pitch requires a custom approach if needed
+            AudioSource.PlayClipAtPoint(entry.Clip, position, entry.Volume);
         }
 
         public void StopAllSFX()
         {
-            foreach (var source in _activeSFX)
-            {
-                source.Stop();
-                _sfxPool.Enqueue(source);
-            }
-            _activeSFX.Clear();
+            // Stop any sounds currently playing on the 2D source
+            _sfxSource2D?.Stop();
             Debug.Log("[AudioManager] All SFX stopped");
-        }
-
-        private AudioSource GetSFXSource()
-        {
-            if (_sfxPool.Count > 0)
-            {
-                var source = _sfxPool.Dequeue();
-                _activeSFX.Add(source);
-                return source;
-            }
-
-            // All sources in use - skip this sound
-            Debug.LogWarning("[AudioManager] SFX pool exhausted");
-            return null;
-        }
-
-        private IEnumerator ReturnSFXAfterPlay(AudioSource source, float duration)
-        {
-            yield return new WaitForSeconds(duration);
-
-            if (_activeSFX.Contains(source))
-            {
-                _activeSFX.Remove(source);
-                source.Stop();
-                _sfxPool.Enqueue(source);
-            }
         }
 
         // ============================================

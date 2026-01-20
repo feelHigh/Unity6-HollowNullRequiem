@@ -3,10 +3,12 @@
 // Spawns VFX for combat events
 // ============================================
 
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using HNR.Core;
 using HNR.Core.Events;
+using HNR.Core.Interfaces;
 using HNR.Cards;
 using HNR.Characters;
 using HNR.Combat;
@@ -42,6 +44,13 @@ namespace HNR.VFX
 
         [SerializeField, Tooltip("Persistent aura effect for Null State")]
         private string _nullAuraEffectId = "vfx_null_aura";
+
+        [Header("Null State Audio")]
+        [SerializeField, Tooltip("SFX to play when Null State burst VFX appears")]
+        private string _nullStateSFX = "null_state";
+
+        [SerializeField, Tooltip("Delay before playing SFX to sync with particle appearance")]
+        private float _nullStateSFXDelay = 0.1f;
 
         [Header("Hit Effect Prefix")]
         [SerializeField, Tooltip("Prefix for aspect-based hit effects (e.g., hit_flame)")]
@@ -178,6 +187,10 @@ namespace HNR.VFX
             {
                 burst.SetColor(requiemColor);
                 burst.SetScale(2f);
+
+                // Play Null State SFX with delay to sync with particle appearance
+                StartCoroutine(PlayNullStateSFXDelayed());
+
                 Debug.Log($"[CombatVFXController] Spawned {_nullBurstEffectId} at {evt.Requiem.Position}");
             }
             else
@@ -291,6 +304,19 @@ namespace HNR.VFX
         // ============================================
         // Helper Methods
         // ============================================
+
+        /// <summary>
+        /// Plays the Null State SFX after a delay to sync with particle appearance.
+        /// </summary>
+        private IEnumerator PlayNullStateSFXDelayed()
+        {
+            yield return new WaitForSeconds(_nullStateSFXDelay);
+
+            if (ServiceLocator.TryGet<IAudioManager>(out var audioManager))
+            {
+                audioManager.PlaySFX(_nullStateSFX);
+            }
+        }
 
         private string GetHitEffectId(SoulAspect aspect)
         {

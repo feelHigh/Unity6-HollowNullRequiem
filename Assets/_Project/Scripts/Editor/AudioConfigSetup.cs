@@ -48,10 +48,14 @@ namespace HNR.Editor
             ("critical_hit", "critical_hit"),
             ("heal", "heal"),
             ("enemy_attack", "enemy_attack"),
-            ("enemy_defeated", "enemy_defeated")
+            ("enemy_defeated", "enemy_defeated"),
+            // Card sounds
+            ("card_draw", "card_draw"),
+            ("card_play", "card_play"),
+            ("card_discard", "card_discard")
         };
 
-        // Status effect SFX
+        // Status effect SFX (individual status types)
         private static readonly (string filename, string id)[] StatusDefinitions = new[]
         {
             ("status_burn", "status_burn"),
@@ -60,7 +64,10 @@ namespace HNR.Editor
             ("status_vulnerability", "status_vulnerability"),
             ("status_strength", "status_strength"),
             ("status_regen", "status_regen"),
-            ("status_tick", "status_tick")
+            ("status_tick", "status_tick"),
+            // Corruption and Null State
+            ("corruption_gain", "corruption_gain"),
+            ("null_state", "null_state")
         };
 
         // Requiem Art SFX

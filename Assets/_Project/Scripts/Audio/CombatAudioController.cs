@@ -32,20 +32,10 @@ namespace HNR.Audio
         [Header("Combat SFX")]
         [SerializeField] private string _damageHitSFX = "damage_hit";
         [SerializeField] private string _criticalHitSFX = "critical_hit";
-        [SerializeField] private string _blockSFX = "block";
         [SerializeField] private string _healSFX = "heal";
-
-        [Header("Turn SFX")]
-        [SerializeField] private string _turnStartSFX = "turn_start";
-        [SerializeField] private string _turnEndSFX = "turn_end";
 
         [Header("Status SFX")]
         [SerializeField] private string _corruptionGainSFX = "corruption_gain";
-        [SerializeField] private string _nullStateSFX = "null_state";
-        [SerializeField] private string _statusAppliedSFX = "status_applied";
-
-        [Header("Null State Audio")]
-        [SerializeField] private string _nullStateAmbientId = "null_state_ambient";
 
         [Header("Enemy SFX")]
         [SerializeField] private string _enemyDefeatedSFX = "enemy_defeated";
@@ -68,7 +58,6 @@ namespace HNR.Audio
 
         private IAudioManager _audioManager;
         private bool _isBossFight;
-        private HashSet<RequiemInstance> _requiemsWithNullAudio = new();
 
         // ============================================
         // Lifecycle
@@ -110,10 +99,6 @@ namespace HNR.Audio
             EventBus.Subscribe<CombatStartedEvent>(OnCombatStarted);
             EventBus.Subscribe<CombatEndedEvent>(OnCombatEnded);
 
-            // Turn events
-            EventBus.Subscribe<TurnStartedEvent>(OnTurnStarted);
-            EventBus.Subscribe<TurnEndedEvent>(OnTurnEnded);
-
             // Card events
             EventBus.Subscribe<CardDrawnEvent>(OnCardDrawn);
             EventBus.Subscribe<CardPlayedEvent>(OnCardPlayed);
@@ -121,14 +106,11 @@ namespace HNR.Audio
 
             // Damage/healing events
             EventBus.Subscribe<DamageDealtEvent>(OnDamageDealt);
-            EventBus.Subscribe<BlockGainedEvent>(OnBlockGained);
             EventBus.Subscribe<HealingReceivedEvent>(OnHealingReceived);
 
             // Status events
             EventBus.Subscribe<CorruptionChangedEvent>(OnCorruptionChanged);
-            EventBus.Subscribe<NullStateEnteredEvent>(OnNullStateEntered);
             EventBus.Subscribe<NullStateExitedEvent>(OnNullStateExited);
-            EventBus.Subscribe<StatusAppliedEvent>(OnStatusApplied);
 
             // Enemy events
             EventBus.Subscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
@@ -141,10 +123,6 @@ namespace HNR.Audio
             EventBus.Unsubscribe<CombatStartedEvent>(OnCombatStarted);
             EventBus.Unsubscribe<CombatEndedEvent>(OnCombatEnded);
 
-            // Turn events
-            EventBus.Unsubscribe<TurnStartedEvent>(OnTurnStarted);
-            EventBus.Unsubscribe<TurnEndedEvent>(OnTurnEnded);
-
             // Card events
             EventBus.Unsubscribe<CardDrawnEvent>(OnCardDrawn);
             EventBus.Unsubscribe<CardPlayedEvent>(OnCardPlayed);
@@ -152,14 +130,11 @@ namespace HNR.Audio
 
             // Damage/healing events
             EventBus.Unsubscribe<DamageDealtEvent>(OnDamageDealt);
-            EventBus.Unsubscribe<BlockGainedEvent>(OnBlockGained);
             EventBus.Unsubscribe<HealingReceivedEvent>(OnHealingReceived);
 
             // Status events
             EventBus.Unsubscribe<CorruptionChangedEvent>(OnCorruptionChanged);
-            EventBus.Unsubscribe<NullStateEnteredEvent>(OnNullStateEntered);
             EventBus.Unsubscribe<NullStateExitedEvent>(OnNullStateExited);
-            EventBus.Unsubscribe<StatusAppliedEvent>(OnStatusApplied);
 
             // Enemy events
             EventBus.Unsubscribe<EnemyDefeatedEvent>(OnEnemyDefeated);
@@ -229,31 +204,7 @@ namespace HNR.Audio
             _audioManager?.PlaySFX(sfx);
             _audioManager?.StopMusic(_musicFadeTime);
 
-            // Stop Null State ambient if playing
-            _audioManager?.StopAmbient(_nullStateAmbientId);
-            _requiemsWithNullAudio.Clear();
-
             Debug.Log($"[CombatAudioController] Combat ended - Victory: {evt.Victory}");
-        }
-
-        // ============================================
-        // Turn Handlers
-        // ============================================
-
-        private void OnTurnStarted(TurnStartedEvent evt)
-        {
-            if (evt.IsPlayerTurn)
-            {
-                _audioManager?.PlaySFX(_turnStartSFX);
-            }
-        }
-
-        private void OnTurnEnded(TurnEndedEvent evt)
-        {
-            if (evt.WasPlayerTurn)
-            {
-                _audioManager?.PlaySFX(_turnEndSFX);
-            }
         }
 
         // ============================================
@@ -294,14 +245,6 @@ namespace HNR.Audio
             }
         }
 
-        private void OnBlockGained(BlockGainedEvent evt)
-        {
-            if (evt.Amount > 0)
-            {
-                _audioManager?.PlaySFX(_blockSFX);
-            }
-        }
-
         private void OnHealingReceived(HealingReceivedEvent evt)
         {
             if (evt.Amount > 0)
@@ -323,38 +266,9 @@ namespace HNR.Audio
             }
         }
 
-        private void OnNullStateEntered(NullStateEnteredEvent evt)
-        {
-            _audioManager?.PlaySFX(_nullStateSFX);
-
-            // Start ambient loop for this Requiem
-            if (evt.Requiem != null && !_requiemsWithNullAudio.Contains(evt.Requiem))
-            {
-                _audioManager?.PlayAmbient(_nullStateAmbientId);
-                _requiemsWithNullAudio.Add(evt.Requiem);
-            }
-
-            Debug.Log($"[CombatAudioController] {evt.Requiem?.Name} entered Null State!");
-        }
-
         private void OnNullStateExited(NullStateExitedEvent evt)
         {
-            if (evt.Requiem != null)
-            {
-                _requiemsWithNullAudio.Remove(evt.Requiem);
-
-                // Only stop ambient if no other Requiems in Null State
-                if (_requiemsWithNullAudio.Count == 0)
-                {
-                    _audioManager?.StopAmbient(_nullStateAmbientId);
-                }
-            }
             Debug.Log($"[CombatAudioController] {evt.Requiem?.Name} exited Null State");
-        }
-
-        private void OnStatusApplied(StatusAppliedEvent evt)
-        {
-            _audioManager?.PlaySFX(_statusAppliedSFX);
         }
 
         // ============================================

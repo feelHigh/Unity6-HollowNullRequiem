@@ -110,6 +110,24 @@ MonoBehaviour:
     Volume: 1
     Pitch: 1
     Loop: 0
+  - Id: card_draw
+    Clip: {fileID: 8300000, guid: 4ff5f50ed31ef44938b52e8fced973b7, type: 3}
+    Category: 1
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: card_play
+    Clip: {fileID: 8300000, guid: 6eadee2cd04b74be989969265badd518, type: 3}
+    Category: 1
+    Volume: 0
+    Pitch: 1
+    Loop: 0
+  - Id: card_discard
+    Clip: {fileID: 8300000, guid: 3f24454de66ef46b0b18a63848f7db77, type: 3}
+    Category: 1
+    Volume: 0
+    Pitch: 1
+    Loop: 0
   _statusEntries:
   - Id: status_burn
     Clip: {fileID: 8300000, guid: df8ef7c018dd7fd47a223c23acc88c9f, type: 3}
@@ -149,6 +167,18 @@ MonoBehaviour:
     Loop: 0
   - Id: status_tick
     Clip: {fileID: 8300000, guid: f91ae08b9b77bea438a77bfb0c42365e, type: 3}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: corruption_gain
+    Clip: {fileID: 8300000, guid: b17ce82cc75be074880fcb58291c05bf, type: 3}
+    Category: 2
+    Volume: 1
+    Pitch: 1
+    Loop: 0
+  - Id: null_state
+    Clip: {fileID: 8300000, guid: a9a3bdee9e1f4314aa1b9002ba5c8993, type: 3}
     Category: 2
     Volume: 1
     Pitch: 1
@@ -238,7 +268,7 @@ MonoBehaviour:
   - Id: victory
     Clip: {fileID: 8300000, guid: 3b0ae53548b926e49933f5f7f495e5e1, type: 3}
     Category: 6
-    Volume: 0.3
+    Volume: 0.25
     Pitch: 1
     Loop: 0
   - Id: defeat
