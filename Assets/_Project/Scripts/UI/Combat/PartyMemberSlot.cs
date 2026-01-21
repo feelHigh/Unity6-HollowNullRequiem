@@ -99,9 +99,6 @@ namespace HNR.UI.Combat
                 _portraitFrame.color = UIColors.GetAspectColor(requiem.Data.SoulAspect);
             }
 
-            // Reset Art-ready glow at combat start (SE starts at 0, so no Art available)
-            SetActive(false);
-
             // Clear any leftover status icons from previous combat
             ClearStatuses();
 
@@ -109,6 +106,9 @@ namespace HNR.UI.Combat
             EventBus.Subscribe<StatusAppliedEvent>(OnStatusApplied);
             EventBus.Subscribe<StatusRemovedEvent>(OnStatusRemoved);
             EventBus.Subscribe<SoulEssenceChangedEvent>(OnSEChanged);
+
+            // Check if Art is ready based on persisted SE (SE now persists across combats)
+            UpdateArtReadyGlow();
         }
 
         /// <summary>
@@ -156,31 +156,39 @@ namespace HNR.UI.Combat
 
         /// <summary>
         /// Updates the active glow to show when Requiem Art is ready to use.
+        /// Checks SE directly from TurnManager.Context to work reliably during initialization.
         /// </summary>
         private void UpdateArtReadyGlow()
         {
             if (_requiem == null || _activeGlow == null) return;
 
-            // Check if Art can be activated (enough SE or in Null State)
-            var combatManager = CombatManager.Instance;
-            if (combatManager != null)
-            {
-                bool canActivate = combatManager.CanActivateArt(_requiem);
-                bool notUsedYet = !_requiem.HasUsedArtThisCombat;
-
-                if (canActivate && notUsedYet)
-                {
-                    SetActive(true);
-                }
-                else
-                {
-                    SetActive(false);
-                }
-            }
-            else
+            // Check Art availability
+            var art = _requiem.Data?.RequiemArt;
+            if (art == null)
             {
                 SetActive(false);
+                return;
             }
+
+            // Check if already used this combat
+            if (_requiem.HasUsedArtThisCombat)
+            {
+                SetActive(false);
+                return;
+            }
+
+            // Get SE directly from TurnManager.Context (works during initialization)
+            int currentSE = 0;
+            if (ServiceLocator.TryGet<TurnManager>(out var turnManager) && turnManager.Context != null)
+            {
+                currentSE = turnManager.Context.SoulEssence;
+            }
+
+            // Calculate effective cost (reduced in Null State)
+            int effectiveCost = art.GetEffectiveCost(_requiem.InNullState);
+            bool canActivate = currentSE >= effectiveCost;
+
+            SetActive(canActivate);
         }
 
         private void TriggerArtActivationFeedback()

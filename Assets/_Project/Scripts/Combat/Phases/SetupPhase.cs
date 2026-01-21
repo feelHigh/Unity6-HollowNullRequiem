@@ -26,7 +26,8 @@ namespace HNR.Combat
             context.TurnNumber = 0;
             context.TeamBlock = 0;
             context.IsPlayerTurn = true;
-            context.SoulEssence = 0;
+            // Note: SoulEssence is now set by TurnManager.StartCombat() from RunManager
+            // to persist across combats. Do NOT reset it here.
 
             // Reset Art usage flags for all Requiems (allows Art use in each combat)
             foreach (var requiem in context.Team)

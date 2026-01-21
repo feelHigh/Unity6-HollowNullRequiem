@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
+using HNR.Core;
 using HNR.Core.Events;
 using HNR.Combat;
 using HNR.Characters;
@@ -140,17 +141,19 @@ namespace HNR.UI.Combat
                 }
             }
 
-            // Default first slot as active
-            if (team.Length > 0)
-            {
-                SetActiveSlot(0);
-            }
+            // Note: Art glow is managed by each PartyMemberSlot based on SE
+            // Do NOT call SetActiveSlot here - it would override the correct glow state
 
-            // Reset SE gauge to 0 at combat start
-            // SE accumulates during combat and resets between combats
-            UpdateSharedSE(0);
-            _isArtReady = false;
-            Debug.Log("[PartyStatusSidebar] Initialized - SE gauge reset to 0");
+            // Initialize SE gauge with persisted value from TurnManager context
+            // SE now persists across combats during a run
+            int initialSE = 0;
+            if (ServiceLocator.TryGet<TurnManager>(out var turnManager) && turnManager.Context != null)
+            {
+                initialSE = turnManager.Context.SoulEssence;
+            }
+            UpdateSharedSE(initialSE);
+            _isArtReady = initialSE >= _maxSE;
+            Debug.Log($"[PartyStatusSidebar] Initialized - SE gauge set to {initialSE}");
         }
 
         /// <summary>

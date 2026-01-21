@@ -416,22 +416,24 @@ namespace HNR.Map
 
         private void ApplyCorruptionChange(int amount)
         {
-            if (ServiceLocator.TryGet<CorruptionManager>(out var corruptionManager))
+            // Use RunManager for persistent corruption changes (works outside combat)
+            // CorruptionManager is combat-only and may not have valid team references
+            if (ServiceLocator.TryGet<IRunManager>(out var runManager))
             {
                 if (amount > 0)
                 {
-                    corruptionManager.AddCorruptionToTeam(amount);
+                    runManager.AddTeamCorruption(amount);
                     Debug.Log($"[EchoEvent] Team gained {amount} corruption");
                 }
                 else if (amount < 0)
                 {
-                    corruptionManager.RemoveCorruptionFromTeam(-amount);
+                    runManager.RemoveTeamCorruption(-amount);
                     Debug.Log($"[EchoEvent] Team purified {-amount} corruption");
                 }
             }
             else
             {
-                Debug.LogWarning($"[EchoEvent] CorruptionManager not available - cannot apply corruption change: {amount}");
+                Debug.LogWarning($"[EchoEvent] RunManager not available - cannot apply corruption change: {amount}");
             }
         }
 

@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using HNR.Core;
 using HNR.Core.Events;
+using HNR.Core.Interfaces;
 using HNR.Cards;
 using HNR.Characters;
 using HNR.Characters.Visuals;
@@ -187,20 +188,34 @@ namespace HNR.Combat
                 Debug.Log($"[TurnManager] CombatConfig loaded: DamagePerCorruption={_combatConfig.DamagePerCorruption}, Min={_combatConfig.MinimumCorruptionPerHit}, Max={_combatConfig.MaximumCorruptionPerHit}");
             }
 
-            // Calculate team HP from all Requiems
-            int totalHP = 0;
-            foreach (var requiem in team)
+            // Use persisted team HP and Soul Essence from RunManager
+            // This preserves state across multiple combats during a run
+            if (ServiceLocator.TryGet<IRunManager>(out var runManager))
             {
-                totalHP += requiem.MaxHP;
+                _context.TeamHP = runManager.TeamCurrentHP;
+                _context.TeamMaxHP = runManager.TeamMaxHP;
+                _context.SoulEssence = runManager.SoulEssence;
+                Debug.Log($"[TurnManager] Using persisted state from RunManager: HP={_context.TeamHP}/{_context.TeamMaxHP}, SE={_context.SoulEssence}");
             }
-            _context.TeamHP = totalHP;
-            _context.TeamMaxHP = totalHP;
+            else
+            {
+                // Fallback: Calculate from Requiems if RunManager unavailable
+                int totalHP = 0;
+                foreach (var requiem in team)
+                {
+                    totalHP += requiem.MaxHP;
+                }
+                _context.TeamHP = totalHP;
+                _context.TeamMaxHP = totalHP;
+                _context.SoulEssence = 0;
+                Debug.LogWarning($"[TurnManager] RunManager not available - using calculated HP: {_context.TeamHP}/{_context.TeamMaxHP}");
+            }
 
             _combatActive = true;
             TransitionToPhase(CombatPhase.Setup);
 
             EventBus.Publish(new CombatStartedEvent(enemies));
-            Debug.Log($"[TurnManager] Combat started: {team.Count} Requiems vs {enemies.Count} Enemies");
+            Debug.Log($"[TurnManager] Combat started: {team.Count} Requiems vs {enemies.Count} Enemies, HP: {_context.TeamHP}/{_context.TeamMaxHP}, SE: {_context.SoulEssence}");
         }
 
         /// <summary>
@@ -262,6 +277,32 @@ namespace HNR.Combat
             _combatActive = false;
             _context.CombatEnded = true;
             _context.PlayerVictory = victory;
+
+            // Sync combat HP and Soul Essence back to RunManager for persistence across combats
+            if (ServiceLocator.TryGet<IRunManager>(out var runManager))
+            {
+                // Calculate HP delta from combat
+                int hpBefore = runManager.TeamCurrentHP;
+                int hpAfter = _context.TeamHP;
+                int delta = hpAfter - hpBefore;
+
+                if (delta < 0)
+                {
+                    // Team took damage during combat
+                    runManager.DamageTeam(-delta);
+                    Debug.Log($"[TurnManager] Syncing combat HP to RunManager: {hpBefore} -> {hpAfter} (took {-delta} damage)");
+                }
+                else if (delta > 0)
+                {
+                    // Team healed during combat
+                    runManager.HealTeam(delta);
+                    Debug.Log($"[TurnManager] Syncing combat HP to RunManager: {hpBefore} -> {hpAfter} (healed {delta})");
+                }
+
+                // Sync Soul Essence
+                runManager.SetSoulEssence(_context.SoulEssence);
+                Debug.Log($"[TurnManager] Syncing Soul Essence to RunManager: {_context.SoulEssence}");
+            }
 
             int voidShards = 0;
             if (victory)

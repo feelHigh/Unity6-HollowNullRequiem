@@ -152,5 +152,43 @@ namespace HNR.Core.Interfaces
         /// Battle Mission difficulty context.
         /// </summary>
         DifficultyLevel BattleMissionDifficulty { get; }
+
+        /// <summary>
+        /// Add corruption to all team members.
+        /// Used by Echo events and other non-combat sources.
+        /// </summary>
+        /// <param name="amount">Amount of corruption to add.</param>
+        void AddTeamCorruption(int amount);
+
+        /// <summary>
+        /// Remove corruption from all team members.
+        /// Used by Echo events and sanctuaries.
+        /// </summary>
+        /// <param name="amount">Amount of corruption to remove.</param>
+        void RemoveTeamCorruption(int amount);
+
+        /// <summary>
+        /// Current Soul Essence (persists across combats).
+        /// </summary>
+        int SoulEssence { get; }
+
+        /// <summary>
+        /// Add Soul Essence to the shared pool.
+        /// </summary>
+        /// <param name="amount">Amount to add.</param>
+        void AddSoulEssence(int amount);
+
+        /// <summary>
+        /// Spend Soul Essence from the shared pool.
+        /// </summary>
+        /// <param name="amount">Amount to spend.</param>
+        /// <returns>True if enough SE was available and spent.</returns>
+        bool SpendSoulEssence(int amount);
+
+        /// <summary>
+        /// Set Soul Essence directly (for save/load).
+        /// </summary>
+        /// <param name="amount">Amount to set.</param>
+        void SetSoulEssence(int amount);
     }
 }

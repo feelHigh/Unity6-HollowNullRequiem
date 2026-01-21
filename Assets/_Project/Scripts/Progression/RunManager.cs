@@ -11,6 +11,7 @@ using HNR.Core.Events;
 using HNR.Core.Interfaces;
 using HNR.Cards;
 using HNR.Characters;
+using HNR.Combat;
 using HNR.Map;
 
 namespace HNR.Progression
@@ -34,6 +35,7 @@ namespace HNR.Progression
         private int _runSeed;
         private int _teamCurrentHP;
         private int _teamMaxHP;
+        private int _soulEssence;
         private int _currentZone = 1;
         private bool _isRunActive;
         private float _runStartTime;
@@ -64,6 +66,9 @@ namespace HNR.Progression
 
         /// <summary>Maximum team HP.</summary>
         public int TeamMaxHP => _teamMaxHP;
+
+        /// <summary>Current Soul Essence (persists across combats).</summary>
+        public int SoulEssence => _soulEssence;
 
         /// <summary>The player's deck.</summary>
         public IReadOnlyList<CardDataSO> Deck => _deck.AsReadOnly();
@@ -361,12 +366,13 @@ namespace HNR.Progression
             }
 
             _teamCurrentHP = _teamMaxHP;
+            _soulEssence = 0; // Reset Soul Essence for new run
             _isRunActive = true;
 
             // Publish event
             EventBus.Publish(new RunStartedEvent(selectedTeam));
 
-            Debug.Log($"[RunManager] New run initialized - Seed: {_runSeed}, Team: {_team.Count}, Deck: {_deck.Count} cards, HP: {_teamCurrentHP}/{_teamMaxHP}");
+            Debug.Log($"[RunManager] New run initialized - Seed: {_runSeed}, Team: {_team.Count}, Deck: {_deck.Count} cards, HP: {_teamCurrentHP}/{_teamMaxHP}, SE: {_soulEssence}");
         }
 
         /// <summary>
@@ -508,7 +514,8 @@ namespace HNR.Progression
             var data = new TeamSaveData
             {
                 TeamCurrentHP = _teamCurrentHP,
-                TeamMaxHP = _teamMaxHP
+                TeamMaxHP = _teamMaxHP,
+                SharedSoulEssence = _soulEssence
             };
 
             foreach (var requiem in _team)
@@ -637,6 +644,7 @@ namespace HNR.Progression
             CleanupTeam();
             _teamCurrentHP = saveData.Team.TeamCurrentHP;
             _teamMaxHP = saveData.Team.TeamMaxHP;
+            _soulEssence = saveData.Team.SharedSoulEssence;
 
             for (int i = 0; i < saveData.Team.RequiemIds.Count; i++)
             {
@@ -771,6 +779,7 @@ namespace HNR.Progression
             if (actualHeal > 0)
             {
                 _stats.HealingReceived += actualHeal;
+                EventBus.Publish(new TeamHPChangedEvent(_teamCurrentHP, _teamMaxHP, actualHeal));
                 Debug.Log($"[RunManager] Team healed: {oldHP} → {_teamCurrentHP} (+{actualHeal})");
             }
         }
@@ -784,9 +793,11 @@ namespace HNR.Progression
 
             int oldHP = _teamCurrentHP;
             _teamCurrentHP = Mathf.Max(0, _teamCurrentHP - amount);
+            int actualDamage = oldHP - _teamCurrentHP;
 
-            _stats.DamageTaken += amount;
-            Debug.Log($"[RunManager] Team damaged: {oldHP} → {_teamCurrentHP} (-{amount})");
+            _stats.DamageTaken += actualDamage;
+            EventBus.Publish(new TeamHPChangedEvent(_teamCurrentHP, _teamMaxHP, -actualDamage));
+            Debug.Log($"[RunManager] Team damaged: {oldHP} → {_teamCurrentHP} (-{actualDamage})");
 
             if (_teamCurrentHP <= 0)
             {
@@ -803,7 +814,8 @@ namespace HNR.Progression
 
             _teamMaxHP += amount;
             _teamCurrentHP += amount;
-            Debug.Log($"[RunManager] Max HP increased by {amount}. New max: {_teamMaxHP}");
+            EventBus.Publish(new TeamHPChangedEvent(_teamCurrentHP, _teamMaxHP, amount));
+            Debug.Log($"[RunManager] Max HP increased by {amount}. New max: {_teamMaxHP}, Current: {_teamCurrentHP}");
         }
 
         /// <summary>
@@ -815,9 +827,12 @@ namespace HNR.Progression
             if (amount <= 0) return;
 
             int oldMax = _teamMaxHP;
+            int oldCurrent = _teamCurrentHP;
             _teamMaxHP = Mathf.Max(1, _teamMaxHP - amount); // Minimum 1 max HP
             _teamCurrentHP = Mathf.Min(_teamCurrentHP, _teamMaxHP);
+            int hpLost = oldCurrent - _teamCurrentHP;
 
+            EventBus.Publish(new TeamHPChangedEvent(_teamCurrentHP, _teamMaxHP, -hpLost));
             Debug.Log($"[RunManager] Max HP decreased by {amount}. {oldMax} → {_teamMaxHP}, Current: {_teamCurrentHP}");
 
             if (_teamCurrentHP <= 0)
@@ -842,6 +857,98 @@ namespace HNR.Progression
         public void RecordEnemyDefeated()
         {
             _stats.EnemiesDefeated++;
+        }
+
+        // ============================================
+        // Team Corruption Management
+        // ============================================
+
+        /// <summary>
+        /// Add corruption to all team members.
+        /// Used by Echo events and other non-combat sources.
+        /// </summary>
+        public void AddTeamCorruption(int amount)
+        {
+            if (amount <= 0) return;
+
+            foreach (var requiem in _team)
+            {
+                if (requiem != null && !requiem.IsDead)
+                {
+                    int previousCorruption = requiem.Corruption;
+                    requiem.AddCorruption(amount);
+                    EventBus.Publish(new CorruptionChangedEvent(requiem, previousCorruption, requiem.Corruption));
+                    Debug.Log($"[RunManager] {requiem.Name} corruption: {previousCorruption} → {requiem.Corruption} (+{amount})");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Remove corruption from all team members.
+        /// Used by Echo events and sanctuaries.
+        /// </summary>
+        public void RemoveTeamCorruption(int amount)
+        {
+            if (amount <= 0) return;
+
+            foreach (var requiem in _team)
+            {
+                if (requiem != null && !requiem.IsDead)
+                {
+                    int previousCorruption = requiem.Corruption;
+                    requiem.RemoveCorruption(amount);
+                    EventBus.Publish(new CorruptionChangedEvent(requiem, previousCorruption, requiem.Corruption));
+                    Debug.Log($"[RunManager] {requiem.Name} corruption: {previousCorruption} → {requiem.Corruption} (-{amount})");
+                }
+            }
+        }
+
+        // ============================================
+        // Soul Essence Management
+        // ============================================
+
+        /// <summary>
+        /// Add Soul Essence to the shared pool.
+        /// Persists across combats during a run.
+        /// </summary>
+        public void AddSoulEssence(int amount)
+        {
+            if (amount <= 0) return;
+
+            int previous = _soulEssence;
+            _soulEssence += amount;
+            EventBus.Publish(new SoulEssenceChangedEvent(_soulEssence, previous));
+            Debug.Log($"[RunManager] Soul Essence: {previous} → {_soulEssence} (+{amount})");
+        }
+
+        /// <summary>
+        /// Spend Soul Essence from the shared pool.
+        /// </summary>
+        /// <returns>True if enough SE was available and spent.</returns>
+        public bool SpendSoulEssence(int amount)
+        {
+            if (amount <= 0) return true;
+            if (_soulEssence < amount) return false;
+
+            int previous = _soulEssence;
+            _soulEssence -= amount;
+            EventBus.Publish(new SoulEssenceChangedEvent(_soulEssence, previous));
+            Debug.Log($"[RunManager] Soul Essence: {previous} → {_soulEssence} (-{amount})");
+            return true;
+        }
+
+        /// <summary>
+        /// Set Soul Essence directly (for save/load).
+        /// </summary>
+        public void SetSoulEssence(int amount)
+        {
+            int previous = _soulEssence;
+            _soulEssence = Mathf.Max(0, amount);
+            if (_soulEssence != previous)
+            {
+                EventBus.Publish(new SoulEssenceChangedEvent(_soulEssence, previous));
+                Debug.Log($"[RunManager] Soul Essence set: {previous} → {_soulEssence}");
+            }
         }
     }
 }

@@ -74,6 +74,9 @@ namespace HNR.Progression
 
         /// <summary>Team-wide max HP.</summary>
         public int TeamMaxHP;
+
+        /// <summary>Team-wide shared Soul Essence pool (persists across combats).</summary>
+        public int SharedSoulEssence;
     }
 
     // ============================================
