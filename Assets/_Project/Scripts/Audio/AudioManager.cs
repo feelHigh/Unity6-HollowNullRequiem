@@ -88,7 +88,16 @@ namespace HNR.Audio
             set
             {
                 _masterVolume = Mathf.Clamp01(value);
-                UpdateMixerVolume(MASTER_VOLUME_PARAM, _isMasterMuted ? 0f : _masterVolume);
+                float effectiveVolume = _isMasterMuted ? 0f : _masterVolume;
+
+                // Try mixer first
+                if (_masterMixer != null)
+                {
+                    UpdateMixerVolume(MASTER_VOLUME_PARAM, effectiveVolume);
+                }
+
+                // Always set AudioListener as fallback/additional control
+                AudioListener.volume = effectiveVolume;
             }
         }
 
@@ -98,7 +107,19 @@ namespace HNR.Audio
             set
             {
                 _musicVolume = Mathf.Clamp01(value);
-                UpdateMixerVolume(MUSIC_VOLUME_PARAM, _isMusicMuted ? 0f : _musicVolume);
+                float effectiveVolume = _isMusicMuted ? 0f : _musicVolume;
+
+                // Try mixer first
+                if (_masterMixer != null)
+                {
+                    UpdateMixerVolume(MUSIC_VOLUME_PARAM, effectiveVolume);
+                }
+
+                // Fallback: directly set music source volumes
+                if (_musicSourceA != null)
+                    _musicSourceA.volume = effectiveVolume;
+                if (_musicSourceB != null)
+                    _musicSourceB.volume = effectiveVolume;
             }
         }
 
@@ -108,7 +129,17 @@ namespace HNR.Audio
             set
             {
                 _sfxVolume = Mathf.Clamp01(value);
-                UpdateMixerVolume(SFX_VOLUME_PARAM, _isSFXMuted ? 0f : _sfxVolume);
+                float effectiveVolume = _isSFXMuted ? 0f : _sfxVolume;
+
+                // Try mixer first
+                if (_masterMixer != null)
+                {
+                    UpdateMixerVolume(SFX_VOLUME_PARAM, effectiveVolume);
+                }
+
+                // Fallback: set SFX source volume directly
+                if (_sfxSource2D != null)
+                    _sfxSource2D.volume = effectiveVolume;
             }
         }
 
@@ -195,21 +226,40 @@ namespace HNR.Audio
         public void MuteMaster(bool muted)
         {
             _isMasterMuted = muted;
-            UpdateMixerVolume(MASTER_VOLUME_PARAM, muted ? 0f : _masterVolume);
+            float effectiveVolume = muted ? 0f : _masterVolume;
+
+            if (_masterMixer != null)
+                UpdateMixerVolume(MASTER_VOLUME_PARAM, effectiveVolume);
+
+            // Fallback
+            AudioListener.volume = effectiveVolume;
             Debug.Log($"[AudioManager] Master muted: {muted}");
         }
 
         public void MuteMusic(bool muted)
         {
             _isMusicMuted = muted;
-            UpdateMixerVolume(MUSIC_VOLUME_PARAM, muted ? 0f : _musicVolume);
+            float effectiveVolume = muted ? 0f : _musicVolume;
+
+            if (_masterMixer != null)
+                UpdateMixerVolume(MUSIC_VOLUME_PARAM, effectiveVolume);
+
+            // Fallback
+            if (_musicSourceA != null) _musicSourceA.volume = effectiveVolume;
+            if (_musicSourceB != null) _musicSourceB.volume = effectiveVolume;
             Debug.Log($"[AudioManager] Music muted: {muted}");
         }
 
         public void MuteSFX(bool muted)
         {
             _isSFXMuted = muted;
-            UpdateMixerVolume(SFX_VOLUME_PARAM, muted ? 0f : _sfxVolume);
+            float effectiveVolume = muted ? 0f : _sfxVolume;
+
+            if (_masterMixer != null)
+                UpdateMixerVolume(SFX_VOLUME_PARAM, effectiveVolume);
+
+            // Fallback
+            if (_sfxSource2D != null) _sfxSource2D.volume = effectiveVolume;
             Debug.Log($"[AudioManager] SFX muted: {muted}");
         }
 

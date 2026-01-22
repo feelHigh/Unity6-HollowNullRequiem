@@ -19,8 +19,9 @@ namespace HNR.UI.Combat
     {
         [Header("Speed Toggle")]
         [SerializeField] private Button _speedToggle;
-        [SerializeField] private TMP_Text _speedLabel;
         [SerializeField] private Image _speedIcon;
+        [SerializeField] private Sprite _speed1xSprite;
+        [SerializeField] private Sprite _speed2xSprite;
 
         [Header("Auto-Battle")]
         [SerializeField] private Button _autoBattleToggle;
@@ -97,10 +98,10 @@ namespace HNR.UI.Combat
 
         private void UpdateSpeedDisplay()
         {
-            if (_speedLabel == null) return;
+            if (_speedIcon == null) return;
 
             float speed = _speedOptions[_currentSpeedIndex];
-            _speedLabel.text = speed == 1f ? "1x" : $"{speed}x";
+            _speedIcon.sprite = speed == 1f ? _speed1xSprite : _speed2xSprite;
         }
 
         /// <summary>

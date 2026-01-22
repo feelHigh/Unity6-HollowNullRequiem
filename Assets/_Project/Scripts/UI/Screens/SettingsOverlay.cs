@@ -319,6 +319,13 @@ namespace HNR.UI.Screens
             {
                 _audioManager.MasterVolume = value;
             }
+            else
+            {
+                Debug.LogWarning("[SettingsOverlay] AudioManager not found - using AudioListener fallback");
+            }
+
+            // Fallback: Always set AudioListener.volume for master
+            AudioListener.volume = value;
             UpdateVolumeLabel(_masterVolumeLabel, value);
         }
 
@@ -328,6 +335,10 @@ namespace HNR.UI.Screens
             {
                 _audioManager.MusicVolume = value;
             }
+            else
+            {
+                Debug.LogWarning("[SettingsOverlay] AudioManager not found for music volume");
+            }
             UpdateVolumeLabel(_musicVolumeLabel, value);
         }
 
@@ -336,6 +347,10 @@ namespace HNR.UI.Screens
             if (_audioManager != null)
             {
                 _audioManager.SFXVolume = value;
+            }
+            else
+            {
+                Debug.LogWarning("[SettingsOverlay] AudioManager not found for SFX volume");
             }
             UpdateVolumeLabel(_sfxVolumeLabel, value);
         }

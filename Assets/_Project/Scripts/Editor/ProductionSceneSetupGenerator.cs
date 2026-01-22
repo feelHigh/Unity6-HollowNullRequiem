@@ -3411,8 +3411,8 @@ namespace HNR.Editor
             // Auto-battle button - use sprite if available (fallback to play emoji)
             GameObject autoBtn = CreateSystemMenuButton(menuBar, "AutoBtn", "\u25B6", new Color(0.1f, 0.08f, 0.15f), iconConfig?.AutoBattleIcon);
 
-            // Speed button - use sprite if available (fallback to text "1x")
-            GameObject speedBtn = CreateSystemMenuButton(menuBar, "SpeedBtn", "1x", new Color(0.1f, 0.08f, 0.15f), iconConfig?.SpeedIcon);
+            // Speed button - use 1x sprite as initial state (fallback to text "1x")
+            GameObject speedBtn = CreateSystemMenuButton(menuBar, "SpeedBtn", "1x", new Color(0.1f, 0.08f, 0.15f), iconConfig?.Speed1xIcon);
 
             // Add SystemMenuBar component and wire references
             var sysMenuBar = menuBar.AddComponent<SystemMenuBar>();
@@ -3420,9 +3420,15 @@ namespace HNR.Editor
 
             // Wire speed toggle
             so.FindProperty("_speedToggle").objectReferenceValue = speedBtn.GetComponent<Button>();
-            var speedLabel = speedBtn.GetComponentInChildren<TMP_Text>(true);
-            if (speedLabel != null)
-                so.FindProperty("_speedLabel").objectReferenceValue = speedLabel;
+            // Wire the speed icon image for sprite swapping
+            var speedIconImage = speedBtn.transform.Find("Label")?.GetComponent<Image>();
+            if (speedIconImage != null)
+                so.FindProperty("_speedIcon").objectReferenceValue = speedIconImage;
+            // Wire both speed sprites
+            if (iconConfig?.Speed1xIcon != null)
+                so.FindProperty("_speed1xSprite").objectReferenceValue = iconConfig.Speed1xIcon;
+            if (iconConfig?.Speed2xIcon != null)
+                so.FindProperty("_speed2xSprite").objectReferenceValue = iconConfig.Speed2xIcon;
 
             // Wire auto-battle toggle
             so.FindProperty("_autoBattleToggle").objectReferenceValue = autoBtn.GetComponent<Button>();
@@ -3961,6 +3967,9 @@ namespace HNR.Editor
             statsLayout.childForceExpandWidth = false;
             statsLayout.childForceExpandHeight = false;
 
+            // Load icon config for HP and Currency icons
+            var iconConfig = LoadIconConfig();
+
             // HP Container with AnimatedStatDisplay
             GameObject hpContainer = new GameObject("HPContainer");
             hpContainer.transform.SetParent(statsContainer.transform, false);
@@ -3968,12 +3977,9 @@ namespace HNR.Editor
             hpLayout.spacing = 4;
             hpLayout.childAlignment = TextAnchor.MiddleCenter;
 
-            GameObject hpIcon = new GameObject("HPIcon");
-            hpIcon.transform.SetParent(hpContainer.transform, false);
-            RectTransform hpIconRect = hpIcon.AddComponent<RectTransform>();
-            hpIconRect.sizeDelta = new Vector2(16, 16);
-            Image hpIconImg = hpIcon.AddComponent<Image>();
-            hpIconImg.color = new Color(0.18f, 0.8f, 0.44f); // Health green
+            // HP Icon - use sprite from config if available
+            Color healthGreen = new Color(0.18f, 0.8f, 0.44f);
+            GameObject hpIcon = CreateIconImage(hpContainer, "HPIcon", iconConfig?.HPIcon, new Vector2(16, 16), healthGreen, "\u2764", 14);
             var hpIconLayout = hpIcon.AddComponent<LayoutElement>();
             hpIconLayout.preferredWidth = 16;
             hpIconLayout.preferredHeight = 16;
@@ -4013,12 +4019,9 @@ namespace HNR.Editor
             currencyLayout.spacing = 4;
             currencyLayout.childAlignment = TextAnchor.MiddleCenter;
 
-            GameObject currencyIcon = new GameObject("CurrencyIcon");
-            currencyIcon.transform.SetParent(currencyContainer.transform, false);
-            RectTransform currIconRect = currencyIcon.AddComponent<RectTransform>();
-            currIconRect.sizeDelta = new Vector2(16, 16);
-            Image currIconImg = currencyIcon.AddComponent<Image>();
-            currIconImg.color = new Color(0f, 0.83f, 0.89f); // Soul cyan
+            // Currency Icon - use sprite from config if available
+            Color soulCyan = new Color(0f, 0.83f, 0.89f);
+            GameObject currencyIcon = CreateIconImage(currencyContainer, "CurrencyIcon", iconConfig?.CurrencyIcon, new Vector2(16, 16), soulCyan, "\u25C6", 14);
             var currIconLayout = currencyIcon.AddComponent<LayoutElement>();
             currIconLayout.preferredWidth = 16;
             currIconLayout.preferredHeight = 16;
@@ -4071,11 +4074,13 @@ namespace HNR.Editor
             legendBg.color = new Color(0.07f, 0.07f, 0.13f, 0.95f);
 
             HorizontalLayoutGroup layout = legend.AddComponent<HorizontalLayoutGroup>();
-            layout.padding = new RectOffset(12, 12, 4, 4);
-            layout.spacing = 16;
+            layout.padding = new RectOffset(20, 20, 4, 4);
+            layout.spacing = 48; // More spacing between legend items
             layout.childAlignment = TextAnchor.MiddleCenter;
             layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = true;
+            layout.childForceExpandHeight = false;
+            layout.childControlWidth = false;
+            layout.childControlHeight = false;
 
             // Load icon config for map legend
             var iconConfig = LoadIconConfig();
@@ -4105,20 +4110,38 @@ namespace HNR.Editor
             GameObject item = new GameObject($"Legend_{label}");
             item.transform.SetParent(parent.transform, false);
 
+            // Add LayoutElement to control item size
+            var itemLayout = item.AddComponent<LayoutElement>();
+            itemLayout.preferredWidth = 120; // Icon (20) + spacing (6) + label (100) - some margin
+            itemLayout.preferredHeight = 24;
+
             HorizontalLayoutGroup layout = item.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 3;
+            layout.spacing = 6;
             layout.childAlignment = TextAnchor.MiddleCenter;
             layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = false;
+            layout.childControlWidth = false;
+            layout.childControlHeight = false;
 
             // Icon - use sprite if available, fallback to text
-            GameObject iconObj = CreateIconImage(item, "Icon", iconSprite, new Vector2(16, 16), color, fallbackIcon, 12);
+            GameObject iconObj = CreateIconImage(item, "Icon", iconSprite, new Vector2(20, 20), color, fallbackIcon, 14);
             var iconLayout = iconObj.AddComponent<LayoutElement>();
-            iconLayout.preferredWidth = 16;
-            iconLayout.preferredHeight = 16;
+            iconLayout.minWidth = 20;
+            iconLayout.preferredWidth = 20;
+            iconLayout.minHeight = 20;
+            iconLayout.preferredHeight = 20;
 
-            GameObject labelObj = CreateText(item, "Label", label, 8);
-            labelObj.GetComponent<TMP_Text>().color = new Color(0.63f, 0.63f, 0.63f);
+            // Label with fixed width 100 and font size 16
+            GameObject labelObj = CreateText(item, "Label", label, 16);
+            var labelText = labelObj.GetComponent<TMP_Text>();
+            labelText.color = new Color(0.75f, 0.75f, 0.75f);
+            labelText.alignment = TextAlignmentOptions.Left; // Ensure left alignment for labels
+            // Override CreateText's default sizeDelta (200, 50) to match our desired width
+            labelObj.GetComponent<RectTransform>().sizeDelta = new Vector2(100, 24);
+            var labelLayout = labelObj.AddComponent<LayoutElement>();
+            labelLayout.minWidth = 100;
+            labelLayout.preferredWidth = 100;
+            labelLayout.flexibleWidth = 0; // Prevent stretching
         }
 
         /// <summary>
@@ -4844,13 +4867,13 @@ namespace HNR.Editor
             titleText.fontSize = 32;
             titleText.fontStyle = FontStyles.Bold;
 
-            // Settings button
-            var settingsButton = CreateSimpleButton("SettingsButton", header.transform, "=");
+            // Settings button - use icon from config
+            var iconConfig = LoadIconConfig();
+            var settingsButton = CreateIconButton("SettingsButton", header.transform, iconConfig?.SettingsIcon, "\u2699", new Vector2(60, 60));
             var settingsButtonRect = settingsButton.GetComponent<RectTransform>();
             settingsButtonRect.anchorMin = new Vector2(1, 0.5f);
             settingsButtonRect.anchorMax = new Vector2(1, 0.5f);
             settingsButtonRect.pivot = new Vector2(1, 0.5f);
-            settingsButtonRect.sizeDelta = new Vector2(60, 60);
             settingsButtonRect.anchoredPosition = Vector2.zero;
 
             // Content area
@@ -4864,14 +4887,24 @@ namespace HNR.Editor
             var hlg = content.AddComponent<HorizontalLayoutGroup>();
             hlg.spacing = 50;
             hlg.childAlignment = TextAnchor.MiddleCenter;
-            hlg.childForceExpandWidth = true;
-            hlg.childForceExpandHeight = true;
+            hlg.childForceExpandWidth = false;
+            hlg.childForceExpandHeight = false;
+            hlg.childControlWidth = false;
+            hlg.childControlHeight = false;
 
-            // Story button (placeholder)
+            // Story button (placeholder) - 1:2 ratio (200x400)
             var storyButton = CreateLargeButtonWithSubtitle("StoryButton", content.transform, "Story", "Coming Soon");
+            var storyLayout = storyButton.AddComponent<LayoutElement>();
+            storyLayout.preferredWidth = 200;
+            storyLayout.preferredHeight = 400;
+            storyButton.GetComponent<RectTransform>().sizeDelta = new Vector2(200, 400);
 
-            // Battle Mission button
+            // Battle Mission button - 1:2 ratio (200x400)
             var battleMissionButton = CreateLargeButtonWithSubtitle("BattleMissionButton", content.transform, "Battle Mission", "Challenge the Null Rift");
+            var battleLayout = battleMissionButton.AddComponent<LayoutElement>();
+            battleLayout.preferredWidth = 200;
+            battleLayout.preferredHeight = 400;
+            battleMissionButton.GetComponent<RectTransform>().sizeDelta = new Vector2(200, 400);
 
             // Wire references
             var so = new SerializedObject(missionsScreen);
@@ -4950,12 +4983,13 @@ namespace HNR.Editor
             titleRect.anchoredPosition = new Vector2(80, 0);
             title.GetComponent<TMP_Text>().fontSize = 32;
 
-            var settingsButton = CreateSimpleButton("SettingsButton", header.transform, "=");
+            // Settings button - use icon from config
+            var iconConfig = LoadIconConfig();
+            var settingsButton = CreateIconButton("SettingsButton", header.transform, iconConfig?.SettingsIcon, "\u2699", new Vector2(60, 60));
             var settingsRect = settingsButton.GetComponent<RectTransform>();
             settingsRect.anchorMin = new Vector2(1, 0.5f);
             settingsRect.anchorMax = new Vector2(1, 0.5f);
             settingsRect.pivot = new Vector2(1, 0.5f);
-            settingsRect.sizeDelta = new Vector2(60, 60);
 
             // Zone container
             var zoneContainer = CreateSimpleUIObject("ZoneContainer", screenObj.transform);
@@ -4966,22 +5000,41 @@ namespace HNR.Editor
             zoneRect.offsetMax = Vector2.zero;
 
             var hlg = zoneContainer.AddComponent<HorizontalLayoutGroup>();
-            hlg.spacing = 30;
+            hlg.spacing = 0; // No spacing - connection lines are children
             hlg.childAlignment = TextAnchor.MiddleCenter;
-            hlg.childForceExpandWidth = true;
-            hlg.childForceExpandHeight = true;
+            hlg.childForceExpandWidth = false;
+            hlg.childForceExpandHeight = false;
+            hlg.childControlWidth = false;
+            hlg.childControlHeight = false;
 
-            // Zone nodes
+            // Zone nodes - 240x240 each, with connection lines between them
             var zone1 = CreateZoneNode("Zone1Node", zoneContainer.transform, 1, "The Outer Reaches");
+            var zone1Layout = zone1.AddComponent<LayoutElement>();
+            zone1Layout.preferredWidth = 240;
+            zone1Layout.preferredHeight = 240;
+            zone1.GetComponent<RectTransform>().sizeDelta = new Vector2(240, 240);
+
+            // Connection line between Zone 1 and Zone 2 (inside HLG)
+            var conn1 = CreateInlineConnectionLine("Connection1to2", zoneContainer.transform, 80);
+
             var zone2 = CreateZoneNode("Zone2Node", zoneContainer.transform, 2, "The Hollow Depths");
+            var zone2Layout = zone2.AddComponent<LayoutElement>();
+            zone2Layout.preferredWidth = 240;
+            zone2Layout.preferredHeight = 240;
+            zone2.GetComponent<RectTransform>().sizeDelta = new Vector2(240, 240);
+
+            // Connection line between Zone 2 and Zone 3 (inside HLG)
+            var conn2 = CreateInlineConnectionLine("Connection2to3", zoneContainer.transform, 80);
+
             var zone3 = CreateZoneNode("Zone3Node", zoneContainer.transform, 3, "The Null Core");
+            var zone3Layout = zone3.AddComponent<LayoutElement>();
+            zone3Layout.preferredWidth = 240;
+            zone3Layout.preferredHeight = 240;
+            zone3.GetComponent<RectTransform>().sizeDelta = new Vector2(240, 240);
 
             // Difficulty selector (bottom center, matching reference design)
             var difficultySection = CreateDifficultySelectorUI(screenObj.transform);
             var diffSelector = difficultySection.GetComponent<DifficultySelector>();
-
-            // Connection lines between zones
-            CreateZoneConnectionLines(screenObj.transform, zone1, zone2, zone3);
 
             // Wire references
             var so = new SerializedObject(screen);
@@ -5073,44 +5126,50 @@ namespace HNR.Editor
             return buttonObj;
         }
 
-        private static void CreateZoneConnectionLines(Transform parent, GameObject zone1, GameObject zone2, GameObject zone3)
+        /// <summary>
+        /// Creates an inline connection line element for HorizontalLayoutGroup.
+        /// Contains dotted line visual that sits between zone nodes.
+        /// </summary>
+        private static GameObject CreateInlineConnectionLine(string name, Transform parent, float width)
         {
-            var linesContainer = CreateSimpleUIObject("ConnectionLines", parent);
-            var linesRect = linesContainer.GetComponent<RectTransform>();
-            // Same area as zone container
-            linesRect.anchorMin = new Vector2(0.1f, 0.3f);
-            linesRect.anchorMax = new Vector2(0.9f, 0.8f);
-            linesRect.offsetMin = Vector2.zero;
-            linesRect.offsetMax = Vector2.zero;
+            var connObj = CreateSimpleUIObject(name, parent);
+            var rect = connObj.GetComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(width, 240); // Same height as zone nodes
 
-            // Line from Zone 1 to Zone 2 (short line between nodes, not spanning entire width)
-            // Zones are at roughly 1/6, 3/6, 5/6 of container width due to HLG
-            // Line 1->2 goes from edge of zone1 to edge of zone2
-            var line1 = CreateConnectionLine(linesContainer.transform, "Line1to2");
-            var line1Rect = line1.GetComponent<RectTransform>();
-            line1Rect.anchorMin = new Vector2(0.25f, 0.48f);  // After zone 1
-            line1Rect.anchorMax = new Vector2(0.42f, 0.52f);  // Before zone 2
-            line1Rect.offsetMin = Vector2.zero;
-            line1Rect.offsetMax = Vector2.zero;
+            // Add LayoutElement to give it the desired width
+            var layout = connObj.AddComponent<LayoutElement>();
+            layout.preferredWidth = width;
+            layout.preferredHeight = 240;
 
-            // Line from Zone 2 to Zone 3 (short line between nodes)
-            var line2 = CreateConnectionLine(linesContainer.transform, "Line2to3");
-            var line2Rect = line2.GetComponent<RectTransform>();
-            line2Rect.anchorMin = new Vector2(0.58f, 0.48f);  // After zone 2
-            line2Rect.anchorMax = new Vector2(0.75f, 0.52f);  // Before zone 3
-            line2Rect.offsetMin = Vector2.zero;
-            line2Rect.offsetMax = Vector2.zero;
+            // Connection line color (matches NullRift map lines)
+            Color lineColor = new Color(0.4f, 0.35f, 0.5f, 0.9f);
 
-            // Put lines behind zone nodes
-            linesContainer.transform.SetAsFirstSibling();
-        }
+            // Create dotted line in the center of this element
+            int dotCount = 5;
+            float dotWidth = 8f;
+            float dotHeight = 3f;
+            float totalDotsWidth = dotCount * dotWidth;
+            float gapWidth = (width - totalDotsWidth) / (dotCount + 1);
 
-        private static GameObject CreateConnectionLine(Transform parent, string name)
-        {
-            var lineObj = CreateSimpleUIObject(name, parent);
-            var lineImage = lineObj.AddComponent<Image>();
-            lineImage.color = new Color(0.5f, 0.5f, 0.6f, 0.8f);
-            return lineObj;
+            for (int i = 0; i < dotCount; i++)
+            {
+                var dot = CreateSimpleUIObject($"Dot{i}", connObj.transform);
+                var dotRect = dot.GetComponent<RectTransform>();
+                dotRect.anchorMin = new Vector2(0.5f, 0.5f);
+                dotRect.anchorMax = new Vector2(0.5f, 0.5f);
+                dotRect.pivot = new Vector2(0.5f, 0.5f);
+                dotRect.sizeDelta = new Vector2(dotWidth, dotHeight);
+
+                // Position dots horizontally across the connection
+                float startX = -width / 2 + gapWidth + dotWidth / 2;
+                float xPos = startX + i * (dotWidth + gapWidth);
+                dotRect.anchoredPosition = new Vector2(xPos, 0);
+
+                var dotImage = dot.AddComponent<Image>();
+                dotImage.color = lineColor;
+            }
+
+            return connObj;
         }
 
         private static GameObject CreateZoneNode(string name, Transform parent, int zoneNumber, string zoneName)
@@ -5128,7 +5187,9 @@ namespace HNR.Editor
             numRect.anchorMax = new Vector2(1, 0.9f);
             numRect.offsetMin = new Vector2(10, 0);
             numRect.offsetMax = new Vector2(-10, 0);
-            numberText.GetComponent<TMP_Text>().fontSize = 24;
+            var numTmp = numberText.GetComponent<TMP_Text>();
+            numTmp.fontSize = 24;
+            numTmp.alignment = TextAlignmentOptions.Center;
 
             var nameText = CreateSimpleTextObject("ZoneName", nodeObj.transform, zoneName);
             var nameRect = nameText.GetComponent<RectTransform>();
@@ -5136,7 +5197,9 @@ namespace HNR.Editor
             nameRect.anchorMax = new Vector2(1, 0.55f);
             nameRect.offsetMin = new Vector2(10, 0);
             nameRect.offsetMax = new Vector2(-10, 0);
-            nameText.GetComponent<TMP_Text>().fontSize = 16;
+            var nameTmp = nameText.GetComponent<TMP_Text>();
+            nameTmp.fontSize = 16;
+            nameTmp.alignment = TextAlignmentOptions.Center;
 
             var so = new SerializedObject(nodeComponent);
             so.FindProperty("_zoneNumber").intValue = zoneNumber;
@@ -5906,6 +5969,8 @@ namespace HNR.Editor
 
             var vlg = slidersContainer.AddComponent<VerticalLayoutGroup>();
             vlg.spacing = 15;
+            vlg.childControlWidth = true;   // Enable width control
+            vlg.childControlHeight = true;  // Enable height control
             vlg.childForceExpandWidth = true;
             vlg.childForceExpandHeight = false;
             vlg.padding = new RectOffset(10, 10, 10, 10);
@@ -5934,6 +5999,10 @@ namespace HNR.Editor
             so.FindProperty("_masterVolumeSlider").objectReferenceValue = masterSlider.GetComponentInChildren<Slider>();
             so.FindProperty("_musicVolumeSlider").objectReferenceValue = musicSlider.GetComponentInChildren<Slider>();
             so.FindProperty("_sfxVolumeSlider").objectReferenceValue = sfxSlider.GetComponentInChildren<Slider>();
+            // Wire volume labels (Percent text in each row)
+            so.FindProperty("_masterVolumeLabel").objectReferenceValue = masterSlider.transform.Find("Percent")?.GetComponent<TMP_Text>();
+            so.FindProperty("_musicVolumeLabel").objectReferenceValue = musicSlider.transform.Find("Percent")?.GetComponent<TMP_Text>();
+            so.FindProperty("_sfxVolumeLabel").objectReferenceValue = sfxSlider.transform.Find("Percent")?.GetComponent<TMP_Text>();
             so.ApplyModifiedProperties();
 
             overlayObj.SetActive(false);
@@ -5978,6 +6047,8 @@ namespace HNR.Editor
             var headerObj = CreateSimpleUIObject(text.Replace(" ", "") + "Header", parent);
             var layoutElement = headerObj.AddComponent<LayoutElement>();
             layoutElement.preferredHeight = 30;
+            layoutElement.minHeight = 30;
+            layoutElement.flexibleWidth = 1; // Allow expansion
 
             var textObj = CreateSimpleTextObject("Text", headerObj.transform, text);
             SetFullStretchRect(textObj);
@@ -5994,29 +6065,31 @@ namespace HNR.Editor
         {
             var row = CreateSimpleUIObject(name, parent);
             var layoutElement = row.AddComponent<LayoutElement>();
-            layoutElement.preferredHeight = 45;
+            layoutElement.preferredHeight = 50;
+            layoutElement.minHeight = 50;
+            layoutElement.flexibleWidth = 1; // Allow expansion to fill parent width
 
             // Row background (light)
             var rowBg = row.AddComponent<Image>();
             rowBg.color = new Color(0.95f, 0.95f, 0.97f, 1f);
 
-            // Label
+            // Label (left side, 20% width)
             var label = CreateSimpleTextObject("Label", row.transform, labelText);
             var labelRect = label.GetComponent<RectTransform>();
             labelRect.anchorMin = new Vector2(0, 0);
-            labelRect.anchorMax = new Vector2(0.25f, 1);
-            labelRect.offsetMin = new Vector2(10, 0);
+            labelRect.anchorMax = new Vector2(0.20f, 1);
+            labelRect.offsetMin = new Vector2(15, 0);
             labelRect.offsetMax = new Vector2(0, 0);
             var labelTmp = label.GetComponent<TMP_Text>();
             labelTmp.fontSize = 16;
             labelTmp.color = Color.black;
-            labelTmp.alignment = TextAlignmentOptions.Left;
+            labelTmp.alignment = TextAlignmentOptions.MidlineLeft;
 
-            // Slider
+            // Slider container - positioned between label and percentage
             var sliderObj = CreateSimpleUIObject("Slider", row.transform);
             var sliderRect = sliderObj.GetComponent<RectTransform>();
-            sliderRect.anchorMin = new Vector2(0.27f, 0.25f);
-            sliderRect.anchorMax = new Vector2(0.72f, 0.75f);
+            sliderRect.anchorMin = new Vector2(0.22f, 0.3f);
+            sliderRect.anchorMax = new Vector2(0.72f, 0.7f);
             sliderRect.offsetMin = Vector2.zero;
             sliderRect.offsetMax = Vector2.zero;
 
@@ -6024,67 +6097,86 @@ namespace HNR.Editor
             slider.minValue = 0;
             slider.maxValue = 1;
             slider.value = 1;
+            slider.direction = Slider.Direction.LeftToRight;
+            slider.wholeNumbers = false;
 
+            // Slider background track (gray bar)
             var sliderBgObj = CreateSimpleUIObject("Background", sliderObj.transform);
-            SetFullStretchRect(sliderBgObj);
+            var sliderBgRect = sliderBgObj.GetComponent<RectTransform>();
+            sliderBgRect.anchorMin = Vector2.zero;
+            sliderBgRect.anchorMax = Vector2.one;
+            sliderBgRect.offsetMin = Vector2.zero;
+            sliderBgRect.offsetMax = Vector2.zero;
             var sliderBgImage = sliderBgObj.AddComponent<Image>();
-            sliderBgImage.color = new Color(0.75f, 0.75f, 0.78f, 1f);
-            slider.targetGraphic = sliderBgImage;
+            sliderBgImage.color = new Color(0.7f, 0.7f, 0.73f, 1f);
 
-            var fillArea = CreateSimpleUIObject("FillArea", sliderObj.transform);
+            // Fill area - contains the fill image
+            var fillArea = CreateSimpleUIObject("Fill Area", sliderObj.transform);
             var fillAreaRect = fillArea.GetComponent<RectTransform>();
             fillAreaRect.anchorMin = Vector2.zero;
             fillAreaRect.anchorMax = Vector2.one;
             fillAreaRect.offsetMin = Vector2.zero;
             fillAreaRect.offsetMax = Vector2.zero;
 
+            // Fill image (orange progress bar)
             var fill = CreateSimpleUIObject("Fill", fillArea.transform);
-            SetFullStretchRect(fill);
+            var fillRect = fill.GetComponent<RectTransform>();
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
             var fillImage = fill.AddComponent<Image>();
             fillImage.color = new Color(0.9f, 0.6f, 0.1f, 1f);  // Orange fill
-            slider.fillRect = fill.GetComponent<RectTransform>();
+            slider.fillRect = fillRect;
 
-            var handleArea = CreateSimpleUIObject("HandleSlideArea", sliderObj.transform);
-            SetFullStretchRect(handleArea);
+            // Handle slide area - defines the area where handle can move
+            var handleArea = CreateSimpleUIObject("Handle Slide Area", sliderObj.transform);
+            var handleAreaRect = handleArea.GetComponent<RectTransform>();
+            handleAreaRect.anchorMin = Vector2.zero;
+            handleAreaRect.anchorMax = Vector2.one;
+            handleAreaRect.offsetMin = new Vector2(10, 0);
+            handleAreaRect.offsetMax = new Vector2(-10, 0);
 
+            // Handle (draggable knob)
             var handle = CreateSimpleUIObject("Handle", handleArea.transform);
             var handleRect = handle.GetComponent<RectTransform>();
-            handleRect.sizeDelta = new Vector2(18, 18);
+            handleRect.sizeDelta = new Vector2(20, 20);
             var handleImage = handle.AddComponent<Image>();
-            handleImage.color = new Color(0.9f, 0.6f, 0.1f, 1f);  // Orange handle
+            handleImage.color = new Color(0.95f, 0.65f, 0.15f, 1f);  // Brighter orange handle
             slider.handleRect = handleRect;
+            slider.targetGraphic = handleImage;
 
-            // Percentage text
+            // Percentage text (shows current value like "100%")
             var percentText = CreateSimpleTextObject("Percent", row.transform, "100%");
             var percentRect = percentText.GetComponent<RectTransform>();
             percentRect.anchorMin = new Vector2(0.74f, 0);
-            percentRect.anchorMax = new Vector2(0.82f, 1);
+            percentRect.anchorMax = new Vector2(0.84f, 1);
             percentRect.offsetMin = Vector2.zero;
             percentRect.offsetMax = Vector2.zero;
             var percentTmp = percentText.GetComponent<TMP_Text>();
-            percentTmp.fontSize = 14;
+            percentTmp.fontSize = 16;
             percentTmp.color = Color.black;
             percentTmp.alignment = TextAlignmentOptions.Center;
 
             // Mute label
             var muteLabel = CreateSimpleTextObject("MuteLabel", row.transform, "Mute");
             var muteLabelRect = muteLabel.GetComponent<RectTransform>();
-            muteLabelRect.anchorMin = new Vector2(0.83f, 0);
-            muteLabelRect.anchorMax = new Vector2(0.92f, 1);
+            muteLabelRect.anchorMin = new Vector2(0.85f, 0);
+            muteLabelRect.anchorMax = new Vector2(0.93f, 1);
             muteLabelRect.offsetMin = Vector2.zero;
             muteLabelRect.offsetMax = Vector2.zero;
             var muteLabelTmp = muteLabel.GetComponent<TMP_Text>();
             muteLabelTmp.fontSize = 14;
-            muteLabelTmp.color = new Color(0.5f, 0.5f, 0.55f, 1f);
+            muteLabelTmp.color = new Color(0.4f, 0.4f, 0.45f, 1f);
             muteLabelTmp.alignment = TextAlignmentOptions.Center;
 
             // Mute checkbox placeholder
             var muteBox = CreateSimpleUIObject("MuteCheckbox", row.transform);
             var muteBoxRect = muteBox.GetComponent<RectTransform>();
-            muteBoxRect.anchorMin = new Vector2(0.93f, 0.25f);
-            muteBoxRect.anchorMax = new Vector2(0.98f, 0.75f);
-            muteBoxRect.offsetMin = Vector2.zero;
-            muteBoxRect.offsetMax = Vector2.zero;
+            muteBoxRect.anchorMin = new Vector2(0.94f, 0.5f);
+            muteBoxRect.anchorMax = new Vector2(0.94f, 0.5f);
+            muteBoxRect.pivot = new Vector2(0.5f, 0.5f);
+            muteBoxRect.sizeDelta = new Vector2(24, 24);
             var muteBoxImage = muteBox.AddComponent<Image>();
             muteBoxImage.color = new Color(0.8f, 0.8f, 0.82f, 1f);
 
@@ -6216,6 +6308,33 @@ namespace HNR.Editor
             var tmpText = textObj.GetComponent<TMP_Text>();
             tmpText.alignment = TextAlignmentOptions.Center;
             tmpText.fontSize = 24;
+
+            return buttonObj;
+        }
+
+        /// <summary>
+        /// Creates a button with an icon sprite (or fallback text).
+        /// </summary>
+        private static GameObject CreateIconButton(string name, Transform parent, Sprite iconSprite, string fallbackText, Vector2 size)
+        {
+            var buttonObj = CreateSimpleUIObject(name, parent);
+            var rect = buttonObj.GetComponent<RectTransform>();
+            rect.sizeDelta = size;
+
+            var bgImage = buttonObj.AddComponent<Image>();
+            bgImage.color = new Color(0.25f, 0.25f, 0.3f, 0.9f);
+
+            var button = buttonObj.AddComponent<Button>();
+            button.targetGraphic = bgImage;
+
+            // Use sprite if available, otherwise use text fallback
+            Color cyanColor = new Color(0f, 0.83f, 0.89f); // Soul cyan
+            var iconSize = new Vector2(size.x * 0.6f, size.y * 0.6f);
+            GameObject iconObj = CreateIconImage(buttonObj, "Icon", iconSprite, iconSize, cyanColor, fallbackText, (int)(size.y * 0.4f));
+            var iconRect = iconObj.GetComponent<RectTransform>();
+            iconRect.anchorMin = Vector2.zero;
+            iconRect.anchorMax = Vector2.one;
+            iconRect.sizeDelta = Vector2.zero;
 
             return buttonObj;
         }

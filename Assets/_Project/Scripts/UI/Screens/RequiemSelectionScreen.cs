@@ -344,7 +344,7 @@ namespace HNR.UI
             nameRect.offsetMax = new Vector2(-8, -2);
             var nameText = nameGO.GetComponent<TextMeshProUGUI>();
             nameText.text = requiem.RequiemName;
-            nameText.fontSize = 16;
+            nameText.fontSize = 24;
             nameText.fontStyle = FontStyles.Bold;
             nameText.color = Color.white;
             nameText.alignment = TextAlignmentOptions.Left;
@@ -360,19 +360,19 @@ namespace HNR.UI
             classRect.offsetMax = new Vector2(-8, 0);
             var classText = classGO.GetComponent<TextMeshProUGUI>();
             classText.text = $"{requiem.Class} | {requiem.SoulAspect}";
-            classText.fontSize = 11;
+            classText.fontSize = 16;
             classText.color = new Color(0.7f, 0.7f, 0.7f);
             classText.alignment = TextAlignmentOptions.Left;
             classText.raycastTarget = false;
 
-            // Top-left badge with aspect icon sprite
+            // Top-left badge with aspect icon sprite (72x72)
             var badgeGO = new GameObject("AspectBadge", typeof(RectTransform), typeof(Image));
             badgeGO.transform.SetParent(slotGO.transform, false);
             var badgeRect = badgeGO.GetComponent<RectTransform>();
             badgeRect.anchorMin = new Vector2(0, 1);
             badgeRect.anchorMax = new Vector2(0, 1);
             badgeRect.pivot = new Vector2(0, 1);
-            badgeRect.sizeDelta = new Vector2(35, 35);
+            badgeRect.sizeDelta = new Vector2(72, 72);
             badgeRect.anchoredPosition = new Vector2(8, -8);
             var badgeImage = badgeGO.GetComponent<Image>();
             badgeImage.raycastTarget = false;
@@ -401,7 +401,7 @@ namespace HNR.UI
             hpRect.offsetMax = new Vector2(-8, -2);
             var hpText = hpGO.GetComponent<TextMeshProUGUI>();
             hpText.text = $"HP {requiem.BaseHP}";
-            hpText.fontSize = 12;
+            hpText.fontSize = 18;
             hpText.fontStyle = FontStyles.Bold;
             hpText.color = new Color(0.9f, 0.9f, 0.9f);
             hpText.alignment = TextAlignmentOptions.Right;

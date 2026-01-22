@@ -36,8 +36,11 @@ namespace HNR.Editor
         [SerializeField, Tooltip("Auto-battle button icon (replaces play emoji)")]
         private Sprite _autoBattleIcon;
 
-        [SerializeField, Tooltip("Speed toggle button icon (optional, uses text by default)")]
-        private Sprite _speedIcon;
+        [SerializeField, Tooltip("Speed 1x icon (normal speed)")]
+        private Sprite _speed1xIcon;
+
+        [SerializeField, Tooltip("Speed 2x icon (fast speed)")]
+        private Sprite _speed2xIcon;
 
         // ============================================
         // Map Legend Icons
@@ -72,6 +75,17 @@ namespace HNR.Editor
         [Header("Combat UI Icons")]
         [SerializeField, Tooltip("Checkmark icon for execution button")]
         private Sprite _checkmarkIcon;
+
+        // ============================================
+        // Run Stats Icons (NullRift header)
+        // ============================================
+
+        [Header("Run Stats Icons")]
+        [SerializeField, Tooltip("HP icon for run stats display")]
+        private Sprite _hpIcon;
+
+        [SerializeField, Tooltip("Currency icon for run stats display (Void Shards)")]
+        private Sprite _currencyIcon;
 
         // ============================================
         // Settings Category Icons
@@ -113,8 +127,11 @@ namespace HNR.Editor
         /// <summary>Auto-battle button icon sprite.</summary>
         public Sprite AutoBattleIcon => _autoBattleIcon;
 
-        /// <summary>Speed toggle button icon sprite (optional).</summary>
-        public Sprite SpeedIcon => _speedIcon;
+        /// <summary>Speed 1x icon sprite (normal speed).</summary>
+        public Sprite Speed1xIcon => _speed1xIcon;
+
+        /// <summary>Speed 2x icon sprite (fast speed).</summary>
+        public Sprite Speed2xIcon => _speed2xIcon;
 
         // ============================================
         // Properties - Map Legend
@@ -147,6 +164,16 @@ namespace HNR.Editor
 
         /// <summary>Checkmark icon sprite.</summary>
         public Sprite CheckmarkIcon => _checkmarkIcon;
+
+        // ============================================
+        // Properties - Run Stats
+        // ============================================
+
+        /// <summary>HP icon sprite for run stats.</summary>
+        public Sprite HPIcon => _hpIcon;
+
+        /// <summary>Currency icon sprite for run stats.</summary>
+        public Sprite CurrencyIcon => _currencyIcon;
 
         // ============================================
         // Properties - Settings Categories
@@ -228,7 +255,8 @@ namespace HNR.Editor
             // System menu
             if (_settingsIcon == null) { Debug.LogWarning("[SceneIconConfig] Settings Icon not assigned"); valid = false; }
             if (_autoBattleIcon == null) { Debug.LogWarning("[SceneIconConfig] Auto-Battle Icon not assigned"); valid = false; }
-            // Note: _speedIcon is optional, not validated
+            if (_speed1xIcon == null) { Debug.LogWarning("[SceneIconConfig] Speed 1x Icon not assigned"); valid = false; }
+            if (_speed2xIcon == null) { Debug.LogWarning("[SceneIconConfig] Speed 2x Icon not assigned"); valid = false; }
 
             // Map legend
             if (_combatNodeIcon == null) { Debug.LogWarning("[SceneIconConfig] Combat Node Icon not assigned"); valid = false; }
@@ -242,6 +270,10 @@ namespace HNR.Editor
             // Combat UI
             if (_checkmarkIcon == null) { Debug.LogWarning("[SceneIconConfig] Checkmark Icon not assigned"); valid = false; }
 
+            // Run stats
+            if (_hpIcon == null) { Debug.LogWarning("[SceneIconConfig] HP Icon not assigned"); valid = false; }
+            if (_currencyIcon == null) { Debug.LogWarning("[SceneIconConfig] Currency Icon not assigned"); valid = false; }
+
             // Settings categories
             if (_displaySettingsIcon == null) { Debug.LogWarning("[SceneIconConfig] Display Settings Icon not assigned"); valid = false; }
             if (_audioSettingsIcon == null) { Debug.LogWarning("[SceneIconConfig] Audio Settings Icon not assigned"); valid = false; }
@@ -251,7 +283,7 @@ namespace HNR.Editor
 
             if (valid)
             {
-                Debug.Log("[SceneIconConfig] All 18 required icons validated successfully");
+                Debug.Log("[SceneIconConfig] All 22 required icons validated successfully");
             }
 
             return valid;
@@ -267,7 +299,8 @@ namespace HNR.Editor
             if (_discardPileIcon != null) count++;
             if (_settingsIcon != null) count++;
             if (_autoBattleIcon != null) count++;
-            if (_speedIcon != null) count++;
+            if (_speed1xIcon != null) count++;
+            if (_speed2xIcon != null) count++;
             if (_combatNodeIcon != null) count++;
             if (_eliteNodeIcon != null) count++;
             if (_shopNodeIcon != null) count++;
@@ -276,6 +309,8 @@ namespace HNR.Editor
             if (_treasureIcon != null) count++;
             if (_bossNodeIcon != null) count++;
             if (_checkmarkIcon != null) count++;
+            if (_hpIcon != null) count++;
+            if (_currencyIcon != null) count++;
             if (_displaySettingsIcon != null) count++;
             if (_audioSettingsIcon != null) count++;
             if (_gameSettingsIcon != null) count++;
