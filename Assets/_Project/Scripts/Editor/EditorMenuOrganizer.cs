@@ -750,7 +750,7 @@ HNR/
     ├── Show Menu Organization
     ├── Wire Card Prefab References
     ├── Reset Battle Mission Progress
-    ├── Config/ (Aspect Icons, Card Sprite Config)
+    ├── Config/ (Aspect Icons, Card Sprite Config, Banner Config)
     └── Missing Scripts/ (Find, Remove)
 
 Build/ (separate menu)
@@ -834,6 +834,24 @@ Build/ (separate menu)
         public static void VerifyAspectIconConfig()
         {
             AspectIconConfigGenerator.VerifyAspectIconConfig();
+        }
+
+        [MenuItem("HNR/5. Utilities/Config/Generate Banner Config", priority = 217)]
+        public static void GenerateBannerConfig()
+        {
+            BannerConfigGenerator.GenerateBannerConfig();
+        }
+
+        [MenuItem("HNR/5. Utilities/Config/Verify Banner Config", priority = 218)]
+        public static void VerifyBannerConfig()
+        {
+            BannerConfigGenerator.VerifyBannerConfig();
+        }
+
+        [MenuItem("HNR/5. Utilities/Config/Link Banner Images", priority = 219)]
+        public static void LinkBannerImages()
+        {
+            BannerConfigGenerator.LinkBannerImages();
         }
 
         // ============================================

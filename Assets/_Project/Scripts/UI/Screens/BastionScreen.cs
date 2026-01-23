@@ -9,6 +9,7 @@ using TMPro;
 using DG.Tweening;
 using HNR.Core;
 using HNR.Core.Interfaces;
+using HNR.UI.Components;
 using HNR.UI.Screens;
 
 namespace HNR.UI
@@ -66,6 +67,14 @@ namespace HNR.UI
         private TMP_Text _requiemsButtonSubtitle;
 
         // ============================================
+        // Event Banner Carousel
+        // ============================================
+
+        [Header("Event Banner")]
+        [SerializeField, Tooltip("Event banner carousel component")]
+        private EventBannerCarousel _eventBannerCarousel;
+
+        // ============================================
         // Animation Settings
         // ============================================
 
@@ -103,6 +112,12 @@ namespace HNR.UI
             LoadPlayerData();
             PlayShowAnimation();
 
+            // Initialize event banner carousel
+            if (_eventBannerCarousel != null)
+            {
+                _eventBannerCarousel.Initialize();
+            }
+
             Debug.Log("[BastionScreen] Bastion hub shown");
         }
 
@@ -113,6 +128,12 @@ namespace HNR.UI
             // Kill any running tweens
             _currentTween?.Kill();
             DOTween.Kill(this);
+
+            // Pause event banner auto-advance
+            if (_eventBannerCarousel != null)
+            {
+                _eventBannerCarousel.PauseAutoAdvance();
+            }
 
             Debug.Log("[BastionScreen] Bastion hub hidden");
         }

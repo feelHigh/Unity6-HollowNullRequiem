@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9359337a4ec43be4a8e80ed011f48893, type: 3}
+  m_Name: BannerConfig
+  m_EditorClassIdentifier: 
+  _banners:
+  - _image: {fileID: 2473044633292972554, guid: bf40ad31cd4e3984e8ae1e26e7fa0cdc, type: 3}
+    _title: Welcome Event
+    _description: Welcome to Hollow Null Requiem! Tap for rewards.
+    _isActive: 1
+    _priority: 0
+    _actionType: 0
+    _actionParameter: 
+    _startDate: 
+    _endDate: 
+  - _image: {fileID: -4345453495101101033, guid: 21fbc4cc63380aa488f3cfcc8a4bd554, type: 3}
+    _title: Void Festival
+    _description: Limited time event - Earn double Void Shards!
+    _isActive: 1
+    _priority: 1
+    _actionType: 0
+    _actionParameter: 
+    _startDate: 
+    _endDate: 
+  - _image: {fileID: -8224289544831742157, guid: 8c157b919c6a34545b13f00a5a2f5c90, type: 3}
+    _title: Kira Spotlight
+    _description: New Requiem Art revealed - Blazing Inferno!
+    _isActive: 1
+    _priority: 2
+    _actionType: 0
+    _actionParameter: 
+    _startDate: 
+    _endDate: 
+  - _image: {fileID: -6478062448808983259, guid: 595849ee0201a82429eccf671795ac6a, type: 3}
+    _title: New Content
+    _description: Zone 4 coming soon - The Abyss awaits.
+    _isActive: 1
+    _priority: 3
+    _actionType: 0
+    _actionParameter: 
+    _startDate: 
+    _endDate: 
+  - _image: {fileID: -7772875108770580559, guid: 167c473ec1352664c977a680f41da1ec, type: 3}
+    _title: Boss Challenge
+    _description: Elite Boss Challenge - Test your strength!
+    _isActive: 1
+    _priority: 4
+    _actionType: 0
+    _actionParameter: 
+    _startDate: 
+    _endDate: 
+  _autoAdvanceInterval: 2
+  _transitionDuration: 0.3
+  _enableLoop: 1
+  _pauseOnInteraction: 1
+  _resumeDelay: 1.5
+  _activeIndicatorColor: {r: 1, g: 1, b: 1, a: 1}
+  _inactiveIndicatorColor: {r: 1, g: 1, b: 1, a: 0.4}
+  _indicatorSize: 12
+  _indicatorSpacing: 8

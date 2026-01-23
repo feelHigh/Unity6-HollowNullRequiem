@@ -42,11 +42,14 @@ namespace HNR.Editor
         private const string ICON_CONFIG_PATH = "Assets/_Project/Data/Config/SceneIconConfig.asset";
         private const string BACKGROUND_CONFIG_PATH = "Assets/_Project/Data/Config/BackgroundConfig.asset";
         private const string COMBAT_CONFIG_PATH = "Assets/_Project/Data/Config/CombatConfig.asset";
+        private const string BANNER_CONFIG_PATH = "Assets/_Project/Data/Config/BannerConfig.asset";
 
         // Cached icon config for current generation run
         private static SceneIconConfigSO _iconConfig;
         // Cached background config for current generation run
         private static BackgroundConfigSO _backgroundConfig;
+        // Cached banner config for current generation run
+        private static BannerConfigSO _bannerConfig;
 
         /// <summary>
         /// Loads the scene icon configuration asset.
@@ -91,12 +94,30 @@ namespace HNR.Editor
         }
 
         /// <summary>
+        /// Loads the banner configuration asset.
+        /// </summary>
+        /// <returns>The banner config or null if not found</returns>
+        private static BannerConfigSO LoadBannerConfig()
+        {
+            if (_bannerConfig == null)
+            {
+                _bannerConfig = AssetDatabase.LoadAssetAtPath<BannerConfigSO>(BANNER_CONFIG_PATH);
+                if (_bannerConfig == null)
+                {
+                    Debug.LogWarning("[ProductionSceneSetupGenerator] BannerConfig not found at " + BANNER_CONFIG_PATH + ". Run 'HNR > 5. Utilities > Config > Generate Banner Config' first.");
+                }
+            }
+            return _bannerConfig;
+        }
+
+        /// <summary>
         /// Clears all cached configs (call after scene generation batch completes).
         /// </summary>
         private static void ClearAllConfigCaches()
         {
             _iconConfig = null;
             _backgroundConfig = null;
+            _bannerConfig = null;
         }
 
         // ============================================
@@ -228,6 +249,21 @@ namespace HNR.Editor
 
             // === BastionScreen ===
             GameObject bastionScreen = CreateBastionScreen(screenContainer);
+
+            // === Event Banner Carousel ===
+            GameObject eventBannerCarousel = CreateEventBannerCarousel(bastionScreen);
+            if (eventBannerCarousel != null)
+            {
+                // Wire carousel to BastionScreen
+                var bastionScreenComp = bastionScreen.GetComponent<BastionScreen>();
+                if (bastionScreenComp != null)
+                {
+                    SerializedObject bastionSO = new SerializedObject(bastionScreenComp);
+                    bastionSO.FindProperty("_eventBannerCarousel").objectReferenceValue =
+                        eventBannerCarousel.GetComponent<EventBannerCarousel>();
+                    bastionSO.ApplyModifiedPropertiesWithoutUndo();
+                }
+            }
 
             // === Overlay Container ===
             GameObject overlayContainer = CreateUIContainer(canvasObj, "OverlayContainer");
@@ -1152,28 +1188,38 @@ namespace HNR.Editor
             GameObject navContainer = new GameObject("NavigationButtons");
             navContainer.transform.SetParent(screenObj.transform, false);
             RectTransform navRect = navContainer.AddComponent<RectTransform>();
-            // Position on right side like reference image
-            navRect.anchorMin = new Vector2(0.65f, 0.25f);
-            navRect.anchorMax = new Vector2(0.98f, 0.80f);
+            // Position on right side of screen
+            navRect.anchorMin = new Vector2(0.7f, 0.25f);
+            navRect.anchorMax = new Vector2(0.98f, 0.55f);
             navRect.offsetMin = Vector2.zero;
             navRect.offsetMax = Vector2.zero;
 
             VerticalLayoutGroup navVLG = navContainer.AddComponent<VerticalLayoutGroup>();
             navVLG.spacing = 15;
-            navVLG.childAlignment = TextAnchor.UpperRight;
-            navVLG.childForceExpandWidth = true;
+            navVLG.childAlignment = TextAnchor.MiddleRight;
+            navVLG.childControlWidth = true;
+            navVLG.childControlHeight = true;
+            navVLG.childForceExpandWidth = false; // Don't force expand - use fixed width
             navVLG.childForceExpandHeight = false;
-            navVLG.padding = new RectOffset(0, 0, 10, 10);
+            navVLG.childScaleWidth = false;
+            navVLG.childScaleHeight = false;
+            navVLG.padding = new RectOffset(10, 10, 10, 10);
 
-            // Missions button (wide horizontal, no subtitle)
+            // Missions button (fixed width 256)
             GameObject missionsButton = CreateWideNavButton(navContainer, "MissionsButton", "Missions");
             LayoutElement missionsLE = missionsButton.AddComponent<LayoutElement>();
-            missionsLE.preferredHeight = 70;
+            missionsLE.preferredWidth = 256;
+            missionsLE.preferredHeight = 60;
+            missionsLE.minWidth = 256;
+            missionsLE.minHeight = 50;
 
-            // Requiems button (wide horizontal, no subtitle)
+            // Requiems button (fixed width 256)
             GameObject requiemsButton = CreateWideNavButton(navContainer, "RequiemsButton", "Requiems");
             LayoutElement requiemsLE = requiemsButton.AddComponent<LayoutElement>();
-            requiemsLE.preferredHeight = 70;
+            requiemsLE.preferredWidth = 256;
+            requiemsLE.preferredHeight = 60;
+            requiemsLE.minWidth = 256;
+            requiemsLE.minHeight = 50;
 
             // ============================================
             // Wire References
@@ -1191,6 +1237,120 @@ namespace HNR.Editor
             screenSO.ApplyModifiedPropertiesWithoutUndo();
 
             return screenObj;
+        }
+
+        /// <summary>
+        /// Creates the event banner carousel for the Bastion screen.
+        /// Positioned below the player info area.
+        /// </summary>
+        private static GameObject CreateEventBannerCarousel(GameObject parent)
+        {
+            var bannerConfig = LoadBannerConfig();
+
+            // Create carousel container
+            GameObject carouselObj = new GameObject("EventBannerCarousel");
+            carouselObj.transform.SetParent(parent.transform, false);
+
+            RectTransform carouselRect = carouselObj.AddComponent<RectTransform>();
+            // Position below player info area (top-left quadrant) - half width
+            carouselRect.anchorMin = new Vector2(0.02f, 0.65f);
+            carouselRect.anchorMax = new Vector2(0.285f, 0.83f);
+            carouselRect.offsetMin = Vector2.zero;
+            carouselRect.offsetMax = Vector2.zero;
+
+            // Background
+            Image carouselBg = carouselObj.AddComponent<Image>();
+            carouselBg.color = new Color(0.08f, 0.08f, 0.12f, 0.9f);
+
+            // Create viewport (leave space at bottom for indicators)
+            GameObject viewportObj = new GameObject("Viewport");
+            viewportObj.transform.SetParent(carouselObj.transform, false);
+
+            RectTransform viewportRect = viewportObj.AddComponent<RectTransform>();
+            viewportRect.anchorMin = new Vector2(0, 0.15f); // Leave 15% for indicators
+            viewportRect.anchorMax = Vector2.one;
+            viewportRect.offsetMin = Vector2.zero;
+            viewportRect.offsetMax = Vector2.zero;
+
+            Image viewportImage = viewportObj.AddComponent<Image>();
+            viewportImage.color = Color.white; // Must be opaque for Mask to work!
+            Mask viewportMask = viewportObj.AddComponent<Mask>();
+            viewportMask.showMaskGraphic = false; // Hide the white image, but mask still uses its alpha
+
+            // Create content container
+            GameObject contentObj = new GameObject("Content");
+            contentObj.transform.SetParent(viewportObj.transform, false);
+
+            RectTransform contentRect = contentObj.AddComponent<RectTransform>();
+            // Anchor to left edge, stretch vertically
+            contentRect.anchorMin = new Vector2(0, 0);
+            contentRect.anchorMax = new Vector2(0, 1);
+            contentRect.pivot = new Vector2(0, 0.5f);
+            contentRect.anchoredPosition = Vector2.zero;
+            contentRect.offsetMin = Vector2.zero;
+            contentRect.offsetMax = Vector2.zero;
+            // Width will be set by ContentSizeFitter based on children
+
+            HorizontalLayoutGroup contentHLG = contentObj.AddComponent<HorizontalLayoutGroup>();
+            contentHLG.spacing = 0;
+            contentHLG.childAlignment = TextAnchor.MiddleLeft;
+            contentHLG.childForceExpandWidth = false;
+            contentHLG.childForceExpandHeight = false;
+            contentHLG.childControlWidth = true;  // Use LayoutElement preferred width
+            contentHLG.childControlHeight = false; // Let children use their own height
+            contentHLG.childScaleWidth = false;
+            contentHLG.childScaleHeight = false;
+
+            ContentSizeFitter contentSizeFitter = contentObj.AddComponent<ContentSizeFitter>();
+            contentSizeFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            contentSizeFitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained; // Height from viewport
+
+            // Create ScrollRect
+            ScrollRect scrollRect = carouselObj.AddComponent<ScrollRect>();
+            scrollRect.content = contentRect;
+            scrollRect.viewport = viewportRect;
+            scrollRect.horizontal = true;
+            scrollRect.vertical = false;
+            scrollRect.movementType = ScrollRect.MovementType.Elastic;
+            scrollRect.elasticity = 0.1f;
+            scrollRect.inertia = true;
+            scrollRect.decelerationRate = 0.135f;
+            scrollRect.scrollSensitivity = 1f;
+
+            // Create indicator container
+            GameObject indicatorContainer = new GameObject("IndicatorContainer");
+            indicatorContainer.transform.SetParent(carouselObj.transform, false);
+
+            RectTransform indicatorRect = indicatorContainer.AddComponent<RectTransform>();
+            indicatorRect.anchorMin = new Vector2(0.3f, 0);
+            indicatorRect.anchorMax = new Vector2(0.7f, 0.15f);
+            indicatorRect.offsetMin = Vector2.zero;
+            indicatorRect.offsetMax = Vector2.zero;
+
+            HorizontalLayoutGroup indicatorHLG = indicatorContainer.AddComponent<HorizontalLayoutGroup>();
+            indicatorHLG.spacing = bannerConfig?.IndicatorSpacing ?? 8f;
+            indicatorHLG.childAlignment = TextAnchor.MiddleCenter;
+            indicatorHLG.childForceExpandWidth = false;
+            indicatorHLG.childForceExpandHeight = false;
+
+            // Create drag handler
+            BannerDragHandler dragHandler = viewportObj.AddComponent<BannerDragHandler>();
+
+            // Add EventBannerCarousel component
+            EventBannerCarousel carousel = carouselObj.AddComponent<EventBannerCarousel>();
+
+            // Wire references
+            SerializedObject carouselSO = new SerializedObject(carousel);
+            carouselSO.FindProperty("_bannerConfig").objectReferenceValue = bannerConfig;
+            carouselSO.FindProperty("_scrollRect").objectReferenceValue = scrollRect;
+            carouselSO.FindProperty("_contentContainer").objectReferenceValue = contentRect;
+            carouselSO.FindProperty("_indicatorContainer").objectReferenceValue = indicatorRect;
+            carouselSO.FindProperty("_dragHandler").objectReferenceValue = dragHandler;
+            carouselSO.ApplyModifiedPropertiesWithoutUndo();
+
+            Debug.Log("[ProductionSceneSetupGenerator] Created EventBannerCarousel");
+
+            return carouselObj;
         }
 
         /// <summary>
