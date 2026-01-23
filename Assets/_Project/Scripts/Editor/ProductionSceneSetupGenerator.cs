@@ -395,6 +395,20 @@ namespace HNR.Editor
                 Debug.Log("[ProductionSceneSetupGenerator] Wired DeckViewerModal to EchoEventScreen");
             }
 
+            // === RelicShopOverlay (overlay for relic purchases) ===
+            GameObject relicShopOverlay = CreateRelicShopOverlay(overlayContainer);
+
+            // Wire RelicShopOverlay and DeckViewerModal to ShopScreen
+            var shopScreenComp = shopScreen.GetComponent<ShopScreen>();
+            if (shopScreenComp != null)
+            {
+                var shopScreenSo = new SerializedObject(shopScreenComp);
+                shopScreenSo.FindProperty("_relicShopOverlay").objectReferenceValue = relicShopOverlay.GetComponent<RelicShopOverlay>();
+                shopScreenSo.FindProperty("_deckViewerModal").objectReferenceValue = deckViewerModal.GetComponent<DeckViewerModal>();
+                shopScreenSo.ApplyModifiedPropertiesWithoutUndo();
+                Debug.Log("[ProductionSceneSetupGenerator] Wired RelicShopOverlay and DeckViewerModal to ShopScreen");
+            }
+
             // === Background ===
             GameObject zoneBackgroundObj = CreateZoneBackground(canvasObj, 1, new Color(0.03f, 0.01f, 0.08f));
 
@@ -1680,6 +1694,10 @@ namespace HNR.Editor
             GameObject purifyBtn = CreateShopServiceButton(servicesPanel, "PurifyButton", "Purify", "50 Shards");
             var purifyButton = purifyBtn.GetComponent<Button>();
 
+            // Buy Relic Button
+            GameObject buyRelicBtn = CreateShopServiceButton(servicesPanel, "BuyRelicButton", "Buy Relic", "View Relics");
+            var buyRelicButton = buyRelicBtn.GetComponent<Button>();
+
             // === Leave Button ===
             GameObject leaveBtn = CreateMenuButton(screenObj, "LeaveButton", "LEAVE SHOP");
             RectTransform leaveRect = leaveBtn.GetComponent<RectTransform>();
@@ -1695,6 +1713,7 @@ namespace HNR.Editor
             so.FindProperty("_leaveButton").objectReferenceValue = leaveButton;
             so.FindProperty("_removeCardButton").objectReferenceValue = removeCardButton;
             so.FindProperty("_purifyButton").objectReferenceValue = purifyButton;
+            so.FindProperty("_buyRelicButton").objectReferenceValue = buyRelicButton;
             so.ApplyModifiedPropertiesWithoutUndo();
 
             Debug.Log("[ProductionSceneSetupGenerator] Created ShopScreen with wired references");
@@ -4805,6 +4824,282 @@ namespace HNR.Editor
             so.ApplyModifiedPropertiesWithoutUndo();
 
             Debug.Log("[ProductionSceneSetupGenerator] Created DeckViewerModal");
+            return modal;
+        }
+
+        /// <summary>
+        /// Creates the RelicShopOverlay for viewing and purchasing relics in shop.
+        /// </summary>
+        private static GameObject CreateRelicShopOverlay(GameObject parent)
+        {
+            GameObject modal = new GameObject("RelicShopOverlay");
+            modal.transform.SetParent(parent.transform, false);
+
+            RectTransform modalRect = modal.AddComponent<RectTransform>();
+            modalRect.anchorMin = Vector2.zero;
+            modalRect.anchorMax = Vector2.one;
+            modalRect.sizeDelta = Vector2.zero;
+
+            // === Modal Panel (holds all content) ===
+            GameObject modalPanel = new GameObject("ModalPanel");
+            modalPanel.transform.SetParent(modal.transform, false);
+            RectTransform panelRect = modalPanel.AddComponent<RectTransform>();
+            panelRect.anchorMin = Vector2.zero;
+            panelRect.anchorMax = Vector2.one;
+            panelRect.sizeDelta = Vector2.zero;
+            modalPanel.SetActive(false);
+
+            // === Canvas Group for fade animation ===
+            CanvasGroup canvasGroup = modalPanel.AddComponent<CanvasGroup>();
+            canvasGroup.alpha = 0f;
+
+            // === Background Overlay (semi-transparent) ===
+            Image bgOverlay = modalPanel.AddComponent<Image>();
+            bgOverlay.color = new Color(0f, 0f, 0f, 0.85f);
+
+            // === Content Container (centered panel) ===
+            GameObject contentPanel = new GameObject("ContentPanel");
+            contentPanel.transform.SetParent(modalPanel.transform, false);
+            RectTransform contentRect = contentPanel.AddComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0.15f, 0.12f);
+            contentRect.anchorMax = new Vector2(0.85f, 0.88f);
+            contentRect.sizeDelta = Vector2.zero;
+
+            Image contentBg = contentPanel.AddComponent<Image>();
+            contentBg.color = new Color(0.08f, 0.06f, 0.12f, 0.98f);
+
+            // === Header ===
+            GameObject header = new GameObject("Header");
+            header.transform.SetParent(contentPanel.transform, false);
+            RectTransform headerRect = header.AddComponent<RectTransform>();
+            headerRect.anchorMin = new Vector2(0, 0.88f);
+            headerRect.anchorMax = new Vector2(1, 1);
+            headerRect.sizeDelta = Vector2.zero;
+
+            Image headerBg = header.AddComponent<Image>();
+            headerBg.color = new Color(0.1f, 0.08f, 0.15f, 0.95f);
+
+            // Title
+            GameObject title = CreateText(header, "Title", "RELICS", 28);
+            RectTransform titleRect = title.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0, 0);
+            titleRect.anchorMax = new Vector2(0.5f, 1);
+            titleRect.offsetMin = new Vector2(20, 0);
+            titleRect.offsetMax = new Vector2(0, 0);
+            var titleTmp = title.GetComponent<TMP_Text>();
+            titleTmp.alignment = TextAlignmentOptions.Left;
+            titleTmp.fontStyle = TMPro.FontStyles.Bold;
+            titleTmp.color = new Color(0.83f, 0.69f, 0.22f); // Soul gold
+
+            // Void Shards display
+            GameObject shardsDisplay = CreateText(header, "VoidShardsText", "0", 20);
+            RectTransform shardsRect = shardsDisplay.GetComponent<RectTransform>();
+            shardsRect.anchorMin = new Vector2(0.7f, 0);
+            shardsRect.anchorMax = new Vector2(1, 1);
+            shardsRect.offsetMin = new Vector2(0, 0);
+            shardsRect.offsetMax = new Vector2(-20, 0);
+            var shardsTmp = shardsDisplay.GetComponent<TMP_Text>();
+            shardsTmp.alignment = TextAlignmentOptions.Right;
+            shardsTmp.color = new Color(0f, 0.83f, 0.89f); // Cyan
+
+            // === Main Content Area (horizontal layout) ===
+            GameObject mainArea = new GameObject("MainArea");
+            mainArea.transform.SetParent(contentPanel.transform, false);
+            RectTransform mainRect = mainArea.AddComponent<RectTransform>();
+            mainRect.anchorMin = new Vector2(0, 0.12f);
+            mainRect.anchorMax = new Vector2(1, 0.86f);
+            mainRect.sizeDelta = Vector2.zero;
+
+            // === Relic Grid (left side) ===
+            GameObject relicGridArea = new GameObject("RelicGridArea");
+            relicGridArea.transform.SetParent(mainArea.transform, false);
+            RectTransform gridAreaRect = relicGridArea.AddComponent<RectTransform>();
+            gridAreaRect.anchorMin = new Vector2(0, 0);
+            gridAreaRect.anchorMax = new Vector2(0.55f, 1);
+            gridAreaRect.sizeDelta = Vector2.zero;
+
+            ScrollRect scroll = relicGridArea.AddComponent<ScrollRect>();
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.scrollSensitivity = 20f;
+
+            Image scrollMask = relicGridArea.AddComponent<Image>();
+            scrollMask.color = new Color(0.05f, 0.03f, 0.08f, 0.5f);
+            relicGridArea.AddComponent<Mask>().showMaskGraphic = true;
+
+            // Viewport
+            GameObject viewport = new GameObject("Viewport");
+            viewport.transform.SetParent(relicGridArea.transform, false);
+            RectTransform viewportRect = viewport.AddComponent<RectTransform>();
+            viewportRect.anchorMin = Vector2.zero;
+            viewportRect.anchorMax = Vector2.one;
+            viewportRect.sizeDelta = Vector2.zero;
+
+            // Relic Container (GridLayoutGroup)
+            GameObject relicContainer = new GameObject("RelicContainer");
+            relicContainer.transform.SetParent(viewport.transform, false);
+            RectTransform relicContainerRect = relicContainer.AddComponent<RectTransform>();
+            relicContainerRect.anchorMin = new Vector2(0, 1);
+            relicContainerRect.anchorMax = new Vector2(1, 1);
+            relicContainerRect.pivot = new Vector2(0.5f, 1);
+            relicContainerRect.sizeDelta = new Vector2(0, 200);
+
+            GridLayoutGroup grid = relicContainer.AddComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(100, 140);
+            grid.spacing = new Vector2(15, 15);
+            grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
+            grid.startAxis = GridLayoutGroup.Axis.Horizontal;
+            grid.childAlignment = TextAnchor.UpperLeft;
+            grid.padding = new RectOffset(15, 15, 15, 15);
+
+            ContentSizeFitter fitter = relicContainer.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            scroll.content = relicContainerRect;
+            scroll.viewport = viewportRect;
+
+            // === Details Panel (right side) ===
+            GameObject detailsPanel = new GameObject("DetailsPanel");
+            detailsPanel.transform.SetParent(mainArea.transform, false);
+            RectTransform detailsRect = detailsPanel.AddComponent<RectTransform>();
+            detailsRect.anchorMin = new Vector2(0.58f, 0);
+            detailsRect.anchorMax = new Vector2(1, 1);
+            detailsRect.sizeDelta = Vector2.zero;
+
+            Image detailsBg = detailsPanel.AddComponent<Image>();
+            detailsBg.color = new Color(0.1f, 0.08f, 0.12f, 0.9f);
+
+            VerticalLayoutGroup detailsLayout = detailsPanel.AddComponent<VerticalLayoutGroup>();
+            detailsLayout.padding = new RectOffset(15, 15, 15, 15);
+            detailsLayout.spacing = 10;
+            detailsLayout.childAlignment = TextAnchor.UpperCenter;
+            detailsLayout.childForceExpandWidth = true;
+            detailsLayout.childForceExpandHeight = false;
+
+            // Selected Relic Icon
+            GameObject iconContainer = new GameObject("IconContainer");
+            iconContainer.transform.SetParent(detailsPanel.transform, false);
+            var iconContainerLayout = iconContainer.AddComponent<LayoutElement>();
+            iconContainerLayout.preferredHeight = 100;
+
+            GameObject selectedIcon = new GameObject("SelectedRelicIcon");
+            selectedIcon.transform.SetParent(iconContainer.transform, false);
+            RectTransform iconRect = selectedIcon.AddComponent<RectTransform>();
+            iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+            iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+            iconRect.sizeDelta = new Vector2(96, 96);
+            Image selectedIconImg = selectedIcon.AddComponent<Image>();
+            selectedIconImg.color = Color.white;
+
+            // Selected Relic Name
+            GameObject relicNameObj = CreateText(detailsPanel, "SelectedRelicName", "Select a Relic", 20);
+            relicNameObj.GetComponent<TMP_Text>().fontStyle = TMPro.FontStyles.Bold;
+            relicNameObj.GetComponent<TMP_Text>().color = new Color(0.83f, 0.69f, 0.22f);
+            var nameTmp = relicNameObj.GetComponent<TMP_Text>();
+            var nameLayout = relicNameObj.AddComponent<LayoutElement>();
+            nameLayout.preferredHeight = 30;
+
+            // Selected Relic Description
+            GameObject relicDescObj = CreateText(detailsPanel, "SelectedRelicDescription", "", 14);
+            var descTmp = relicDescObj.GetComponent<TMP_Text>();
+            descTmp.color = new Color(0.8f, 0.8f, 0.8f);
+            descTmp.alignment = TextAlignmentOptions.Top;
+            var descLayout = relicDescObj.AddComponent<LayoutElement>();
+            descLayout.preferredHeight = 80;
+            descLayout.flexibleHeight = 1;
+
+            // Selected Relic Price
+            GameObject relicPriceObj = CreateText(detailsPanel, "SelectedRelicPrice", "", 18);
+            var priceTmp = relicPriceObj.GetComponent<TMP_Text>();
+            priceTmp.color = new Color(0f, 0.83f, 0.89f);
+            var priceLayout = relicPriceObj.AddComponent<LayoutElement>();
+            priceLayout.preferredHeight = 30;
+
+            // Purchase Button
+            GameObject purchaseBtn = new GameObject("PurchaseButton");
+            purchaseBtn.transform.SetParent(detailsPanel.transform, false);
+            Image purchaseBg = purchaseBtn.AddComponent<Image>();
+            purchaseBg.color = new Color(0.2f, 0.5f, 0.3f, 0.9f); // Green
+            Button purchaseButton = purchaseBtn.AddComponent<Button>();
+            purchaseButton.targetGraphic = purchaseBg;
+            var purchaseLayout = purchaseBtn.AddComponent<LayoutElement>();
+            purchaseLayout.preferredHeight = 50;
+
+            GameObject purchaseText = CreateText(purchaseBtn, "Text", "Select Relic", 16);
+            RectTransform purchaseTextRect = purchaseText.GetComponent<RectTransform>();
+            purchaseTextRect.anchorMin = Vector2.zero;
+            purchaseTextRect.anchorMax = Vector2.one;
+            purchaseTextRect.sizeDelta = Vector2.zero;
+            var purchaseTextTmp = purchaseText.GetComponent<TMP_Text>();
+            purchaseTextTmp.fontStyle = TMPro.FontStyles.Bold;
+
+            detailsPanel.SetActive(false); // Hidden until relic selected
+
+            // === Footer / Close Button ===
+            GameObject footer = new GameObject("Footer");
+            footer.transform.SetParent(contentPanel.transform, false);
+            RectTransform footerRect = footer.AddComponent<RectTransform>();
+            footerRect.anchorMin = new Vector2(0, 0);
+            footerRect.anchorMax = new Vector2(1, 0.1f);
+            footerRect.sizeDelta = Vector2.zero;
+
+            HorizontalLayoutGroup footerLayout = footer.AddComponent<HorizontalLayoutGroup>();
+            footerLayout.padding = new RectOffset(20, 20, 8, 8);
+            footerLayout.spacing = 16;
+            footerLayout.childAlignment = TextAnchor.MiddleRight;
+            footerLayout.childForceExpandWidth = false;
+            footerLayout.childForceExpandHeight = true;
+
+            // Spacer
+            GameObject spacer = new GameObject("Spacer");
+            spacer.transform.SetParent(footer.transform, false);
+            var spacerLayout = spacer.AddComponent<LayoutElement>();
+            spacerLayout.flexibleWidth = 1;
+
+            // Close button
+            GameObject closeBtn = new GameObject("CloseButton");
+            closeBtn.transform.SetParent(footer.transform, false);
+            Image closeBg = closeBtn.AddComponent<Image>();
+            closeBg.color = new Color(0.15f, 0.12f, 0.2f, 0.9f);
+            Button closeButton = closeBtn.AddComponent<Button>();
+            closeButton.targetGraphic = closeBg;
+            var closeLayout = closeBtn.AddComponent<LayoutElement>();
+            closeLayout.preferredWidth = 120;
+            closeLayout.preferredHeight = 40;
+
+            GameObject closeText = CreateText(closeBtn, "Text", "Close", 16);
+            RectTransform closeTextRect = closeText.GetComponent<RectTransform>();
+            closeTextRect.anchorMin = Vector2.zero;
+            closeTextRect.anchorMax = Vector2.one;
+            closeTextRect.sizeDelta = Vector2.zero;
+            closeText.GetComponent<TMP_Text>().color = new Color(0f, 0.83f, 0.89f);
+
+            // === Add RelicShopOverlay component and wire references ===
+            var relicOverlay = modal.AddComponent<RelicShopOverlay>();
+            var so = new SerializedObject(relicOverlay);
+            so.FindProperty("_modalPanel").objectReferenceValue = modalPanel;
+            so.FindProperty("_canvasGroup").objectReferenceValue = canvasGroup;
+            so.FindProperty("_backgroundOverlay").objectReferenceValue = bgOverlay;
+            so.FindProperty("_titleText").objectReferenceValue = titleTmp;
+            so.FindProperty("_voidShardsText").objectReferenceValue = shardsTmp;
+            so.FindProperty("_relicContainer").objectReferenceValue = relicContainer.transform;
+            so.FindProperty("_scrollRect").objectReferenceValue = scroll;
+            so.FindProperty("_detailsPanel").objectReferenceValue = detailsPanel;
+            so.FindProperty("_selectedRelicIcon").objectReferenceValue = selectedIconImg;
+            so.FindProperty("_selectedRelicName").objectReferenceValue = nameTmp;
+            so.FindProperty("_selectedRelicDescription").objectReferenceValue = descTmp;
+            so.FindProperty("_selectedRelicPrice").objectReferenceValue = priceTmp;
+            so.FindProperty("_purchaseButton").objectReferenceValue = purchaseButton;
+            so.FindProperty("_purchaseButtonText").objectReferenceValue = purchaseTextTmp;
+            so.FindProperty("_closeButton").objectReferenceValue = closeButton;
+            so.FindProperty("_fadeInDuration").floatValue = 0.3f;
+            so.FindProperty("_fadeOutDuration").floatValue = 0.2f;
+            so.FindProperty("_purchaseButtonActiveColor").colorValue = new Color(0.2f, 0.5f, 0.3f, 1f);
+            so.FindProperty("_purchaseButtonDisabledColor").colorValue = new Color(0.3f, 0.3f, 0.3f, 0.6f);
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            Debug.Log("[ProductionSceneSetupGenerator] Created RelicShopOverlay");
             return modal;
         }
 

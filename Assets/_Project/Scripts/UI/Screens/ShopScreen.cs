@@ -13,6 +13,7 @@ using HNR.Core.Interfaces;
 using HNR.Progression;
 using HNR.Map;
 using HNR.UI.Components;
+using HNR.UI.Screens;
 
 namespace HNR.UI
 {
@@ -69,6 +70,13 @@ namespace HNR.UI
 
         [SerializeField, Tooltip("Deck viewer modal for card removal")]
         private DeckViewerModal _deckViewerModal;
+
+        [Header("Relic Shop")]
+        [SerializeField, Tooltip("Button to open relic shop overlay")]
+        private Button _buyRelicButton;
+
+        [SerializeField, Tooltip("Relic shop overlay modal")]
+        private RelicShopOverlay _relicShopOverlay;
 
         [Header("Item Details Panel")]
         [SerializeField, Tooltip("Panel showing selected item details")]
@@ -187,6 +195,12 @@ namespace HNR.UI
                 _purifyButton.onClick.RemoveAllListeners();
                 _purifyButton.onClick.AddListener(OnPurifyClicked);
             }
+
+            if (_buyRelicButton != null)
+            {
+                _buyRelicButton.onClick.RemoveAllListeners();
+                _buyRelicButton.onClick.AddListener(OnBuyRelicClicked);
+            }
         }
 
         // ============================================
@@ -205,6 +219,7 @@ namespace HNR.UI
         {
             RefreshItemSlots();
             RefreshRelicDisplay();
+            UpdateRelicButtonVisibility();
 
             // Clear selection if purchased item was selected
             if (_selectedItem == evt.Item)
@@ -267,10 +282,15 @@ namespace HNR.UI
                 return;
             }
 
+            // Filter out relics - they appear only in the overlay
             foreach (var item in _shopManager.CurrentInventory.Items)
             {
+                if (item.Type == ShopItemType.Relic) continue;
                 CreateItemSlot(item);
             }
+
+            // Update relic button visibility
+            UpdateRelicButtonVisibility();
 
             Debug.Log($"[ShopScreen] Created {_itemSlots.Count} item slots");
         }
@@ -517,6 +537,30 @@ namespace HNR.UI
             Debug.Log($"[ShopScreen] Purify service used ({_purifyCost} shards, -{_purifyAmount} corruption)");
         }
 
+        private void OnBuyRelicClicked()
+        {
+            // Find or use assigned RelicShopOverlay
+            var overlay = _relicShopOverlay;
+            if (overlay == null)
+            {
+                overlay = FindAnyObjectByType<RelicShopOverlay>(FindObjectsInactive.Include);
+            }
+
+            if (overlay == null)
+            {
+                Debug.LogWarning("[ShopScreen] RelicShopOverlay not found");
+                return;
+            }
+
+            overlay.Show(OnRelicShopClosed);
+            Debug.Log("[ShopScreen] Opening relic shop overlay");
+        }
+
+        private void OnRelicShopClosed()
+        {
+            RefreshAll();
+        }
+
         // ============================================
         // Service Buttons
         // ============================================
@@ -548,6 +592,15 @@ namespace HNR.UI
             }
         }
 
+        private void UpdateRelicButtonVisibility()
+        {
+            if (_buyRelicButton == null) return;
+
+            var relics = _shopManager?.CurrentInventory?.GetItemsByType(ShopItemType.Relic);
+            bool hasAvailableRelics = relics != null && relics.Exists(r => !r.IsPurchased);
+            _buyRelicButton.gameObject.SetActive(hasAvailableRelics);
+        }
+
         // ============================================
         // Public Methods
         // ============================================
@@ -562,6 +615,7 @@ namespace HNR.UI
             RefreshItemSlots();
             RefreshDetailsPanel();
             RefreshServiceButtons();
+            UpdateRelicButtonVisibility();
         }
     }
 

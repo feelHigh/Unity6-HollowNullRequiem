@@ -24,12 +24,16 @@ MonoBehaviour:
     _outcomes:
     - _type: 4
       _value: 15
-      _cardId: 
-      _relicId: 
+      _cardId:
+      _relicId:
     - _type: 9
       _value: 10
-      _cardId: 
-      _relicId: 
+      _cardId:
+      _relicId:
+    - _type: 7
+      _value: 0
+      _cardId:
+      _relicId: relic_healing_echo 
   - _choiceText: End their suffering
     _outcomeText: A mercy killing. The corruption dissipates, leaving behind void
       shards.

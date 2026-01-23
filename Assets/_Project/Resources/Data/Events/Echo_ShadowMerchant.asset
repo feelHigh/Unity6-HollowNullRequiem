@@ -19,16 +19,21 @@ MonoBehaviour:
   _backgroundImage: {fileID: 0}
   _choices:
   - _choiceText: Trade HP for gold (Lose 20 HP)
-    _outcomeText: Blood is the currency of the desperate. The merchant seems pleased.
+    _outcomeText: Blood is the currency of the desperate. The merchant flips you a
+      peculiar coin as a token of appreciation.
     _outcomes:
     - _type: 4
       _value: 20
-      _cardId: 
-      _relicId: 
+      _cardId:
+      _relicId:
     - _type: 1
       _value: 75
-      _cardId: 
-      _relicId: 
+      _cardId:
+      _relicId:
+    - _type: 7
+      _value: 0
+      _cardId:
+      _relicId: relic_merchants_coin 
   - _choiceText: Trade gold for power (Lose 50 gold)
     _outcomeText: The merchant produces a card unlike any you've seen.
     _outcomes:

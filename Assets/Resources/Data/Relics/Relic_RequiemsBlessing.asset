@@ -20,4 +20,4 @@ MonoBehaviour:
   _trigger: 3
   _effectType: 5
   _effectValue: 1
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 080e66f528b8c4715b7a0f6bc26837ed, type: 3}

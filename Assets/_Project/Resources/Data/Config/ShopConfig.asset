@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _minCardCount: 3
   _maxCardCount: 4
-  _relicCount: 1
+  _relicCount: 4
   _cardRemovePrice: 75
   _purificationPrice: 50
   _purificationAmount: 15

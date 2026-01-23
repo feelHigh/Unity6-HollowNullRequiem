@@ -19,15 +19,16 @@ MonoBehaviour:
   _backgroundImage: {fileID: 0}
   _choices:
   - _choiceText: Absorb the memory
-    _outcomeText: Pain. Fear. Then... understanding. You learn from their mistakes.
+    _outcomeText: Pain. Fear. Then... understanding. The memory crystallizes into
+      something tangible.
     _outcomes:
     - _type: 8
       _value: 3
-      _cardId: 
-      _relicId: 
-    - _type: 14
+      _cardId:
+      _relicId:
+    - _type: 15
       _value: 0
-      _cardId: 
+      _cardId:
       _relicId: 
   - _choiceText: Shatter the crystal
     _outcomeText: The memory disperses, leaving behind concentrated void essence.

@@ -33,11 +33,11 @@ MonoBehaviour:
       _cardId: 
       _relicId: 
   - _choiceText: Pray for guidance
-    _outcomeText: Visions show you the path ahead and hidden treasures.
+    _outcomeText: Visions show you the path ahead. A sacred blessing settles upon you.
     _outcomes:
-    - _type: 1
-      _value: 40
-      _cardId: 
-      _relicId: 
+    - _type: 7
+      _value: 0
+      _cardId:
+      _relicId: relic_requiems_blessing 
   _validZones: 
   _uniquePerRun: 1

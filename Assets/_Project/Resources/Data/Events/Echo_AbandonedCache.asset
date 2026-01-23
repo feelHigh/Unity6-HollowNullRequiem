@@ -20,11 +20,15 @@ MonoBehaviour:
   _choices:
   - _choiceText: Force it open
     _outcomeText: The lock shatters. Gold coins spill out, glinting with an otherworldly
-      sheen.
+      sheen. A curious artifact tumbles free.
     _outcomes:
     - _type: 1
       _value: 50
-      _cardId: 
+      _cardId:
+      _relicId:
+    - _type: 15
+      _value: 0
+      _cardId:
       _relicId: 
   - _choiceText: Listen to the whispers
     _outcomeText: The voices guide you to a hidden card, pulsing with power.
