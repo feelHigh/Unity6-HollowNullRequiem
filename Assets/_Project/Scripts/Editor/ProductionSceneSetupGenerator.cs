@@ -554,6 +554,30 @@ namespace HNR.Editor
             }
             combatBgSO.ApplyModifiedPropertiesWithoutUndo();
 
+            // === Combat Ground (Floor Surface) ===
+            // Ground SpriteRenderer placed beneath characters to prevent floating appearance
+            // Characters (enemy/ally slots) are at Y=0, ground covers from character base to bottom of screen
+            // Camera view is roughly 14 units tall (based on WorldBackground), centered at origin
+            GameObject combatGroundObj = new GameObject("CombatGround");
+            combatGroundObj.transform.position = new Vector3(0, -3f, 5f); // Center at Y=-3, top at Y=2, bottom at Y=-8
+            var groundRenderer = combatGroundObj.AddComponent<SpriteRenderer>();
+            groundRenderer.sortingOrder = -900; // In front of background (-1000), behind characters
+            groundRenderer.drawMode = SpriteDrawMode.Sliced;
+            groundRenderer.size = new Vector2(24f, 10f); // Covers from character feet to bottom of screen
+
+            // Assign ground sprite from config if available
+            if (bgConfig?.CombatGroundSprite != null)
+            {
+                groundRenderer.sprite = bgConfig.CombatGroundSprite;
+                Debug.Log("[ProductionSceneSetupGenerator] Assigned Combat ground sprite from BackgroundConfig");
+            }
+            else
+            {
+                // Use a dark color as fallback (ground will be visible but plain)
+                groundRenderer.color = new Color(0.05f, 0.03f, 0.08f, 0.9f);
+                Debug.Log("[ProductionSceneSetupGenerator] Using fallback color for Combat ground (no sprite assigned)");
+            }
+
             // === World Space UI Containers ===
             // These are plain transforms for world-space floating UIs (not under screen-space canvas)
             GameObject worldSpaceUIParent = new GameObject("--- WORLD SPACE UI ---");
@@ -613,7 +637,7 @@ namespace HNR.Editor
             {
                 GameObject slot = new GameObject($"EnemySlot_{i}");
                 slot.transform.SetParent(enemySlotsParent.transform);
-                slot.transform.position = new Vector3(enemyXPositions[i], 0f, 0f);
+                slot.transform.position = new Vector3(enemyXPositions[i], -1f, 0f);
                 enemySlots[i] = slot.transform;
             }
 
@@ -627,7 +651,7 @@ namespace HNR.Editor
             {
                 GameObject slot = new GameObject($"AllySlot_{i}");
                 slot.transform.SetParent(allySlotsParent.transform);
-                slot.transform.position = new Vector3(allyXPositions[i], 0f, 0f);
+                slot.transform.position = new Vector3(allyXPositions[i], -1f, 0f);
                 allySlots[i] = slot.transform;
             }
 
@@ -1628,7 +1652,21 @@ namespace HNR.Editor
 
             // === Background ===
             Image bg = screenObj.AddComponent<Image>();
-            bg.color = new Color(0.08f, 0.05f, 0.12f, 0.98f);
+
+            // Load background from config, fallback to color if not available
+            var bgConfig = LoadBackgroundConfig();
+            if (bgConfig?.ShopBackground != null)
+            {
+                bg.sprite = bgConfig.ShopBackground;
+                bg.type = Image.Type.Sliced;
+                bg.color = Color.white;
+                Debug.Log("[ProductionSceneSetupGenerator] Assigned Shop background sprite from BackgroundConfig");
+            }
+            else
+            {
+                bg.color = bgConfig?.ShopFallbackColor ?? new Color(0.08f, 0.05f, 0.12f, 0.98f);
+                Debug.Log("[ProductionSceneSetupGenerator] Using fallback color for Shop background");
+            }
 
             // === Shop Title ===
             GameObject titleObj = CreateText(screenObj, "ShopTitle", "VOID MARKET", 42);

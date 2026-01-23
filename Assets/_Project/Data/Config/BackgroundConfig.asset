@@ -23,9 +23,9 @@ MonoBehaviour:
   _combatNormalBackground: {fileID: -6165157779383437791, guid: aa130f43f6c2f2848b100a10a2c65041, type: 3}
   _combatEliteBackground: {fileID: -3579912083077801254, guid: 5886186691ac6734ca22fb3553a99504, type: 3}
   _combatBossBackground: {fileID: 2143170485677104241, guid: 44e70109bac0b6349a39e009b1790381, type: 3}
+  _combatGroundSprite: {fileID: 342691378988220609, guid: c64df1a78b73ecc44ae4253d499aaf22, type: 3}
   _sanctuaryBackground: {fileID: 208501425453735209, guid: 5cec6b1dd5f741049b16953cc619bf8c, type: 3}
-  _shopBackground: {fileID: -8804988126394330590, guid: 34f8d65f6fff0c84a8b38c49d90f39b2, type: 3}
-  _campfireSprite: {fileID: -2129459566656321190, guid: fba2213ac30f200408d81a5fe86f594e, type: 3}
+  _shopBackground: {fileID: -6401945523764108678, guid: b5e115fa7a618d94fb59833eb3e02425, type: 3}
   _mainMenuFallbackColor: {r: 0.05, g: 0.02, b: 0.1, a: 1}
   _bastionFallbackColor: {r: 0.08, g: 0.05, b: 0.12, a: 1}
   _missionsFallbackColor: {r: 0.08, g: 0.08, b: 0.12, a: 1}

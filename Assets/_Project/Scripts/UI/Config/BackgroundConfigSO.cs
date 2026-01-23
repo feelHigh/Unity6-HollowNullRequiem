@@ -62,6 +62,9 @@ namespace HNR.UI.Config
         [SerializeField, Tooltip("Boss combat encounter background")]
         private Sprite _combatBossBackground;
 
+        [SerializeField, Tooltip("Ground/floor image beneath characters in combat")]
+        private Sprite _combatGroundSprite;
+
         // ============================================
         // Screen Backgrounds (Overlays)
         // ============================================
@@ -130,6 +133,7 @@ namespace HNR.UI.Config
         public Sprite CombatNormalBackground => _combatNormalBackground;
         public Sprite CombatEliteBackground => _combatEliteBackground;
         public Sprite CombatBossBackground => _combatBossBackground;
+        public Sprite CombatGroundSprite => _combatGroundSprite;
 
         // ============================================
         // Screen Background Accessors
@@ -195,7 +199,8 @@ namespace HNR.UI.Config
         {
             return _combatNormalBackground != null &&
                    _combatEliteBackground != null &&
-                   _combatBossBackground != null;
+                   _combatBossBackground != null &&
+                   _combatGroundSprite != null;
         }
 
         /// <summary>
@@ -290,6 +295,7 @@ namespace HNR.UI.Config
             if (_combatNormalBackground != null) count++;
             if (_combatEliteBackground != null) count++;
             if (_combatBossBackground != null) count++;
+            if (_combatGroundSprite != null) count++;
             if (_sanctuaryBackground != null) count++;
             if (_shopBackground != null) count++;
             return count;
