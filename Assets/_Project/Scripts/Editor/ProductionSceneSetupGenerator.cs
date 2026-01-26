@@ -217,6 +217,9 @@ namespace HNR.Editor
             // === Overlay Container ===
             GameObject overlayContainer = CreateUIContainer(canvasObj, "OverlayContainer");
 
+            // === Settings Overlay ===
+            CreateSettingsOverlay(canvasObj.transform);
+
             // === Background ===
             CreateSpriteBackground(canvasObj, "MainMenu", new Color(0.05f, 0.02f, 0.1f));
 
@@ -1188,9 +1191,9 @@ namespace HNR.Editor
             GameObject navContainer = new GameObject("NavigationButtons");
             navContainer.transform.SetParent(screenObj.transform, false);
             RectTransform navRect = navContainer.AddComponent<RectTransform>();
-            // Position on right side of screen
-            navRect.anchorMin = new Vector2(0.7f, 0.25f);
-            navRect.anchorMax = new Vector2(0.98f, 0.55f);
+            // Position on right side of screen (raised to align with event banner)
+            navRect.anchorMin = new Vector2(0.7f, 0.55f);
+            navRect.anchorMax = new Vector2(0.98f, 0.85f);
             navRect.offsetMin = Vector2.zero;
             navRect.offsetMax = Vector2.zero;
 

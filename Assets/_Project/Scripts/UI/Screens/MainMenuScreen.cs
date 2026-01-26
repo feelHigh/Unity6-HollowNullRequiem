@@ -11,6 +11,7 @@ using DG.Tweening;
 using HNR.Core;
 using HNR.Core.Interfaces;
 using HNR.Progression;
+using HNR.UI.Screens;
 
 namespace HNR.UI
 {
@@ -331,17 +332,7 @@ namespace HNR.UI
         private void OnSettingsClicked()
         {
             Debug.Log("[MainMenuScreen] Settings clicked");
-
-            // Find and show settings screen
-            var settingsScreen = FindAnyObjectByType<SettingsScreen>(FindObjectsInactive.Include);
-            if (settingsScreen != null)
-            {
-                settingsScreen.Show();
-            }
-            else
-            {
-                Debug.LogWarning("[MainMenuScreen] SettingsScreen not found in scene");
-            }
+            SettingsOverlay.ShowSettings();
         }
 
         private void OnQuitClicked()
