@@ -1733,8 +1733,7 @@ namespace HNR.Editor
             illustRect.anchoredPosition = new Vector2(20, 0);
             illustRect.sizeDelta = new Vector2(200, 0);
 
-            Image illustBg = illustrationPanel.AddComponent<Image>();
-            illustBg.color = new Color(0.15f, 0.12f, 0.2f, 0.9f);
+            // No Image component on IllustrationPanel - only the child IllustrationIcon has an image
 
             // Illustration icon - fills entire panel area
             GameObject illustIcon = new GameObject("IllustrationIcon");
@@ -4661,6 +4660,8 @@ namespace HNR.Editor
             // HP Container with AnimatedStatDisplay - larger width to prevent overlap
             GameObject hpContainer = new GameObject("HPContainer");
             hpContainer.transform.SetParent(statsContainer.transform, false);
+            RectTransform hpContainerRect = hpContainer.AddComponent<RectTransform>();
+            hpContainerRect.sizeDelta = new Vector2(200, 40);
             HorizontalLayoutGroup hpLayout = hpContainer.AddComponent<HorizontalLayoutGroup>();
             hpLayout.spacing = 8;
             hpLayout.childAlignment = TextAnchor.MiddleCenter;
@@ -4706,6 +4707,8 @@ namespace HNR.Editor
             // Currency Container with AnimatedStatDisplay - larger width to prevent overlap
             GameObject currencyContainer = new GameObject("CurrencyContainer");
             currencyContainer.transform.SetParent(statsContainer.transform, false);
+            RectTransform currencyContainerRect = currencyContainer.AddComponent<RectTransform>();
+            currencyContainerRect.sizeDelta = new Vector2(200, 40);
             HorizontalLayoutGroup currencyLayout = currencyContainer.AddComponent<HorizontalLayoutGroup>();
             currencyLayout.spacing = 8;
             currencyLayout.childAlignment = TextAnchor.MiddleCenter;

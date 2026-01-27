@@ -30,11 +30,11 @@ namespace HNR.Editor.LayerLab
         private static readonly Color FallbackRed = new Color(0.35f, 0.15f, 0.15f);
         private static readonly Color FallbackGray = new Color(0.25f, 0.25f, 0.28f);
 
-        // Text colors (from LayerLab prefabs)
-        private static readonly Color TextColorPurple = new Color(0.322f, 0.106f, 0.612f, 1f);
-        private static readonly Color TextColorGreen = new Color(0.145f, 0.451f, 0.345f, 1f);
-        private static readonly Color TextColorRed = new Color(0.525f, 0.161f, 0.255f, 1f);
-        private static readonly Color TextColorGray = new Color(0.314f, 0.298f, 0.353f, 1f);
+        // Fallback text colors (used when config not available)
+        private static readonly Color FallbackTextColorPurple = new Color(0.322f, 0.106f, 0.612f, 1f);
+        private static readonly Color FallbackTextColorGreen = new Color(0.145f, 0.451f, 0.345f, 1f);
+        private static readonly Color FallbackTextColorRed = new Color(0.525f, 0.161f, 0.255f, 1f);
+        private static readonly Color FallbackTextColorGray = new Color(0.314f, 0.298f, 0.353f, 1f);
 
         /// <summary>
         /// Creates a Button_01 small style button (230x104).
@@ -94,11 +94,11 @@ namespace HNR.Editor.LayerLab
             textRect.anchoredPosition = new Vector2(0, 6); // 6 units above center
             textRect.sizeDelta = new Vector2(-44, -28); // 22 each side, 14 top/bottom
 
-            // Set text color based on button color
+            // Set text color based on button color (from config if available)
             var tmp = textObj.GetComponent<TextMeshProUGUI>();
             if (tmp != null)
             {
-                tmp.color = GetTextColor(color);
+                tmp.color = GetTextColor(color, config);
             }
 
             return buttonObj;
@@ -348,17 +348,24 @@ namespace HNR.Editor.LayerLab
         }
 
         /// <summary>
-        /// Gets text color for button.
+        /// Gets text color for button from config, with fallback to hardcoded values.
         /// </summary>
-        private static Color GetTextColor(string color)
+        private static Color GetTextColor(string color, LayerLabSpriteConfigSO config)
         {
+            // Use config colors if available
+            if (config != null)
+            {
+                return config.GetTextColor(color);
+            }
+
+            // Fallback to hardcoded colors
             return color?.ToLower() switch
             {
-                "purple" => TextColorPurple,
-                "green" => TextColorGreen,
-                "red" => TextColorRed,
-                "gray" => TextColorGray,
-                _ => TextColorPurple
+                "purple" => FallbackTextColorPurple,
+                "green" => FallbackTextColorGreen,
+                "red" => FallbackTextColorRed,
+                "gray" => FallbackTextColorGray,
+                _ => FallbackTextColorPurple
             };
         }
 

@@ -126,6 +126,23 @@ namespace HNR.UI.Config
         private TMP_FontAsset _fontAfacadFlux;
 
         // ============================================
+        // Button Text Colors
+        // ============================================
+
+        [Header("Button Text Colors")]
+        [SerializeField, Tooltip("Text color for purple buttons")]
+        private Color _textColorPurple = new Color(0.322f, 0.106f, 0.612f, 1f);
+
+        [SerializeField, Tooltip("Text color for green buttons")]
+        private Color _textColorGreen = new Color(0.145f, 0.451f, 0.345f, 1f);
+
+        [SerializeField, Tooltip("Text color for red buttons")]
+        private Color _textColorRed = new Color(0.525f, 0.161f, 0.255f, 1f);
+
+        [SerializeField, Tooltip("Text color for gray buttons")]
+        private Color _textColorGray = new Color(0.314f, 0.298f, 0.353f, 1f);
+
+        // ============================================
         // Button_01 Small Accessors
         // ============================================
 
@@ -179,6 +196,15 @@ namespace HNR.UI.Config
         // ============================================
 
         public TMP_FontAsset FontAfacadFlux => _fontAfacadFlux;
+
+        // ============================================
+        // Text Color Accessors
+        // ============================================
+
+        public Color TextColorPurple => _textColorPurple;
+        public Color TextColorGreen => _textColorGreen;
+        public Color TextColorRed => _textColorRed;
+        public Color TextColorGray => _textColorGray;
 
         // ============================================
         // Public API
@@ -244,6 +270,23 @@ namespace HNR.UI.Config
         public (Sprite backBg, Sprite bg, Sprite border, Sprite deco, Sprite focus) GetStageFrameSprites()
         {
             return (_stageFrameBackBg, _stageFrameBg, _stageFrameBorder, _stageFrameDeco, _stageFrameFocus);
+        }
+
+        /// <summary>
+        /// Gets text color for a specific button color.
+        /// </summary>
+        /// <param name="color">Button color: "purple", "green", "red", "gray"</param>
+        /// <returns>The text color for that button style</returns>
+        public Color GetTextColor(string color)
+        {
+            return color?.ToLower() switch
+            {
+                "purple" => _textColorPurple,
+                "green" => _textColorGreen,
+                "red" => _textColorRed,
+                "gray" => _textColorGray,
+                _ => _textColorPurple // Default to purple
+            };
         }
 
         // ============================================
