@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _eventId: Echo_MemoryFragment
   _eventTitle: Memory Fragment
-  _narrative: A crystallized memory floats before you - an echo of someone's final
-    moments before the Hollow consumed them. Do you dare witness their fate?
+  _narrative: "A crystallized memory floats before you - \nan echo of someone's final
+    moments before the Hollow consumed them. \nDo you dare witness their fate?"
   _backgroundImage: {fileID: 2318179183690850536, guid: 3c2e7c53b71072f4789d32e95a69a2b2, type: 3}
   _choices:
   - _choiceText: Absorb the memory

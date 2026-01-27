@@ -172,6 +172,8 @@ namespace HNR.UI.Screens
             if (_portraitButtonPrefab != null)
             {
                 buttonObj = Instantiate(_portraitButtonPrefab, _portraitContainer);
+                buttonObj.SetActive(true); // Ensure instantiated object is active (template may be hidden)
+                buttonObj.name = $"Portrait_{requiem.RequiemName}";
             }
             else
             {

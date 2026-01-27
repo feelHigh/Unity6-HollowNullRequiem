@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _eventId: Echo_AncientShrine
   _eventTitle: Ancient Shrine
-  _narrative: A forgotten shrine stands untouched by corruption. The altar glows
-    with residual divine energy, offering blessings to those who would pray.
+  _narrative: "A forgotten shrine stands untouched by corruption. \nThe altar glows
+    with residual divine energy, offering blessings \nto those who would pray."
   _backgroundImage: {fileID: -8411073679454477631, guid: 415937d39c55cf04096c1d516a2af8f4, type: 3}
   _choices:
   - _choiceText: Pray for healing

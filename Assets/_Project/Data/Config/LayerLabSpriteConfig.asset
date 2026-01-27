@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9516a8a86b208014a94f55f38c9b8844, type: 3}
+  m_Name: LayerLabSpriteConfig
+  m_EditorClassIdentifier: 
+  _button01SmallPurpleBg: {fileID: 21300000, guid: bb9ee1cb3fda74028b4787e77df83ad9, type: 3}
+  _button01SmallPurpleDeco: {fileID: 21300000, guid: 57979a720fbfa471b8f7edd251153236, type: 3}
+  _button01SmallGreenBg: {fileID: 21300000, guid: b7322759767544856963bfa1e25d944e, type: 3}
+  _button01SmallGreenDeco: {fileID: 21300000, guid: 57979a720fbfa471b8f7edd251153236, type: 3}
+  _button01SmallRedBg: {fileID: 21300000, guid: 06c4797756f6d4329a91c6fe452602fd, type: 3}
+  _button01SmallRedDeco: {fileID: 21300000, guid: 57979a720fbfa471b8f7edd251153236, type: 3}
+  _button01SmallGrayBg: {fileID: 21300000, guid: 71e08a20ba6834833b3dfa831cc92a09, type: 3}
+  _button01SmallGrayDeco: {fileID: 21300000, guid: 57979a720fbfa471b8f7edd251153236, type: 3}
+  _buttonConvexRectangleGrayBg: {fileID: 21300000, guid: 04e9599fb09634cdfbd91bfaa6606059, type: 3}
+  _buttonConvexRectangleGrayBorder: {fileID: 21300000, guid: 04e9599fb09634cdfbd91bfaa6606059, type: 3}
+  _buttonConvexLeftFlushGrayBg: {fileID: 21300000, guid: 91deb6269f59948e584ae534024037f5, type: 3}
+  _buttonConvexLeftFlushGrayBorder: {fileID: 21300000, guid: 91deb6269f59948e584ae534024037f5, type: 3}
+  _tabMenuBg: {fileID: 21300000, guid: cdae500795f3045fcac46b64d217c123, type: 3}
+  _tabMenuGlow: {fileID: 21300000, guid: a0ddcc68a017d4d87b56bda92ebfbf18, type: 3}
+  _tabMenuBorder: {fileID: 21300000, guid: 63accbdd262f34c0aaa2f9f8835eed62, type: 3}
+  _tabFocusGlow: {fileID: 21300000, guid: 1e87dbb3d71e24820b84330c177fd0e1, type: 3}
+  _tabFocus: {fileID: 21300000, guid: 6d5c1fa143b17400ea6fb2bc86d05aa7, type: 3}
+  _stageFrameBackBg: {fileID: 21300000, guid: 7958ae0365b8e47ad9807e338b203e70, type: 3}
+  _stageFrameBg: {fileID: 21300000, guid: 1cb6252d286cc49088e1335dcceecf3c, type: 3}
+  _stageFrameBorder: {fileID: 21300000, guid: 144484eb063e745e88fbb4818f3e1026, type: 3}
+  _stageFrameDeco: {fileID: 21300000, guid: 0244829ae7323424193d362117b2fee2, type: 3}
+  _stageFrameFocus: {fileID: 21300000, guid: 096f2cd8afcb04302bc47c2751a98177, type: 3}
+  _iconSettings: {fileID: 21300000, guid: 3172ebd2a01bd4a56a7f613d1be33851, type: 3}
+  _iconBack: {fileID: 21300000, guid: 65030c05d866d483d828798666ba8975, type: 3}
+  _fontAfacadFlux: {fileID: 11400000, guid: 80b8d90dcb9f744a3b722e3f74ae6ed8, type: 2}

@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _eventId: Echo_WoundedTraveler
   _eventTitle: Wounded Traveler
-  _narrative: A fellow wanderer lies wounded by the path. Their eyes plead for help,
-    but the corruption spreading through their veins tells another story.
+  _narrative: "A fellow wanderer lies wounded by the path. \nTheir eyes plead for
+    help, but the corruption spreading \nthrough their veins tells another story."
   _backgroundImage: {fileID: -7738117470717306996, guid: df3a460b51658194092c3541be3f3e57, type: 3}
   _choices:
   - _choiceText: Heal them (Lose 15 HP)

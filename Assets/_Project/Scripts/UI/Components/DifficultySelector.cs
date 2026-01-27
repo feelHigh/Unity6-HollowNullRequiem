@@ -60,6 +60,11 @@ namespace HNR.UI.Components
         [SerializeField] private Color _unselectedColor = new Color(0.4f, 0.4f, 0.4f, 1f);
         [SerializeField] private Color _lockedColor = new Color(0.3f, 0.3f, 0.3f, 0.5f);
 
+        [Header("Alpha-Based Fading (when no SelectionIndicator)")]
+        [SerializeField] private float _selectedAlpha = 1.0f;
+        [SerializeField] private float _unselectedAlpha = 0.5f;
+        [SerializeField] private float _lockedAlpha = 0.3f;
+
         [Header("Animation")]
         [SerializeField] private float _selectionAnimDuration = 0.2f;
 
@@ -239,25 +244,56 @@ namespace HNR.UI.Components
             bool isSelected = _currentDifficulty == difficulty;
             bool isUnlocked = IsDifficultyUnlocked(difficulty);
 
-            Color targetColor;
-            if (isSelected)
-                targetColor = _selectedColor;
-            else if (isUnlocked)
-                targetColor = _unselectedColor;
-            else
-                targetColor = _lockedColor;
-
-            // Update button image color
-            var buttonImage = button.GetComponent<Image>();
-            if (buttonImage != null)
+            // When no selection indicator, use alpha-based fading to preserve button colors
+            if (_selectionIndicator == null)
             {
-                buttonImage.color = targetColor;
+                float targetAlpha;
+                if (isSelected)
+                    targetAlpha = _selectedAlpha;
+                else if (isUnlocked)
+                    targetAlpha = _unselectedAlpha;
+                else
+                    targetAlpha = _lockedAlpha;
+
+                // Apply alpha to all images in the button hierarchy
+                foreach (var image in button.GetComponentsInChildren<Image>())
+                {
+                    var color = image.color;
+                    color.a = targetAlpha;
+                    image.color = color;
+                }
+
+                // Update text alpha
+                if (text != null)
+                {
+                    var textColor = text.color;
+                    textColor.a = isUnlocked ? targetAlpha : _lockedAlpha;
+                    text.color = textColor;
+                }
             }
-
-            // Update text color
-            if (text != null)
+            else
             {
-                text.color = isUnlocked ? Color.white : new Color(0.5f, 0.5f, 0.5f, 1f);
+                // Original behavior: color tinting
+                Color targetColor;
+                if (isSelected)
+                    targetColor = _selectedColor;
+                else if (isUnlocked)
+                    targetColor = _unselectedColor;
+                else
+                    targetColor = _lockedColor;
+
+                // Update button image color
+                var buttonImage = button.GetComponent<Image>();
+                if (buttonImage != null)
+                {
+                    buttonImage.color = targetColor;
+                }
+
+                // Update text color
+                if (text != null)
+                {
+                    text.color = isUnlocked ? Color.white : new Color(0.5f, 0.5f, 0.5f, 1f);
+                }
             }
         }
 
