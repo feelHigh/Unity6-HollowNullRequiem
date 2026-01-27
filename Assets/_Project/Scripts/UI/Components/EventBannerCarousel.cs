@@ -41,6 +41,13 @@ namespace HNR.UI.Components
         [SerializeField, Tooltip("Drag handler for interaction")]
         private BannerDragHandler _dragHandler;
 
+        [Header("Prefabs")]
+        [SerializeField, Tooltip("Banner slide prefab (optional)")]
+        private GameObject _slidePrefab;
+
+        [SerializeField, Tooltip("Page indicator prefab (optional)")]
+        private GameObject _indicatorPrefab;
+
         // ============================================
         // State
         // ============================================
@@ -208,7 +215,21 @@ namespace HNR.UI.Components
 
         private GameObject CreateSlideObject(BannerSlide banner, int index)
         {
-            GameObject slideObj = new GameObject($"Slide_{index}");
+            GameObject slideObj;
+
+            // Use prefab if available
+            if (_slidePrefab != null)
+            {
+                slideObj = Instantiate(_slidePrefab, _contentContainer);
+                slideObj.name = $"Slide_{index}";
+
+                // Configure slide from prefab
+                ConfigureSlideFromPrefab(slideObj, banner, index);
+                return slideObj;
+            }
+
+            // Fallback: Create at runtime
+            slideObj = new GameObject($"Slide_{index}");
             slideObj.transform.SetParent(_contentContainer, false);
 
             RectTransform rect = slideObj.AddComponent<RectTransform>();
@@ -333,6 +354,99 @@ namespace HNR.UI.Components
             descText.color = new Color(0.8f, 0.8f, 0.8f, 1f);
         }
 
+        /// <summary>
+        /// Configures a slide instantiated from prefab.
+        /// </summary>
+        private void ConfigureSlideFromPrefab(GameObject slideObj, BannerSlide banner, int index)
+        {
+            // Get slide dimensions
+            float slideWidth = 0f;
+            float slideHeight = 0f;
+
+            if (_scrollRect != null && _scrollRect.viewport != null)
+            {
+                slideWidth = _scrollRect.viewport.rect.width;
+                slideHeight = _scrollRect.viewport.rect.height;
+            }
+
+            if (slideWidth <= 10f || slideHeight <= 10f)
+            {
+                var carouselRect = GetComponent<RectTransform>();
+                if (carouselRect != null)
+                {
+                    slideWidth = carouselRect.rect.width;
+                    slideHeight = carouselRect.rect.height * 0.85f;
+                }
+            }
+
+            slideWidth = Mathf.Max(slideWidth, 200f);
+            slideHeight = Mathf.Max(slideHeight, 80f);
+
+            // Update RectTransform
+            var rect = slideObj.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.sizeDelta = new Vector2(slideWidth, slideHeight);
+            }
+
+            // Update LayoutElement
+            var layout = slideObj.GetComponent<LayoutElement>();
+            if (layout != null)
+            {
+                layout.preferredWidth = slideWidth;
+                layout.preferredHeight = slideHeight;
+                layout.minWidth = slideWidth;
+                layout.minHeight = slideHeight;
+            }
+
+            // Update background image
+            var bgImage = slideObj.GetComponent<Image>();
+            if (bgImage != null)
+            {
+                if (banner.HasImage)
+                {
+                    bgImage.sprite = banner.Image;
+                    bgImage.color = Color.white;
+                }
+                else
+                {
+                    bgImage.color = new Color(0.1f, 0.1f, 0.15f, 1f);
+                }
+            }
+
+            // Update title text
+            var titleTransform = slideObj.transform.Find("Title");
+            if (titleTransform != null)
+            {
+                var titleText = titleTransform.GetComponent<TextMeshProUGUI>();
+                if (titleText != null)
+                {
+                    titleText.text = banner.Title;
+                    titleText.gameObject.SetActive(!banner.HasImage);
+                }
+            }
+
+            // Update description text
+            var descTransform = slideObj.transform.Find("Description");
+            if (descTransform != null)
+            {
+                var descText = descTransform.GetComponent<TextMeshProUGUI>();
+                if (descText != null)
+                {
+                    descText.text = banner.Description;
+                    descText.gameObject.SetActive(!banner.HasImage);
+                }
+            }
+
+            // Wire button click
+            var button = slideObj.GetComponent<Button>();
+            if (button != null)
+            {
+                button.onClick.RemoveAllListeners();
+                button.onClick.AddListener(() => OnSlideClicked(index));
+            }
+        }
+
         // ============================================
         // Indicator Creation
         // ============================================
@@ -352,18 +466,39 @@ namespace HNR.UI.Components
 
         private GameObject CreateIndicatorObject(int index)
         {
-            GameObject indicatorObj = new GameObject($"Indicator_{index}");
+            GameObject indicatorObj;
+            float size = _bannerConfig?.IndicatorSize ?? 12f;
+
+            // Use prefab if available
+            if (_indicatorPrefab != null)
+            {
+                indicatorObj = Instantiate(_indicatorPrefab, _indicatorContainer);
+                indicatorObj.name = $"Indicator_{index}";
+
+                var rect = indicatorObj.GetComponent<RectTransform>();
+                if (rect != null)
+                {
+                    rect.sizeDelta = new Vector2(size, size);
+                }
+
+                var image = indicatorObj.GetComponent<Image>();
+                if (image != null)
+                {
+                    image.color = _bannerConfig?.InactiveIndicatorColor ?? new Color(1f, 1f, 1f, 0.4f);
+                }
+
+                return indicatorObj;
+            }
+
+            // Fallback: Create at runtime
+            indicatorObj = new GameObject($"Indicator_{index}");
             indicatorObj.transform.SetParent(_indicatorContainer, false);
 
-            RectTransform rect = indicatorObj.AddComponent<RectTransform>();
-            float size = _bannerConfig?.IndicatorSize ?? 12f;
-            rect.sizeDelta = new Vector2(size, size);
+            RectTransform rectTransform = indicatorObj.AddComponent<RectTransform>();
+            rectTransform.sizeDelta = new Vector2(size, size);
 
-            Image image = indicatorObj.AddComponent<Image>();
-            image.color = _bannerConfig?.InactiveIndicatorColor ?? new Color(1f, 1f, 1f, 0.4f);
-
-            // Make circular using rounded sprite or just leave as square
-            // For simplicity, we use a simple square/circle color
+            Image indicatorImage = indicatorObj.AddComponent<Image>();
+            indicatorImage.color = _bannerConfig?.InactiveIndicatorColor ?? new Color(1f, 1f, 1f, 0.4f);
 
             return indicatorObj;
         }

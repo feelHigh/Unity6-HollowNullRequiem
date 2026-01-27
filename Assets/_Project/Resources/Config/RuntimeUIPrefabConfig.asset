@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18595c2aa1b3d9542acd1ae0cfcc4ee3, type: 3}
+  m_Name: RuntimeUIPrefabConfig
+  m_EditorClassIdentifier: 
+  _confirmationDialogPrefab: {fileID: 8299735302905728333, guid: 01dd13f4c3f353e4fb6142034c91844c, type: 3}
+  _statusIconPrefab: {fileID: 103313813484372285, guid: fd04012f10b33e246b899f1f0b3d35a7, type: 3}
+  _relicDisplayIconPrefab: {fileID: 7458742241724434136, guid: aa4385d79e6885f498a573a8c6aee7c4, type: 3}
+  _deckViewerCardSlotPrefab: {fileID: 6245254299025359885, guid: 35852d9c1ff8af647b69c849cc3ed3a2, type: 3}
+  _simpleCardDisplayItemPrefab: {fileID: 7183161108610645078, guid: 071d9db9976fb9b42a4ecbe772b08d8d, type: 3}
+  _sanctuaryCardSlotPrefab: {fileID: 2609636175091791228, guid: 9bb4467156c551849b9dec90da8c8c69, type: 3}
+  _sanctuaryUpgradeSlotPrefab: {fileID: 6300023630263278215, guid: 5e1fecfd8de1e2d45b459d880379e6bd, type: 3}
+  _rewardCardSlotPrefab: {fileID: 50237854095274769, guid: e20b7864c6477e447879cc460033eaef, type: 3}
+  _relicShopSlotPrefab: {fileID: 7773619744291785886, guid: 9bfc71bef9a90324296aa226d8f1f1ef, type: 3}
+  _bannerSlidePrefab: {fileID: 4903687796097194713, guid: 1c938d5614943534a9c1496b874e506f, type: 3}
+  _bannerIndicatorPrefab: {fileID: 6288110410872107467, guid: 0f25add0037b30f478807bcda535965f, type: 3}
+  _requiemSelectionSlotPrefab: {fileID: 6692836284439112905, guid: 04ccc78f2c540bd41a9859c6f3ad0ed3, type: 3}
+  _requiemPortraitButtonPrefab: {fileID: 6126581270583451971, guid: 1700e02e25475c74f9540800f72d3ce9, type: 3}

@@ -45,6 +45,7 @@ namespace HNR.Editor
         private const string COMBAT_CONFIG_PATH = "Assets/_Project/Data/Config/CombatConfig.asset";
         private const string BANNER_CONFIG_PATH = "Assets/_Project/Data/Config/BannerConfig.asset";
         private const string LAYERLAB_CONFIG_PATH = "Assets/_Project/Data/Config/LayerLabSpriteConfig.asset";
+        private const string RUNTIME_PREFAB_CONFIG_PATH = "Assets/_Project/Resources/Config/RuntimeUIPrefabConfig.asset";
 
         // Cached icon config for current generation run
         private static SceneIconConfigSO _iconConfig;
@@ -54,6 +55,8 @@ namespace HNR.Editor
         private static LayerLabSpriteConfigSO _layerLabConfig;
         // Cached banner config for current generation run
         private static BannerConfigSO _bannerConfig;
+        // Cached runtime UI prefab config for current generation run
+        private static RuntimeUIPrefabConfigSO _runtimePrefabConfig;
 
         /// <summary>
         /// Loads the scene icon configuration asset.
@@ -123,6 +126,24 @@ namespace HNR.Editor
             _backgroundConfig = null;
             _bannerConfig = null;
             _layerLabConfig = null;
+            _runtimePrefabConfig = null;
+        }
+
+        /// <summary>
+        /// Loads the runtime UI prefab configuration asset.
+        /// </summary>
+        /// <returns>The runtime prefab config or null if not found</returns>
+        private static RuntimeUIPrefabConfigSO LoadRuntimePrefabConfig()
+        {
+            if (_runtimePrefabConfig == null)
+            {
+                _runtimePrefabConfig = AssetDatabase.LoadAssetAtPath<RuntimeUIPrefabConfigSO>(RUNTIME_PREFAB_CONFIG_PATH);
+                if (_runtimePrefabConfig == null)
+                {
+                    Debug.LogWarning("[ProductionSceneSetupGenerator] RuntimeUIPrefabConfig not found. Run 'HNR > 5. Utilities > Config > Generate Runtime UI Prefab Config' first.");
+                }
+            }
+            return _runtimePrefabConfig;
         }
 
         /// <summary>
@@ -1372,6 +1393,23 @@ namespace HNR.Editor
             carouselSO.FindProperty("_contentContainer").objectReferenceValue = contentRect;
             carouselSO.FindProperty("_indicatorContainer").objectReferenceValue = indicatorRect;
             carouselSO.FindProperty("_dragHandler").objectReferenceValue = dragHandler;
+
+            // Wire runtime prefabs if available
+            var runtimePrefabConfig = LoadRuntimePrefabConfig();
+            if (runtimePrefabConfig != null)
+            {
+                if (runtimePrefabConfig.BannerSlidePrefab != null)
+                {
+                    carouselSO.FindProperty("_slidePrefab").objectReferenceValue = runtimePrefabConfig.BannerSlidePrefab;
+                    Debug.Log("[ProductionSceneSetupGenerator] Wired BannerSlide.prefab to EventBannerCarousel._slidePrefab");
+                }
+                if (runtimePrefabConfig.BannerIndicatorPrefab != null)
+                {
+                    carouselSO.FindProperty("_indicatorPrefab").objectReferenceValue = runtimePrefabConfig.BannerIndicatorPrefab;
+                    Debug.Log("[ProductionSceneSetupGenerator] Wired BannerIndicator.prefab to EventBannerCarousel._indicatorPrefab");
+                }
+            }
+
             carouselSO.ApplyModifiedPropertiesWithoutUndo();
 
             Debug.Log("[ProductionSceneSetupGenerator] Created EventBannerCarousel");
@@ -3508,7 +3546,23 @@ namespace HNR.Editor
             {
                 var floatingUI = enemyFloatingUIPrefab.GetComponent<EnemyFloatingUI>();
                 if (floatingUI != null)
+                {
                     SetPropertyIfExists(so, "_enemyUIPrefab", floatingUI);
+
+                    // Wire status icon prefab to EnemyFloatingUI
+                    var runtimePrefabConfig = LoadRuntimePrefabConfig();
+                    if (runtimePrefabConfig != null && runtimePrefabConfig.StatusIconPrefab != null)
+                    {
+                        var floatingUISO = new SerializedObject(floatingUI);
+                        var statusIconProp = floatingUISO.FindProperty("_statusIconPrefab");
+                        if (statusIconProp != null)
+                        {
+                            statusIconProp.objectReferenceValue = runtimePrefabConfig.StatusIconPrefab;
+                            floatingUISO.ApplyModifiedPropertiesWithoutUndo();
+                            Debug.Log("[ProductionSceneSetupGenerator] Wired StatusIcon.prefab to EnemyFloatingUI._statusIconPrefab");
+                        }
+                    }
+                }
             }
             else
             {
@@ -5338,6 +5392,15 @@ namespace HNR.Editor
             so.FindProperty("_tooltipName").objectReferenceValue = tooltipName.GetComponent<TMP_Text>();
             so.FindProperty("_tooltipDescription").objectReferenceValue = tooltipDesc.GetComponent<TMP_Text>();
             so.FindProperty("_tooltipRarity").objectReferenceValue = tooltipRarity.GetComponent<TMP_Text>();
+
+            // Wire relic icon prefab if available
+            var runtimePrefabConfig = LoadRuntimePrefabConfig();
+            if (runtimePrefabConfig != null && runtimePrefabConfig.RelicDisplayIconPrefab != null)
+            {
+                so.FindProperty("_relicIconPrefab").objectReferenceValue = runtimePrefabConfig.RelicDisplayIconPrefab;
+                Debug.Log("[ProductionSceneSetupGenerator] Wired RelicDisplayIcon.prefab to RelicDisplayBar._relicIconPrefab");
+            }
+
             so.ApplyModifiedPropertiesWithoutUndo();
 
             return barObj;
@@ -5882,6 +5945,15 @@ namespace HNR.Editor
             so.FindProperty("_fadeOutDuration").floatValue = 0.2f;
             so.FindProperty("_purchaseButtonActiveColor").colorValue = new Color(0.2f, 0.5f, 0.3f, 1f);
             so.FindProperty("_purchaseButtonDisabledColor").colorValue = new Color(0.3f, 0.3f, 0.3f, 0.6f);
+
+            // Wire relic slot prefab if available
+            var runtimePrefabConfig = LoadRuntimePrefabConfig();
+            if (runtimePrefabConfig != null && runtimePrefabConfig.RelicShopSlotPrefab != null)
+            {
+                so.FindProperty("_relicSlotPrefab").objectReferenceValue = runtimePrefabConfig.RelicShopSlotPrefab;
+                Debug.Log("[ProductionSceneSetupGenerator] Wired RelicShopSlot.prefab to RelicShopOverlay._relicSlotPrefab");
+            }
+
             so.ApplyModifiedPropertiesWithoutUndo();
 
             Debug.Log("[ProductionSceneSetupGenerator] Created RelicShopOverlay");

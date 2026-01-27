@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
+using HNR.UI.Config;
 
 namespace HNR.UI.Components
 {
@@ -23,6 +24,12 @@ namespace HNR.UI.Components
 
         private static ConfirmationDialog _instance;
         public static ConfirmationDialog Instance => _instance;
+
+        // ============================================
+        // Static Prefab Reference
+        // ============================================
+
+        private static GameObject _dialogPrefab;
 
         // ============================================
         // UI References
@@ -280,9 +287,37 @@ namespace HNR.UI.Components
         // Runtime Instance Creation
         // ============================================
 
+        /// <summary>
+        /// Sets the prefab to use for dialog creation. Call before first Show().
+        /// </summary>
+        public static void SetDialogPrefab(GameObject prefab)
+        {
+            _dialogPrefab = prefab;
+        }
+
         private static void CreateInstance()
         {
-            // Create dialog at runtime if needed
+            // Try to use prefab from config first
+            if (_dialogPrefab == null)
+            {
+                var config = RuntimeUIPrefabConfigSO.Instance;
+                if (config != null && config.ConfirmationDialogPrefab != null)
+                {
+                    _dialogPrefab = config.ConfirmationDialogPrefab;
+                }
+            }
+
+            // Use prefab if available
+            if (_dialogPrefab != null)
+            {
+                var prefabInstance = Instantiate(_dialogPrefab);
+                prefabInstance.name = "ConfirmationDialog";
+                DontDestroyOnLoad(prefabInstance);
+                Debug.Log("[ConfirmationDialog] Created from prefab");
+                return;
+            }
+
+            // Fallback: Create dialog at runtime
             var go = new GameObject("ConfirmationDialog");
 
             // Create Canvas
