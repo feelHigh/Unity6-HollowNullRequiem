@@ -68,9 +68,6 @@ Hero Editor - Layer Lab
 <b>VFX</b>
 Cartoon FX Remaster - Jean Moreno
 
-<b>AI Integration</b>
-Synaptic AI Pro - Synaptic Games
-
 ---
 
 <size=32><b>INSPIRATION</b></size>

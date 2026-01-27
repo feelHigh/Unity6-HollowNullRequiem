@@ -151,7 +151,6 @@ namespace HNR.Diagnostics
             sb.AppendLine("| Animation | DOTween Pro |");
             sb.AppendLine("| Persistence | Easy Save 3 |");
             sb.AppendLine("| VFX | Cartoon FX Remaster |");
-            sb.AppendLine("| AI Integration | Synaptic AI Pro (MCP) |");
             sb.AppendLine();
         }
 
