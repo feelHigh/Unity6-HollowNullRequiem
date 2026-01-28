@@ -34,9 +34,61 @@ MonoBehaviour:
   _stageFrameBorder: {fileID: 21300000, guid: 144484eb063e745e88fbb4818f3e1026, type: 3}
   _stageFrameDeco: {fileID: 21300000, guid: 0244829ae7323424193d362117b2fee2, type: 3}
   _stageFrameFocus: {fileID: 21300000, guid: 096f2cd8afcb04302bc47c2751a98177, type: 3}
+  _profileFrameBg: {fileID: 21300000, guid: 2f7743311a6bc4481a725ec9b322de5c, type: 3}
+  _profileFrameBorder: {fileID: 21300000, guid: 2f29096ed1dae4d018038c9701b88aa4, type: 3}
+  _profileFrameBorderDecoPurple: {fileID: 21300000, guid: 849d8256222df42d3b9e1dcfb8f1df37, type: 3}
+  _cardFrameRectanglePurpleBg: {fileID: 21300000, guid: 8dea355958a3f4bfa88e7610253ee9e9, type: 3}
+  _cardFrameRectangleGreenBg: {fileID: 21300000, guid: 83b2576d0ef1141c09d8b1858a4eddef, type: 3}
+  _listFrameBg: {fileID: 21300000, guid: 1c2ea3e9571184af2a5a5a42a9c0eca1, type: 3}
+  _listFrameBorder: {fileID: 21300000, guid: d4f8f55fbc21a463880f595813729920, type: 3}
+  _panelFrameBg: {fileID: 21300000, guid: 1c2ea3e9571184af2a5a5a42a9c0eca1, type: 3}
+  _panelFrameBorder: {fileID: 21300000, guid: d4f8f55fbc21a463880f595813729920, type: 3}
+  _panelFrameDeco: {fileID: 21300000, guid: 9e344015b6deb4446904b7fde2dac1d5, type: 3}
+  _itemFrameSquarePurple: {fileID: 21300000, guid: d3ef70a0e21c74ae9ac67d0244d06501, type: 3}
+  _baseFrameBorderRectH40: {fileID: 21300000, guid: 0bdb20fd0b478464caec50f9316dc88f, type: 3}
+  _baseFrameBorderRectH50: {fileID: 21300000, guid: c141c2d6f99c94d5f94f486729b9bc91, type: 3}
+  _baseFrameBorderRectH60: {fileID: 21300000, guid: 78d439cd53eb34997ba5d8d1bee08ab6, type: 3}
+  _lineFrameDecoLine01: {fileID: 21300000, guid: 5864ca9a74c574ac7a3f723d11556a5b, type: 3}
+  _sliderBorderTaperedBg: {fileID: 21300000, guid: b443d6d5f27e948f3a5025d9277fb2f5, type: 3}
+  _sliderBorderTaperedFill: {fileID: 21300000, guid: 54a0b09d729f849a9979de1fd81bdc84, type: 3}
+  _sliderBorderTaperedBorder: {fileID: 21300000, guid: 9fc5cb9febc7f4ad9a9a08336a1ee187, type: 3}
+  _pictoIconTimer: {fileID: 21300000, guid: 5a7c6a415b325434fa52dda959887d06, type: 3}
+  _pictoIconAttack: {fileID: 21300000, guid: 8f579b33b9ca74bda8f572b93e4087db, type: 3}
+  _pictoIconMenu: {fileID: 21300000, guid: 2fdf9e484c95a409fa75d9689b7805a4, type: 3}
+  _pictoIconBook: {fileID: 21300000, guid: afd27a5e6b49542da8bfac967f089361, type: 3}
+  _pictoIconBattle: {fileID: 21300000, guid: 46f38837615144f0a9086286e2bc8b76, type: 3}
+  _pictoIconLock: {fileID: 21300000, guid: 485084c7ac66846799ca59784899281a, type: 3}
+  _itemIconHeart: {fileID: 21300000, guid: 915b30f04f4fc405291d1bc7b6697d35, type: 3}
+  _itemIconEnergyPurple: {fileID: 21300000, guid: bb8ca47167d6f4a7e894f5361192e397, type: 3}
+  _itemIconShield: {fileID: 21300000, guid: e76ad19b4a4b74069b5ee7e1198bc49d, type: 3}
+  _itemIconCurrency: {fileID: 21300000, guid: b12696e5a29bb4462b7caa2afcc2e063, type: 3}
+  _mapIconCombat: {fileID: 21300000, guid: b060316ad213b4638806ca4aac3b48ba, type: 3}
+  _mapIconElite: {fileID: 21300000, guid: c84eaee1c807d451895d257be3d64439, type: 3}
+  _mapIconShop: {fileID: 21300000, guid: cbe6ba94279074a83b7676f64594c47e, type: 3}
+  _mapIconEcho: {fileID: 21300000, guid: 1e040c41e37d84e25a0b4e610373a419, type: 3}
+  _mapIconSanctuary: {fileID: 21300000, guid: 862923fb6f3a44807a4db356e7d5e15a, type: 3}
+  _mapIconTreasure: {fileID: 21300000, guid: c3220d82d9c7a4384a1ce5b803d17227, type: 3}
+  _mapIconBoss: {fileID: 21300000, guid: e2a7451e297d44788962a7e503064c5b, type: 3}
+  _deckIconDraw: {fileID: 21300000, guid: 84748cf2661904d14a2318d587b42554, type: 3}
+  _deckIconDiscard: {fileID: 21300000, guid: fa3216cb285974ae19227be6b66c14de, type: 3}
+  _speedIcon1x: {fileID: 21300000, guid: 6a736cfd9250d5c4a9ff3e0e4ad0cb5c, type: 3}
+  _speedIcon2x: {fileID: 21300000, guid: c7a6fe9f3f07bf74a897236d55e0cee6, type: 3}
+  _iconCheckmark: {fileID: 21300000, guid: 840bf04b27d534218a2963e666072dd9, type: 3}
+  _settingsIconDisplay: {fileID: 21300000, guid: 8cd55c5b366c4574d93e99269b8a01d9, type: 3}
+  _settingsIconAudio: {fileID: 21300000, guid: 052913ff636054540b70d52173eccf89, type: 3}
+  _settingsIconGame: {fileID: 21300000, guid: 561ce56b57e34e6499fda3c9e96b3559, type: 3}
+  _settingsIconNetwork: {fileID: 21300000, guid: df6b34c8b502f7e48a79565096a23132, type: 3}
+  _settingsIconAccount: {fileID: 21300000, guid: 8a03f4e4f5e68804cadf129ecd68c56c, type: 3}
+  _alertDiamondWhiteBg: {fileID: 21300000, guid: 269be58c0b3824899b9a0285b169328f, type: 3}
   _iconSettings: {fileID: 21300000, guid: 3172ebd2a01bd4a56a7f613d1be33851, type: 3}
   _iconBack: {fileID: 21300000, guid: 65030c05d866d483d828798666ba8975, type: 3}
   _fontAfacadFlux: {fileID: 11400000, guid: 80b8d90dcb9f744a3b722e3f74ae6ed8, type: 2}
+  _verticalSliderBg: {fileID: 21300000, guid: 29f12c941be2a443e93430fdf53f4cb4, type: 3}
+  _verticalSliderBgLeft: {fileID: 21300000, guid: 6d74bb324cc324a53a8e0e3062121a7a, type: 3}
+  _verticalSliderBgRight: {fileID: 21300000, guid: 41d9889fecf884dcab9f8da49da4c6e6, type: 3}
+  _verticalSliderFillBorder: {fileID: 21300000, guid: 676a2400cd9984f9580cef67f098d66d, type: 3}
+  _partySlotFrame: {fileID: 21300000, guid: b1a895715c1d4495d8551b8fbc9ffa12, type: 3}
+  _partySlotActiveGlow: {fileID: 21300000, guid: 88d00d0f87d044bcd82f9c0458d15c6d, type: 3}
   _textColorPurple: {r: 0, g: 0, b: 0, a: 1}
   _textColorGreen: {r: 0.145, g: 0.451, b: 0.345, a: 1}
   _textColorRed: {r: 0.525, g: 0.161, b: 0.255, a: 1}

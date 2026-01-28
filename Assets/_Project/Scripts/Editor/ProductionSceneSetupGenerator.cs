@@ -40,48 +40,20 @@ namespace HNR.Editor
     {
         private const string SCENES_PATH = "Assets/_Project/Scenes";
         private const string PREFABS_PATH = "Assets/_Project/Prefabs";
-        private const string ICON_CONFIG_PATH = "Assets/_Project/Data/Config/SceneIconConfig.asset";
         private const string BACKGROUND_CONFIG_PATH = "Assets/_Project/Data/Config/BackgroundConfig.asset";
         private const string COMBAT_CONFIG_PATH = "Assets/_Project/Data/Config/CombatConfig.asset";
         private const string BANNER_CONFIG_PATH = "Assets/_Project/Data/Config/BannerConfig.asset";
         private const string LAYERLAB_CONFIG_PATH = "Assets/_Project/Data/Config/LayerLabSpriteConfig.asset";
         private const string RUNTIME_PREFAB_CONFIG_PATH = "Assets/_Project/Resources/Config/RuntimeUIPrefabConfig.asset";
 
-        // Cached icon config for current generation run
-        private static SceneIconConfigSO _iconConfig;
         // Cached background config for current generation run
         private static BackgroundConfigSO _backgroundConfig;
-        // Cached LayerLab sprite config for current generation run
+        // Cached LayerLab sprite config for current generation run (also contains all icon sprites)
         private static LayerLabSpriteConfigSO _layerLabConfig;
         // Cached banner config for current generation run
         private static BannerConfigSO _bannerConfig;
         // Cached runtime UI prefab config for current generation run
         private static RuntimeUIPrefabConfigSO _runtimePrefabConfig;
-
-        /// <summary>
-        /// Loads the scene icon configuration asset.
-        /// </summary>
-        /// <returns>The icon config or null if not found</returns>
-        private static SceneIconConfigSO LoadIconConfig()
-        {
-            if (_iconConfig == null)
-            {
-                _iconConfig = AssetDatabase.LoadAssetAtPath<SceneIconConfigSO>(ICON_CONFIG_PATH);
-                if (_iconConfig == null)
-                {
-                    Debug.LogWarning("[ProductionSceneSetupGenerator] SceneIconConfig not found. Run 'HNR > 2. Prefabs > Icons > Generate Scene Icons' first. Using text fallback.");
-                }
-            }
-            return _iconConfig;
-        }
-
-        /// <summary>
-        /// Clears the cached icon config (call after scene generation batch completes).
-        /// </summary>
-        private static void ClearIconConfigCache()
-        {
-            _iconConfig = null;
-        }
 
         /// <summary>
         /// Loads the background configuration asset.
@@ -122,7 +94,6 @@ namespace HNR.Editor
         /// </summary>
         private static void ClearAllConfigCaches()
         {
-            _iconConfig = null;
             _backgroundConfig = null;
             _bannerConfig = null;
             _layerLabConfig = null;
@@ -1093,13 +1064,57 @@ namespace HNR.Editor
 
             var screen = screenObj.AddComponent<MainMenuScreen>();
 
-            // === Title ===
-            GameObject titleObj = CreateText(screenObj, "Title", "HOLLOW NULL REQUIEM", 64);
+            // === Title with LayerLab Frame ===
+            var layerLabConfig = LoadLayerLabConfig();
+
+            // Title frame container (using ListFrame for elegant background)
+            GameObject titleFrameObj = new GameObject("TitleFrame");
+            titleFrameObj.transform.SetParent(screenObj.transform, false);
+            RectTransform titleFrameRect = titleFrameObj.AddComponent<RectTransform>();
+            titleFrameRect.anchorMin = new Vector2(0.5f, 0.72f);
+            titleFrameRect.anchorMax = new Vector2(0.5f, 0.82f);
+            titleFrameRect.anchoredPosition = Vector2.zero;
+            titleFrameRect.sizeDelta = new Vector2(900, 120);
+
+            // Frame background using LayerLab sprite if available
+            Image frameBg = titleFrameObj.AddComponent<Image>();
+            if (layerLabConfig != null && layerLabConfig.TabMenuBg != null)
+            {
+                frameBg.sprite = layerLabConfig.TabMenuBg;
+                frameBg.type = Image.Type.Sliced;
+                frameBg.color = new Color(0.15f, 0.08f, 0.25f, 0.85f); // Dark purple tint
+
+                // Add border layer if available
+                if (layerLabConfig.TabMenuBorder != null)
+                {
+                    GameObject borderObj = new GameObject("Border");
+                    borderObj.transform.SetParent(titleFrameObj.transform, false);
+                    RectTransform borderRect = borderObj.AddComponent<RectTransform>();
+                    borderRect.anchorMin = Vector2.zero;
+                    borderRect.anchorMax = Vector2.one;
+                    borderRect.sizeDelta = Vector2.zero;
+                    Image borderImg = borderObj.AddComponent<Image>();
+                    borderImg.sprite = layerLabConfig.TabMenuBorder;
+                    borderImg.type = Image.Type.Sliced;
+                    borderImg.color = new Color(0.6f, 0.4f, 0.8f, 0.9f); // Purple border
+                    borderImg.raycastTarget = false;
+                }
+            }
+            else
+            {
+                frameBg.color = new Color(0.1f, 0.05f, 0.15f, 0.85f); // Fallback dark purple
+            }
+            frameBg.raycastTarget = false;
+
+            // Title text - larger font (80 instead of 64)
+            GameObject titleObj = CreateText(titleFrameObj, "Title", "HOLLOW NULL REQUIEM", 80);
             RectTransform titleRect = titleObj.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0.5f, 0.75f);
-            titleRect.anchorMax = new Vector2(0.5f, 0.75f);
+            titleRect.anchorMin = Vector2.zero;
+            titleRect.anchorMax = Vector2.one;
             titleRect.anchoredPosition = Vector2.zero;
-            titleRect.sizeDelta = new Vector2(800, 100);
+            titleRect.sizeDelta = Vector2.zero;
+            titleRect.offsetMin = new Vector2(20, 10);
+            titleRect.offsetMax = new Vector2(-20, -10);
 
             // === Button Container ===
             GameObject buttonContainer = new GameObject("ButtonContainer");
@@ -1131,13 +1146,13 @@ namespace HNR.Editor
             // === Quit Button ===
             GameObject quitBtn = CreateMenuButton(buttonContainer, "QuitButton", "QUIT");
 
-            // === Version Text ===
+            // === Version Text (positioned to avoid cutoff) ===
             GameObject versionObj = CreateText(screenObj, "VersionText", "v0.1.0", 18);
             RectTransform versionRect = versionObj.GetComponent<RectTransform>();
             versionRect.anchorMin = new Vector2(1, 0);
             versionRect.anchorMax = new Vector2(1, 0);
-            versionRect.anchoredPosition = new Vector2(-20, 20);
-            versionRect.sizeDelta = new Vector2(100, 30);
+            versionRect.anchoredPosition = new Vector2(-30, 30); // Increased margin to avoid cutoff
+            versionRect.sizeDelta = new Vector2(150, 40); // Increased width for safety
             versionObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.BottomRight;
 
             // === Wire References ===
@@ -1183,22 +1198,68 @@ namespace HNR.Editor
             playerInfoRect.offsetMax = new Vector2(-10, -10);
 
             HorizontalLayoutGroup playerInfoHLG = playerInfoContainer.AddComponent<HorizontalLayoutGroup>();
-            playerInfoHLG.spacing = 15;
+            playerInfoHLG.spacing = 25; // Increased spacing between LevelBadge and Nickname
             playerInfoHLG.childAlignment = TextAnchor.MiddleLeft;
             playerInfoHLG.childForceExpandWidth = false;
             playerInfoHLG.childForceExpandHeight = false;
 
-            // Level badge
+            // Level badge with LayerLab styling
+            var bastionLayerLabConfig = LoadLayerLabConfig();
+
             GameObject levelBadge = new GameObject("LevelBadge");
             levelBadge.transform.SetParent(playerInfoContainer.transform, false);
             levelBadge.AddComponent<RectTransform>();
             LayoutElement levelBadgeLE = levelBadge.AddComponent<LayoutElement>();
-            levelBadgeLE.preferredWidth = 60;
-            levelBadgeLE.preferredHeight = 60;
-            Image levelBadgeImage = levelBadge.AddComponent<Image>();
-            levelBadgeImage.color = new Color(0.3f, 0.4f, 0.5f, 0.9f);
+            levelBadgeLE.preferredWidth = 70; // Slightly larger for LayerLab frame
+            levelBadgeLE.preferredHeight = 70;
 
-            GameObject levelTextObj = CreateText(levelBadge, "LevelText", "LV\n1", 18);
+            // Use LayerLab StageFrame for badge if available
+            Image levelBadgeImage = levelBadge.AddComponent<Image>();
+            if (bastionLayerLabConfig != null && bastionLayerLabConfig.StageFrameBg != null)
+            {
+                levelBadgeImage.sprite = bastionLayerLabConfig.StageFrameBg;
+                levelBadgeImage.type = Image.Type.Sliced;
+                levelBadgeImage.color = new Color(0.5f, 0.35f, 0.7f, 0.95f); // Purple tint
+
+                // Add border layer for badge
+                if (bastionLayerLabConfig.StageFrameBorder != null)
+                {
+                    GameObject badgeBorder = new GameObject("Border");
+                    badgeBorder.transform.SetParent(levelBadge.transform, false);
+                    RectTransform badgeBorderRect = badgeBorder.AddComponent<RectTransform>();
+                    badgeBorderRect.anchorMin = Vector2.zero;
+                    badgeBorderRect.anchorMax = Vector2.one;
+                    badgeBorderRect.sizeDelta = Vector2.zero;
+                    Image badgeBorderImg = badgeBorder.AddComponent<Image>();
+                    badgeBorderImg.sprite = bastionLayerLabConfig.StageFrameBorder;
+                    badgeBorderImg.type = Image.Type.Sliced;
+                    badgeBorderImg.color = new Color(0.7f, 0.5f, 0.9f, 1f); // Bright purple border
+                    badgeBorderImg.raycastTarget = false;
+                }
+
+                // Add glow layer for emphasis
+                if (bastionLayerLabConfig.StageFrameFocus != null)
+                {
+                    GameObject badgeGlow = new GameObject("Glow");
+                    badgeGlow.transform.SetParent(levelBadge.transform, false);
+                    RectTransform badgeGlowRect = badgeGlow.AddComponent<RectTransform>();
+                    badgeGlowRect.anchorMin = new Vector2(-0.1f, -0.1f);
+                    badgeGlowRect.anchorMax = new Vector2(1.1f, 1.1f);
+                    badgeGlowRect.sizeDelta = Vector2.zero;
+                    Image badgeGlowImg = badgeGlow.AddComponent<Image>();
+                    badgeGlowImg.sprite = bastionLayerLabConfig.StageFrameFocus;
+                    badgeGlowImg.type = Image.Type.Sliced;
+                    badgeGlowImg.color = new Color(0.6f, 0.4f, 0.9f, 0.4f); // Subtle purple glow
+                    badgeGlowImg.raycastTarget = false;
+                    badgeGlow.transform.SetAsFirstSibling(); // Behind everything
+                }
+            }
+            else
+            {
+                levelBadgeImage.color = new Color(0.3f, 0.4f, 0.5f, 0.9f); // Fallback
+            }
+
+            GameObject levelTextObj = CreateText(levelBadge, "LevelText", "LV\n1", 28); // Larger font size
             RectTransform levelTextRect = levelTextObj.GetComponent<RectTransform>();
             levelTextRect.anchorMin = Vector2.zero;
             levelTextRect.anchorMax = Vector2.one;
@@ -1206,12 +1267,13 @@ namespace HNR.Editor
             TextMeshProUGUI levelTMP = levelTextObj.GetComponent<TextMeshProUGUI>();
             levelTMP.alignment = TextAlignmentOptions.Center;
             levelTMP.fontStyle = FontStyles.Bold;
+            levelTMP.color = Color.white; // White for better visibility
 
-            // Nickname
-            GameObject nicknameObj = CreateText(playerInfoContainer, "Nickname", "Commander", 24);
+            // Nickname - larger font
+            GameObject nicknameObj = CreateText(playerInfoContainer, "Nickname", "Commander", 32);
             LayoutElement nicknameLE = nicknameObj.AddComponent<LayoutElement>();
-            nicknameLE.preferredWidth = 150;
-            nicknameLE.preferredHeight = 50;
+            nicknameLE.preferredWidth = 200; // Wider for larger text
+            nicknameLE.preferredHeight = 60;
             TextMeshProUGUI nicknameText = nicknameObj.GetComponent<TextMeshProUGUI>();
             nicknameText.fontStyle = FontStyles.Bold;
             nicknameText.alignment = TextAlignmentOptions.Left;
@@ -1252,21 +1314,58 @@ namespace HNR.Editor
             navVLG.childScaleHeight = false;
             navVLG.padding = new RectOffset(10, 10, 10, 10);
 
-            // Missions button (fixed width 256)
+            // Missions button (larger - 300x75)
             GameObject missionsButton = CreateWideNavButton(navContainer, "MissionsButton", "Missions");
             LayoutElement missionsLE = missionsButton.AddComponent<LayoutElement>();
-            missionsLE.preferredWidth = 256;
-            missionsLE.preferredHeight = 60;
-            missionsLE.minWidth = 256;
-            missionsLE.minHeight = 50;
+            missionsLE.preferredWidth = 300;
+            missionsLE.preferredHeight = 75;
+            missionsLE.minWidth = 280;
+            missionsLE.minHeight = 60;
 
-            // Requiems button (fixed width 256)
+            // Requiems button (larger - 300x75)
             GameObject requiemsButton = CreateWideNavButton(navContainer, "RequiemsButton", "Requiems");
             LayoutElement requiemsLE = requiemsButton.AddComponent<LayoutElement>();
-            requiemsLE.preferredWidth = 256;
-            requiemsLE.preferredHeight = 60;
-            requiemsLE.minWidth = 256;
-            requiemsLE.minHeight = 50;
+            requiemsLE.preferredWidth = 300;
+            requiemsLE.preferredHeight = 75;
+            requiemsLE.minWidth = 280;
+            requiemsLE.minHeight = 60;
+
+            // === Placeholder buttons for future features (gray/disabled style) ===
+            // Collection button (placeholder)
+            GameObject collectionButton = CreateWideNavButton(navContainer, "CollectionButton", "Collection");
+            LayoutElement collectionLE = collectionButton.AddComponent<LayoutElement>();
+            collectionLE.preferredWidth = 300;
+            collectionLE.preferredHeight = 65;
+            collectionLE.minWidth = 280;
+            collectionLE.minHeight = 55;
+            SetButtonDisabledStyle(collectionButton);
+
+            // Shop button (placeholder)
+            GameObject shopButton = CreateWideNavButton(navContainer, "ShopButton", "Shop");
+            LayoutElement shopLE = shopButton.AddComponent<LayoutElement>();
+            shopLE.preferredWidth = 300;
+            shopLE.preferredHeight = 65;
+            shopLE.minWidth = 280;
+            shopLE.minHeight = 55;
+            SetButtonDisabledStyle(shopButton);
+
+            // Achievements button (placeholder)
+            GameObject achievementsButton = CreateWideNavButton(navContainer, "AchievementsButton", "Achievements");
+            LayoutElement achievementsLE = achievementsButton.AddComponent<LayoutElement>();
+            achievementsLE.preferredWidth = 300;
+            achievementsLE.preferredHeight = 65;
+            achievementsLE.minWidth = 280;
+            achievementsLE.minHeight = 55;
+            SetButtonDisabledStyle(achievementsButton);
+
+            // Events button (placeholder)
+            GameObject eventsButton = CreateWideNavButton(navContainer, "EventsButton", "Events");
+            LayoutElement eventsLE = eventsButton.AddComponent<LayoutElement>();
+            eventsLE.preferredWidth = 300;
+            eventsLE.preferredHeight = 65;
+            eventsLE.minWidth = 280;
+            eventsLE.minHeight = 55;
+            SetButtonDisabledStyle(eventsButton);
 
             // ============================================
             // Wire References
@@ -1584,6 +1683,145 @@ namespace HNR.Editor
             return CreateLargeButtonWithSubtitle(name, parent, title, subtitle);
         }
 
+        /// <summary>
+        /// Creates a card-style mission button with icon, title, and subtitle.
+        /// Size: 280x420 (taller, more card-like).
+        /// </summary>
+        private static GameObject CreateMissionCardButton(Transform parent, string name, string title, string subtitle, bool isEnabled, string iconType)
+        {
+            var layerLabConfig = LoadLayerLabConfig();
+
+            GameObject buttonObj = new GameObject(name);
+            buttonObj.transform.SetParent(parent, false);
+
+            RectTransform rect = buttonObj.AddComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(280, 420);
+
+            // Background image - use CardFrame if available, otherwise solid color
+            Image bgImage = buttonObj.AddComponent<Image>();
+            Sprite cardBg = null;
+
+            // Determine card color based on type
+            if (layerLabConfig != null)
+            {
+                if (iconType == "book")
+                    cardBg = layerLabConfig.CardFrameRectanglePurpleBg;
+                else if (iconType == "battle")
+                    cardBg = layerLabConfig.CardFrameRectangleGreenBg;
+            }
+
+            if (cardBg != null)
+            {
+                bgImage.sprite = cardBg;
+                bgImage.type = Image.Type.Sliced;
+                bgImage.color = Color.white;
+            }
+            else
+            {
+                // Fallback color
+                bgImage.color = iconType == "book"
+                    ? new Color(0.4f, 0.2f, 0.5f, 0.95f)  // Purple for Story
+                    : new Color(0.2f, 0.5f, 0.3f, 0.95f); // Green for Battle
+            }
+
+            // Add button component
+            Button button = buttonObj.AddComponent<Button>();
+            button.targetGraphic = bgImage;
+            button.interactable = isEnabled;
+
+            // Icon area (top 35%)
+            GameObject iconArea = new GameObject("IconArea");
+            iconArea.transform.SetParent(buttonObj.transform, false);
+            RectTransform iconAreaRect = iconArea.AddComponent<RectTransform>();
+            iconAreaRect.anchorMin = new Vector2(0.1f, 0.65f);
+            iconAreaRect.anchorMax = new Vector2(0.9f, 0.95f);
+            iconAreaRect.sizeDelta = Vector2.zero;
+
+            // Icon image
+            Image iconImage = iconArea.AddComponent<Image>();
+            iconImage.preserveAspect = true;
+            iconImage.raycastTarget = false;
+
+            // Try to load icon sprite
+            Sprite iconSprite = null;
+            if (layerLabConfig != null)
+            {
+                iconSprite = iconType == "book" ? layerLabConfig.PictoIconBook : layerLabConfig.PictoIconBattle;
+            }
+
+            if (iconSprite != null)
+            {
+                iconImage.sprite = iconSprite;
+                iconImage.color = Color.white;
+            }
+            else
+            {
+                // Fallback to colored placeholder
+                iconImage.color = new Color(1f, 1f, 1f, 0.5f);
+            }
+
+            // Title area (middle 30%)
+            GameObject titleObj = CreateText(buttonObj, "Title", title, 32);
+            RectTransform titleRect = titleObj.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0, 0.35f);
+            titleRect.anchorMax = new Vector2(1, 0.60f);
+            titleRect.offsetMin = new Vector2(15, 0);
+            titleRect.offsetMax = new Vector2(-15, 0);
+            var titleTmp = titleObj.GetComponent<TMP_Text>();
+            titleTmp.alignment = TextAlignmentOptions.Center;
+            titleTmp.fontStyle = FontStyles.Bold;
+            titleTmp.color = Color.white;
+
+            // Subtitle area (bottom 25%)
+            GameObject subtitleObj = CreateText(buttonObj, "Subtitle", subtitle, 20);
+            RectTransform subtitleRect = subtitleObj.GetComponent<RectTransform>();
+            subtitleRect.anchorMin = new Vector2(0, 0.12f);
+            subtitleRect.anchorMax = new Vector2(1, 0.32f);
+            subtitleRect.offsetMin = new Vector2(15, 0);
+            subtitleRect.offsetMax = new Vector2(-15, 0);
+            var subtitleTmp = subtitleObj.GetComponent<TMP_Text>();
+            subtitleTmp.alignment = TextAlignmentOptions.Center;
+            subtitleTmp.color = new Color(0.8f, 0.8f, 0.8f);
+
+            // "Coming Soon" overlay for disabled buttons
+            if (!isEnabled)
+            {
+                GameObject overlay = new GameObject("DisabledOverlay");
+                overlay.transform.SetParent(buttonObj.transform, false);
+                RectTransform overlayRect = overlay.AddComponent<RectTransform>();
+                overlayRect.anchorMin = Vector2.zero;
+                overlayRect.anchorMax = Vector2.one;
+                overlayRect.sizeDelta = Vector2.zero;
+
+                Image overlayImage = overlay.AddComponent<Image>();
+                overlayImage.color = new Color(0, 0, 0, 0.6f);
+                overlayImage.raycastTarget = false;
+
+                // Lock icon in overlay
+                GameObject lockIcon = new GameObject("LockIcon");
+                lockIcon.transform.SetParent(overlay.transform, false);
+                RectTransform lockRect = lockIcon.AddComponent<RectTransform>();
+                lockRect.anchorMin = new Vector2(0.5f, 0.5f);
+                lockRect.anchorMax = new Vector2(0.5f, 0.5f);
+                lockRect.sizeDelta = new Vector2(64, 64);
+
+                Image lockImage = lockIcon.AddComponent<Image>();
+                lockImage.raycastTarget = false;
+
+                if (layerLabConfig?.PictoIconLock != null)
+                {
+                    lockImage.sprite = layerLabConfig.PictoIconLock;
+                    lockImage.color = new Color(1f, 1f, 1f, 0.8f);
+                }
+                else
+                {
+                    lockImage.color = new Color(0.6f, 0.6f, 0.6f, 0.8f);
+                }
+            }
+
+            return buttonObj;
+        }
+
         private static GameObject CreateRequiemSelectionScreen(GameObject parent)
         {
             GameObject screenObj = new GameObject("RequiemSelectionScreen");
@@ -1750,12 +1988,12 @@ namespace HNR.Editor
             screenObj.AddComponent<EchoEventScreen>();
             screenObj.SetActive(false);
 
-            // === Event Panel (reduced height - about half screen) ===
+            // === Event Panel (expanded height for better button fit) ===
             GameObject panel = new GameObject("EventPanel");
             panel.transform.SetParent(screenObj.transform, false);
             RectTransform panelRect = panel.AddComponent<RectTransform>();
-            panelRect.anchorMin = new Vector2(0.15f, 0.3f);
-            panelRect.anchorMax = new Vector2(0.85f, 0.85f);
+            panelRect.anchorMin = new Vector2(0.15f, 0.20f);
+            panelRect.anchorMax = new Vector2(0.85f, 0.88f);
             panelRect.sizeDelta = Vector2.zero;
 
             Image panelBg = panel.AddComponent<Image>();
@@ -1781,7 +2019,7 @@ namespace HNR.Editor
             iconRect.anchorMax = Vector2.one;
             iconRect.sizeDelta = Vector2.zero;
             Image bgImage = illustIcon.AddComponent<Image>();
-            bgImage.color = new Color(0.42f, 0.25f, 0.63f); // Hollow Violet for echo events
+            bgImage.color = Color.white; // White to properly display illustrations (not violet tint)
             bgImage.preserveAspect = true;
 
             // === Content Panel (Right side) ===
@@ -1805,8 +2043,8 @@ namespace HNR.Editor
             titleTmp.characterSpacing = 4f; // Letter spacing per mockup
             titleTmp.alignment = TextAlignmentOptions.Left;
 
-            // === Event Description / Narrative - larger font, smaller area ===
-            GameObject descObj = CreateText(contentPanel, "NarrativeText", "Event narrative text goes here...", 24);
+            // === Event Description / Narrative - larger font for readability ===
+            GameObject descObj = CreateText(contentPanel, "NarrativeText", "Event narrative text goes here...", 26);
             RectTransform descRect = descObj.GetComponent<RectTransform>();
             descRect.anchorMin = new Vector2(0, 0.58f);
             descRect.anchorMax = new Vector2(1, 0.82f);
@@ -1815,12 +2053,12 @@ namespace HNR.Editor
             narrativeTmp.alignment = TextAlignmentOptions.TopLeft;
             narrativeTmp.color = new Color(0.85f, 0.85f, 0.85f);
 
-            // === Choice Container - larger area for bigger buttons ===
+            // === Choice Container - expanded area for buttons ===
             GameObject choiceContainer = new GameObject("ChoiceContainer");
             choiceContainer.transform.SetParent(contentPanel.transform, false);
             RectTransform choiceRect = choiceContainer.AddComponent<RectTransform>();
             choiceRect.anchorMin = new Vector2(0, 0.05f);
-            choiceRect.anchorMax = new Vector2(1, 0.55f);
+            choiceRect.anchorMax = new Vector2(1, 0.60f);
             choiceRect.sizeDelta = Vector2.zero;
 
             VerticalLayoutGroup choiceLayout = choiceContainer.AddComponent<VerticalLayoutGroup>();
@@ -1841,8 +2079,8 @@ namespace HNR.Editor
             Image outcomeBg = outcomePanel.AddComponent<Image>();
             outcomeBg.color = new Color(0.08f, 0.06f, 0.12f, 0.98f);
 
-            // OutcomeText - positioned at top of outcome panel
-            GameObject outcomeText = CreateText(outcomePanel, "OutcomeText", "Outcome text...", 20);
+            // OutcomeText - positioned at top of outcome panel with larger font
+            GameObject outcomeText = CreateText(outcomePanel, "OutcomeText", "Outcome text...", 28);
             RectTransform outcomeTextRect = outcomeText.GetComponent<RectTransform>();
             outcomeTextRect.anchorMin = new Vector2(0.1f, 0.65f);
             outcomeTextRect.anchorMax = new Vector2(0.9f, 0.90f);
@@ -1927,10 +2165,6 @@ namespace HNR.Editor
 
             skipBtn.SetActive(false); // Hidden by default, shown when no choices
 
-            // === Create Choice Button Template (for prefab) ===
-            GameObject choiceButtonTemplate = CreateEchoChoiceButton(screenObj);
-            choiceButtonTemplate.SetActive(false); // Hidden template
-
             // === Wire EchoEventScreen references ===
             var echoScreen = screenObj.GetComponent<EchoEventScreen>();
             if (echoScreen != null)
@@ -1940,7 +2174,20 @@ namespace HNR.Editor
                 so.FindProperty("_narrativeText").objectReferenceValue = narrativeTmp;
                 so.FindProperty("_backgroundImage").objectReferenceValue = bgImage;
                 so.FindProperty("_choiceContainer").objectReferenceValue = choiceContainer.transform;
-                so.FindProperty("_choiceButtonPrefab").objectReferenceValue = choiceButtonTemplate.GetComponent<Button>();
+
+                // Wire EchoChoiceButton prefab asset instead of inline template
+                var echoChoiceButtonPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                    "Assets/_Project/Prefabs/UI/NullRift/EchoChoiceButton.prefab");
+                if (echoChoiceButtonPrefab != null)
+                {
+                    so.FindProperty("_choiceButtonPrefab").objectReferenceValue = echoChoiceButtonPrefab;
+                    Debug.Log("[ProductionSceneSetupGenerator] Wired EchoChoiceButton.prefab to EchoEventScreen");
+                }
+                else
+                {
+                    Debug.LogWarning("[ProductionSceneSetupGenerator] EchoChoiceButton.prefab not found - run HNR > 2. Prefabs > UI > NullRift > EchoChoiceButton Prefab first");
+                }
+
                 so.FindProperty("_outcomePanel").objectReferenceValue = outcomePanel;
                 so.FindProperty("_outcomeText").objectReferenceValue = outcomeTmp;
                 so.FindProperty("_continueButton").objectReferenceValue = continueBtnComponent;
@@ -1967,6 +2214,7 @@ namespace HNR.Editor
 
         /// <summary>
         /// Creates a choice button template for EchoEventScreen using LayerLab styling.
+        /// Features two text areas: MainText (cyan, upper) for choice description and ResultText (black, lower) for cost/result.
         /// </summary>
         private static GameObject CreateEchoChoiceButton(GameObject parent)
         {
@@ -1976,44 +2224,63 @@ namespace HNR.Editor
             if (layerLabConfig != null && layerLabConfig.HasAllButton01SmallSprites())
             {
                 // Use LayerLab purple button for choices
-                buttonObj = LayerLabButtonBuilder.CreateButton01Small(parent, "ChoiceButtonTemplate", "Choice Text", "purple");
+                buttonObj = LayerLabButtonBuilder.CreateButton01Small(parent, "ChoiceButtonTemplate", "", "purple");
 
-                // Adjust size for choice layout - larger buttons for better visibility
+                // Adjust size for choice layout - reduced height to fit better
                 var rect = buttonObj.GetComponent<RectTransform>();
-                rect.sizeDelta = new Vector2(500, 80);
+                rect.sizeDelta = new Vector2(500, 85);
 
                 // Add layout element for vertical layout
                 var layoutElement = buttonObj.AddComponent<LayoutElement>();
-                layoutElement.preferredHeight = 80;
+                layoutElement.preferredHeight = 85;
                 layoutElement.minWidth = 400;
                 layoutElement.flexibleWidth = 1;
 
-                // Adjust text for left alignment with larger font
-                var textObj = buttonObj.transform.Find("Text");
-                if (textObj != null)
+                // Rename existing text to MainText and reposition for upper portion (50-92% Y)
+                var existingText = buttonObj.transform.Find("Text");
+                if (existingText != null)
                 {
-                    var tmp = textObj.GetComponent<TextMeshProUGUI>();
-                    if (tmp != null)
+                    existingText.name = "Text"; // Keep as "Text" for EchoEventScreen compatibility
+                    var mainTmp = existingText.GetComponent<TextMeshProUGUI>();
+                    if (mainTmp != null)
                     {
-                        tmp.alignment = TextAlignmentOptions.Left;
-                        tmp.text = "Choice Text";
-                        tmp.fontSize = 22;
-                        tmp.fontSizeMax = 22;
-                        tmp.fontSizeMin = 16;
+                        mainTmp.alignment = TextAlignmentOptions.Left;
+                        mainTmp.text = "Choice Text";
+                        mainTmp.fontSize = 22;
+                        mainTmp.fontSizeMax = 22;
+                        mainTmp.fontSizeMin = 16;
+                        mainTmp.color = new Color(0f, 0.95f, 1f); // Bright cyan for main choice text
                     }
-                    var textRect = textObj.GetComponent<RectTransform>();
-                    textRect.offsetMin = new Vector2(25, 0);
-                    textRect.offsetMax = new Vector2(-25, 0);
+                    var mainTextRect = existingText.GetComponent<RectTransform>();
+                    mainTextRect.anchorMin = new Vector2(0, 0.50f);
+                    mainTextRect.anchorMax = new Vector2(1, 0.92f);
+                    mainTextRect.offsetMin = new Vector2(25, 0);
+                    mainTextRect.offsetMax = new Vector2(-25, 0);
                 }
+
+                // Create ResultText for lower portion (10-48% Y) - same font size as main for consistency
+                GameObject resultTextObj = CreateText(buttonObj, "ResultText", "", 22);
+                RectTransform resultRect = resultTextObj.GetComponent<RectTransform>();
+                resultRect.anchorMin = new Vector2(0, 0.10f);
+                resultRect.anchorMax = new Vector2(1, 0.48f);
+                resultRect.offsetMin = new Vector2(25, 0);
+                resultRect.offsetMax = new Vector2(-25, 0);
+                var resultTmp = resultTextObj.GetComponent<TextMeshProUGUI>();
+                resultTmp.alignment = TextAlignmentOptions.Left;
+                resultTmp.color = new Color(0.1f, 0.1f, 0.1f); // Dark/black for result text
+                resultTmp.fontStyle = FontStyles.Italic;
+                resultTmp.fontSize = 22; // Same as main text
+                resultTmp.fontSizeMax = 22;
+                resultTmp.fontSizeMin = 14;
             }
             else
             {
-                // Fallback to simple button - larger
+                // Fallback to simple button with two text areas
                 buttonObj = new GameObject("ChoiceButtonTemplate");
                 buttonObj.transform.SetParent(parent.transform, false);
 
                 RectTransform rect = buttonObj.AddComponent<RectTransform>();
-                rect.sizeDelta = new Vector2(500, 70);
+                rect.sizeDelta = new Vector2(500, 85);
 
                 Image bg = buttonObj.AddComponent<Image>();
                 bg.color = new Color(0.15f, 0.12f, 0.2f, 0.9f);
@@ -2022,19 +2289,32 @@ namespace HNR.Editor
                 button.targetGraphic = bg;
 
                 var layoutElement = buttonObj.AddComponent<LayoutElement>();
-                layoutElement.preferredHeight = 70;
+                layoutElement.preferredHeight = 85;
                 layoutElement.minWidth = 400;
                 layoutElement.flexibleWidth = 1;
 
-                GameObject textObj = CreateText(buttonObj, "Text", "Choice Text", 20);
-                RectTransform textRect = textObj.GetComponent<RectTransform>();
-                textRect.anchorMin = Vector2.zero;
-                textRect.anchorMax = Vector2.one;
-                textRect.offsetMin = new Vector2(20, 0);
-                textRect.offsetMax = new Vector2(-20, 0);
-                var tmp = textObj.GetComponent<TextMeshProUGUI>();
-                tmp.alignment = TextAlignmentOptions.Left;
-                tmp.color = Color.white;
+                // MainText - upper portion (50-92% Y), cyan color, font size 22
+                GameObject mainTextObj = CreateText(buttonObj, "Text", "Choice Text", 22);
+                RectTransform mainTextRect = mainTextObj.GetComponent<RectTransform>();
+                mainTextRect.anchorMin = new Vector2(0, 0.50f);
+                mainTextRect.anchorMax = new Vector2(1, 0.92f);
+                mainTextRect.offsetMin = new Vector2(20, 0);
+                mainTextRect.offsetMax = new Vector2(-20, 0);
+                var mainTmp = mainTextObj.GetComponent<TextMeshProUGUI>();
+                mainTmp.alignment = TextAlignmentOptions.Left;
+                mainTmp.color = new Color(0f, 0.95f, 1f); // Bright cyan
+
+                // ResultText - lower portion (10-48% Y), font size 22 to match main
+                GameObject resultTextObj = CreateText(buttonObj, "ResultText", "", 22);
+                RectTransform resultTextRect = resultTextObj.GetComponent<RectTransform>();
+                resultTextRect.anchorMin = new Vector2(0, 0.10f);
+                resultTextRect.anchorMax = new Vector2(1, 0.48f);
+                resultTextRect.offsetMin = new Vector2(20, 0);
+                resultTextRect.offsetMax = new Vector2(-20, 0);
+                var resultTmp = resultTextObj.GetComponent<TextMeshProUGUI>();
+                resultTmp.alignment = TextAlignmentOptions.Left;
+                resultTmp.color = new Color(0.1f, 0.1f, 0.1f); // Dark/black
+                resultTmp.fontStyle = FontStyles.Italic;
             }
 
             return buttonObj;
@@ -2103,7 +2383,9 @@ namespace HNR.Editor
             grid.constraintCount = 3;
             grid.padding = new RectOffset(10, 10, 10, 10);
 
-            // === Services Panel (Right side) ===
+            // === Services Panel (Right side) with LayerLab styling ===
+            var shopLayerLabConfig = LoadLayerLabConfig();
+
             GameObject servicesPanel = new GameObject("ServicesPanel");
             servicesPanel.transform.SetParent(screenObj.transform, false);
             RectTransform servicesRect = servicesPanel.AddComponent<RectTransform>();
@@ -2111,8 +2393,34 @@ namespace HNR.Editor
             servicesRect.anchorMax = new Vector2(0.95f, 0.85f);
             servicesRect.sizeDelta = Vector2.zero;
 
+            // Services panel background with LayerLab frame if available
             Image servicesBg = servicesPanel.AddComponent<Image>();
-            servicesBg.color = new Color(0.1f, 0.08f, 0.12f, 0.9f);
+            if (shopLayerLabConfig != null && shopLayerLabConfig.TabMenuBg != null)
+            {
+                servicesBg.sprite = shopLayerLabConfig.TabMenuBg;
+                servicesBg.type = Image.Type.Sliced;
+                servicesBg.color = new Color(0.2f, 0.15f, 0.3f, 0.92f); // Purple tint
+
+                // Add border if available
+                if (shopLayerLabConfig.TabMenuBorder != null)
+                {
+                    GameObject servicesBorder = new GameObject("Border");
+                    servicesBorder.transform.SetParent(servicesPanel.transform, false);
+                    RectTransform borderRect = servicesBorder.AddComponent<RectTransform>();
+                    borderRect.anchorMin = Vector2.zero;
+                    borderRect.anchorMax = Vector2.one;
+                    borderRect.sizeDelta = Vector2.zero;
+                    Image borderImg = servicesBorder.AddComponent<Image>();
+                    borderImg.sprite = shopLayerLabConfig.TabMenuBorder;
+                    borderImg.type = Image.Type.Sliced;
+                    borderImg.color = new Color(0.6f, 0.45f, 0.8f, 0.85f);
+                    borderImg.raycastTarget = false;
+                }
+            }
+            else
+            {
+                servicesBg.color = new Color(0.1f, 0.08f, 0.12f, 0.9f);
+            }
 
             VerticalLayoutGroup servicesLayout = servicesPanel.AddComponent<VerticalLayoutGroup>();
             servicesLayout.padding = new RectOffset(15, 15, 15, 15);
@@ -2121,12 +2429,12 @@ namespace HNR.Editor
             servicesLayout.childForceExpandWidth = true;
             servicesLayout.childForceExpandHeight = false;
 
-            // Services title - larger for visibility
-            GameObject servicesTitleObj = CreateText(servicesPanel, "ServicesTitle", "SERVICES", 24);
+            // Services title - larger font (32 instead of 24)
+            GameObject servicesTitleObj = CreateText(servicesPanel, "ServicesTitle", "SERVICES", 32);
             servicesTitleObj.GetComponent<TMP_Text>().fontStyle = FontStyles.Bold;
             servicesTitleObj.GetComponent<TMP_Text>().color = new Color(0.83f, 0.69f, 0.22f); // Soul gold
             var servTitleLayout = servicesTitleObj.AddComponent<LayoutElement>();
-            servTitleLayout.preferredHeight = 40;
+            servTitleLayout.preferredHeight = 50; // Increased from 40
 
             // Remove Card Button
             GameObject removeCardBtn = CreateShopServiceButton(servicesPanel, "RemoveCardButton", "Remove Card", "75 Shards");
@@ -2140,12 +2448,12 @@ namespace HNR.Editor
             GameObject buyRelicBtn = CreateShopServiceButton(servicesPanel, "BuyRelicButton", "Buy Relic", "View Relics");
             var buyRelicButton = buyRelicBtn.GetComponent<Button>();
 
-            // === Leave Button ===
+            // === Leave Button (larger for better accessibility) ===
             GameObject leaveBtn = CreateMenuButton(screenObj, "LeaveButton", "LEAVE SHOP");
             RectTransform leaveRect = leaveBtn.GetComponent<RectTransform>();
             leaveRect.anchorMin = new Vector2(0.5f, 0.05f);
             leaveRect.anchorMax = new Vector2(0.5f, 0.05f);
-            leaveRect.sizeDelta = new Vector2(200, 50);
+            leaveRect.sizeDelta = new Vector2(260, 60); // Increased from (200, 50)
             var leaveButton = leaveBtn.GetComponent<Button>();
 
             // === Wire ShopScreen references ===
@@ -2183,30 +2491,30 @@ namespace HNR.Editor
                 var layoutElement = btnObj.AddComponent<LayoutElement>();
                 layoutElement.preferredHeight = 90;
 
-                // Adjust main text for upper portion - larger font and white color for contrast
+                // Adjust main text for centered upper portion (55-85% Y) - both texts centered together
                 var textObj = btnObj.transform.Find("Text");
                 if (textObj != null)
                 {
                     var textRect = textObj.GetComponent<RectTransform>();
-                    textRect.anchorMin = new Vector2(0, 0.45f);
-                    textRect.anchorMax = new Vector2(1, 0.95f);
+                    textRect.anchorMin = new Vector2(0, 0.55f);
+                    textRect.anchorMax = new Vector2(1, 0.85f);
                     textRect.sizeDelta = Vector2.zero;
                     var mainTmp = textObj.GetComponent<TMP_Text>();
                     if (mainTmp != null)
                     {
-                        mainTmp.fontSize = 24;
-                        mainTmp.fontSizeMax = 24;
-                        mainTmp.fontSizeMin = 18;
+                        mainTmp.fontSize = 22;
+                        mainTmp.fontSizeMax = 22;
+                        mainTmp.fontSizeMin = 16;
                         mainTmp.color = Color.white; // White for better contrast
                         mainTmp.fontStyle = FontStyles.Bold;
                     }
                 }
 
-                // Create cost text below main label - larger and cyan for visibility
+                // Create cost text below main label - centered lower (20-50% Y), closer to label
                 GameObject costObj = CreateText(btnObj, "Cost", cost, 16);
                 RectTransform costRect = costObj.GetComponent<RectTransform>();
-                costRect.anchorMin = new Vector2(0, 0.05f);
-                costRect.anchorMax = new Vector2(1, 0.45f);
+                costRect.anchorMin = new Vector2(0, 0.20f);
+                costRect.anchorMax = new Vector2(1, 0.50f);
                 costRect.sizeDelta = Vector2.zero;
                 var costTmp = costObj.GetComponent<TMP_Text>();
                 costTmp.color = new Color(0f, 0.9f, 1f); // Bright cyan for visibility
@@ -2228,13 +2536,13 @@ namespace HNR.Editor
                 layoutElement.preferredHeight = 90;
 
                 VerticalLayoutGroup layout = btnObj.AddComponent<VerticalLayoutGroup>();
-                layout.padding = new RectOffset(10, 10, 10, 10);
-                layout.spacing = 6;
+                layout.padding = new RectOffset(10, 10, 15, 15);
+                layout.spacing = 4;
                 layout.childAlignment = TextAnchor.MiddleCenter;
                 layout.childForceExpandWidth = true;
                 layout.childForceExpandHeight = false;
 
-                GameObject labelObj = CreateText(btnObj, "Label", label, 22);
+                GameObject labelObj = CreateText(btnObj, "Label", label, 20);
                 labelObj.GetComponent<TMP_Text>().fontStyle = FontStyles.Bold;
                 labelObj.GetComponent<TMP_Text>().color = Color.white;
 
@@ -2297,21 +2605,32 @@ namespace HNR.Editor
             rightRect.anchorMax = new Vector2(0.85f, 0.2f);
             rightRect.sizeDelta = new Vector2(150, 200);
 
-            // === Title with semi-transparent background - larger and better contrast ===
-            GameObject titleContainer = new GameObject("TitleContainer");
-            titleContainer.transform.SetParent(screenObj.transform, false);
-            RectTransform titleContainerRect = titleContainer.AddComponent<RectTransform>();
-            titleContainerRect.anchorMin = new Vector2(0.5f, 0.84f);
-            titleContainerRect.anchorMax = new Vector2(0.5f, 0.94f);
-            titleContainerRect.sizeDelta = new Vector2(450, 0);
+            // === Merged Text Background Container - single 70% black background for both title and description ===
+            GameObject textBackgroundContainer = new GameObject("TextBackgroundContainer");
+            textBackgroundContainer.transform.SetParent(screenObj.transform, false);
+            RectTransform textBgContainerRect = textBackgroundContainer.AddComponent<RectTransform>();
+            // Anchor-stretch to cover both title and description area
+            textBgContainerRect.anchorMin = new Vector2(0.1f, 0.66f);
+            textBgContainerRect.anchorMax = new Vector2(0.9f, 0.90f);
+            textBgContainerRect.sizeDelta = Vector2.zero;
 
-            // Title background (darker for better contrast)
-            Image titleBg = titleContainer.AddComponent<Image>();
-            titleBg.color = new Color(0f, 0f, 0f, 0.7f);
-            titleBg.raycastTarget = false;
+            // Single merged background (70% black)
+            Image textBgImage = textBackgroundContainer.AddComponent<Image>();
+            textBgImage.color = new Color(0f, 0f, 0f, 0.7f);
+            textBgImage.raycastTarget = false;
+
+            // === Title Container (inside merged background) ===
+            GameObject titleContainer = new GameObject("TitleContainer");
+            titleContainer.transform.SetParent(textBackgroundContainer.transform, false);
+            RectTransform titleContainerRect = titleContainer.AddComponent<RectTransform>();
+            // Position in upper portion of merged container
+            titleContainerRect.anchorMin = new Vector2(0, 0.50f);
+            titleContainerRect.anchorMax = new Vector2(1, 1f);
+            titleContainerRect.sizeDelta = Vector2.zero;
+            // No background on titleContainer - uses parent's merged background
 
             // Title text - larger font with better contrast
-            GameObject titleObj = CreateText(titleContainer, "Title", "SANCTUARY", 44);
+            GameObject titleObj = CreateText(titleContainer, "Title", "SANCTUARY", 48);
             RectTransform titleRect = titleObj.GetComponent<RectTransform>();
             titleRect.anchorMin = Vector2.zero;
             titleRect.anchorMax = Vector2.one;
@@ -2322,21 +2641,18 @@ namespace HNR.Editor
             titleText.color = new Color(0.3f, 0.95f, 0.55f); // Brighter green for better contrast
             titleText.fontStyle = FontStyles.Bold;
 
-            // === Description with semi-transparent background - larger and better contrast ===
+            // === Description Container (inside merged background) ===
             GameObject descContainer = new GameObject("DescriptionContainer");
-            descContainer.transform.SetParent(screenObj.transform, false);
+            descContainer.transform.SetParent(textBackgroundContainer.transform, false);
             RectTransform descContainerRect = descContainer.AddComponent<RectTransform>();
-            descContainerRect.anchorMin = new Vector2(0.5f, 0.74f);
-            descContainerRect.anchorMax = new Vector2(0.5f, 0.83f);
-            descContainerRect.sizeDelta = new Vector2(600, 0);
-
-            // Description background (darker for better contrast)
-            Image descBg = descContainer.AddComponent<Image>();
-            descBg.color = new Color(0f, 0f, 0f, 0.7f);
-            descBg.raycastTarget = false;
+            // Position in lower portion of merged container
+            descContainerRect.anchorMin = new Vector2(0, 0f);
+            descContainerRect.anchorMax = new Vector2(1, 0.50f);
+            descContainerRect.sizeDelta = Vector2.zero;
+            // No background on descContainer - uses parent's merged background
 
             // Description text - larger font with better contrast
-            GameObject descObj = CreateText(descContainer, "Description", "A moment of respite in the Null Rift...", 24);
+            GameObject descObj = CreateText(descContainer, "Description", "A moment of respite in the Null Rift...", 28);
             RectTransform descRect = descObj.GetComponent<RectTransform>();
             descRect.anchorMin = Vector2.zero;
             descRect.anchorMax = Vector2.one;
@@ -2346,12 +2662,12 @@ namespace HNR.Editor
             var descText = descObj.GetComponent<TMP_Text>();
             descText.color = new Color(0.9f, 0.9f, 0.9f); // Brighter for better contrast
 
-            // Choice buttons container - repositioned lower to accommodate visuals
+            // Choice buttons container - centered horizontally
             GameObject choicesContainer = new GameObject("ChoicesContainer");
             choicesContainer.transform.SetParent(screenObj.transform, false);
             RectTransform choicesRect = choicesContainer.AddComponent<RectTransform>();
-            choicesRect.anchorMin = new Vector2(0.15f, 0.58f);
-            choicesRect.anchorMax = new Vector2(0.85f, 0.75f);
+            choicesRect.anchorMin = new Vector2(0.2f, 0.42f); // Centered (was 0.15, 0.58)
+            choicesRect.anchorMax = new Vector2(0.8f, 0.58f); // Centered (was 0.85, 0.75)
             choicesRect.sizeDelta = Vector2.zero;
 
             HorizontalLayoutGroup choicesLayout = choicesContainer.AddComponent<HorizontalLayoutGroup>();
@@ -2375,7 +2691,7 @@ namespace HNR.Editor
             RectTransform leaveRect = leaveBtn.GetComponent<RectTransform>();
             leaveRect.anchorMin = new Vector2(0.5f, 0.05f);
             leaveRect.anchorMax = new Vector2(0.5f, 0.05f);
-            leaveRect.sizeDelta = new Vector2(220, 55);
+            leaveRect.sizeDelta = new Vector2(280, 65); // Increased from (220, 55)
 
             // === Card Selection Panel (shown when Upgrade is clicked) ===
             GameObject cardSelectionPanel = new GameObject("CardSelectionPanel");
@@ -2529,13 +2845,13 @@ namespace HNR.Editor
                 var rect = choice.GetComponent<RectTransform>();
                 rect.sizeDelta = new Vector2(220, 110);
 
-                // Adjust main text positioning for upper area - larger font and white color for contrast
+                // Adjust main text positioning - closer to center for better visual balance
                 var textObj = choice.transform.Find("Text");
                 if (textObj != null)
                 {
                     var textRect = textObj.GetComponent<RectTransform>();
-                    textRect.anchorMin = new Vector2(0, 0.5f);
-                    textRect.anchorMax = new Vector2(1, 0.95f);
+                    textRect.anchorMin = new Vector2(0, 0.52f);
+                    textRect.anchorMax = new Vector2(1, 0.90f);
                     textRect.sizeDelta = Vector2.zero;
                     var titleTmp = textObj.GetComponent<TMP_Text>();
                     if (titleTmp != null)
@@ -2548,11 +2864,11 @@ namespace HNR.Editor
                     }
                 }
 
-                // Add description below title - larger font with dark gray color
+                // Add description below title - positioned closer to title for better visual balance
                 GameObject descObj = CreateText(choice, "Desc", desc, 18);
                 RectTransform descRect = descObj.GetComponent<RectTransform>();
-                descRect.anchorMin = new Vector2(0, 0.08f);
-                descRect.anchorMax = new Vector2(1, 0.48f);
+                descRect.anchorMin = new Vector2(0, 0.15f);
+                descRect.anchorMax = new Vector2(1, 0.50f);
                 descRect.sizeDelta = Vector2.zero;
                 var descTmp = descObj.GetComponent<TMP_Text>();
                 descTmp.color = new Color(0.35f, 0.35f, 0.4f); // Dark gray for contrast
@@ -3256,6 +3572,43 @@ namespace HNR.Editor
             };
         }
 
+        /// <summary>
+        /// Sets a button to disabled/grayed out style for placeholder features.
+        /// </summary>
+        private static void SetButtonDisabledStyle(GameObject buttonObj)
+        {
+            var button = buttonObj.GetComponent<Button>();
+            if (button != null)
+            {
+                button.interactable = false;
+
+                // Gray out the button colors
+                ColorBlock colors = button.colors;
+                colors.disabledColor = new Color(0.4f, 0.4f, 0.45f, 0.6f);
+                button.colors = colors;
+            }
+
+            // Gray out background image
+            var bgImage = buttonObj.GetComponent<Image>();
+            if (bgImage != null)
+            {
+                bgImage.color = new Color(0.25f, 0.25f, 0.3f, 0.7f);
+            }
+
+            // Gray out text
+            var textObj = buttonObj.transform.Find("ButtonText") ?? buttonObj.transform.Find("Text");
+            if (textObj != null)
+            {
+                var tmp = textObj.GetComponent<TextMeshProUGUI>();
+                if (tmp != null)
+                {
+                    tmp.color = new Color(0.5f, 0.5f, 0.55f, 0.8f);
+                }
+            }
+
+            // "Coming Soon" text removed per Phase 4 UI cleanup
+        }
+
         // ============================================
         // Utility
         // ============================================
@@ -3666,15 +4019,43 @@ namespace HNR.Editor
             hpLayout.preferredHeight = 28; // Taller for better visibility
             hpLayout.flexibleWidth = -1; // Fixed width - do not expand/shrink
 
-            // HP Bar background with LayerLab frame styling
+            // HP Bar background with LayerLab slider styling
             Image hpBg = hpBarContainer.AddComponent<Image>();
-            if (layerLabConfig != null && layerLabConfig.TabMenuBg != null)
+
+            // Add Mask to clip child elements properly
+            var hpMask = hpBarContainer.AddComponent<Mask>();
+            hpMask.showMaskGraphic = true;
+
+            if (layerLabConfig != null && layerLabConfig.SliderBorderTaperedBg != null)
             {
-                hpBg.sprite = layerLabConfig.TabMenuBg;
+                hpBg.sprite = layerLabConfig.SliderBorderTaperedBg;
                 hpBg.type = Image.Type.Sliced;
                 hpBg.color = new Color(0.3f, 0.25f, 0.4f, 0.85f); // Purple tint
 
-                // Add border layer
+                // Add border layer using slider border
+                if (layerLabConfig.SliderBorderTaperedBorder != null)
+                {
+                    GameObject borderObj = new GameObject("Border");
+                    borderObj.transform.SetParent(hpBarContainer.transform, false);
+                    RectTransform borderRect = borderObj.AddComponent<RectTransform>();
+                    borderRect.anchorMin = Vector2.zero;
+                    borderRect.anchorMax = Vector2.one;
+                    borderRect.sizeDelta = Vector2.zero;
+                    Image borderImg = borderObj.AddComponent<Image>();
+                    borderImg.sprite = layerLabConfig.SliderBorderTaperedBorder;
+                    borderImg.type = Image.Type.Sliced;
+                    borderImg.color = new Color(0.6f, 0.5f, 0.8f, 0.8f);
+                    borderImg.raycastTarget = false;
+                    borderObj.transform.SetAsFirstSibling();
+                }
+            }
+            else if (layerLabConfig != null && layerLabConfig.TabMenuBg != null)
+            {
+                // Fallback to TabMenu styling if slider sprites not available
+                hpBg.sprite = layerLabConfig.TabMenuBg;
+                hpBg.type = Image.Type.Sliced;
+                hpBg.color = new Color(0.3f, 0.25f, 0.4f, 0.85f);
+
                 if (layerLabConfig.TabMenuBorder != null)
                 {
                     GameObject borderObj = new GameObject("Border");
@@ -3721,7 +4102,7 @@ namespace HNR.Editor
             dmgFillAreaRect.offsetMin = Vector2.zero;
             dmgFillAreaRect.offsetMax = Vector2.zero;
 
-            // Damage Fill
+            // Damage Fill - with LayerLab slider fill sprite if available
             GameObject dmgFillObj = new GameObject("Fill");
             dmgFillObj.transform.SetParent(dmgFillAreaObj.transform, false);
             RectTransform dmgFillRect = dmgFillObj.AddComponent<RectTransform>();
@@ -3730,6 +4111,11 @@ namespace HNR.Editor
             dmgFillRect.offsetMin = Vector2.zero;
             dmgFillRect.offsetMax = Vector2.zero;
             Image dmgFillImg = dmgFillObj.AddComponent<Image>();
+            if (layerLabConfig != null && layerLabConfig.SliderBorderTaperedFill != null)
+            {
+                dmgFillImg.sprite = layerLabConfig.SliderBorderTaperedFill;
+                dmgFillImg.type = Image.Type.Sliced;
+            }
             dmgFillImg.color = new Color(1f, 0.27f, 0.27f); // Corruption glow #FF4444
             damageSlider.fillRect = dmgFillRect;
 
@@ -3758,7 +4144,7 @@ namespace HNR.Editor
             hpFillAreaRect.offsetMin = Vector2.zero;
             hpFillAreaRect.offsetMax = Vector2.zero;
 
-            // Health Fill
+            // Health Fill - with LayerLab slider fill sprite if available
             GameObject hpFillObj = new GameObject("Fill");
             hpFillObj.transform.SetParent(hpFillAreaObj.transform, false);
             RectTransform hpFillRect = hpFillObj.AddComponent<RectTransform>();
@@ -3767,6 +4153,11 @@ namespace HNR.Editor
             hpFillRect.offsetMin = Vector2.zero;
             hpFillRect.offsetMax = Vector2.zero;
             Image hpFillImg = hpFillObj.AddComponent<Image>();
+            if (layerLabConfig != null && layerLabConfig.SliderBorderTaperedFill != null)
+            {
+                hpFillImg.sprite = layerLabConfig.SliderBorderTaperedFill;
+                hpFillImg.type = Image.Type.Sliced;
+            }
             hpFillImg.color = new Color(0.18f, 0.8f, 0.44f); // Health green #2ECC71
             healthSlider.fillRect = hpFillRect;
 
@@ -3797,13 +4188,21 @@ namespace HNR.Editor
             blockLayoutElement.preferredWidth = 80;
             blockLayoutElement.preferredHeight = 32;
 
-            // Shield icon - LARGER (20x20 instead of 16x16)
+            // Shield icon - LARGER (20x20 instead of 16x16) with sprite from config
             GameObject shieldIcon = new GameObject("ShieldIcon");
             shieldIcon.transform.SetParent(blockContainer.transform, false);
             RectTransform shieldRect = shieldIcon.AddComponent<RectTransform>();
             shieldRect.sizeDelta = new Vector2(20, 20);
             Image shieldImg = shieldIcon.AddComponent<Image>();
-            shieldImg.color = new Color(0.2f, 0.6f, 0.86f); // Block blue #3498DB
+            if (layerLabConfig != null && layerLabConfig.ItemIconShield != null)
+            {
+                shieldImg.sprite = layerLabConfig.ItemIconShield;
+                shieldImg.color = Color.white; // Show sprite with native colors
+            }
+            else
+            {
+                shieldImg.color = new Color(0.2f, 0.6f, 0.86f); // Fallback block blue #3498DB
+            }
 
             // Block text - LARGER font (16 instead of 12)
             GameObject blockText = CreateText(blockContainer, "BlockText", "12", 16);
@@ -4009,18 +4408,17 @@ namespace HNR.Editor
             layout.childForceExpandHeight = false;
             layout.reverseArrangement = true;
 
-            // Load icon config for system menu
-            var iconConfig = LoadIconConfig();
+            // Load LayerLab config for system menu icons
             var layerLabConfig = LoadLayerLabConfig();
 
-            // Settings button - use LayerLab ConvexRectangle if available
-            GameObject settingsBtn = CreateSystemMenuButtonLayerLab(menuBar, "SettingsBtn", "\u2699", iconConfig?.SettingsIcon, layerLabConfig);
+            // Settings button - use LayerLab ConvexRectangle with settings icon
+            GameObject settingsBtn = CreateSystemMenuButtonLayerLab(menuBar, "SettingsBtn", "\u2699", layerLabConfig?.IconSettings, layerLabConfig);
 
-            // Auto-battle button - use LayerLab ConvexRectangle if available
-            GameObject autoBtn = CreateSystemMenuButtonLayerLab(menuBar, "AutoBtn", "\u25B6", iconConfig?.AutoBattleIcon, layerLabConfig);
+            // Auto-battle button - use LayerLab ConvexRectangle with attack icon
+            GameObject autoBtn = CreateSystemMenuButtonLayerLab(menuBar, "AutoBtn", "\u25B6", layerLabConfig?.PictoIconAttack, layerLabConfig);
 
-            // Speed button - use LayerLab ConvexRectangle if available
-            GameObject speedBtn = CreateSystemMenuButtonLayerLab(menuBar, "SpeedBtn", "1x", iconConfig?.Speed1xIcon, layerLabConfig);
+            // Speed button - use LayerLab ConvexRectangle with timer icon
+            GameObject speedBtn = CreateSystemMenuButtonLayerLab(menuBar, "SpeedBtn", "1x", layerLabConfig?.SpeedIcon1x, layerLabConfig);
 
             // Add SystemMenuBar component and wire references
             var sysMenuBar = menuBar.AddComponent<SystemMenuBar>();
@@ -4032,11 +4430,11 @@ namespace HNR.Editor
             var speedIconImage = speedBtn.transform.Find("Icon")?.GetComponent<Image>() ?? speedBtn.transform.Find("Label")?.GetComponent<Image>();
             if (speedIconImage != null)
                 so.FindProperty("_speedIcon").objectReferenceValue = speedIconImage;
-            // Wire both speed sprites
-            if (iconConfig?.Speed1xIcon != null)
-                so.FindProperty("_speed1xSprite").objectReferenceValue = iconConfig.Speed1xIcon;
-            if (iconConfig?.Speed2xIcon != null)
-                so.FindProperty("_speed2xSprite").objectReferenceValue = iconConfig.Speed2xIcon;
+            // Wire both speed sprites from LayerLab config
+            if (layerLabConfig?.SpeedIcon1x != null)
+                so.FindProperty("_speed1xSprite").objectReferenceValue = layerLabConfig.SpeedIcon1x;
+            if (layerLabConfig?.SpeedIcon2x != null)
+                so.FindProperty("_speed2xSprite").objectReferenceValue = layerLabConfig.SpeedIcon2x;
 
             // Wire auto-battle toggle
             so.FindProperty("_autoBattleToggle").objectReferenceValue = autoBtn.GetComponent<Button>();
@@ -4150,18 +4548,22 @@ namespace HNR.Editor
             seGaugeLayoutElement.minWidth = 28;
             // No flexibleHeight - let HorizontalLayoutGroup control height via childForceExpandHeight
 
-            // SE gauge background with LayerLab styling
-            Image seBg = seGaugeContainer.AddComponent<Image>();
-            if (layerLabConfig != null && layerLabConfig.StageFrameBg != null)
-            {
-                seBg.sprite = layerLabConfig.StageFrameBg;
-                seBg.type = Image.Type.Sliced;
-                seBg.color = new Color(0.4f, 0.35f, 0.55f, 0.85f); // Purple tint
-            }
-            else
-            {
-                seBg.color = new Color(0.1f, 0.08f, 0.15f, 0.9f);
-            }
+            // SharedSEGauge container has NO Image - restructured per Phase 4 spec
+            // Structure: SELabel > SESlider > SEText (sibling order in hierarchy)
+            // SESlider internally: Bg (with BgLeft, BgRight) > FillArea > Fill (with FillBorder)
+
+            // SE Label at top (created first for proper sibling order)
+            GameObject seLabelObj = CreateText(seGaugeContainer, "SELabel", "SE", 20);
+            RectTransform seLabelRect = seLabelObj.GetComponent<RectTransform>();
+            seLabelRect.anchorMin = new Vector2(0, 1);
+            seLabelRect.anchorMax = new Vector2(1, 1);
+            seLabelRect.pivot = new Vector2(0.5f, 1);
+            seLabelRect.anchoredPosition = new Vector2(0, 0);
+            seLabelRect.sizeDelta = new Vector2(0, 20);
+            var seLabelTmp = seLabelObj.GetComponent<TextMeshProUGUI>();
+            seLabelTmp.fontStyle = TMPro.FontStyles.Bold;
+            seLabelTmp.fontSize = 20;
+            seLabelTmp.color = new Color(0.7f, 0.7f, 0.8f);
 
             // SE Slider (vertical fill from bottom to top)
             GameObject seSliderObj = new GameObject("SESlider");
@@ -4169,8 +4571,8 @@ namespace HNR.Editor
             RectTransform seSliderRect = seSliderObj.AddComponent<RectTransform>();
             seSliderRect.anchorMin = new Vector2(0, 0);
             seSliderRect.anchorMax = new Vector2(1, 1); // Full stretch
-            seSliderRect.offsetMin = new Vector2(4, 20); // Margin for SE text at bottom
-            seSliderRect.offsetMax = new Vector2(-4, -20); // Margin for SE label at top
+            seSliderRect.offsetMin = new Vector2(0, 20); // Margin for SE text at bottom
+            seSliderRect.offsetMax = new Vector2(0, -20); // Margin for SE label at top
 
             // Slider component configured for vertical bottom-to-top
             Slider seSlider = seSliderObj.AddComponent<Slider>();
@@ -4180,16 +4582,69 @@ namespace HNR.Editor
             seSlider.value = 0f;
             seSlider.interactable = false;
 
+            // Bg container (with sprite from LayerLab if available)
+            // Color: #1C1B33 = new Color(0.11f, 0.106f, 0.2f)
+            GameObject seBgObj = new GameObject("Bg");
+            seBgObj.transform.SetParent(seSliderObj.transform, false);
+            RectTransform seBgRect = seBgObj.AddComponent<RectTransform>();
+            seBgRect.anchorMin = Vector2.zero;
+            seBgRect.anchorMax = Vector2.one;
+            seBgRect.offsetMin = Vector2.zero;
+            seBgRect.offsetMax = Vector2.zero;
+            Image seBgImg = seBgObj.AddComponent<Image>();
+            if (layerLabConfig != null && layerLabConfig.VerticalSliderBg != null)
+            {
+                seBgImg.sprite = layerLabConfig.VerticalSliderBg;
+                seBgImg.type = Image.Type.Sliced;
+            }
+            seBgImg.color = new Color(0.11f, 0.106f, 0.2f); // #1C1B33
+
+            // BgLeft - left edge decoration
+            // Color: #4C3C73 = new Color(0.298f, 0.235f, 0.451f)
+            GameObject seBgLeftObj = new GameObject("BgLeft");
+            seBgLeftObj.transform.SetParent(seBgObj.transform, false);
+            RectTransform seBgLeftRect = seBgLeftObj.AddComponent<RectTransform>();
+            seBgLeftRect.anchorMin = Vector2.zero;
+            seBgLeftRect.anchorMax = Vector2.one;
+            seBgLeftRect.offsetMin = Vector2.zero;
+            seBgLeftRect.offsetMax = Vector2.zero;
+            Image seBgLeftImg = seBgLeftObj.AddComponent<Image>();
+            if (layerLabConfig != null && layerLabConfig.VerticalSliderBgLeft != null)
+            {
+                seBgLeftImg.sprite = layerLabConfig.VerticalSliderBgLeft;
+                seBgLeftImg.type = Image.Type.Sliced;
+            }
+            seBgLeftImg.color = new Color(0.298f, 0.235f, 0.451f); // #4C3C73
+            seBgLeftImg.raycastTarget = false;
+
+            // BgRight - right edge decoration
+            // Color: #6C3B95 = new Color(0.424f, 0.231f, 0.584f)
+            GameObject seBgRightObj = new GameObject("BgRight");
+            seBgRightObj.transform.SetParent(seBgObj.transform, false);
+            RectTransform seBgRightRect = seBgRightObj.AddComponent<RectTransform>();
+            seBgRightRect.anchorMin = Vector2.zero;
+            seBgRightRect.anchorMax = Vector2.one;
+            seBgRightRect.offsetMin = Vector2.zero;
+            seBgRightRect.offsetMax = Vector2.zero;
+            Image seBgRightImg = seBgRightObj.AddComponent<Image>();
+            if (layerLabConfig != null && layerLabConfig.VerticalSliderBgRight != null)
+            {
+                seBgRightImg.sprite = layerLabConfig.VerticalSliderBgRight;
+                seBgRightImg.type = Image.Type.Sliced;
+            }
+            seBgRightImg.color = new Color(0.424f, 0.231f, 0.584f); // #6C3B95
+            seBgRightImg.raycastTarget = false;
+
             // Fill Area for slider
-            GameObject seFillAreaObj = new GameObject("Fill Area");
+            GameObject seFillAreaObj = new GameObject("FillArea");
             seFillAreaObj.transform.SetParent(seSliderObj.transform, false);
             RectTransform seFillAreaRect = seFillAreaObj.AddComponent<RectTransform>();
             seFillAreaRect.anchorMin = Vector2.zero;
             seFillAreaRect.anchorMax = Vector2.one;
-            seFillAreaRect.offsetMin = Vector2.zero;
-            seFillAreaRect.offsetMax = Vector2.zero;
+            seFillAreaRect.offsetMin = new Vector2(2, 2);
+            seFillAreaRect.offsetMax = new Vector2(-2, -2);
 
-            // Fill image for slider
+            // Fill image for slider - white base color
             GameObject seFillObj = new GameObject("Fill");
             seFillObj.transform.SetParent(seFillAreaObj.transform, false);
             RectTransform seFillRect = seFillObj.AddComponent<RectTransform>();
@@ -4198,36 +4653,41 @@ namespace HNR.Editor
             seFillRect.offsetMin = Vector2.zero;
             seFillRect.offsetMax = Vector2.zero;
             Image seFillImg = seFillObj.AddComponent<Image>();
-            seFillImg.color = new Color(0f, 0.83f, 0.89f); // Soul cyan
+            seFillImg.color = Color.white; // White fill, tinted by FillBorder sprite
+
+            // FillBorder - border overlay for fill
+            // Color: #EB9A19 = new Color(0.922f, 0.604f, 0.098f)
+            GameObject seFillBorderObj = new GameObject("FillBorder");
+            seFillBorderObj.transform.SetParent(seFillObj.transform, false);
+            RectTransform seFillBorderRect = seFillBorderObj.AddComponent<RectTransform>();
+            seFillBorderRect.anchorMin = Vector2.zero;
+            seFillBorderRect.anchorMax = Vector2.one;
+            seFillBorderRect.offsetMin = Vector2.zero;
+            seFillBorderRect.offsetMax = Vector2.zero;
+            Image seFillBorderImg = seFillBorderObj.AddComponent<Image>();
+            if (layerLabConfig != null && layerLabConfig.VerticalSliderFillBorder != null)
+            {
+                seFillBorderImg.sprite = layerLabConfig.VerticalSliderFillBorder;
+                seFillBorderImg.type = Image.Type.Sliced;
+            }
+            seFillBorderImg.color = new Color(0.922f, 0.604f, 0.098f); // #EB9A19
+            seFillBorderImg.raycastTarget = false;
 
             // Wire slider fill rect
             seSlider.fillRect = seFillRect;
 
-            // SE Text at bottom (shows current SE value) - LARGER font (12 instead of 9)
-            GameObject seTextObj = CreateText(seGaugeContainer, "SEText", "0", 12);
+            // SE Text at bottom (shows current SE value) - created after slider for proper sibling order
+            GameObject seTextObj = CreateText(seGaugeContainer, "SEText", "0", 22);
             RectTransform seTextRect = seTextObj.GetComponent<RectTransform>();
             seTextRect.anchorMin = new Vector2(0, 0);
             seTextRect.anchorMax = new Vector2(1, 0);
             seTextRect.pivot = new Vector2(0.5f, 0);
-            seTextRect.anchoredPosition = new Vector2(0, 3);
-            seTextRect.sizeDelta = new Vector2(0, 16);
+            seTextRect.anchoredPosition = new Vector2(0, 0);
+            seTextRect.sizeDelta = new Vector2(0, 22);
             var seTmp = seTextObj.GetComponent<TextMeshProUGUI>();
             seTmp.fontStyle = TMPro.FontStyles.Bold;
-            seTmp.fontSize = 12;
+            seTmp.fontSize = 22;
             seTmp.color = new Color(0f, 0.83f, 0.89f); // Soul cyan
-
-            // SE Label at top - LARGER font (10 instead of 8)
-            GameObject seLabelObj = CreateText(seGaugeContainer, "SELabel", "SE", 10);
-            RectTransform seLabelRect = seLabelObj.GetComponent<RectTransform>();
-            seLabelRect.anchorMin = new Vector2(0, 1);
-            seLabelRect.anchorMax = new Vector2(1, 1);
-            seLabelRect.pivot = new Vector2(0.5f, 1);
-            seLabelRect.anchoredPosition = new Vector2(0, -3);
-            seLabelRect.sizeDelta = new Vector2(0, 14);
-            var seLabelTmp = seLabelObj.GetComponent<TextMeshProUGUI>();
-            seLabelTmp.fontStyle = TMPro.FontStyles.Bold;
-            seLabelTmp.fontSize = 10;
-            seLabelTmp.color = new Color(0.7f, 0.7f, 0.8f);
 
             // ============================================
             // Party Member Slots Container (vertical stack on right, fills height)
@@ -4292,6 +4752,9 @@ namespace HNR.Editor
         /// </summary>
         private static GameObject CreatePartyMemberSlot(GameObject parent, int index)
         {
+            // Load LayerLab config for party slot sprites
+            var layerLabConfig = LoadLayerLabConfig();
+
             GameObject slot = new GameObject($"PartySlot_{index}");
             slot.transform.SetParent(parent.transform, false);
 
@@ -4303,19 +4766,21 @@ namespace HNR.Editor
             // No preferredHeight or flexibleHeight - parent controls via childForceExpandHeight
 
             // Add Button component for click interaction (Requiem Art activation)
+            // Background is transparent but Image needed for Button targetGraphic
             Image slotBg = slot.AddComponent<Image>();
-            slotBg.color = new Color(0.15f, 0.12f, 0.22f, 0.9f);
+            slotBg.color = new Color(0, 0, 0, 0); // Transparent background
 
             Button slotButton = slot.AddComponent<Button>();
             slotButton.targetGraphic = slotBg;
             var buttonColors = slotButton.colors;
-            buttonColors.normalColor = new Color(0.15f, 0.12f, 0.22f, 0.9f);
-            buttonColors.highlightedColor = new Color(0.25f, 0.2f, 0.35f, 1f);
-            buttonColors.pressedColor = new Color(0f, 0.7f, 0.8f, 1f); // Cyan press
-            buttonColors.selectedColor = new Color(0.2f, 0.16f, 0.28f, 0.95f);
+            buttonColors.normalColor = new Color(0, 0, 0, 0); // Transparent
+            buttonColors.highlightedColor = new Color(0.25f, 0.2f, 0.35f, 0.3f); // Subtle highlight
+            buttonColors.pressedColor = new Color(0f, 0.7f, 0.8f, 0.3f); // Subtle cyan press
+            buttonColors.selectedColor = new Color(0.2f, 0.16f, 0.28f, 0.2f);
             slotButton.colors = buttonColors;
 
             // Portrait frame (circular) with mask - centered in slot, size relative to slot
+            // Apply LayerLab party slot frame if available
             GameObject portraitFrame = new GameObject("PortraitFrame");
             portraitFrame.transform.SetParent(slot.transform, false);
             RectTransform frameRect = portraitFrame.AddComponent<RectTransform>();
@@ -4325,16 +4790,25 @@ namespace HNR.Editor
             frameRect.offsetMin = Vector2.zero;
             frameRect.offsetMax = Vector2.zero;
             Image frameImg = portraitFrame.AddComponent<Image>();
-            frameImg.color = new Color(0.4f, 0.4f, 0.5f, 1f);
+            if (layerLabConfig != null && layerLabConfig.PartySlotFrame != null)
+            {
+                frameImg.sprite = layerLabConfig.PartySlotFrame;
+                frameImg.type = Image.Type.Sliced;
+                frameImg.color = Color.white; // Show sprite with native colors
+            }
+            else
+            {
+                frameImg.color = new Color(0.4f, 0.4f, 0.5f, 1f); // Fallback color
+            }
 
-            // Portrait mask (circular crop)
+            // Portrait mask (circular crop) - use stretch anchors with offset padding
             GameObject maskObj = new GameObject("PortraitMask");
             maskObj.transform.SetParent(portraitFrame.transform, false);
             RectTransform maskRect = maskObj.AddComponent<RectTransform>();
-            maskRect.anchorMin = new Vector2(0.05f, 0.05f);
-            maskRect.anchorMax = new Vector2(0.95f, 0.95f);
-            maskRect.offsetMin = Vector2.zero;
-            maskRect.offsetMax = Vector2.zero;
+            maskRect.anchorMin = Vector2.zero;
+            maskRect.anchorMax = Vector2.one;
+            maskRect.offsetMin = new Vector2(8, 8); // Left=8, Bottom=8
+            maskRect.offsetMax = new Vector2(-8, -8); // Right=8, Top=8
             Image maskImg = maskObj.AddComponent<Image>();
             maskImg.color = Color.white;
             var mask = maskObj.AddComponent<Mask>();
@@ -4348,8 +4822,8 @@ namespace HNR.Editor
             portraitRect.anchorMin = new Vector2(0.5f, 0.5f);
             portraitRect.anchorMax = new Vector2(0.5f, 0.5f);
             portraitRect.pivot = new Vector2(0.5f, 0.65f); // Pivot slightly above center for face
-            portraitRect.sizeDelta = new Vector2(60, 80); // Larger than mask area
-            portraitRect.anchoredPosition = Vector2.zero;
+            portraitRect.sizeDelta = new Vector2(120, 160); // Larger size for better visibility
+            portraitRect.anchoredPosition = new Vector2(0, 8); // Slight upward offset
             Image portraitImg = portrait.AddComponent<Image>();
             portraitImg.color = Color.white;
             portraitImg.preserveAspect = true;
@@ -4371,6 +4845,7 @@ namespace HNR.Editor
             statusLayout.childForceExpandHeight = false;
 
             // Active glow (for highlighting when Art is ready)
+            // Apply LayerLab party slot active glow if available
             GameObject activeGlow = new GameObject("ActiveGlow");
             activeGlow.transform.SetParent(slot.transform, false);
             activeGlow.transform.SetAsFirstSibling();
@@ -4380,7 +4855,16 @@ namespace HNR.Editor
             glowRect.offsetMin = new Vector2(-2, -2);
             glowRect.offsetMax = new Vector2(2, 2);
             Image glowImg = activeGlow.AddComponent<Image>();
-            glowImg.color = new Color(0f, 0.83f, 0.89f, 0.4f); // Soul cyan with alpha
+            if (layerLabConfig != null && layerLabConfig.PartySlotActiveGlow != null)
+            {
+                glowImg.sprite = layerLabConfig.PartySlotActiveGlow;
+                glowImg.type = Image.Type.Sliced;
+                glowImg.color = Color.white; // White to show sprite native colors
+            }
+            else
+            {
+                glowImg.color = new Color(0f, 0.83f, 0.89f, 0.4f); // Fallback soul cyan with alpha
+            }
             activeGlow.SetActive(false); // Hidden by default
 
             // Add PartyMemberSlot component and wire references
@@ -4417,15 +4901,14 @@ namespace HNR.Editor
             layout.childForceExpandHeight = false;
             layout.padding = new RectOffset(6, 6, 12, 12);
 
-            // Load configs
-            var iconConfig = LoadIconConfig();
+            // Load LayerLab config for deck icons
             var layerLabConfig = LoadLayerLabConfig();
 
             // Draw pile - with LayerLab frame
-            var drawPile = CreateDeckPileDisplayLayerLab(sidebar, "DrawPile", iconConfig?.DrawPileIcon, "\U0001F4DA", "23", "Draw", new Color(0f, 0.83f, 0.89f), layerLabConfig);
+            var drawPile = CreateDeckPileDisplayLayerLab(sidebar, "DrawPile", layerLabConfig?.DeckIconDraw, "\U0001F4DA", "23", "Draw", new Color(0f, 0.83f, 0.89f), layerLabConfig);
 
             // Discard pile - with LayerLab frame
-            var discardPile = CreateDeckPileDisplayLayerLab(sidebar, "DiscardPile", iconConfig?.DiscardPileIcon, "\U0001F504", "0", "Discard", new Color(0.7f, 0.5f, 0.8f), layerLabConfig);
+            var discardPile = CreateDeckPileDisplayLayerLab(sidebar, "DiscardPile", layerLabConfig?.DeckIconDiscard, "\U0001F504", "0", "Discard", new Color(0.7f, 0.5f, 0.8f), layerLabConfig);
 
             // Add DeckInfoSidebar component and wire references
             var deckInfoComponent = sidebar.AddComponent<DeckInfoSidebar>();
@@ -4520,9 +5003,11 @@ namespace HNR.Editor
             countObj.GetComponent<TextMeshProUGUI>().color = color;
             countObj.GetComponent<TextMeshProUGUI>().fontStyle = TMPro.FontStyles.Bold;
 
-            // Label - LARGER font (18 for better visibility)
+            // Label - LARGER font (18 for better visibility) with fixed height
             GameObject labelObj = CreateText(content, "Label", label, 18);
             labelObj.GetComponent<TextMeshProUGUI>().color = new Color(0.8f, 0.8f, 0.85f);
+            var labelLayout = labelObj.AddComponent<LayoutElement>();
+            labelLayout.preferredHeight = 30; // Fixed height per plan
 
             return pile;
         }
@@ -4708,8 +5193,8 @@ namespace HNR.Editor
             var statsLayoutElement = statsContainer.AddComponent<LayoutElement>();
             statsLayoutElement.ignoreLayout = true;
 
-            // Load icon config for HP and Currency icons
-            var iconConfig = LoadIconConfig();
+            // Load LayerLab config for HP and Currency icons
+            var layerLabConfig = LoadLayerLabConfig();
 
             // HP Container with AnimatedStatDisplay - larger width to prevent overlap
             GameObject hpContainer = new GameObject("HPContainer");
@@ -4723,9 +5208,8 @@ namespace HNR.Editor
             hpContainerLayout.preferredWidth = 200;
             hpContainerLayout.preferredHeight = 40;
 
-            // HP Icon - larger size for better visibility
-            Color healthGreen = new Color(0.18f, 0.8f, 0.44f);
-            GameObject hpIcon = CreateIconImage(hpContainer, "HPIcon", iconConfig?.HPIcon, new Vector2(32, 32), healthGreen, "\u2764", 24);
+            // HP Icon - white color to properly display icon sprite (sprite has its own color)
+            GameObject hpIcon = CreateIconImage(hpContainer, "HPIcon", layerLabConfig?.ItemIconHeart, new Vector2(32, 32), Color.white, "\u2764", 24);
             var hpIconLayout = hpIcon.AddComponent<LayoutElement>();
             hpIconLayout.preferredWidth = 32;
             hpIconLayout.preferredHeight = 32;
@@ -4772,7 +5256,7 @@ namespace HNR.Editor
 
             // Currency Icon - larger size for better visibility
             Color soulCyan = new Color(0f, 0.83f, 0.89f);
-            GameObject currencyIcon = CreateIconImage(currencyContainer, "CurrencyIcon", iconConfig?.CurrencyIcon, new Vector2(32, 32), soulCyan, "\u25C6", 24);
+            GameObject currencyIcon = CreateIconImage(currencyContainer, "CurrencyIcon", layerLabConfig?.ItemIconCurrency, new Vector2(32, 32), soulCyan, "\u25C6", 24);
             var currIconLayout = currencyIcon.AddComponent<LayoutElement>();
             currIconLayout.preferredWidth = 32;
             currIconLayout.preferredHeight = 32;
@@ -4833,19 +5317,19 @@ namespace HNR.Editor
             layout.childControlWidth = false;
             layout.childControlHeight = false;
 
-            // Load icon config for map legend
-            var iconConfig = LoadIconConfig();
+            // Load LayerLab config for map legend icons
+            var layerLabConfig = LoadLayerLabConfig();
 
             // Node type legend items - sprite, fallback text, label, color
             var nodeTypes = new (Sprite sprite, string fallback, string label, Color color)[]
             {
-                (iconConfig?.CombatNodeIcon, "\u2694\uFE0F", "Combat", new Color(0.77f, 0.12f, 0.23f)),
-                (iconConfig?.EliteNodeIcon, "\U0001F480", "Elite", new Color(1f, 0.27f, 0.27f)),
-                (iconConfig?.ShopNodeIcon, "\U0001F6D2", "Shop", new Color(0.83f, 0.69f, 0.22f)),
-                (iconConfig?.EchoEventIcon, "\u2753", "Echo", new Color(0.2f, 0.5f, 0.9f)), // Blue to match node color
-                (iconConfig?.SanctuaryIcon, "\U0001F56F\uFE0F", "Sanctuary", new Color(0.18f, 0.8f, 0.44f)),
-                (iconConfig?.TreasureIcon, "\U0001F48E", "Treasure", new Color(0.83f, 0.69f, 0.22f)),
-                (iconConfig?.BossNodeIcon, "\U0001F479", "Boss", new Color(1f, 0.27f, 0.27f)),
+                (layerLabConfig?.MapIconCombat, "\u2694\uFE0F", "Combat", new Color(0.77f, 0.12f, 0.23f)),
+                (layerLabConfig?.MapIconElite, "\U0001F480", "Elite", new Color(1f, 0.27f, 0.27f)),
+                (layerLabConfig?.MapIconShop, "\U0001F6D2", "Shop", new Color(0.83f, 0.69f, 0.22f)),
+                (layerLabConfig?.MapIconEcho, "\u2753", "Echo", new Color(0.2f, 0.5f, 0.9f)), // Blue to match node color
+                (layerLabConfig?.MapIconSanctuary, "\U0001F56F\uFE0F", "Sanctuary", new Color(0.18f, 0.8f, 0.44f)),
+                (layerLabConfig?.MapIconTreasure, "\U0001F48E", "Treasure", new Color(0.83f, 0.69f, 0.22f)),
+                (layerLabConfig?.MapIconBoss, "\U0001F479", "Boss", new Color(1f, 0.27f, 0.27f)),
             };
 
             foreach (var (sprite, fallback, label, color) in nodeTypes)
@@ -4874,8 +5358,10 @@ namespace HNR.Editor
             layout.childControlWidth = false;
             layout.childControlHeight = false;
 
-            // Icon - use sprite if available, fallback to text
-            GameObject iconObj = CreateIconImage(item, "Icon", iconSprite, new Vector2(20, 20), color, fallbackIcon, 14);
+            // Icon - use WHITE color so sprite displays with its native colors
+            // Only use semantic color for fallback text
+            Color iconColor = iconSprite != null ? Color.white : color;
+            GameObject iconObj = CreateIconImage(item, "Icon", iconSprite, new Vector2(20, 20), iconColor, fallbackIcon, 14);
             var iconLayout = iconObj.AddComponent<LayoutElement>();
             iconLayout.minWidth = 20;
             iconLayout.preferredWidth = 20;
@@ -5683,7 +6169,10 @@ namespace HNR.Editor
             Image bgOverlay = modalPanel.AddComponent<Image>();
             bgOverlay.color = new Color(0f, 0f, 0f, 0.85f);
 
-            // === Content Container (centered panel) ===
+            // Load LayerLab config for frame styling
+            var relicLayerLabConfig = LoadLayerLabConfig();
+
+            // === Content Container (centered panel) with LayerLab styling ===
             GameObject contentPanel = new GameObject("ContentPanel");
             contentPanel.transform.SetParent(modalPanel.transform, false);
             RectTransform contentRect = contentPanel.AddComponent<RectTransform>();
@@ -5691,10 +6180,36 @@ namespace HNR.Editor
             contentRect.anchorMax = new Vector2(0.85f, 0.88f);
             contentRect.sizeDelta = Vector2.zero;
 
+            // Apply LayerLab ListFrame to content panel
             Image contentBg = contentPanel.AddComponent<Image>();
-            contentBg.color = new Color(0.08f, 0.06f, 0.12f, 0.98f);
+            if (relicLayerLabConfig != null && relicLayerLabConfig.ListFrameBg != null)
+            {
+                contentBg.sprite = relicLayerLabConfig.ListFrameBg;
+                contentBg.type = Image.Type.Sliced;
+                contentBg.color = new Color(0.25f, 0.2f, 0.35f, 0.98f); // Purple tint
 
-            // === Header ===
+                // Add ListFrame border
+                if (relicLayerLabConfig.ListFrameBorder != null)
+                {
+                    GameObject contentBorder = new GameObject("Border");
+                    contentBorder.transform.SetParent(contentPanel.transform, false);
+                    RectTransform borderRect = contentBorder.AddComponent<RectTransform>();
+                    borderRect.anchorMin = Vector2.zero;
+                    borderRect.anchorMax = Vector2.one;
+                    borderRect.sizeDelta = Vector2.zero;
+                    Image borderImg = contentBorder.AddComponent<Image>();
+                    borderImg.sprite = relicLayerLabConfig.ListFrameBorder;
+                    borderImg.type = Image.Type.Sliced;
+                    borderImg.color = new Color(0.6f, 0.5f, 0.8f, 0.8f);
+                    borderImg.raycastTarget = false;
+                }
+            }
+            else
+            {
+                contentBg.color = new Color(0.08f, 0.06f, 0.12f, 0.98f);
+            }
+
+            // === Header with LayerLab BaseFrame styling ===
             GameObject header = new GameObject("Header");
             header.transform.SetParent(contentPanel.transform, false);
             RectTransform headerRect = header.AddComponent<RectTransform>();
@@ -5703,7 +6218,16 @@ namespace HNR.Editor
             headerRect.sizeDelta = Vector2.zero;
 
             Image headerBg = header.AddComponent<Image>();
-            headerBg.color = new Color(0.1f, 0.08f, 0.15f, 0.95f);
+            if (relicLayerLabConfig != null && relicLayerLabConfig.BaseFrameBorderRectH60 != null)
+            {
+                headerBg.sprite = relicLayerLabConfig.BaseFrameBorderRectH60;
+                headerBg.type = Image.Type.Sliced;
+                headerBg.color = new Color(0.35f, 0.28f, 0.5f, 0.95f); // Purple tint
+            }
+            else
+            {
+                headerBg.color = new Color(0.1f, 0.08f, 0.15f, 0.95f);
+            }
 
             // Title
             GameObject title = CreateText(header, "Title", "RELICS", 28);
@@ -5736,7 +6260,7 @@ namespace HNR.Editor
             mainRect.anchorMax = new Vector2(1, 0.86f);
             mainRect.sizeDelta = Vector2.zero;
 
-            // === Relic Grid (left side) ===
+            // === Relic Grid (left side) with LayerLab PanelFrame styling ===
             GameObject relicGridArea = new GameObject("RelicGridArea");
             relicGridArea.transform.SetParent(mainArea.transform, false);
             RectTransform gridAreaRect = relicGridArea.AddComponent<RectTransform>();
@@ -5750,7 +6274,16 @@ namespace HNR.Editor
             scroll.scrollSensitivity = 20f;
 
             Image scrollMask = relicGridArea.AddComponent<Image>();
-            scrollMask.color = new Color(0.05f, 0.03f, 0.08f, 0.5f);
+            if (relicLayerLabConfig != null && relicLayerLabConfig.PanelFrameBg != null)
+            {
+                scrollMask.sprite = relicLayerLabConfig.PanelFrameBg;
+                scrollMask.type = Image.Type.Sliced;
+                scrollMask.color = new Color(0.2f, 0.15f, 0.3f, 0.7f); // Purple tint with transparency
+            }
+            else
+            {
+                scrollMask.color = new Color(0.05f, 0.03f, 0.08f, 0.5f);
+            }
             relicGridArea.AddComponent<Mask>().showMaskGraphic = true;
 
             // Viewport
@@ -5785,7 +6318,7 @@ namespace HNR.Editor
             scroll.content = relicContainerRect;
             scroll.viewport = viewportRect;
 
-            // === Details Panel (right side) ===
+            // === Details Panel (right side) with LayerLab PanelFrame styling ===
             GameObject detailsPanel = new GameObject("DetailsPanel");
             detailsPanel.transform.SetParent(mainArea.transform, false);
             RectTransform detailsRect = detailsPanel.AddComponent<RectTransform>();
@@ -5794,7 +6327,49 @@ namespace HNR.Editor
             detailsRect.sizeDelta = Vector2.zero;
 
             Image detailsBg = detailsPanel.AddComponent<Image>();
-            detailsBg.color = new Color(0.1f, 0.08f, 0.12f, 0.9f);
+            if (relicLayerLabConfig != null && relicLayerLabConfig.PanelFrameBg != null)
+            {
+                detailsBg.sprite = relicLayerLabConfig.PanelFrameBg;
+                detailsBg.type = Image.Type.Sliced;
+                detailsBg.color = new Color(0.22f, 0.18f, 0.32f, 0.95f); // Purple tint
+
+                // Add border
+                if (relicLayerLabConfig.PanelFrameBorder != null)
+                {
+                    GameObject detailsBorder = new GameObject("Border");
+                    detailsBorder.transform.SetParent(detailsPanel.transform, false);
+                    RectTransform borderRect = detailsBorder.AddComponent<RectTransform>();
+                    borderRect.anchorMin = Vector2.zero;
+                    borderRect.anchorMax = Vector2.one;
+                    borderRect.sizeDelta = Vector2.zero;
+                    Image borderImg = detailsBorder.AddComponent<Image>();
+                    borderImg.sprite = relicLayerLabConfig.PanelFrameBorder;
+                    borderImg.type = Image.Type.Sliced;
+                    borderImg.color = new Color(0.55f, 0.45f, 0.75f, 0.8f);
+                    borderImg.raycastTarget = false;
+                }
+
+                // Add bottom deco
+                if (relicLayerLabConfig.PanelFrameDeco != null)
+                {
+                    GameObject detailsDeco = new GameObject("Deco");
+                    detailsDeco.transform.SetParent(detailsPanel.transform, false);
+                    RectTransform decoRect = detailsDeco.AddComponent<RectTransform>();
+                    decoRect.anchorMin = new Vector2(0, 0);
+                    decoRect.anchorMax = new Vector2(1, 0.15f);
+                    decoRect.sizeDelta = Vector2.zero;
+                    Image decoImg = detailsDeco.AddComponent<Image>();
+                    decoImg.sprite = relicLayerLabConfig.PanelFrameDeco;
+                    decoImg.type = Image.Type.Sliced;
+                    decoImg.color = new Color(0.5f, 0.4f, 0.7f, 0.6f);
+                    decoImg.raycastTarget = false;
+                    decoImg.preserveAspect = true;
+                }
+            }
+            else
+            {
+                detailsBg.color = new Color(0.1f, 0.08f, 0.12f, 0.9f);
+            }
 
             VerticalLayoutGroup detailsLayout = detailsPanel.AddComponent<VerticalLayoutGroup>();
             detailsLayout.padding = new RectOffset(15, 15, 15, 15);
@@ -5842,8 +6417,7 @@ namespace HNR.Editor
             var priceLayout = relicPriceObj.AddComponent<LayoutElement>();
             priceLayout.preferredHeight = 30;
 
-            // Purchase Button - LayerLab green style
-            var relicLayerLabConfig = LoadLayerLabConfig();
+            // Purchase Button - LayerLab green style (reuse relicLayerLabConfig from above)
             GameObject purchaseBtn;
             if (relicLayerLabConfig != null && relicLayerLabConfig.HasAllButton01SmallSprites())
             {
@@ -6036,26 +6610,24 @@ namespace HNR.Editor
             contentRect.offsetMax = Vector2.zero;
 
             var hlg = content.AddComponent<HorizontalLayoutGroup>();
-            hlg.spacing = 50;
+            hlg.spacing = 60;
             hlg.childAlignment = TextAnchor.MiddleCenter;
             hlg.childForceExpandWidth = false;
             hlg.childForceExpandHeight = false;
             hlg.childControlWidth = false;
             hlg.childControlHeight = false;
 
-            // Story button (placeholder) - 1:2 ratio (200x400) with LayerLab style
-            var storyButton = CreateLayerLabLargeButton("StoryButton", content.transform, "Story", "Coming Soon");
+            // Story button (placeholder) - Card style (280x420) with icon and disabled overlay
+            var storyButton = CreateMissionCardButton(content.transform, "StoryButton", "Story", "Coming Soon", false, "book");
             var storyLayout = storyButton.AddComponent<LayoutElement>();
-            storyLayout.preferredWidth = 200;
-            storyLayout.preferredHeight = 400;
-            storyButton.GetComponent<RectTransform>().sizeDelta = new Vector2(200, 400);
+            storyLayout.preferredWidth = 280;
+            storyLayout.preferredHeight = 420;
 
-            // Battle Mission button - 1:2 ratio (200x400) with LayerLab style
-            var battleMissionButton = CreateLayerLabLargeButton("BattleMissionButton", content.transform, "Battle Mission", "Challenge the Null Rift");
+            // Battle Mission button - Card style (280x420) with icon, enabled
+            var battleMissionButton = CreateMissionCardButton(content.transform, "BattleMissionButton", "Battle Mission", "Challenge the Null Rift", true, "battle");
             var battleLayout = battleMissionButton.AddComponent<LayoutElement>();
-            battleLayout.preferredWidth = 200;
-            battleLayout.preferredHeight = 400;
-            battleMissionButton.GetComponent<RectTransform>().sizeDelta = new Vector2(200, 400);
+            battleLayout.preferredWidth = 280;
+            battleLayout.preferredHeight = 420;
 
             // Wire references
             var so = new SerializedObject(missionsScreen);
@@ -6380,11 +6952,11 @@ namespace HNR.Editor
                 }
             }
 
-            // Zone number text at top
+            // Zone number text - centered in upper portion
             var numberText = CreateSimpleTextObject("ZoneNumber", nodeObj.transform, $"ZONE {zoneNumber}");
             var numRect = numberText.GetComponent<RectTransform>();
-            numRect.anchorMin = new Vector2(0, 0.75f);
-            numRect.anchorMax = new Vector2(1, 0.95f);
+            numRect.anchorMin = new Vector2(0, 0.52f); // Centered around 0.6 vertically
+            numRect.anchorMax = new Vector2(1, 0.72f);
             numRect.offsetMin = new Vector2(10, 0);
             numRect.offsetMax = new Vector2(-10, 0);
             var numTmp = numberText.GetComponent<TMP_Text>();
@@ -6393,11 +6965,11 @@ namespace HNR.Editor
             numTmp.alignment = TextAlignmentOptions.Center;
             numTmp.color = new Color(0.83f, 0.69f, 0.22f); // Soul gold
 
-            // Zone name text at bottom
+            // Zone name text - centered below zone number
             var nameTextObj = CreateSimpleTextObject("ZoneName", nodeObj.transform, zoneName);
             var nameRect = nameTextObj.GetComponent<RectTransform>();
-            nameRect.anchorMin = new Vector2(0, 0.05f);
-            nameRect.anchorMax = new Vector2(1, 0.35f);
+            nameRect.anchorMin = new Vector2(0, 0.28f); // Centered around 0.35 vertically
+            nameRect.anchorMax = new Vector2(1, 0.50f);
             nameRect.offsetMin = new Vector2(10, 0);
             nameRect.offsetMax = new Vector2(-10, 0);
             var nameTmp = nameTextObj.GetComponent<TMP_Text>();
@@ -6660,141 +7232,122 @@ namespace HNR.Editor
         /// <summary>
         /// Creates a Requiem portrait button template using LayerLab StageFrame styling.
         /// </summary>
+        /// <summary>
+        /// Creates a Requiem portrait button template using profile-style frame (not zone-selection StageFrame).
+        /// </summary>
         private static GameObject CreateRequiemPortraitTemplate(Transform parent)
         {
             var layerLabConfig = LoadLayerLabConfig();
 
-            GameObject templateObj;
+            GameObject templateObj = new GameObject("PortraitButtonTemplate");
+            templateObj.transform.SetParent(parent, false);
 
-            // Use LayerLab StageFrame if available
-            if (layerLabConfig != null && layerLabConfig.HasAllStageFrameSprites())
+            RectTransform rect = templateObj.AddComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(200, 280);
+
+            // Background - use ProfileFrame if available
+            Image bgImage = templateObj.AddComponent<Image>();
+            bool hasProfileFrame = layerLabConfig?.ProfileFrameBg != null;
+
+            if (hasProfileFrame)
             {
-                // Create a styled stage frame for the portrait
-                templateObj = LayerLabStageFrameBuilder.CreateStyledStageFrame(
-                    parent.gameObject,
-                    "PortraitButtonTemplate",
-                    "",  // Title set at runtime
-                    "",  // Subtitle set at runtime
-                    isSelectable: true
-                );
-
-                // Resize to fit grid
-                var rect = templateObj.GetComponent<RectTransform>();
-                rect.sizeDelta = new Vector2(200, 280);
-
-                // Add portrait image area (center of frame)
-                GameObject portraitArea = new GameObject("Portrait");
-                portraitArea.transform.SetParent(templateObj.transform, false);
-                RectTransform portraitRect = portraitArea.AddComponent<RectTransform>();
-                portraitRect.anchorMin = new Vector2(0.1f, 0.3f);
-                portraitRect.anchorMax = new Vector2(0.9f, 0.85f);
-                portraitRect.sizeDelta = Vector2.zero;
-
-                Image portraitImage = portraitArea.AddComponent<Image>();
-                portraitImage.color = Color.white;
-                portraitImage.raycastTarget = false;
-
-                // Update title positioning for portrait layout
-                var titleObj = templateObj.transform.Find("Title");
-                if (titleObj != null)
-                {
-                    var titleRect = titleObj.GetComponent<RectTransform>();
-                    titleRect.anchorMin = new Vector2(0, 0.05f);
-                    titleRect.anchorMax = new Vector2(1, 0.25f);
-
-                    var titleTmp = titleObj.GetComponent<TextMeshProUGUI>();
-                    if (titleTmp != null)
-                    {
-                        titleTmp.text = "Requiem Name";
-                        titleTmp.fontSize = 18;
-                    }
-                }
-
-                // Hide subtitle for portrait layout
-                var subtitleObj = templateObj.transform.Find("Subtitle");
-                if (subtitleObj != null)
-                {
-                    subtitleObj.gameObject.SetActive(false);
-                }
+                bgImage.sprite = layerLabConfig.ProfileFrameBg;
+                bgImage.type = Image.Type.Sliced;
+                bgImage.color = Color.white;
             }
             else
             {
-                // Fallback to simple button
-                templateObj = new GameObject("PortraitButtonTemplate");
-                templateObj.transform.SetParent(parent, false);
-
-                RectTransform rect = templateObj.AddComponent<RectTransform>();
-                rect.sizeDelta = new Vector2(200, 280);
-
-                Image bg = templateObj.AddComponent<Image>();
-                bg.color = new Color(0.15f, 0.12f, 0.2f, 0.9f);
-
-                Button button = templateObj.AddComponent<Button>();
-                button.targetGraphic = bg;
-
-                // Portrait image
-                GameObject portraitArea = new GameObject("Portrait");
-                portraitArea.transform.SetParent(templateObj.transform, false);
-                RectTransform portraitRect = portraitArea.AddComponent<RectTransform>();
-                portraitRect.anchorMin = new Vector2(0.1f, 0.3f);
-                portraitRect.anchorMax = new Vector2(0.9f, 0.95f);
-                portraitRect.sizeDelta = Vector2.zero;
-
-                Image portraitImage = portraitArea.AddComponent<Image>();
-                portraitImage.color = Color.white;
-                portraitImage.raycastTarget = false;
-
-                // Name text
-                GameObject nameObj = CreateText(templateObj, "Title", "Requiem Name", 18);
-                RectTransform nameRect = nameObj.GetComponent<RectTransform>();
-                nameRect.anchorMin = new Vector2(0, 0);
-                nameRect.anchorMax = new Vector2(1, 0.25f);
-                nameRect.offsetMin = new Vector2(5, 5);
-                nameRect.offsetMax = new Vector2(-5, -5);
-                nameObj.GetComponent<TMP_Text>().color = new Color(0.83f, 0.69f, 0.22f);
+                bgImage.color = new Color(0.12f, 0.10f, 0.18f, 0.95f);
             }
+
+            // Add button component
+            Button button = templateObj.AddComponent<Button>();
+            button.targetGraphic = bgImage;
+
+            // Border layer - use ProfileFrameBorder if available
+            if (hasProfileFrame && layerLabConfig.ProfileFrameBorder != null)
+            {
+                GameObject borderObj = new GameObject("Border");
+                borderObj.transform.SetParent(templateObj.transform, false);
+                RectTransform borderRect = borderObj.AddComponent<RectTransform>();
+                borderRect.anchorMin = Vector2.zero;
+                borderRect.anchorMax = Vector2.one;
+                borderRect.sizeDelta = Vector2.zero;
+
+                Image borderImg = borderObj.AddComponent<Image>();
+                borderImg.sprite = layerLabConfig.ProfileFrameBorder;
+                borderImg.type = Image.Type.Sliced;
+                borderImg.color = Color.white;
+                borderImg.raycastTarget = false;
+            }
+
+            // Purple border decoration layer
+            if (hasProfileFrame && layerLabConfig.ProfileFrameBorderDecoPurple != null)
+            {
+                GameObject decoObj = new GameObject("BorderDeco");
+                decoObj.transform.SetParent(templateObj.transform, false);
+                RectTransform decoRect = decoObj.AddComponent<RectTransform>();
+                decoRect.anchorMin = Vector2.zero;
+                decoRect.anchorMax = Vector2.one;
+                decoRect.sizeDelta = Vector2.zero;
+
+                Image decoImg = decoObj.AddComponent<Image>();
+                decoImg.sprite = layerLabConfig.ProfileFrameBorderDecoPurple;
+                decoImg.type = Image.Type.Sliced;
+                decoImg.color = Color.white;
+                decoImg.raycastTarget = false;
+            }
+
+            // Portrait image area (fills 80% of frame, centered)
+            GameObject portraitArea = new GameObject("Portrait");
+            portraitArea.transform.SetParent(templateObj.transform, false);
+            RectTransform portraitRect = portraitArea.AddComponent<RectTransform>();
+            portraitRect.anchorMin = new Vector2(0.1f, 0.2f);   // Portrait fills 80% of width, 75% of height
+            portraitRect.anchorMax = new Vector2(0.9f, 0.95f);
+            portraitRect.sizeDelta = Vector2.zero;
+
+            Image portraitImage = portraitArea.AddComponent<Image>();
+            portraitImage.color = Color.white;
+            portraitImage.preserveAspect = true;
+            portraitImage.raycastTarget = false;
+
+            // Name text at bottom (15% height area) with soul gold color
+            GameObject nameObj = CreateText(templateObj, "Title", "Requiem Name", 18);
+            RectTransform nameRect = nameObj.GetComponent<RectTransform>();
+            nameRect.anchorMin = new Vector2(0, 0);
+            nameRect.anchorMax = new Vector2(1, 0.18f);
+            nameRect.offsetMin = new Vector2(8, 5);
+            nameRect.offsetMax = new Vector2(-8, -2);
+            var nameTmp = nameObj.GetComponent<TMP_Text>();
+            nameTmp.color = new Color(0.83f, 0.69f, 0.22f); // Soul gold
+            nameTmp.fontStyle = FontStyles.Bold;
+            nameTmp.alignment = TextAlignmentOptions.Center;
+
+            // Focus/selection highlight layer
+            GameObject focusObj = new GameObject("Focus");
+            focusObj.transform.SetParent(templateObj.transform, false);
+            RectTransform focusRect = focusObj.AddComponent<RectTransform>();
+            focusRect.anchorMin = new Vector2(-0.05f, -0.02f);
+            focusRect.anchorMax = new Vector2(1.05f, 1.02f);
+            focusRect.sizeDelta = Vector2.zero;
+
+            Image focusImg = focusObj.AddComponent<Image>();
+            focusImg.color = new Color(0.56f, 0.27f, 0.68f, 0.6f); // Purple glow
+            focusImg.raycastTarget = false;
+            focusObj.SetActive(false); // Hidden by default, shown on selection
 
             // Add RequiemPortraitButton component
             var portraitButton = templateObj.AddComponent<RequiemPortraitButton>();
 
-            // Wire button reference
-            var buttonComp = templateObj.GetComponent<Button>();
-            if (buttonComp != null)
-            {
-                SerializedObject portraitSo = new SerializedObject(portraitButton);
-                portraitSo.FindProperty("_button").objectReferenceValue = buttonComp;
-
-                // Wire portrait image
-                var portraitImg = templateObj.transform.Find("Portrait")?.GetComponent<Image>();
-                if (portraitImg != null)
-                {
-                    portraitSo.FindProperty("_portraitImage").objectReferenceValue = portraitImg;
-                }
-
-                // Wire name text
-                var nameTmp = templateObj.transform.Find("Title")?.GetComponent<TMP_Text>();
-                if (nameTmp != null)
-                {
-                    portraitSo.FindProperty("_nameText").objectReferenceValue = nameTmp;
-                }
-
-                // Wire frame image (the root button image serves as frame)
-                var frameImg = templateObj.GetComponent<Image>();
-                if (frameImg != null)
-                {
-                    portraitSo.FindProperty("_frameImage").objectReferenceValue = frameImg;
-                }
-
-                // Wire glow/selection highlight (Focus layer from LayerLab StageFrame)
-                var focusLayer = templateObj.transform.Find("Focus")?.GetComponent<Image>();
-                if (focusLayer != null)
-                {
-                    portraitSo.FindProperty("_glowImage").objectReferenceValue = focusLayer;
-                    portraitSo.FindProperty("_selectionHighlight").objectReferenceValue = focusLayer;
-                }
-
-                portraitSo.ApplyModifiedPropertiesWithoutUndo();
-            }
+            // Wire references
+            SerializedObject portraitSo = new SerializedObject(portraitButton);
+            portraitSo.FindProperty("_button").objectReferenceValue = button;
+            portraitSo.FindProperty("_portraitImage").objectReferenceValue = portraitImage;
+            portraitSo.FindProperty("_nameText").objectReferenceValue = nameTmp;
+            portraitSo.FindProperty("_frameImage").objectReferenceValue = bgImage;
+            portraitSo.FindProperty("_glowImage").objectReferenceValue = focusImg;
+            portraitSo.FindProperty("_selectionHighlight").objectReferenceValue = focusImg;
+            portraitSo.ApplyModifiedPropertiesWithoutUndo();
 
             return templateObj;
         }
@@ -6804,6 +7357,7 @@ namespace HNR.Editor
             var panelObj = CreateSimpleUIObject("RequiemDetailPanel", parent);
             SetFullStretchRect(panelObj);
             var detailPanel = panelObj.AddComponent<RequiemDetailPanel>();
+            var layerLabConfig = LoadLayerLabConfig();
 
             var canvasGroup = panelObj.AddComponent<CanvasGroup>();
             canvasGroup.alpha = 0;
@@ -6820,7 +7374,7 @@ namespace HNR.Editor
             contentRect.offsetMin = Vector2.zero;
             contentRect.offsetMax = Vector2.zero;
 
-            // Header (top bar)
+            // Header (top bar) - apply BaseFrame_Border_Rectangle_H60 if available
             var header = CreateSimpleUIObject("Header", panelContent.transform);
             var headerRect = header.GetComponent<RectTransform>();
             headerRect.anchorMin = new Vector2(0, 0.92f);
@@ -6829,7 +7383,16 @@ namespace HNR.Editor
             headerRect.offsetMax = Vector2.zero;
 
             var headerBg = header.AddComponent<Image>();
-            headerBg.color = new Color(0.95f, 0.95f, 0.97f, 1f);
+            if (layerLabConfig?.BaseFrameBorderRectH60 != null)
+            {
+                headerBg.sprite = layerLabConfig.BaseFrameBorderRectH60;
+                headerBg.type = Image.Type.Sliced;
+                headerBg.color = new Color(0.2f, 0.15f, 0.3f, 0.95f); // Purple tint for theme
+            }
+            else
+            {
+                headerBg.color = new Color(0.95f, 0.95f, 0.97f, 1f);
+            }
 
             var closeButton = CreateSimpleButton("CloseButton", header.transform, "<");
             var closeRect = closeButton.GetComponent<RectTransform>();
@@ -6844,6 +7407,7 @@ namespace HNR.Editor
             {
                 closeBtnText.fontSize = 24;
                 closeBtnText.fontStyle = FontStyles.Bold;
+                closeBtnText.color = Color.white;
             }
 
             var titleObj = CreateSimpleTextObject("Title", header.transform, "Details");
@@ -6856,10 +7420,10 @@ namespace HNR.Editor
             var titleText = titleObj.GetComponent<TMP_Text>();
             titleText.fontSize = 24;
             titleText.fontStyle = FontStyles.Bold;
-            titleText.color = Color.black;
+            titleText.color = Color.white;
 
             // ==============================
-            // Left Sidebar - Portrait List
+            // Left Sidebar - Portrait List (apply ListFrame_01 if available)
             // ==============================
             var leftSidebar = CreateSimpleUIObject("LeftSidebar", panelContent.transform);
             var leftRect = leftSidebar.GetComponent<RectTransform>();
@@ -6869,7 +7433,28 @@ namespace HNR.Editor
             leftRect.offsetMax = Vector2.zero;
 
             var leftBg = leftSidebar.AddComponent<Image>();
-            leftBg.color = new Color(0.85f, 0.85f, 0.88f, 1f);
+            if (layerLabConfig?.ListFrameBg != null)
+            {
+                leftBg.sprite = layerLabConfig.ListFrameBg;
+                leftBg.type = Image.Type.Sliced;
+                leftBg.color = new Color(0.15f, 0.12f, 0.2f, 0.95f); // Dark purple
+            }
+            else
+            {
+                leftBg.color = new Color(0.85f, 0.85f, 0.88f, 1f);
+            }
+
+            // Add ListFrame border if available
+            if (layerLabConfig?.ListFrameBorder != null)
+            {
+                var leftBorderObj = CreateSimpleUIObject("Border", leftSidebar.transform);
+                SetFullStretchRect(leftBorderObj);
+                var leftBorderImg = leftBorderObj.AddComponent<Image>();
+                leftBorderImg.sprite = layerLabConfig.ListFrameBorder;
+                leftBorderImg.type = Image.Type.Sliced;
+                leftBorderImg.color = new Color(0.5f, 0.4f, 0.7f, 0.8f);
+                leftBorderImg.raycastTarget = false;
+            }
 
             var portraitListContainer = CreateSimpleUIObject("PortraitList", leftSidebar.transform);
             SetFullStretchRect(portraitListContainer);
@@ -6884,7 +7469,7 @@ namespace HNR.Editor
             vlg.padding = new RectOffset(3, 3, 10, 10);
 
             // ==============================
-            // Menu Sidebar - Stats/Cards Tabs (Vertical)
+            // Menu Sidebar - Stats/Cards Tabs (Vertical) - apply TabMenu styling
             // ==============================
             var menuSidebar = CreateSimpleUIObject("MenuSidebar", panelContent.transform);
             var menuRect = menuSidebar.GetComponent<RectTransform>();
@@ -6894,7 +7479,16 @@ namespace HNR.Editor
             menuRect.offsetMax = Vector2.zero;
 
             var menuBg = menuSidebar.AddComponent<Image>();
-            menuBg.color = new Color(0.95f, 0.95f, 0.97f, 1f);
+            if (layerLabConfig?.TabMenuBg != null)
+            {
+                menuBg.sprite = layerLabConfig.TabMenuBg;
+                menuBg.type = Image.Type.Sliced;
+                menuBg.color = new Color(0.18f, 0.15f, 0.25f, 0.95f);
+            }
+            else
+            {
+                menuBg.color = new Color(0.95f, 0.95f, 0.97f, 1f);
+            }
 
             // Menu buttons container
             var menuButtonsContainer = CreateSimpleUIObject("MenuButtons", menuSidebar.transform);
@@ -6947,7 +7541,7 @@ namespace HNR.Editor
             artImage.color = Color.white; // Full alpha for proper portrait display
             artImage.preserveAspect = true;
 
-            // Stats Panel (right side of stats view)
+            // Stats Panel (right side of stats view) - apply PanelFrame_BottomDeco_01 if available
             var statsPanel = CreateSimpleUIObject("StatsPanel", statsContent.transform);
             var statsPanelRect = statsPanel.GetComponent<RectTransform>();
             statsPanelRect.anchorMin = new Vector2(0.65f, 0);
@@ -6956,7 +7550,39 @@ namespace HNR.Editor
             statsPanelRect.offsetMax = Vector2.zero;
 
             var statsPanelBg = statsPanel.AddComponent<Image>();
-            statsPanelBg.color = new Color(0.95f, 0.95f, 0.97f, 1f);
+            if (layerLabConfig?.PanelFrameBg != null)
+            {
+                statsPanelBg.sprite = layerLabConfig.PanelFrameBg;
+                statsPanelBg.type = Image.Type.Sliced;
+                statsPanelBg.color = new Color(0.12f, 0.10f, 0.18f, 0.95f); // Dark purple
+            }
+            else
+            {
+                statsPanelBg.color = new Color(0.95f, 0.95f, 0.97f, 1f);
+            }
+
+            // Add PanelFrame border and deco if available
+            if (layerLabConfig?.PanelFrameBorder != null)
+            {
+                var panelBorderObj = CreateSimpleUIObject("Border", statsPanel.transform);
+                SetFullStretchRect(panelBorderObj);
+                var panelBorderImg = panelBorderObj.AddComponent<Image>();
+                panelBorderImg.sprite = layerLabConfig.PanelFrameBorder;
+                panelBorderImg.type = Image.Type.Sliced;
+                panelBorderImg.color = new Color(0.5f, 0.4f, 0.7f, 0.8f);
+                panelBorderImg.raycastTarget = false;
+            }
+
+            if (layerLabConfig?.PanelFrameDeco != null)
+            {
+                var panelDecoObj = CreateSimpleUIObject("Deco", statsPanel.transform);
+                SetFullStretchRect(panelDecoObj);
+                var panelDecoImg = panelDecoObj.AddComponent<Image>();
+                panelDecoImg.sprite = layerLabConfig.PanelFrameDeco;
+                panelDecoImg.type = Image.Type.Sliced;
+                panelDecoImg.color = new Color(0.7f, 0.5f, 0.9f, 0.6f);
+                panelDecoImg.raycastTarget = false;
+            }
 
             // Character name and level at top of stats panel
             var nameObj = CreateSimpleTextObject("CharacterName", statsPanel.transform, "Requiem Name");
@@ -6968,7 +7594,8 @@ namespace HNR.Editor
             var nameText = nameObj.GetComponent<TMP_Text>();
             nameText.fontSize = 22;
             nameText.fontStyle = FontStyles.Bold;
-            nameText.color = Color.black;
+            // Use soul gold for name text against dark background
+            nameText.color = new Color(0.83f, 0.69f, 0.22f);
             nameText.alignment = TextAlignmentOptions.Left;
 
             var classObj = CreateSimpleTextObject("CharacterClass", statsPanel.transform, "Class | Aspect");
@@ -6979,7 +7606,8 @@ namespace HNR.Editor
             classRect.offsetMax = new Vector2(-15, 0);
             var classText = classObj.GetComponent<TMP_Text>();
             classText.fontSize = 14;
-            classText.color = new Color(0.4f, 0.4f, 0.4f);
+            // Light gray for secondary text against dark background
+            classText.color = new Color(0.75f, 0.75f, 0.8f);
             classText.alignment = TextAlignmentOptions.Left;
 
             // Stats header
@@ -6991,7 +7619,8 @@ namespace HNR.Editor
             statsHeaderRect.offsetMax = new Vector2(-15, 0);
             var statsHeaderText = statsHeaderObj.GetComponent<TMP_Text>();
             statsHeaderText.fontSize = 14;
-            statsHeaderText.color = new Color(0.5f, 0.5f, 0.5f);
+            // Medium gray for header against dark background
+            statsHeaderText.color = new Color(0.65f, 0.65f, 0.7f);
             statsHeaderText.alignment = TextAlignmentOptions.Left;
 
             // Stats rows container
@@ -7187,21 +7816,42 @@ namespace HNR.Editor
         /// <summary>
         /// Creates a stat row for the redesigned detail panel.
         /// </summary>
+        /// <summary>
+        /// Creates a stat row for the redesigned detail panel with LayerLab styling.
+        /// Uses BaseFrame_Border_Rectangle_H40 if available, with themed text colors.
+        /// </summary>
         private static GameObject CreateStatRowForDetailRedesigned(Transform parent, string label, string value)
         {
+            var layerLabConfig = LoadLayerLabConfig();
+
             var row = CreateSimpleUIObject(label + "Row", parent);
             var layoutElement = row.AddComponent<LayoutElement>();
-            layoutElement.preferredHeight = 30;
+            layoutElement.preferredHeight = 35;
+
+            // Add background with LayerLab BaseFrame styling
+            var rowBg = row.AddComponent<Image>();
+            if (layerLabConfig?.BaseFrameBorderRectH40 != null)
+            {
+                rowBg.sprite = layerLabConfig.BaseFrameBorderRectH40;
+                rowBg.type = Image.Type.Sliced;
+                rowBg.color = new Color(0.18f, 0.15f, 0.25f, 0.8f); // Semi-transparent purple
+            }
+            else
+            {
+                rowBg.color = new Color(0.2f, 0.18f, 0.25f, 0.6f);
+            }
+            rowBg.raycastTarget = false;
 
             var labelObj = CreateSimpleTextObject("Label", row.transform, label);
             var labelRect = labelObj.GetComponent<RectTransform>();
             labelRect.anchorMin = new Vector2(0, 0);
             labelRect.anchorMax = new Vector2(0.6f, 1);
-            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMin = new Vector2(10, 0);
             labelRect.offsetMax = Vector2.zero;
             var labelText = labelObj.GetComponent<TMP_Text>();
             labelText.fontSize = 16;
-            labelText.color = new Color(0.3f, 0.3f, 0.3f);
+            // Light color for label against dark background
+            labelText.color = new Color(0.8f, 0.8f, 0.85f);
             labelText.alignment = TextAlignmentOptions.Left;
 
             var valueObj = CreateSimpleTextObject("Value", row.transform, value);
@@ -7209,11 +7859,12 @@ namespace HNR.Editor
             valueRect.anchorMin = new Vector2(0.6f, 0);
             valueRect.anchorMax = new Vector2(1, 1);
             valueRect.offsetMin = Vector2.zero;
-            valueRect.offsetMax = Vector2.zero;
+            valueRect.offsetMax = new Vector2(-10, 0);
             var valueText = valueObj.GetComponent<TMP_Text>();
             valueText.fontSize = 18;
             valueText.fontStyle = FontStyles.Bold;
-            valueText.color = Color.black;
+            // White for value text against dark background
+            valueText.color = Color.white;
             valueText.alignment = TextAlignmentOptions.Right;
 
             return row;
@@ -7268,15 +7919,15 @@ namespace HNR.Editor
             sidebarVlg.childForceExpandWidth = true;
             sidebarVlg.childForceExpandHeight = false;
 
-            // Load icon config for settings categories
-            var iconConfig = LoadIconConfig();
+            // Load LayerLab config for settings category icons
+            var layerLabConfig = LoadLayerLabConfig();
 
             // Category buttons - use sprites if available, fallback to emoji text
-            CreateSettingsCategoryButton(leftSidebar.transform, "DisplayBtn", iconConfig?.DisplaySettingsIcon, "\U0001F5A5", false);
-            CreateSettingsCategoryButton(leftSidebar.transform, "AudioBtn", iconConfig?.AudioSettingsIcon, "\U0001F3A7", true);   // Selected
-            CreateSettingsCategoryButton(leftSidebar.transform, "GameBtn", iconConfig?.GameSettingsIcon, "\u2699", false);
-            CreateSettingsCategoryButton(leftSidebar.transform, "NetworkBtn", iconConfig?.NetworkSettingsIcon, "\U0001F310", false);
-            CreateSettingsCategoryButton(leftSidebar.transform, "AccountBtn", iconConfig?.AccountSettingsIcon, "\U0001F464", false);
+            CreateSettingsCategoryButton(leftSidebar.transform, "DisplayBtn", layerLabConfig?.SettingsIconDisplay, "\U0001F5A5", false);
+            CreateSettingsCategoryButton(leftSidebar.transform, "AudioBtn", layerLabConfig?.SettingsIconAudio, "\U0001F3A7", true);   // Selected
+            CreateSettingsCategoryButton(leftSidebar.transform, "GameBtn", layerLabConfig?.SettingsIconGame, "\u2699", false);
+            CreateSettingsCategoryButton(leftSidebar.transform, "NetworkBtn", layerLabConfig?.SettingsIconNetwork, "\U0001F310", false);
+            CreateSettingsCategoryButton(leftSidebar.transform, "AccountBtn", layerLabConfig?.SettingsIconAccount, "\U0001F464", false);
 
             // ============================================
             // Main Content Area

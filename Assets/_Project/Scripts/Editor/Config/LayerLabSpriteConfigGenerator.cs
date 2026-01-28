@@ -223,6 +223,139 @@ namespace HNR.Editor.Config
             AssignSprite(so, "_iconBack", FindSprite("Icon_Arrow_03_Prev"));
 
             // ============================================
+            // ProfileFrame Sprites
+            // ============================================
+
+            AssignSprite(so, "_profileFrameBg", FindSprite("ProfileFrame_01_Bg"));
+            AssignSprite(so, "_profileFrameBorder", FindSprite("ProfileFrame_01_Border"));
+            AssignSprite(so, "_profileFrameBorderDecoPurple", FindSprite("ProfileFrame_01_BorderDeco_Purple"));
+
+            // ============================================
+            // CardFrame Sprites
+            // ============================================
+
+            AssignSprite(so, "_cardFrameRectanglePurpleBg", FindSprite("CardFrame_Rectangle_01_Purple"));
+            AssignSprite(so, "_cardFrameRectangleGreenBg", FindSprite("CardFrame_Rectangle_01_Green"));
+
+            // ============================================
+            // ListFrame Sprites
+            // ============================================
+
+            AssignSprite(so, "_listFrameBg", FindSprite("ListFrame_01_Bg"));
+            AssignSprite(so, "_listFrameBorder", FindSprite("ListFrame_01_Border"));
+
+            // ============================================
+            // PanelFrame Sprites
+            // ============================================
+
+            AssignSprite(so, "_panelFrameBg", FindSprite("PanelFrame_BottomDeco_01_Bg"));
+            AssignSprite(so, "_panelFrameBorder", FindSprite("PanelFrame_BottomDeco_01_Border"));
+            AssignSprite(so, "_panelFrameDeco", FindSprite("PanelFrame_BottomDeco_01_Deco"));
+
+            // ============================================
+            // ItemFrame Sprites
+            // ============================================
+
+            AssignSprite(so, "_itemFrameSquarePurple", FindSprite("ItemFrame_Square_01_Purple"));
+
+            // ============================================
+            // BaseFrame Sprites
+            // ============================================
+
+            AssignSprite(so, "_baseFrameBorderRectH40", FindSprite("BaseFrame_Border_Rectangle_H40"));
+            AssignSprite(so, "_baseFrameBorderRectH50", FindSprite("BaseFrame_Border_Rectangle_H50"));
+            AssignSprite(so, "_baseFrameBorderRectH60", FindSprite("BaseFrame_Border_Rectangle_H60"));
+
+            // ============================================
+            // LineFrame Sprites
+            // ============================================
+
+            AssignSprite(so, "_lineFrameDecoLine01", FindSprite("LineFrame_DecoLine_01"));
+
+            // ============================================
+            // Slider Sprites
+            // ============================================
+
+            AssignSprite(so, "_sliderBorderTaperedBg", FindSprite("Slider_Border_Tapered_Bg"));
+            AssignSprite(so, "_sliderBorderTaperedFill", FindSprite("Slider_Border_Tapered_Fill"));
+            AssignSprite(so, "_sliderBorderTaperedBorder", FindSprite("Slider_Border_Tapered_Border"));
+
+            // ============================================
+            // Vertical Slider Sprites (StageVertical_02 for SE Gauge)
+            // ============================================
+
+            AssignSprite(so, "_verticalSliderBg", FindSprite("Slider_StageVertical_02_Bg"));
+            AssignSprite(so, "_verticalSliderBgLeft", FindSprite("Slider_StageVertical_02_BgLeft"));
+            AssignSprite(so, "_verticalSliderBgRight", FindSprite("Slider_StageVertical_02_BgRight"));
+            AssignSprite(so, "_verticalSliderFillBorder", FindSprite("Slider_StageVertical_02_FillBorder"));
+
+            // Note: Party Slot sprites (_partySlotFrame, _partySlotActiveGlow) are NOT auto-populated.
+            // User should assign these manually in the Inspector from appropriate LayerLab frame sprites.
+
+            // ============================================
+            // PictoIcon Sprites
+            // ============================================
+
+            AssignSprite(so, "_pictoIconTimer", FindSprite("Icon_PictoIcon_Timer"));
+            AssignSprite(so, "_pictoIconAttack", FindSprite("Icon_PictoIcon_Attack"));
+            AssignSprite(so, "_pictoIconMenu", FindSprite("Icon_PictoIcon_Menu"));
+            AssignSprite(so, "_pictoIconBook", FindSprite("Icon_PictoIcon_Book"));
+            AssignSprite(so, "_pictoIconBattle", FindSprite("Icon_PictoIcon_Battle"));
+            AssignSprite(so, "_pictoIconLock", FindSprite("Icon_PictoIcon_Lock"));
+
+            // ============================================
+            // ItemIcon Sprites
+            // ============================================
+
+            AssignSprite(so, "_itemIconHeart", FindSprite("Icon_ItemIcon_Heart"));
+            AssignSprite(so, "_itemIconEnergyPurple", FindSprite("Icon_ItemIcon_Energy_Purple"));
+            AssignSprite(so, "_itemIconShield", FindSprite("Icon_ItemIcon_Shield"));
+            AssignSprite(so, "_itemIconCurrency", FindSprite("Icon_ItemIcon_Coin"));
+
+            // ============================================
+            // Map Legend Icon Sprites (using various PictoIcons)
+            // ============================================
+
+            AssignSprite(so, "_mapIconCombat", FindSprite("Icon_PictoIcon_Battle"));     // Crossed swords
+            AssignSprite(so, "_mapIconElite", FindSprite("Icon_PictoIcon_Skull"));       // Skull for elite
+            AssignSprite(so, "_mapIconShop", FindSprite("Icon_PictoIcon_Shop"));         // Shopping/bag
+            AssignSprite(so, "_mapIconEcho", FindSprite("Icon_PictoIcon_Question"));     // Question mark
+            AssignSprite(so, "_mapIconSanctuary", FindSprite("Icon_PictoIcon_Rest"));    // Rest/sanctuary
+            AssignSprite(so, "_mapIconTreasure", FindSprite("Icon_PictoIcon_Treasure")); // Treasure chest
+            AssignSprite(so, "_mapIconBoss", FindSprite("Icon_PictoIcon_Boss"));         // Boss demon
+
+            // ============================================
+            // Deck Display Icon Sprites
+            // ============================================
+
+            AssignSprite(so, "_deckIconDraw", FindSprite("Icon_PictoIcon_Cards"));       // Card deck/draw
+            AssignSprite(so, "_deckIconDiscard", FindSprite("Icon_PictoIcon_Refresh"));  // Refresh/cycle
+
+            // ============================================
+            // Speed/System Icon Sprites
+            // ============================================
+
+            AssignSprite(so, "_speedIcon1x", FindSprite("Icon_PictoIcon_Timer"));        // Timer for 1x
+            AssignSprite(so, "_speedIcon2x", FindSprite("Icon_PictoIcon_Fast"));         // Fast forward for 2x
+            AssignSprite(so, "_iconCheckmark", FindSprite("Icon_PictoIcon_Check"));      // Checkmark
+
+            // ============================================
+            // Settings Category Icon Sprites
+            // ============================================
+
+            AssignSprite(so, "_settingsIconDisplay", FindSprite("Icon_PictoIcon_Display"));   // Monitor/display
+            AssignSprite(so, "_settingsIconAudio", FindSprite("Icon_PictoIcon_Sound"));       // Sound/audio
+            AssignSprite(so, "_settingsIconGame", FindSprite("Icon_PictoIcon_Game"));         // Gamepad
+            AssignSprite(so, "_settingsIconNetwork", FindSprite("Icon_PictoIcon_Network"));   // Globe/network
+            AssignSprite(so, "_settingsIconAccount", FindSprite("Icon_PictoIcon_User"));      // User/account
+
+            // ============================================
+            // Alert Icon Sprites
+            // ============================================
+
+            AssignSprite(so, "_alertDiamondWhiteBg", FindSprite("Alert_Diamond_White_Bg"));
+
+            // ============================================
             // Font Asset
             // ============================================
 

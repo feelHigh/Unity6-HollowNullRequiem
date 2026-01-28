@@ -8,12 +8,19 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEditor;
 using TMPro;
+using HNR.UI.Config;
 
 namespace HNR.Editor
 {
     public static class CombatUIPrefabGenerator
     {
         private const string PrefabDir = "Assets/_Project/Prefabs/UI/Combat";
+
+        private static LayerLabSpriteConfigSO LoadLayerLabConfig()
+        {
+            return AssetDatabase.LoadAssetAtPath<LayerLabSpriteConfigSO>(
+                "Assets/_Project/Data/Config/LayerLabSpriteConfig.asset");
+        }
 
         /// <summary>
         /// Generates all Combat UI prefabs.
@@ -146,10 +153,14 @@ namespace HNR.Editor
 
         /// <summary>
         /// Generates the EnemyFloatingUI prefab for world-space enemy HP and intent display.
+        /// Uses LayerLab slider styling for HP bar with red enemy theme.
         /// </summary>
         public static void GenerateEnemyFloatingUI()
         {
             EnsureDirectoryExists();
+
+            // Load LayerLab config for slider sprites
+            var layerLabConfig = LoadLayerLabConfig();
 
             // Create root GameObject with world space canvas
             var root = new GameObject("EnemyFloatingUI");
@@ -170,7 +181,7 @@ namespace HNR.Editor
             rootRect.localScale = Vector3.one * 0.01f; // Scale down for world space
 
             // ============================================
-            // HP Bar Container
+            // HP Bar Container with LayerLab Styling
             // ============================================
             var hpContainer = CreateChild(root, "HPBarContainer");
             var hpContainerRect = hpContainer.GetComponent<RectTransform>();
@@ -179,18 +190,37 @@ namespace HNR.Editor
             hpContainerRect.offsetMin = new Vector2(5, 0);
             hpContainerRect.offsetMax = new Vector2(-5, 0);
 
-            // HP Bar Background
-            var hpBgGO = CreateChild(hpContainer, "HPBackground");
+            // Add Image component to hpContainer for background and Mask
+            var hpContainerImage = hpContainer.AddComponent<Image>();
+            if (layerLabConfig != null && layerLabConfig.SliderBorderTaperedBg != null)
+            {
+                hpContainerImage.sprite = layerLabConfig.SliderBorderTaperedBg;
+                hpContainerImage.type = Image.Type.Sliced;
+            }
+            hpContainerImage.color = new Color(0.3f, 0.2f, 0.25f, 0.9f); // Dark reddish tint
+
+            // Add Mask to clip child elements properly
+            var hpContainerMask = hpContainer.AddComponent<Mask>();
+            hpContainerMask.showMaskGraphic = true;
+
+            // HP Bar Background - with LayerLab slider styling (dark reddish tint)
+            var hpBgGO = CreateChild(hpContainer, "Background");
             var hpBgRect = hpBgGO.GetComponent<RectTransform>();
             hpBgRect.anchorMin = Vector2.zero;
             hpBgRect.anchorMax = Vector2.one;
             hpBgRect.offsetMin = Vector2.zero;
             hpBgRect.offsetMax = Vector2.zero;
             var hpBgImage = hpBgGO.AddComponent<Image>();
-            hpBgImage.color = new Color(0.15f, 0.15f, 0.2f, 0.9f);
+            if (layerLabConfig != null && layerLabConfig.SliderBorderTaperedBg != null)
+            {
+                hpBgImage.sprite = layerLabConfig.SliderBorderTaperedBg;
+                hpBgImage.type = Image.Type.Sliced;
+            }
+            hpBgImage.color = new Color(0.3f, 0.2f, 0.25f, 0.9f); // Dark reddish tint
+            hpBgImage.raycastTarget = false;
 
             // HP Slider
-            var hpSliderGO = CreateChild(hpContainer, "HPSlider");
+            var hpSliderGO = CreateChild(hpContainer, "HPBar");
             var hpSliderRect = hpSliderGO.GetComponent<RectTransform>();
             hpSliderRect.anchorMin = Vector2.zero;
             hpSliderRect.anchorMax = Vector2.one;
@@ -212,7 +242,7 @@ namespace HNR.Editor
             hpFillAreaRect.offsetMin = Vector2.zero;
             hpFillAreaRect.offsetMax = Vector2.zero;
 
-            // HP Fill
+            // HP Fill - with LayerLab slider fill sprite (red)
             var hpFillGO = CreateChild(hpFillAreaGO, "Fill");
             var hpFillRect = hpFillGO.GetComponent<RectTransform>();
             hpFillRect.anchorMin = Vector2.zero;
@@ -220,8 +250,29 @@ namespace HNR.Editor
             hpFillRect.offsetMin = Vector2.zero;
             hpFillRect.offsetMax = Vector2.zero;
             var hpFillImage = hpFillGO.AddComponent<Image>();
-            hpFillImage.color = new Color(0.9f, 0.2f, 0.2f, 1f);
+            if (layerLabConfig != null && layerLabConfig.SliderBorderTaperedFill != null)
+            {
+                hpFillImage.sprite = layerLabConfig.SliderBorderTaperedFill;
+                hpFillImage.type = Image.Type.Sliced;
+            }
+            hpFillImage.color = new Color(0.9f, 0.25f, 0.25f, 1f); // Red for enemy HP
             hpSlider.fillRect = hpFillRect;
+
+            // HP Border overlay - with LayerLab slider border sprite
+            var hpBorderGO = CreateChild(hpContainer, "Border");
+            var hpBorderRect = hpBorderGO.GetComponent<RectTransform>();
+            hpBorderRect.anchorMin = Vector2.zero;
+            hpBorderRect.anchorMax = Vector2.one;
+            hpBorderRect.offsetMin = Vector2.zero;
+            hpBorderRect.offsetMax = Vector2.zero;
+            var hpBorderImage = hpBorderGO.AddComponent<Image>();
+            if (layerLabConfig != null && layerLabConfig.SliderBorderTaperedBorder != null)
+            {
+                hpBorderImage.sprite = layerLabConfig.SliderBorderTaperedBorder;
+                hpBorderImage.type = Image.Type.Sliced;
+            }
+            hpBorderImage.color = new Color(0.5f, 0.35f, 0.4f, 0.8f);
+            hpBorderImage.raycastTarget = false;
 
             // HP Text
             var hpTextGO = CreateChild(hpContainer, "HPText");
@@ -247,15 +298,21 @@ namespace HNR.Editor
             intentContainerRect.offsetMin = Vector2.zero;
             intentContainerRect.offsetMax = Vector2.zero;
 
-            // Intent Diamond Background (rotated 45 degrees for diamond shape)
+            // Intent Diamond Background (uses Alert_Diamond_White_Bg sprite - already diamond-shaped)
             var intentDiamondGO = CreateChild(intentContainer, "IntentDiamond");
             var intentDiamondRect = intentDiamondGO.GetComponent<RectTransform>();
             intentDiamondRect.anchorMin = new Vector2(0.15f, 0.15f);
             intentDiamondRect.anchorMax = new Vector2(0.85f, 0.85f);
             intentDiamondRect.offsetMin = Vector2.zero;
             intentDiamondRect.offsetMax = Vector2.zero;
-            intentDiamondRect.localRotation = Quaternion.Euler(0, 0, 45);
+            intentDiamondRect.localRotation = Quaternion.identity; // No rotation - sprite is already diamond-shaped
             var intentDiamond = intentDiamondGO.AddComponent<Image>();
+            // Assign Alert_Diamond_White_Bg sprite if available
+            if (layerLabConfig != null && layerLabConfig.AlertDiamondWhiteBg != null)
+            {
+                intentDiamond.sprite = layerLabConfig.AlertDiamondWhiteBg;
+                intentDiamond.type = Image.Type.Simple;
+            }
             intentDiamond.color = new Color(1f, 0.3f, 0.3f, 0.9f);
 
             // Intent Icon

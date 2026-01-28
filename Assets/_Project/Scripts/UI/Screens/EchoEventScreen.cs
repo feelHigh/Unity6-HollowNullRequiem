@@ -42,7 +42,7 @@ namespace HNR.Map
         private Transform _choiceContainer;
 
         [SerializeField, Tooltip("Prefab for choice buttons")]
-        private Button _choiceButtonPrefab;
+        private GameObject _choiceButtonPrefab;
 
         [Header("Outcome")]
         [SerializeField, Tooltip("Panel shown after choice selection")]
@@ -234,10 +234,11 @@ namespace HNR.Map
 
         private void CreateChoiceButton(EchoChoice choice, int index)
         {
-            var button = Instantiate(_choiceButtonPrefab, _choiceContainer);
+            var buttonObj = Instantiate(_choiceButtonPrefab, _choiceContainer);
+            var button = buttonObj.GetComponent<Button>();
 
             // Ensure instantiated button is active (template may be inactive)
-            button.gameObject.SetActive(true);
+            buttonObj.SetActive(true);
 
             // Set button text with choice and outcome preview
             var buttonText = button.GetComponentInChildren<TextMeshProUGUI>();

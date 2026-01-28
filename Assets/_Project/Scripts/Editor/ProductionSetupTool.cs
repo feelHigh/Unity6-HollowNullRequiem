@@ -498,15 +498,17 @@ namespace HNR.Editor
                          "Add a hex sprite to Assets/_Project/Art/UI/Map/ named 'Hexagon' or 'HexNode' to enable.");
             }
 
-            // Icon container (scaled for 42x42 node)
+            // Icon container (centered in 42x42 node with padding)
             GameObject iconObj = new GameObject("Icon");
             iconObj.transform.SetParent(nodeObj.transform, false);
             RectTransform iconRect = iconObj.AddComponent<RectTransform>();
-            iconRect.anchorMin = new Vector2(0.2f, 0.2f);
-            iconRect.anchorMax = new Vector2(0.8f, 0.8f);
-            iconRect.sizeDelta = Vector2.zero;
+            iconRect.anchorMin = new Vector2(0.15f, 0.15f); // Slightly larger than before
+            iconRect.anchorMax = new Vector2(0.85f, 0.85f);
+            iconRect.offsetMin = Vector2.zero;
+            iconRect.offsetMax = Vector2.zero;
             Image iconImg = iconObj.AddComponent<Image>();
-            iconImg.color = Color.white;
+            iconImg.color = Color.white; // White to show sprite native colors
+            iconImg.preserveAspect = true; // Maintain icon aspect ratio
             iconImg.raycastTarget = false;
 
             // Highlight ring (hidden by default, scaled for 42x42)

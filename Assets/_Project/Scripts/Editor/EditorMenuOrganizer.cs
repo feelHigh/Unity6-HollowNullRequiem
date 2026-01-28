@@ -195,11 +195,8 @@ namespace HNR.Editor
             DamageNumberPrefabGenerator.GeneratePrefab();
         }
 
-        [MenuItem("HNR/2. Prefabs/UI/EnemySlotUI Prefab", priority = 32)]
-        public static void GenerateEnemySlotUIPrefab()
-        {
-            EnemySlotUIPrefabGenerator.GeneratePrefab();
-        }
+        // NOTE: EnemySlotUI has been deprecated and removed (Phase 4 cleanup)
+        // Only EnemyFloatingUI is used during combat
 
         [MenuItem("HNR/2. Prefabs/UI/Meta-Game UI (All)", priority = 33)]
         public static void GenerateAllMetaGameUI()
@@ -303,17 +300,8 @@ namespace HNR.Editor
             ProductionSetupTool.LinkAllVisualPrefabs();
         }
 
-        [MenuItem("HNR/2. Prefabs/Icons/Generate Scene Icons", priority = 50)]
-        public static void GenerateSceneIcons()
-        {
-            SceneIconAssetGenerator.GenerateSceneIcons();
-        }
-
-        [MenuItem("HNR/2. Prefabs/Icons/Verify Scene Icons", priority = 51)]
-        public static void VerifySceneIcons()
-        {
-            SceneIconAssetGenerator.VerifySceneIcons();
-        }
+        // NOTE: Scene icons are now part of LayerLabSpriteConfigSO.
+        // Use "HNR > 5. Utilities > Config > Generate LayerLab Sprite Config" to populate all icons.
 
         // ============================================
         // 3. Audio & VFX (priority 70-79)
@@ -726,9 +714,9 @@ HNR/
 │   ├── UI/ (CardBase, Card, CombatCard, DamageNumber, EnemySlotUI, Meta-Game, Combat UI)
 │   ├── Characters/ (Visual Prefabs, Setup Requiem/Enemy Visuals, Link to Data)
 │   ├── VFX/ (Generate VFX Prefabs, VFXPoolManager Config)
-│   ├── Icons/ (Scene Icons)
 │   ├── Create All Prefabs
 │   └── Link Visual Prefabs to Data
+│   (Note: Scene icons now in LayerLabSpriteConfig)
 │
 ├── 3. Audio & VFX/         (70-73)  - Audio/VFX configuration
 │   ├── Generate Audio Config

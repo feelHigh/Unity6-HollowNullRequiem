@@ -107,6 +107,219 @@ namespace HNR.UI.Config
         private Sprite _stageFrameFocus;
 
         // ============================================
+        // ProfileFrame_01 (Character Profile Frames)
+        // ============================================
+
+        [Header("ProfileFrame_01")]
+        [SerializeField, Tooltip("Profile frame background sprite")]
+        private Sprite _profileFrameBg;
+
+        [SerializeField, Tooltip("Profile frame border sprite")]
+        private Sprite _profileFrameBorder;
+
+        [SerializeField, Tooltip("Profile frame purple border decoration")]
+        private Sprite _profileFrameBorderDecoPurple;
+
+        // ============================================
+        // CardFrame (Large Card-Style Buttons)
+        // ============================================
+
+        [Header("CardFrame_Rectangle")]
+        [SerializeField, Tooltip("Card frame rectangle purple background")]
+        private Sprite _cardFrameRectanglePurpleBg;
+
+        [SerializeField, Tooltip("Card frame rectangle green background")]
+        private Sprite _cardFrameRectangleGreenBg;
+
+        // ============================================
+        // ListFrame_01 (Sidebar/List Backgrounds)
+        // ============================================
+
+        [Header("ListFrame_01")]
+        [SerializeField, Tooltip("List frame background sprite")]
+        private Sprite _listFrameBg;
+
+        [SerializeField, Tooltip("List frame border sprite")]
+        private Sprite _listFrameBorder;
+
+        // ============================================
+        // PanelFrame (Panel Backgrounds with Decorations)
+        // ============================================
+
+        [Header("PanelFrame_BottomDeco_01")]
+        [SerializeField, Tooltip("Panel frame background sprite")]
+        private Sprite _panelFrameBg;
+
+        [SerializeField, Tooltip("Panel frame border sprite")]
+        private Sprite _panelFrameBorder;
+
+        [SerializeField, Tooltip("Panel frame bottom decoration sprite")]
+        private Sprite _panelFrameDeco;
+
+        // ============================================
+        // ItemFrame (Item/Relic Slots)
+        // ============================================
+
+        [Header("ItemFrame")]
+        [SerializeField, Tooltip("Item frame square purple sprite")]
+        private Sprite _itemFrameSquarePurple;
+
+        // ============================================
+        // BaseFrame (Basic Rectangles with Border)
+        // ============================================
+
+        [Header("BaseFrame")]
+        [SerializeField, Tooltip("Base frame border rectangle H40")]
+        private Sprite _baseFrameBorderRectH40;
+
+        [SerializeField, Tooltip("Base frame border rectangle H50")]
+        private Sprite _baseFrameBorderRectH50;
+
+        [SerializeField, Tooltip("Base frame border rectangle H60")]
+        private Sprite _baseFrameBorderRectH60;
+
+        // ============================================
+        // LineFrame (Decorative Dividers)
+        // ============================================
+
+        [Header("LineFrame")]
+        [SerializeField, Tooltip("Decorative line divider")]
+        private Sprite _lineFrameDecoLine01;
+
+        // ============================================
+        // Slider Sprites
+        // ============================================
+
+        [Header("Slider")]
+        [SerializeField, Tooltip("Slider tapered background")]
+        private Sprite _sliderBorderTaperedBg;
+
+        [SerializeField, Tooltip("Slider tapered fill")]
+        private Sprite _sliderBorderTaperedFill;
+
+        [SerializeField, Tooltip("Slider tapered border")]
+        private Sprite _sliderBorderTaperedBorder;
+
+        // ============================================
+        // PictoIcons (UI Action Icons)
+        // ============================================
+
+        [Header("PictoIcons")]
+        [SerializeField, Tooltip("Timer/speed icon")]
+        private Sprite _pictoIconTimer;
+
+        [SerializeField, Tooltip("Attack/auto-battle icon")]
+        private Sprite _pictoIconAttack;
+
+        [SerializeField, Tooltip("Menu icon")]
+        private Sprite _pictoIconMenu;
+
+        [SerializeField, Tooltip("Book icon (for Story mode)")]
+        private Sprite _pictoIconBook;
+
+        [SerializeField, Tooltip("Battle/sword icon")]
+        private Sprite _pictoIconBattle;
+
+        [SerializeField, Tooltip("Lock icon")]
+        private Sprite _pictoIconLock;
+
+        // ============================================
+        // ItemIcons (Resource/Status Icons)
+        // ============================================
+
+        [Header("ItemIcons")]
+        [SerializeField, Tooltip("Heart/HP icon")]
+        private Sprite _itemIconHeart;
+
+        [SerializeField, Tooltip("Energy/SE purple icon")]
+        private Sprite _itemIconEnergyPurple;
+
+        [SerializeField, Tooltip("Shield/block icon")]
+        private Sprite _itemIconShield;
+
+        [SerializeField, Tooltip("Currency/coin icon")]
+        private Sprite _itemIconCurrency;
+
+        // ============================================
+        // Map Legend Icons (Node Types)
+        // ============================================
+
+        [Header("Map Legend Icons")]
+        [SerializeField, Tooltip("Combat node icon (crossed swords)")]
+        private Sprite _mapIconCombat;
+
+        [SerializeField, Tooltip("Elite enemy node icon (skull)")]
+        private Sprite _mapIconElite;
+
+        [SerializeField, Tooltip("Shop node icon (cart/bag)")]
+        private Sprite _mapIconShop;
+
+        [SerializeField, Tooltip("Echo event node icon (question mark)")]
+        private Sprite _mapIconEcho;
+
+        [SerializeField, Tooltip("Sanctuary node icon (candle/rest)")]
+        private Sprite _mapIconSanctuary;
+
+        [SerializeField, Tooltip("Treasure node icon (gem/chest)")]
+        private Sprite _mapIconTreasure;
+
+        [SerializeField, Tooltip("Boss node icon (demon/boss)")]
+        private Sprite _mapIconBoss;
+
+        // ============================================
+        // Deck Display Icons
+        // ============================================
+
+        [Header("Deck Display Icons")]
+        [SerializeField, Tooltip("Draw pile icon (deck/book)")]
+        private Sprite _deckIconDraw;
+
+        [SerializeField, Tooltip("Discard pile icon (refresh/cycle)")]
+        private Sprite _deckIconDiscard;
+
+        // ============================================
+        // Speed/System Icons
+        // ============================================
+
+        [Header("Speed/System Icons")]
+        [SerializeField, Tooltip("Speed 1x icon (normal speed)")]
+        private Sprite _speedIcon1x;
+
+        [SerializeField, Tooltip("Speed 2x icon (fast speed)")]
+        private Sprite _speedIcon2x;
+
+        [SerializeField, Tooltip("Checkmark/confirm icon")]
+        private Sprite _iconCheckmark;
+
+        // ============================================
+        // Settings Category Icons
+        // ============================================
+
+        [Header("Settings Category Icons")]
+        [SerializeField, Tooltip("Display/monitor settings icon")]
+        private Sprite _settingsIconDisplay;
+
+        [SerializeField, Tooltip("Audio/sound settings icon")]
+        private Sprite _settingsIconAudio;
+
+        [SerializeField, Tooltip("Game/gameplay settings icon")]
+        private Sprite _settingsIconGame;
+
+        [SerializeField, Tooltip("Network/online settings icon")]
+        private Sprite _settingsIconNetwork;
+
+        [SerializeField, Tooltip("Account/profile settings icon")]
+        private Sprite _settingsIconAccount;
+
+        // ============================================
+        // Alert Icons
+        // ============================================
+
+        [Header("Alert Icons")]
+        [SerializeField, Tooltip("Diamond alert background (white)")]
+        private Sprite _alertDiamondWhiteBg;
+
+        // ============================================
         // Common UI Elements
         // ============================================
 
@@ -124,6 +337,34 @@ namespace HNR.UI.Config
         [Header("Fonts")]
         [SerializeField, Tooltip("AfacadFlux-ExtraBold SDF font asset")]
         private TMP_FontAsset _fontAfacadFlux;
+
+        // ============================================
+        // Vertical Slider (StageVertical_02 for SE Gauge)
+        // ============================================
+
+        [Header("Vertical Slider (SE Gauge)")]
+        [SerializeField, Tooltip("Vertical slider background")]
+        private Sprite _verticalSliderBg;
+
+        [SerializeField, Tooltip("Vertical slider background left edge")]
+        private Sprite _verticalSliderBgLeft;
+
+        [SerializeField, Tooltip("Vertical slider background right edge")]
+        private Sprite _verticalSliderBgRight;
+
+        [SerializeField, Tooltip("Vertical slider fill border")]
+        private Sprite _verticalSliderFillBorder;
+
+        // ============================================
+        // Party Slot Styling
+        // ============================================
+
+        [Header("Party Slot (Manual Assignment)")]
+        [SerializeField, Tooltip("Frame for party member portrait (user assigns in Inspector)")]
+        private Sprite _partySlotFrame;
+
+        [SerializeField, Tooltip("Glow when Art is ready (user assigns in Inspector)")]
+        private Sprite _partySlotActiveGlow;
 
         // ============================================
         // Button Text Colors
@@ -183,6 +424,143 @@ namespace HNR.UI.Config
         public Sprite StageFrameBorder => _stageFrameBorder;
         public Sprite StageFrameDeco => _stageFrameDeco;
         public Sprite StageFrameFocus => _stageFrameFocus;
+
+        // ============================================
+        // ProfileFrame Accessors
+        // ============================================
+
+        public Sprite ProfileFrameBg => _profileFrameBg;
+        public Sprite ProfileFrameBorder => _profileFrameBorder;
+        public Sprite ProfileFrameBorderDecoPurple => _profileFrameBorderDecoPurple;
+
+        // ============================================
+        // CardFrame Accessors
+        // ============================================
+
+        public Sprite CardFrameRectanglePurpleBg => _cardFrameRectanglePurpleBg;
+        public Sprite CardFrameRectangleGreenBg => _cardFrameRectangleGreenBg;
+
+        // ============================================
+        // ListFrame Accessors
+        // ============================================
+
+        public Sprite ListFrameBg => _listFrameBg;
+        public Sprite ListFrameBorder => _listFrameBorder;
+
+        // ============================================
+        // PanelFrame Accessors
+        // ============================================
+
+        public Sprite PanelFrameBg => _panelFrameBg;
+        public Sprite PanelFrameBorder => _panelFrameBorder;
+        public Sprite PanelFrameDeco => _panelFrameDeco;
+
+        // ============================================
+        // ItemFrame Accessors
+        // ============================================
+
+        public Sprite ItemFrameSquarePurple => _itemFrameSquarePurple;
+
+        // ============================================
+        // BaseFrame Accessors
+        // ============================================
+
+        public Sprite BaseFrameBorderRectH40 => _baseFrameBorderRectH40;
+        public Sprite BaseFrameBorderRectH50 => _baseFrameBorderRectH50;
+        public Sprite BaseFrameBorderRectH60 => _baseFrameBorderRectH60;
+
+        // ============================================
+        // LineFrame Accessors
+        // ============================================
+
+        public Sprite LineFrameDecoLine01 => _lineFrameDecoLine01;
+
+        // ============================================
+        // Slider Accessors
+        // ============================================
+
+        public Sprite SliderBorderTaperedBg => _sliderBorderTaperedBg;
+        public Sprite SliderBorderTaperedFill => _sliderBorderTaperedFill;
+        public Sprite SliderBorderTaperedBorder => _sliderBorderTaperedBorder;
+
+        // ============================================
+        // Vertical Slider Accessors
+        // ============================================
+
+        public Sprite VerticalSliderBg => _verticalSliderBg;
+        public Sprite VerticalSliderBgLeft => _verticalSliderBgLeft;
+        public Sprite VerticalSliderBgRight => _verticalSliderBgRight;
+        public Sprite VerticalSliderFillBorder => _verticalSliderFillBorder;
+
+        // ============================================
+        // Party Slot Accessors
+        // ============================================
+
+        public Sprite PartySlotFrame => _partySlotFrame;
+        public Sprite PartySlotActiveGlow => _partySlotActiveGlow;
+
+        // ============================================
+        // PictoIcon Accessors
+        // ============================================
+
+        public Sprite PictoIconTimer => _pictoIconTimer;
+        public Sprite PictoIconAttack => _pictoIconAttack;
+        public Sprite PictoIconMenu => _pictoIconMenu;
+        public Sprite PictoIconBook => _pictoIconBook;
+        public Sprite PictoIconBattle => _pictoIconBattle;
+        public Sprite PictoIconLock => _pictoIconLock;
+
+        // ============================================
+        // ItemIcon Accessors
+        // ============================================
+
+        public Sprite ItemIconHeart => _itemIconHeart;
+        public Sprite ItemIconEnergyPurple => _itemIconEnergyPurple;
+        public Sprite ItemIconShield => _itemIconShield;
+        public Sprite ItemIconCurrency => _itemIconCurrency;
+
+        // ============================================
+        // Map Legend Icon Accessors
+        // ============================================
+
+        public Sprite MapIconCombat => _mapIconCombat;
+        public Sprite MapIconElite => _mapIconElite;
+        public Sprite MapIconShop => _mapIconShop;
+        public Sprite MapIconEcho => _mapIconEcho;
+        public Sprite MapIconSanctuary => _mapIconSanctuary;
+        public Sprite MapIconTreasure => _mapIconTreasure;
+        public Sprite MapIconBoss => _mapIconBoss;
+
+        // ============================================
+        // Deck Display Icon Accessors
+        // ============================================
+
+        public Sprite DeckIconDraw => _deckIconDraw;
+        public Sprite DeckIconDiscard => _deckIconDiscard;
+
+        // ============================================
+        // Speed/System Icon Accessors
+        // ============================================
+
+        public Sprite SpeedIcon1x => _speedIcon1x;
+        public Sprite SpeedIcon2x => _speedIcon2x;
+        public Sprite IconCheckmark => _iconCheckmark;
+
+        // ============================================
+        // Settings Category Icon Accessors
+        // ============================================
+
+        public Sprite SettingsIconDisplay => _settingsIconDisplay;
+        public Sprite SettingsIconAudio => _settingsIconAudio;
+        public Sprite SettingsIconGame => _settingsIconGame;
+        public Sprite SettingsIconNetwork => _settingsIconNetwork;
+        public Sprite SettingsIconAccount => _settingsIconAccount;
+
+        // ============================================
+        // Alert Icon Accessors
+        // ============================================
+
+        public Sprite AlertDiamondWhiteBg => _alertDiamondWhiteBg;
 
         // ============================================
         // Icon Accessors
@@ -270,6 +648,75 @@ namespace HNR.UI.Config
         public (Sprite backBg, Sprite bg, Sprite border, Sprite deco, Sprite focus) GetStageFrameSprites()
         {
             return (_stageFrameBackBg, _stageFrameBg, _stageFrameBorder, _stageFrameDeco, _stageFrameFocus);
+        }
+
+        /// <summary>
+        /// Gets profile frame sprites.
+        /// </summary>
+        /// <returns>Tuple of (bg, border, borderDecoPurple) sprites</returns>
+        public (Sprite bg, Sprite border, Sprite borderDecoPurple) GetProfileFrameSprites()
+        {
+            return (_profileFrameBg, _profileFrameBorder, _profileFrameBorderDecoPurple);
+        }
+
+        /// <summary>
+        /// Gets card frame rectangle sprites for a specific color.
+        /// </summary>
+        /// <param name="color">"purple" or "green"</param>
+        /// <returns>The card frame sprite for that color</returns>
+        public Sprite GetCardFrameRectangleSprite(string color)
+        {
+            return color?.ToLower() switch
+            {
+                "purple" => _cardFrameRectanglePurpleBg,
+                "green" => _cardFrameRectangleGreenBg,
+                _ => _cardFrameRectanglePurpleBg
+            };
+        }
+
+        /// <summary>
+        /// Gets list frame sprites.
+        /// </summary>
+        /// <returns>Tuple of (bg, border) sprites</returns>
+        public (Sprite bg, Sprite border) GetListFrameSprites()
+        {
+            return (_listFrameBg, _listFrameBorder);
+        }
+
+        /// <summary>
+        /// Gets panel frame sprites with bottom decoration.
+        /// </summary>
+        /// <returns>Tuple of (bg, border, deco) sprites</returns>
+        public (Sprite bg, Sprite border, Sprite deco) GetPanelFrameSprites()
+        {
+            return (_panelFrameBg, _panelFrameBorder, _panelFrameDeco);
+        }
+
+        /// <summary>
+        /// Gets slider sprites.
+        /// </summary>
+        /// <returns>Tuple of (bg, fill, border) sprites</returns>
+        public (Sprite bg, Sprite fill, Sprite border) GetSliderSprites()
+        {
+            return (_sliderBorderTaperedBg, _sliderBorderTaperedFill, _sliderBorderTaperedBorder);
+        }
+
+        /// <summary>
+        /// Gets vertical slider sprites for SE gauge.
+        /// </summary>
+        /// <returns>Tuple of (bg, bgLeft, bgRight, fillBorder) sprites</returns>
+        public (Sprite bg, Sprite bgLeft, Sprite bgRight, Sprite fillBorder) GetVerticalSliderSprites()
+        {
+            return (_verticalSliderBg, _verticalSliderBgLeft, _verticalSliderBgRight, _verticalSliderFillBorder);
+        }
+
+        /// <summary>
+        /// Gets party slot sprites.
+        /// </summary>
+        /// <returns>Tuple of (frame, activeGlow) sprites</returns>
+        public (Sprite frame, Sprite activeGlow) GetPartySlotSprites()
+        {
+            return (_partySlotFrame, _partySlotActiveGlow);
         }
 
         /// <summary>
@@ -368,6 +815,79 @@ namespace HNR.UI.Config
             if (_stageFrameDeco != null) count++;
             if (_stageFrameFocus != null) count++;
 
+            // ProfileFrame
+            if (_profileFrameBg != null) count++;
+            if (_profileFrameBorder != null) count++;
+            if (_profileFrameBorderDecoPurple != null) count++;
+
+            // CardFrame
+            if (_cardFrameRectanglePurpleBg != null) count++;
+            if (_cardFrameRectangleGreenBg != null) count++;
+
+            // ListFrame
+            if (_listFrameBg != null) count++;
+            if (_listFrameBorder != null) count++;
+
+            // PanelFrame
+            if (_panelFrameBg != null) count++;
+            if (_panelFrameBorder != null) count++;
+            if (_panelFrameDeco != null) count++;
+
+            // ItemFrame
+            if (_itemFrameSquarePurple != null) count++;
+
+            // BaseFrame
+            if (_baseFrameBorderRectH40 != null) count++;
+            if (_baseFrameBorderRectH50 != null) count++;
+            if (_baseFrameBorderRectH60 != null) count++;
+
+            // LineFrame
+            if (_lineFrameDecoLine01 != null) count++;
+
+            // Slider
+            if (_sliderBorderTaperedBg != null) count++;
+            if (_sliderBorderTaperedFill != null) count++;
+            if (_sliderBorderTaperedBorder != null) count++;
+
+            // PictoIcons
+            if (_pictoIconTimer != null) count++;
+            if (_pictoIconAttack != null) count++;
+            if (_pictoIconMenu != null) count++;
+            if (_pictoIconBook != null) count++;
+            if (_pictoIconBattle != null) count++;
+            if (_pictoIconLock != null) count++;
+
+            // ItemIcons
+            if (_itemIconHeart != null) count++;
+            if (_itemIconEnergyPurple != null) count++;
+            if (_itemIconShield != null) count++;
+            if (_itemIconCurrency != null) count++;
+
+            // Map Legend Icons
+            if (_mapIconCombat != null) count++;
+            if (_mapIconElite != null) count++;
+            if (_mapIconShop != null) count++;
+            if (_mapIconEcho != null) count++;
+            if (_mapIconSanctuary != null) count++;
+            if (_mapIconTreasure != null) count++;
+            if (_mapIconBoss != null) count++;
+
+            // Deck Display Icons
+            if (_deckIconDraw != null) count++;
+            if (_deckIconDiscard != null) count++;
+
+            // Speed/System Icons
+            if (_speedIcon1x != null) count++;
+            if (_speedIcon2x != null) count++;
+            if (_iconCheckmark != null) count++;
+
+            // Settings Category Icons
+            if (_settingsIconDisplay != null) count++;
+            if (_settingsIconAudio != null) count++;
+            if (_settingsIconGame != null) count++;
+            if (_settingsIconNetwork != null) count++;
+            if (_settingsIconAccount != null) count++;
+
             // Icons
             if (_iconSettings != null) count++;
             if (_iconBack != null) count++;
@@ -375,13 +895,26 @@ namespace HNR.UI.Config
             // Font
             if (_fontAfacadFlux != null) count++;
 
+            // Vertical Slider
+            if (_verticalSliderBg != null) count++;
+            if (_verticalSliderBgLeft != null) count++;
+            if (_verticalSliderBgRight != null) count++;
+            if (_verticalSliderFillBorder != null) count++;
+
+            // Party Slot
+            if (_partySlotFrame != null) count++;
+            if (_partySlotActiveGlow != null) count++;
+
+            // Alert Icons
+            if (_alertDiamondWhiteBg != null) count++;
+
             return count;
         }
 
         /// <summary>
         /// Gets the total number of sprite slots.
         /// </summary>
-        public int GetTotalSlots() => 25; // 8 + 4 + 5 + 5 + 2 + 1 (font)
+        public int GetTotalSlots() => 78; // Previous 77 + 1 alert icon
 
         /// <summary>
         /// Checks if the config is valid (has minimum required sprites).
