@@ -42,11 +42,12 @@ namespace HNR.Editor.Generators
             GenerateRequiemPortraitButtonPrefab();
             GenerateRewardCardSlotPrefab();
             GenerateRelicDisplayIconPrefab();
+            GenerateSidebarPortraitPrefab();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log("[RuntimePrefabGenerator] Generated all 13 runtime UI prefabs");
+            Debug.Log("[RuntimePrefabGenerator] Generated all 14 runtime UI prefabs");
         }
 
         [MenuItem("HNR/2. Prefabs/UI/Runtime Prefabs/1. ConfirmationDialog", false, 210)]
@@ -874,6 +875,30 @@ namespace HNR.Editor.Generators
             iconGO.AddComponent<HNR.UI.Combat.RelicIconSlot>();
 
             SavePrefab(iconGO, "RelicDisplayIcon.prefab");
+        }
+
+        [MenuItem("HNR/2. Prefabs/UI/Runtime Prefabs/14. SidebarPortrait", false, 223)]
+        public static void GenerateSidebarPortraitPrefab()
+        {
+            EnsurePrefabDirectory();
+
+            var portraitObj = new GameObject("SidebarPortrait");
+
+            var rect = portraitObj.AddComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(128, 128);
+
+            var layoutElement = portraitObj.AddComponent<LayoutElement>();
+            layoutElement.preferredWidth = 128;
+            layoutElement.preferredHeight = 128;
+
+            var image = portraitObj.AddComponent<Image>();
+            image.color = Color.white;
+            image.preserveAspect = true;
+
+            var button = portraitObj.AddComponent<Button>();
+            button.targetGraphic = image;
+
+            SavePrefab(portraitObj, "SidebarPortrait.prefab");
         }
 
         // ============================================

@@ -99,8 +99,12 @@ namespace HNR.UI.Config
         [SerializeField, Tooltip("Requiem portrait button prefab")]
         private GameObject _requiemPortraitButtonPrefab;
 
+        [SerializeField, Tooltip("Sidebar portrait prefab (128x128, simple button)")]
+        private GameObject _sidebarPortraitPrefab;
+
         public GameObject RequiemSelectionSlotPrefab => _requiemSelectionSlotPrefab;
         public GameObject RequiemPortraitButtonPrefab => _requiemPortraitButtonPrefab;
+        public GameObject SidebarPortraitPrefab => _sidebarPortraitPrefab;
 
         // ============================================
         // Validation
@@ -123,7 +127,8 @@ namespace HNR.UI.Config
                    _bannerSlidePrefab != null &&
                    _bannerIndicatorPrefab != null &&
                    _requiemSelectionSlotPrefab != null &&
-                   _requiemPortraitButtonPrefab != null;
+                   _requiemPortraitButtonPrefab != null &&
+                   _sidebarPortraitPrefab != null;
         }
 
         /// <summary>
@@ -131,7 +136,7 @@ namespace HNR.UI.Config
         /// </summary>
         public (int assigned, int total) GetAssignmentStatus()
         {
-            int total = 13;
+            int total = 14;
             int assigned = 0;
 
             if (_confirmationDialogPrefab != null) assigned++;
@@ -147,6 +152,7 @@ namespace HNR.UI.Config
             if (_bannerIndicatorPrefab != null) assigned++;
             if (_requiemSelectionSlotPrefab != null) assigned++;
             if (_requiemPortraitButtonPrefab != null) assigned++;
+            if (_sidebarPortraitPrefab != null) assigned++;
 
             return (assigned, total);
         }

@@ -25,3 +25,4 @@ MonoBehaviour:
   _bannerIndicatorPrefab: {fileID: 6288110410872107467, guid: 0f25add0037b30f478807bcda535965f, type: 3}
   _requiemSelectionSlotPrefab: {fileID: 6692836284439112905, guid: 04ccc78f2c540bd41a9859c6f3ad0ed3, type: 3}
   _requiemPortraitButtonPrefab: {fileID: 6126581270583451971, guid: 1700e02e25475c74f9540800f72d3ce9, type: 3}
+  _sidebarPortraitPrefab: {fileID: 4679664711025616174, guid: 497107ba9a99af14f8249986f06d9ae6, type: 3}

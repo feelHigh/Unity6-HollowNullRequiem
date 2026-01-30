@@ -41,9 +41,9 @@ MonoBehaviour:
   _cardFrameRectangleGreenBg: {fileID: 21300000, guid: 83b2576d0ef1141c09d8b1858a4eddef, type: 3}
   _listFrameBg: {fileID: 21300000, guid: 1c2ea3e9571184af2a5a5a42a9c0eca1, type: 3}
   _listFrameBorder: {fileID: 21300000, guid: d4f8f55fbc21a463880f595813729920, type: 3}
-  _panelFrameBg: {fileID: 21300000, guid: 1c2ea3e9571184af2a5a5a42a9c0eca1, type: 3}
-  _panelFrameBorder: {fileID: 21300000, guid: d4f8f55fbc21a463880f595813729920, type: 3}
-  _panelFrameDeco: {fileID: 21300000, guid: 9e344015b6deb4446904b7fde2dac1d5, type: 3}
+  _panelFrameBg: {fileID: 21300000, guid: 55fa1d839c6fe4ab490fcdd98e4b54af, type: 3}
+  _panelFrameBorder: {fileID: 21300000, guid: c1cd3eb25621346d5b8ab0d766b34d39, type: 3}
+  _panelFrameDeco: {fileID: 21300000, guid: a4241725bdb4740099d31ffeff339b3c, type: 3}
   _itemFrameSquarePurple: {fileID: 21300000, guid: d3ef70a0e21c74ae9ac67d0244d06501, type: 3}
   _baseFrameBorderRectH40: {fileID: 21300000, guid: 0bdb20fd0b478464caec50f9316dc88f, type: 3}
   _baseFrameBorderRectH50: {fileID: 21300000, guid: c141c2d6f99c94d5f94f486729b9bc91, type: 3}

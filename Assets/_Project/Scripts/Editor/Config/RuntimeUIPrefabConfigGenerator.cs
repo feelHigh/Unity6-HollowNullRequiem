@@ -104,6 +104,7 @@ namespace HNR.Editor.Config
             WirePrefab(so, "_bannerIndicatorPrefab", "BannerIndicator.prefab");
             WirePrefab(so, "_requiemSelectionSlotPrefab", "RequiemSelectionSlot.prefab");
             WirePrefab(so, "_requiemPortraitButtonPrefab", "RequiemPortraitButton.prefab");
+            WirePrefab(so, "_sidebarPortraitPrefab", "SidebarPortrait.prefab");
 
             so.ApplyModifiedPropertiesWithoutUndo();
         }
@@ -144,7 +145,8 @@ namespace HNR.Editor.Config
                 "_bannerSlidePrefab",
                 "_bannerIndicatorPrefab",
                 "_requiemSelectionSlotPrefab",
-                "_requiemPortraitButtonPrefab"
+                "_requiemPortraitButtonPrefab",
+                "_sidebarPortraitPrefab"
             };
 
             foreach (var fieldName in fields)
