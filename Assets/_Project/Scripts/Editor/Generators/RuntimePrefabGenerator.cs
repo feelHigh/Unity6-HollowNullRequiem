@@ -43,11 +43,14 @@ namespace HNR.Editor.Generators
             GenerateRewardCardSlotPrefab();
             GenerateRelicDisplayIconPrefab();
             GenerateSidebarPortraitPrefab();
+            GenerateEmptyStatePrefab();
+            GenerateStatusContainerPrefab();
+            GenerateConfirmTeamButtonPrefab();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log("[RuntimePrefabGenerator] Generated all 14 runtime UI prefabs");
+            Debug.Log("[RuntimePrefabGenerator] Generated all 17 runtime UI prefabs");
         }
 
         [MenuItem("HNR/2. Prefabs/UI/Runtime Prefabs/1. ConfirmationDialog", false, 210)]
@@ -741,6 +744,17 @@ namespace HNR.Editor.Generators
             hpText.alignment = TextAlignmentOptions.Right;
             hpText.raycastTarget = false;
 
+            // Add RequiemSelectionSlotComponent and wire fields
+            var slotComponent = slot.AddComponent<HNR.UI.Components.RequiemSelectionSlotComponent>();
+            WireSerializedField(slotComponent, "_portrait", portraitImage);
+            WireSerializedField(slotComponent, "_background", slotBg);
+            WireSerializedField(slotComponent, "_nameText", nameText);
+            WireSerializedField(slotComponent, "_classText", classText);
+            WireSerializedField(slotComponent, "_hpText", hpText);
+            WireSerializedField(slotComponent, "_aspectBadge", badgeImage);
+            WireSerializedField(slotComponent, "_selectionBorder", borderGO);
+            WireSerializedField(slotComponent, "_button", button);
+
             SavePrefab(slot, "RequiemSelectionSlot.prefab");
         }
 
@@ -899,6 +913,90 @@ namespace HNR.Editor.Generators
             button.targetGraphic = image;
 
             SavePrefab(portraitObj, "SidebarPortrait.prefab");
+        }
+
+        [MenuItem("HNR/2. Prefabs/UI/Runtime Prefabs/15. EmptyState", false, 224)]
+        public static void GenerateEmptyStatePrefab()
+        {
+            EnsurePrefabDirectory();
+
+            var emptyStateObj = new GameObject("EmptyState");
+
+            var rect = emptyStateObj.AddComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(400, 120);
+
+            var canvasGroup = emptyStateObj.AddComponent<CanvasGroup>();
+            canvasGroup.alpha = 1f;
+
+            // Message text
+            var messageObj = CreateChild(emptyStateObj.transform, "Message");
+            StretchRectTransform(messageObj);
+            var messageText = messageObj.AddComponent<TextMeshProUGUI>();
+            messageText.text = "No items available.";
+            messageText.fontSize = 14;
+            messageText.alignment = TextAlignmentOptions.Center;
+            messageText.color = new Color(0.7f, 0.7f, 0.7f, 1f);
+
+            SavePrefab(emptyStateObj, "EmptyState.prefab");
+        }
+
+        [MenuItem("HNR/2. Prefabs/UI/Runtime Prefabs/16. StatusContainer", false, 225)]
+        public static void GenerateStatusContainerPrefab()
+        {
+            EnsurePrefabDirectory();
+
+            var containerObj = new GameObject("StatusContainer");
+
+            var rect = containerObj.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0, 0);
+            rect.anchorMax = new Vector2(1, 0.35f);
+            rect.offsetMin = new Vector2(5, 0);
+            rect.offsetMax = new Vector2(-5, 0);
+
+            var layout = containerObj.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 2f;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+            layout.childControlWidth = false;
+            layout.childControlHeight = false;
+
+            SavePrefab(containerObj, "StatusContainer.prefab");
+        }
+
+        [MenuItem("HNR/2. Prefabs/UI/Runtime Prefabs/17. ConfirmTeamButton", false, 226)]
+        public static void GenerateConfirmTeamButtonPrefab()
+        {
+            EnsurePrefabDirectory();
+
+            var btnObj = new GameObject("ConfirmTeamButton");
+            btnObj.AddComponent<CanvasRenderer>();
+
+            var rect = btnObj.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(200, 60);
+
+            var image = btnObj.AddComponent<Image>();
+            image.sprite = GetWhiteSprite();
+            image.color = new Color(0.2f, 0.6f, 0.3f, 1f); // Green color
+
+            var button = btnObj.AddComponent<Button>();
+            button.targetGraphic = image;
+
+            // Button text
+            var textObj = CreateChild(btnObj.transform, "Text");
+            StretchRectTransform(textObj);
+            var text = textObj.AddComponent<TextMeshProUGUI>();
+            text.text = "CONFIRM TEAM";
+            text.fontSize = 24;
+            text.fontStyle = FontStyles.Bold;
+            text.alignment = TextAlignmentOptions.Center;
+            text.color = Color.white;
+            text.raycastTarget = false;
+
+            SavePrefab(btnObj, "ConfirmTeamButton.prefab");
         }
 
         // ============================================

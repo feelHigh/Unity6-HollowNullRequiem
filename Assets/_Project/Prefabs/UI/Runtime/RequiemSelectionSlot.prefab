@@ -837,6 +837,7 @@ GameObject:
   - component: {fileID: 20337204009374896}
   - component: {fileID: 1998746885141795621}
   - component: {fileID: 487839876368609844}
+  - component: {fileID: 9207110926861879134}
   m_Layer: 0
   m_Name: RequiemSelectionSlot
   m_TagString: Untagged
@@ -949,6 +950,26 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &9207110926861879134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6692836284439112905}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f053733b210e8b340a17cd697b08bbfa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _portrait: {fileID: 4497464564469079104}
+  _background: {fileID: 1998746885141795621}
+  _nameText: {fileID: 8476289368205179988}
+  _classText: {fileID: 5514414628942130083}
+  _hpText: {fileID: 2059746130245260892}
+  _aspectBadge: {fileID: 4898261847843341070}
+  _selectionBorder: {fileID: 2184187733226457111}
+  _button: {fileID: 487839876368609844}
 --- !u!1 &6765659854070585580
 GameObject:
   m_ObjectHideFlags: 0

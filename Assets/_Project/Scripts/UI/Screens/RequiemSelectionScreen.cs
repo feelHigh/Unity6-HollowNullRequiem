@@ -13,6 +13,7 @@ using HNR.Core.Events;
 using HNR.Characters;
 using HNR.Cards;
 using HNR.UI.Config;
+using HNR.UI.Components;
 
 namespace HNR.UI
 {
@@ -97,6 +98,7 @@ namespace HNR.UI
         // ============================================
 
         private List<RequiemSlotUI> _slots = new();
+        private List<RequiemSelectionSlotComponent> _slotComponents = new();
         private List<RequiemDataSO> _selectedRequiems = new();
         private RequiemDataSO _previewedRequiem;
 
@@ -181,7 +183,7 @@ namespace HNR.UI
 
         /// <summary>
         /// Creates a simple fallback UI when no slot prefab is assigned.
-        /// Uses full body portraits like the reference design.
+        /// Uses prefabs from RuntimeUIPrefabConfig when available.
         /// </summary>
         private void CreateSimpleSelectionUI()
         {
@@ -216,18 +218,49 @@ namespace HNR.UI
                 }
             }
 
+            // Try to get prefab from RuntimeUIPrefabConfig
+            var prefabConfig = RuntimeUIPrefabConfigSO.Instance;
+            var slotPrefab = prefabConfig != null ? prefabConfig.RequiemSelectionSlotPrefab : null;
+
             foreach (var requiem in _availableRequiems)
             {
                 if (requiem == null) continue;
 
-                // Create character card slot with portrait
-                var slotGO = CreateCharacterSlot(container, requiem);
-                var button = slotGO.GetComponent<Button>();
-                var selectionBorder = slotGO.transform.Find("SelectionBorder")?.gameObject;
-
-                if (button != null)
+                // Use prefab if available, otherwise fall back to runtime creation
+                if (slotPrefab != null)
                 {
-                    _simpleSlotButtons.Add((requiem, button, selectionBorder));
+                    var slotGO = Instantiate(slotPrefab, container);
+                    var slotComponent = slotGO.GetComponent<RequiemSelectionSlotComponent>();
+                    if (slotComponent != null)
+                    {
+                        slotComponent.Initialize(requiem, _aspectIconConfig);
+                        slotComponent.OnClicked += OnSlotClicked;
+                        _slotComponents.Add(slotComponent);
+                    }
+                    else
+                    {
+                        // Prefab missing component - wire manually
+                        var button = slotGO.GetComponent<Button>();
+                        var selectionBorder = slotGO.transform.Find("SelectionBorder")?.gameObject;
+                        if (button != null)
+                        {
+                            var capturedRequiem = requiem;
+                            button.onClick.AddListener(() => OnSlotClicked(capturedRequiem));
+                            _simpleSlotButtons.Add((requiem, button, selectionBorder));
+                        }
+                    }
+                }
+                else
+                {
+                    // Fallback: Create character card slot at runtime
+                    var slotGO = CreateCharacterSlot(container, requiem);
+                    var button = slotGO.GetComponent<Button>();
+                    var selectionBorder = slotGO.transform.Find("SelectionBorder")?.gameObject;
+
+                    if (button != null)
+                    {
+                        _simpleSlotButtons.Add((requiem, button, selectionBorder));
+                    }
                 }
             }
 
@@ -237,7 +270,8 @@ namespace HNR.UI
                 TryFindAndWireConfirmButton();
             }
 
-            Debug.Log($"[RequiemSelectionScreen] Created {_simpleSlotButtons.Count} character portrait slots");
+            int totalSlots = _slotComponents.Count + _simpleSlotButtons.Count;
+            Debug.Log($"[RequiemSelectionScreen] Created {totalSlots} character slots ({_slotComponents.Count} from prefab, {_simpleSlotButtons.Count} runtime)");
         }
 
         /// <summary>
@@ -460,50 +494,79 @@ namespace HNR.UI
 
         private void CreateConfirmButton()
         {
-            // Create confirm button below the slot container
-            var btnGO = new GameObject("ConfirmTeamButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-            btnGO.transform.SetParent(transform, false);
+            // Try to use prefab from RuntimeUIPrefabConfig
+            var prefabConfig = RuntimeUIPrefabConfigSO.Instance;
+            var btnPrefab = prefabConfig != null ? prefabConfig.ConfirmTeamButtonPrefab : null;
 
-            var rect = btnGO.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = new Vector2(0, -150); // Below the slots
-            rect.sizeDelta = new Vector2(200, 60);
+            GameObject btnGO;
+            if (btnPrefab != null)
+            {
+                btnGO = Instantiate(btnPrefab, transform);
+                btnGO.name = "ConfirmTeamButton";
 
-            // Create white texture for button
-            var whiteTex = new Texture2D(4, 4);
-            var colors = new Color[16];
-            for (int i = 0; i < 16; i++) colors[i] = Color.white;
-            whiteTex.SetPixels(colors);
-            whiteTex.Apply();
-            var whiteSprite = Sprite.Create(whiteTex, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
+                // Position below the slots
+                var rect = btnGO.GetComponent<RectTransform>();
+                if (rect != null)
+                {
+                    rect.anchoredPosition = new Vector2(0, -150);
+                }
 
-            var image = btnGO.GetComponent<Image>();
-            image.sprite = whiteSprite;
-            image.color = new Color(0.2f, 0.6f, 0.3f, 1f); // Green color
+                _startRunButton = btnGO.GetComponent<Button>();
+                if (_startRunButton != null)
+                {
+                    _startRunButton.onClick.RemoveAllListeners();
+                    _startRunButton.onClick.AddListener(OnStartRunClicked);
+                }
 
-            _startRunButton = btnGO.GetComponent<Button>();
-            _startRunButton.onClick.AddListener(OnStartRunClicked);
+                Debug.Log("[RequiemSelectionScreen] Created Confirm Team button from prefab");
+            }
+            else
+            {
+                // Fallback: Create at runtime
+                btnGO = new GameObject("ConfirmTeamButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+                btnGO.transform.SetParent(transform, false);
 
-            // Button text
-            var textGO = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-            textGO.transform.SetParent(btnGO.transform, false);
-            var textRect = textGO.GetComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = Vector2.zero;
-            textRect.offsetMax = Vector2.zero;
+                var rect = btnGO.GetComponent<RectTransform>();
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.anchoredPosition = new Vector2(0, -150); // Below the slots
+                rect.sizeDelta = new Vector2(200, 60);
 
-            var text = textGO.GetComponent<TextMeshProUGUI>();
-            text.text = "CONFIRM TEAM";
-            text.fontSize = 24;
-            text.fontStyle = FontStyles.Bold;
-            text.alignment = TextAlignmentOptions.Center;
-            text.color = Color.white;
-            text.raycastTarget = false;
+                // Create white texture for button
+                var whiteTex = new Texture2D(4, 4);
+                var colors = new Color[16];
+                for (int i = 0; i < 16; i++) colors[i] = Color.white;
+                whiteTex.SetPixels(colors);
+                whiteTex.Apply();
+                var whiteSprite = Sprite.Create(whiteTex, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
 
-            Debug.Log("[RequiemSelectionScreen] Created dynamic Confirm Team button");
+                var image = btnGO.GetComponent<Image>();
+                image.sprite = whiteSprite;
+                image.color = new Color(0.2f, 0.6f, 0.3f, 1f); // Green color
+
+                _startRunButton = btnGO.GetComponent<Button>();
+                _startRunButton.onClick.AddListener(OnStartRunClicked);
+
+                // Button text
+                var textGO = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+                textGO.transform.SetParent(btnGO.transform, false);
+                var textRect = textGO.GetComponent<RectTransform>();
+                textRect.anchorMin = Vector2.zero;
+                textRect.anchorMax = Vector2.one;
+                textRect.offsetMin = Vector2.zero;
+                textRect.offsetMax = Vector2.zero;
+
+                var text = textGO.GetComponent<TextMeshProUGUI>();
+                text.text = "CONFIRM TEAM";
+                text.fontSize = 24;
+                text.fontStyle = FontStyles.Bold;
+                text.alignment = TextAlignmentOptions.Center;
+                text.color = Color.white;
+                text.raycastTarget = false;
+
+                Debug.Log("[RequiemSelectionScreen] Created dynamic Confirm Team button (runtime fallback)");
+            }
         }
 
         private Color GetAspectColor(SoulAspect aspect)
@@ -547,7 +610,18 @@ namespace HNR.UI
             }
             _slots.Clear();
 
-            // Also clear simple slot buttons
+            // Clear slot components (prefab-based)
+            foreach (var slotComponent in _slotComponents)
+            {
+                if (slotComponent != null)
+                {
+                    slotComponent.OnClicked -= OnSlotClicked;
+                    Destroy(slotComponent.gameObject);
+                }
+            }
+            _slotComponents.Clear();
+
+            // Also clear simple slot buttons (runtime fallback)
             foreach (var (_, button, _) in _simpleSlotButtons)
             {
                 if (button != null)
@@ -598,7 +672,7 @@ namespace HNR.UI
 
         private void UpdateUI()
         {
-            // Update slot selection states
+            // Update slot selection states (RequiemSlotUI prefab)
             foreach (var slot in _slots)
             {
                 if (slot != null && slot.Requiem != null)
@@ -607,7 +681,16 @@ namespace HNR.UI
                 }
             }
 
-            // Update simple slot button selection states
+            // Update slot component selection states (RequiemSelectionSlotComponent prefab)
+            foreach (var slotComponent in _slotComponents)
+            {
+                if (slotComponent != null && slotComponent.RequiemData != null)
+                {
+                    slotComponent.SetSelected(_selectedRequiems.Contains(slotComponent.RequiemData));
+                }
+            }
+
+            // Update simple slot button selection states (runtime fallback)
             foreach (var (requiem, button, selectionBorder) in _simpleSlotButtons)
             {
                 if (button != null)

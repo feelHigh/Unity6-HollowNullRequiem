@@ -636,7 +636,7 @@ GameObject:
   - component: {fileID: 6440439630710447886}
   - component: {fileID: 3758279307878578030}
   - component: {fileID: 1815050735326398273}
-  - component: {fileID: 906753730308132749}
+  - component: {fileID: 835161812734082607}
   m_Layer: 0
   m_Name: SimpleCardDisplayItem
   m_TagString: Untagged
@@ -725,7 +725,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &906753730308132749
+--- !u!114 &835161812734082607
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

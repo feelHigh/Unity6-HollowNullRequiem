@@ -454,21 +454,42 @@ namespace HNR.UI.Combat
         {
             if (_statusContainer != null) return;
 
-            // Create status container below HP bar
-            var containerObj = new GameObject("StatusContainer");
-            containerObj.transform.SetParent(transform, false);
+            // Try to use prefab from RuntimeUIPrefabConfig
+            var prefabConfig = RuntimeUIPrefabConfigSO.Instance;
+            var containerPrefab = prefabConfig != null ? prefabConfig.StatusContainerPrefab : null;
 
-            _statusContainer = containerObj.AddComponent<RectTransform>();
-            _statusContainer.anchorMin = new Vector2(0, 0);
-            _statusContainer.anchorMax = new Vector2(1, 0.35f);
-            _statusContainer.offsetMin = new Vector2(5, 0);
-            _statusContainer.offsetMax = new Vector2(-5, 0);
+            GameObject containerObj;
+            if (containerPrefab != null)
+            {
+                containerObj = Instantiate(containerPrefab, transform);
+                containerObj.name = "StatusContainer";
+                _statusContainer = containerObj.GetComponent<RectTransform>();
 
-            var layout = containerObj.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = _statusIconSpacing;
-            layout.childAlignment = TextAnchor.MiddleCenter;
-            layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = false;
+                // Update spacing from config
+                var layout = containerObj.GetComponent<HorizontalLayoutGroup>();
+                if (layout != null)
+                {
+                    layout.spacing = _statusIconSpacing;
+                }
+            }
+            else
+            {
+                // Fallback: Create status container at runtime
+                containerObj = new GameObject("StatusContainer");
+                containerObj.transform.SetParent(transform, false);
+
+                _statusContainer = containerObj.AddComponent<RectTransform>();
+                _statusContainer.anchorMin = new Vector2(0, 0);
+                _statusContainer.anchorMax = new Vector2(1, 0.35f);
+                _statusContainer.offsetMin = new Vector2(5, 0);
+                _statusContainer.offsetMax = new Vector2(-5, 0);
+
+                var layout = containerObj.AddComponent<HorizontalLayoutGroup>();
+                layout.spacing = _statusIconSpacing;
+                layout.childAlignment = TextAnchor.MiddleCenter;
+                layout.childForceExpandWidth = false;
+                layout.childForceExpandHeight = false;
+            }
         }
 
         private void OnStatusApplied(StatusAppliedEvent evt)

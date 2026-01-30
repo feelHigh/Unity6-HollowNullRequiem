@@ -26,3 +26,6 @@ MonoBehaviour:
   _requiemSelectionSlotPrefab: {fileID: 6692836284439112905, guid: 04ccc78f2c540bd41a9859c6f3ad0ed3, type: 3}
   _requiemPortraitButtonPrefab: {fileID: 6126581270583451971, guid: 1700e02e25475c74f9540800f72d3ce9, type: 3}
   _sidebarPortraitPrefab: {fileID: 4679664711025616174, guid: 497107ba9a99af14f8249986f06d9ae6, type: 3}
+  _emptyStatePrefab: {fileID: 8159453978254439022, guid: 87c2edfcd0af6554dbe61c367f1de528, type: 3}
+  _statusContainerPrefab: {fileID: 1510277458320329951, guid: 0f9adafc1c1b3da4fb1189a2ef273261, type: 3}
+  _confirmTeamButtonPrefab: {fileID: 5029584878337275438, guid: 59810b076c5017543bf76b5c4e16c866, type: 3}

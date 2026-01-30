@@ -217,10 +217,21 @@ namespace HNR.UI.Components
         {
             GameObject slideObj;
 
-            // Use prefab if available
-            if (_slidePrefab != null)
+            // Use local prefab first, then fall back to RuntimeUIPrefabConfig
+            GameObject prefab = _slidePrefab;
+            if (prefab == null)
             {
-                slideObj = Instantiate(_slidePrefab, _contentContainer);
+                var config = RuntimeUIPrefabConfigSO.Instance;
+                if (config != null)
+                {
+                    prefab = config.BannerSlidePrefab;
+                }
+            }
+
+            // Use prefab if available
+            if (prefab != null)
+            {
+                slideObj = Instantiate(prefab, _contentContainer);
                 slideObj.name = $"Slide_{index}";
 
                 // Configure slide from prefab
@@ -469,10 +480,21 @@ namespace HNR.UI.Components
             GameObject indicatorObj;
             float size = _bannerConfig?.IndicatorSize ?? 12f;
 
-            // Use prefab if available
-            if (_indicatorPrefab != null)
+            // Use local prefab first, then fall back to RuntimeUIPrefabConfig
+            GameObject prefab = _indicatorPrefab;
+            if (prefab == null)
             {
-                indicatorObj = Instantiate(_indicatorPrefab, _indicatorContainer);
+                var config = RuntimeUIPrefabConfigSO.Instance;
+                if (config != null)
+                {
+                    prefab = config.BannerIndicatorPrefab;
+                }
+            }
+
+            // Use prefab if available
+            if (prefab != null)
+            {
+                indicatorObj = Instantiate(prefab, _indicatorContainer);
                 indicatorObj.name = $"Indicator_{index}";
 
                 var rect = indicatorObj.GetComponent<RectTransform>();

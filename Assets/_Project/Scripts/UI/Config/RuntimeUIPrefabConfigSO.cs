@@ -107,6 +107,24 @@ namespace HNR.UI.Config
         public GameObject SidebarPortraitPrefab => _sidebarPortraitPrefab;
 
         // ============================================
+        // Utility Prefabs
+        // ============================================
+
+        [Header("Utility")]
+        [SerializeField, Tooltip("Empty state message prefab")]
+        private GameObject _emptyStatePrefab;
+
+        [SerializeField, Tooltip("Status container prefab for floating UI")]
+        private GameObject _statusContainerPrefab;
+
+        [SerializeField, Tooltip("Confirm team button prefab")]
+        private GameObject _confirmTeamButtonPrefab;
+
+        public GameObject EmptyStatePrefab => _emptyStatePrefab;
+        public GameObject StatusContainerPrefab => _statusContainerPrefab;
+        public GameObject ConfirmTeamButtonPrefab => _confirmTeamButtonPrefab;
+
+        // ============================================
         // Validation
         // ============================================
 
@@ -128,7 +146,10 @@ namespace HNR.UI.Config
                    _bannerIndicatorPrefab != null &&
                    _requiemSelectionSlotPrefab != null &&
                    _requiemPortraitButtonPrefab != null &&
-                   _sidebarPortraitPrefab != null;
+                   _sidebarPortraitPrefab != null &&
+                   _emptyStatePrefab != null &&
+                   _statusContainerPrefab != null &&
+                   _confirmTeamButtonPrefab != null;
         }
 
         /// <summary>
@@ -136,7 +157,7 @@ namespace HNR.UI.Config
         /// </summary>
         public (int assigned, int total) GetAssignmentStatus()
         {
-            int total = 14;
+            int total = 17;
             int assigned = 0;
 
             if (_confirmationDialogPrefab != null) assigned++;
@@ -153,6 +174,9 @@ namespace HNR.UI.Config
             if (_requiemSelectionSlotPrefab != null) assigned++;
             if (_requiemPortraitButtonPrefab != null) assigned++;
             if (_sidebarPortraitPrefab != null) assigned++;
+            if (_emptyStatePrefab != null) assigned++;
+            if (_statusContainerPrefab != null) assigned++;
+            if (_confirmTeamButtonPrefab != null) assigned++;
 
             return (assigned, total);
         }

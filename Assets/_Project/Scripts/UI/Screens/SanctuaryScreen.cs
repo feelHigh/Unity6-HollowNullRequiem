@@ -571,18 +571,39 @@ namespace HNR.UI
 
         private void ShowEmptyStateMessage()
         {
-            // Create empty state message using TMP
-            var emptyObj = new GameObject("EmptyState");
-            emptyObj.transform.SetParent(_upgradeCardContainer, false);
+            GameObject emptyObj;
 
-            var rect = emptyObj.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(300, 100);
+            // Try to use prefab from RuntimeUIPrefabConfig
+            var prefabConfig = RuntimeUIPrefabConfigSO.Instance;
+            var emptyStatePrefab = prefabConfig != null ? prefabConfig.EmptyStatePrefab : null;
 
-            var text = emptyObj.AddComponent<TextMeshProUGUI>();
-            text.text = "No cards available to upgrade.\n<size=80%><color=#888888>Your deck is empty or all cards are already upgraded.</color></size>";
-            text.fontSize = 14;
-            text.alignment = TextAlignmentOptions.Center;
-            text.color = new Color(0.7f, 0.7f, 0.7f);
+            if (emptyStatePrefab != null)
+            {
+                emptyObj = Instantiate(emptyStatePrefab, _upgradeCardContainer);
+                emptyObj.name = "EmptyState";
+
+                // Update the message text
+                var text = emptyObj.GetComponentInChildren<TextMeshProUGUI>();
+                if (text != null)
+                {
+                    text.text = "No cards available to upgrade.\n<size=80%><color=#888888>Your deck is empty or all cards are already upgraded.</color></size>";
+                }
+            }
+            else
+            {
+                // Fallback: Create empty state message using TMP at runtime
+                emptyObj = new GameObject("EmptyState");
+                emptyObj.transform.SetParent(_upgradeCardContainer, false);
+
+                var rect = emptyObj.AddComponent<RectTransform>();
+                rect.sizeDelta = new Vector2(300, 100);
+
+                var text = emptyObj.AddComponent<TextMeshProUGUI>();
+                text.text = "No cards available to upgrade.\n<size=80%><color=#888888>Your deck is empty or all cards are already upgraded.</color></size>";
+                text.fontSize = 14;
+                text.alignment = TextAlignmentOptions.Center;
+                text.color = new Color(0.7f, 0.7f, 0.7f);
+            }
 
             _spawnedCardSlots.Add(emptyObj);
         }
