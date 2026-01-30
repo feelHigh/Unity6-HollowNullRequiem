@@ -297,164 +297,24 @@ namespace HNR.UI.Components
 
         private static void CreateInstance()
         {
-            // Try to use prefab from config first
-            if (_dialogPrefab == null)
+            // Try to use prefab from config
+            var prefab = _dialogPrefab;
+            if (prefab == null)
             {
                 var config = RuntimeUIPrefabConfigSO.Instance;
-                if (config != null && config.ConfirmationDialogPrefab != null)
-                {
-                    _dialogPrefab = config.ConfirmationDialogPrefab;
-                }
+                prefab = config?.ConfirmationDialogPrefab;
             }
 
-            // Use prefab if available
-            if (_dialogPrefab != null)
+            if (prefab == null)
             {
-                var prefabInstance = Instantiate(_dialogPrefab);
-                prefabInstance.name = "ConfirmationDialog";
-                DontDestroyOnLoad(prefabInstance);
-                Debug.Log("[ConfirmationDialog] Created from prefab");
+                Debug.LogError("[ConfirmationDialog] No prefab available. Assign ConfirmationDialogPrefab in RuntimeUIPrefabConfig or call SetDialogPrefab().");
                 return;
             }
 
-            // Fallback: Create dialog at runtime
-            var go = new GameObject("ConfirmationDialog");
-
-            // Create Canvas
-            var canvas = go.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 1000; // Above everything
-
-            var scaler = go.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920, 1080);
-            scaler.matchWidthOrHeight = 0.5f;
-
-            go.AddComponent<GraphicRaycaster>();
-
-            // Create overlay
-            var overlayGO = new GameObject("Overlay");
-            overlayGO.transform.SetParent(go.transform, false);
-            var overlayRect = overlayGO.AddComponent<RectTransform>();
-            overlayRect.anchorMin = Vector2.zero;
-            overlayRect.anchorMax = Vector2.one;
-            overlayRect.sizeDelta = Vector2.zero;
-
-            var canvasGroup = overlayGO.AddComponent<CanvasGroup>();
-
-            // Background panel
-            var bgGO = new GameObject("Background");
-            bgGO.transform.SetParent(overlayGO.transform, false);
-            var bgRect = bgGO.AddComponent<RectTransform>();
-            bgRect.anchorMin = Vector2.zero;
-            bgRect.anchorMax = Vector2.one;
-            bgRect.sizeDelta = Vector2.zero;
-            var bgImage = bgGO.AddComponent<Image>();
-            bgImage.color = new Color(0, 0, 0, 0.8f);
-
-            // Dialog panel
-            var dialogGO = new GameObject("DialogPanel");
-            dialogGO.transform.SetParent(overlayGO.transform, false);
-            var dialogRect = dialogGO.AddComponent<RectTransform>();
-            dialogRect.anchorMin = new Vector2(0.5f, 0.5f);
-            dialogRect.anchorMax = new Vector2(0.5f, 0.5f);
-            dialogRect.sizeDelta = new Vector2(500, 250);
-            var dialogImage = dialogGO.AddComponent<Image>();
-            dialogImage.color = UIColors.PanelGray;
-
-            // Title
-            var titleGO = new GameObject("Title");
-            titleGO.transform.SetParent(dialogGO.transform, false);
-            var titleRect = titleGO.AddComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0, 1);
-            titleRect.anchorMax = new Vector2(1, 1);
-            titleRect.pivot = new Vector2(0.5f, 1);
-            titleRect.anchoredPosition = new Vector2(0, -20);
-            titleRect.sizeDelta = new Vector2(-40, 40);
-            var titleText = titleGO.AddComponent<TextMeshProUGUI>();
-            titleText.text = "Confirm";
-            titleText.fontSize = 28;
-            titleText.fontStyle = FontStyles.Bold;
-            titleText.color = UIColors.SoulCyan;
-            titleText.alignment = TextAlignmentOptions.Center;
-
-            // Message
-            var messageGO = new GameObject("Message");
-            messageGO.transform.SetParent(dialogGO.transform, false);
-            var messageRect = messageGO.AddComponent<RectTransform>();
-            messageRect.anchorMin = new Vector2(0, 0.35f);
-            messageRect.anchorMax = new Vector2(1, 0.85f);
-            messageRect.sizeDelta = new Vector2(-40, 0);
-            var messageText = messageGO.AddComponent<TextMeshProUGUI>();
-            messageText.text = "Are you sure?";
-            messageText.fontSize = 18;
-            messageText.color = Color.white;
-            messageText.alignment = TextAlignmentOptions.Center;
-
-            // Confirm button
-            var confirmGO = new GameObject("ConfirmButton");
-            confirmGO.transform.SetParent(dialogGO.transform, false);
-            var confirmRect = confirmGO.AddComponent<RectTransform>();
-            confirmRect.anchorMin = new Vector2(0.55f, 0.1f);
-            confirmRect.anchorMax = new Vector2(0.95f, 0.3f);
-            confirmRect.sizeDelta = Vector2.zero;
-            var confirmImage = confirmGO.AddComponent<Image>();
-            confirmImage.color = UIColors.CorruptionGlow;
-            var confirmBtn = confirmGO.AddComponent<Button>();
-            confirmBtn.targetGraphic = confirmImage;
-
-            var confirmTextGO = new GameObject("Text");
-            confirmTextGO.transform.SetParent(confirmGO.transform, false);
-            var confirmTextRect = confirmTextGO.AddComponent<RectTransform>();
-            confirmTextRect.anchorMin = Vector2.zero;
-            confirmTextRect.anchorMax = Vector2.one;
-            confirmTextRect.sizeDelta = Vector2.zero;
-            var confirmBtnText = confirmTextGO.AddComponent<TextMeshProUGUI>();
-            confirmBtnText.text = "Confirm";
-            confirmBtnText.fontSize = 18;
-            confirmBtnText.fontStyle = FontStyles.Bold;
-            confirmBtnText.color = Color.white;
-            confirmBtnText.alignment = TextAlignmentOptions.Center;
-
-            // Cancel button
-            var cancelGO = new GameObject("CancelButton");
-            cancelGO.transform.SetParent(dialogGO.transform, false);
-            var cancelRect = cancelGO.AddComponent<RectTransform>();
-            cancelRect.anchorMin = new Vector2(0.05f, 0.1f);
-            cancelRect.anchorMax = new Vector2(0.45f, 0.3f);
-            cancelRect.sizeDelta = Vector2.zero;
-            var cancelImage = cancelGO.AddComponent<Image>();
-            cancelImage.color = UIColors.PanelGray;
-            var cancelBtn = cancelGO.AddComponent<Button>();
-            cancelBtn.targetGraphic = cancelImage;
-
-            var cancelTextGO = new GameObject("Text");
-            cancelTextGO.transform.SetParent(cancelGO.transform, false);
-            var cancelTextRect = cancelTextGO.AddComponent<RectTransform>();
-            cancelTextRect.anchorMin = Vector2.zero;
-            cancelTextRect.anchorMax = Vector2.one;
-            cancelTextRect.sizeDelta = Vector2.zero;
-            var cancelBtnText = cancelTextGO.AddComponent<TextMeshProUGUI>();
-            cancelBtnText.text = "Cancel";
-            cancelBtnText.fontSize = 18;
-            cancelBtnText.fontStyle = FontStyles.Bold;
-            cancelBtnText.color = UIColors.SoulCyan;
-            cancelBtnText.alignment = TextAlignmentOptions.Center;
-
-            // Add ConfirmationDialog component
-            var dialog = go.AddComponent<ConfirmationDialog>();
-            dialog._overlay = canvasGroup;
-            dialog._backgroundPanel = bgImage;
-            dialog._dialogPanel = dialogRect;
-            dialog._titleText = titleText;
-            dialog._messageText = messageText;
-            dialog._confirmButton = confirmBtn;
-            dialog._confirmButtonText = confirmBtnText;
-            dialog._cancelButton = cancelBtn;
-            dialog._cancelButtonText = cancelBtnText;
-
-            // Don't destroy on load
-            DontDestroyOnLoad(go);
+            var prefabInstance = Instantiate(prefab);
+            prefabInstance.name = "ConfirmationDialog";
+            DontDestroyOnLoad(prefabInstance);
+            Debug.Log("[ConfirmationDialog] Created from prefab");
         }
     }
 }

@@ -10,6 +10,7 @@ using TMPro;
 using DG.Tweening;
 using HNR.Cards;
 using HNR.Characters;
+using HNR.UI.Config;
 
 namespace HNR.UI.Components
 {
@@ -148,165 +149,57 @@ namespace HNR.UI.Components
         {
             if (_cardContainer == null) return;
 
-            // Try to use Card.prefab if available
-            if (_cardItemPrefab != null)
+            // Use local prefab or fall back to config
+            var prefab = _cardItemPrefab ?? RuntimeUIPrefabConfigSO.Instance?.SimpleCardDisplayItemPrefab;
+
+            if (prefab == null)
             {
-                var cardComponent = _cardItemPrefab.GetComponent<Card>();
-                if (cardComponent != null)
+                Debug.LogError("[RequiemCardDisplay] Card item prefab not assigned. Check RuntimeUIPrefabConfig.");
+                return;
+            }
+
+            var cardObj = Instantiate(prefab, _cardContainer);
+            cardObj.name = $"Card_{cardData.CardName}";
+
+            // Try Card component first
+            var cardComponent = cardObj.GetComponent<Card>();
+            if (cardComponent != null)
+            {
+                cardComponent.SetCard(cardData);
+
+                // Add wrapper item for tracking
+                var item = cardObj.GetComponent<CardDisplayItem>();
+                if (item == null)
                 {
-                    // Using Card.prefab - instantiate and setup
-                    var cardObj = Instantiate(_cardItemPrefab, _cardContainer);
-                    var card = cardObj.GetComponent<Card>();
-                    if (card != null)
-                    {
-                        card.SetCard(cardData);
-
-                        // Add wrapper item for tracking
-                        var item = cardObj.AddComponent<CardDisplayItem>();
-                        item.SetCardData(cardData);
-                        _cardItems.Add(item);
-
-                        // Animate entrance
-                        cardObj.transform.localScale = Vector3.zero;
-                        cardObj.transform.DOScale(1f, 0.3f)
-                            .SetDelay(animationDelay)
-                            .SetEase(Ease.OutBack)
-                            .SetLink(cardObj);
-                        return;
-                    }
+                    item = cardObj.AddComponent<CardDisplayItem>();
                 }
-
-                // Fallback to CardDisplayItem prefab
-                var itemObj = Instantiate(_cardItemPrefab, _cardContainer);
-                var displayItem = itemObj.GetComponent<CardDisplayItem>();
+                item.SetCardData(cardData);
+                _cardItems.Add(item);
+            }
+            else
+            {
+                // Fallback to CardDisplayItem
+                var displayItem = cardObj.GetComponent<CardDisplayItem>();
                 if (displayItem != null)
                 {
                     displayItem.SetCardData(cardData);
-                    displayItem.PlayEntranceAnimation(animationDelay);
                     _cardItems.Add(displayItem);
-                    return;
+                }
+                else
+                {
+                    // Add one if missing
+                    displayItem = cardObj.AddComponent<CardDisplayItem>();
+                    displayItem.SetCardData(cardData);
+                    _cardItems.Add(displayItem);
                 }
             }
 
-            // Final fallback: Create simple text display
-            CreateSimpleCardItem(cardData, animationDelay);
-        }
-
-        private void CreateSimpleCardItem(CardDataSO cardData, float animationDelay)
-        {
-            if (_cardContainer == null) return;
-
-            // Create a simple GameObject with card info
-            var itemObj = new GameObject($"Card_{cardData.CardName}");
-            itemObj.transform.SetParent(_cardContainer, false);
-
-            // Add layout element for grid
-            var layoutElement = itemObj.AddComponent<LayoutElement>();
-            layoutElement.preferredHeight = 170;
-            layoutElement.preferredWidth = 120;
-
-            // Add background
-            var image = itemObj.AddComponent<Image>();
-            image.color = GetCardTypeColor(cardData.CardType);
-
-            // Create cost badge
-            var costBadge = new GameObject("CostBadge");
-            costBadge.transform.SetParent(itemObj.transform, false);
-            var costRect = costBadge.AddComponent<RectTransform>();
-            costRect.anchorMin = new Vector2(0, 1);
-            costRect.anchorMax = new Vector2(0, 1);
-            costRect.pivot = new Vector2(0, 1);
-            costRect.sizeDelta = new Vector2(30, 30);
-            costRect.anchoredPosition = new Vector2(5, -5);
-
-            var costBg = costBadge.AddComponent<Image>();
-            costBg.color = new Color(0.1f, 0.1f, 0.15f, 0.9f);
-
-            var costTextObj = new GameObject("CostText");
-            costTextObj.transform.SetParent(costBadge.transform, false);
-            var costTextRect = costTextObj.AddComponent<RectTransform>();
-            costTextRect.anchorMin = Vector2.zero;
-            costTextRect.anchorMax = Vector2.one;
-            costTextRect.offsetMin = Vector2.zero;
-            costTextRect.offsetMax = Vector2.zero;
-
-            var costText = costTextObj.AddComponent<TextMeshProUGUI>();
-            costText.text = cardData.APCost.ToString();
-            costText.fontSize = 16;
-            costText.fontStyle = FontStyles.Bold;
-            costText.color = Color.white;
-            costText.alignment = TextAlignmentOptions.Center;
-
-            // Create card name
-            var nameObj = new GameObject("Name");
-            nameObj.transform.SetParent(itemObj.transform, false);
-            var nameRect = nameObj.AddComponent<RectTransform>();
-            nameRect.anchorMin = new Vector2(0, 0.7f);
-            nameRect.anchorMax = new Vector2(1, 0.85f);
-            nameRect.offsetMin = new Vector2(5, 0);
-            nameRect.offsetMax = new Vector2(-5, 0);
-
-            var nameText = nameObj.AddComponent<TextMeshProUGUI>();
-            nameText.text = cardData.CardName;
-            nameText.fontSize = 12;
-            nameText.fontStyle = FontStyles.Bold;
-            nameText.color = Color.white;
-            nameText.alignment = TextAlignmentOptions.Center;
-
-            // Create card type
-            var typeObj = new GameObject("Type");
-            typeObj.transform.SetParent(itemObj.transform, false);
-            var typeRect = typeObj.AddComponent<RectTransform>();
-            typeRect.anchorMin = new Vector2(0, 0.55f);
-            typeRect.anchorMax = new Vector2(1, 0.7f);
-            typeRect.offsetMin = new Vector2(5, 0);
-            typeRect.offsetMax = new Vector2(-5, 0);
-
-            var typeText = typeObj.AddComponent<TextMeshProUGUI>();
-            typeText.text = cardData.CardType.ToString();
-            typeText.fontSize = 10;
-            typeText.color = new Color(0.8f, 0.8f, 0.8f);
-            typeText.alignment = TextAlignmentOptions.Center;
-
-            // Create description
-            var descObj = new GameObject("Description");
-            descObj.transform.SetParent(itemObj.transform, false);
-            var descRect = descObj.AddComponent<RectTransform>();
-            descRect.anchorMin = new Vector2(0, 0.05f);
-            descRect.anchorMax = new Vector2(1, 0.55f);
-            descRect.offsetMin = new Vector2(8, 5);
-            descRect.offsetMax = new Vector2(-8, -5);
-
-            var descText = descObj.AddComponent<TextMeshProUGUI>();
-            descText.text = cardData.Description;
-            descText.fontSize = 9;
-            descText.color = Color.white;
-            descText.alignment = TextAlignmentOptions.Center;
-            descText.textWrappingMode = TextWrappingModes.Normal;
-
-            // Add simple item component
-            var item = itemObj.AddComponent<CardDisplayItem>();
-            item.SetCardData(cardData);
-            _cardItems.Add(item);
-
             // Animate entrance
-            itemObj.transform.localScale = Vector3.zero;
-            itemObj.transform.DOScale(1f, 0.3f)
+            cardObj.transform.localScale = Vector3.zero;
+            cardObj.transform.DOScale(1f, 0.3f)
                 .SetDelay(animationDelay)
                 .SetEase(Ease.OutBack)
-                .SetLink(itemObj);
-        }
-
-        private Color GetCardTypeColor(CardType cardType)
-        {
-            return cardType switch
-            {
-                CardType.Strike => new Color(0.6f, 0.2f, 0.2f, 0.9f),
-                CardType.Guard => new Color(0.2f, 0.35f, 0.6f, 0.9f),
-                CardType.Skill => new Color(0.2f, 0.5f, 0.25f, 0.9f),
-                CardType.Power => new Color(0.45f, 0.2f, 0.55f, 0.9f),
-                _ => new Color(0.25f, 0.25f, 0.3f, 0.9f)
-            };
+                .SetLink(cardObj);
         }
     }
 

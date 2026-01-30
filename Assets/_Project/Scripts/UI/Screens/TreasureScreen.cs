@@ -13,6 +13,7 @@ using HNR.Core.Interfaces;
 using HNR.Core.Events;
 using HNR.Cards;
 using HNR.Map;
+using HNR.UI.Config;
 
 namespace HNR.UI.Screens
 {
@@ -209,78 +210,45 @@ namespace HNR.UI.Screens
             if (_cardRewards.Count == 0 || _cardRewardContainer == null)
                 return;
 
+            // Use local prefab or fall back to config
+            var prefab = _cardRewardSlotPrefab ?? RuntimeUIPrefabConfigSO.Instance?.RewardCardSlotPrefab;
+
+            if (prefab == null)
+            {
+                Debug.LogError("[TreasureScreen] Card reward slot prefab not assigned. Check RuntimeUIPrefabConfig.");
+                return;
+            }
+
             for (int i = 0; i < _cardRewards.Count; i++)
             {
                 var card = _cardRewards[i];
-                GameObject slot = null;
+                var slot = Instantiate(prefab, _cardRewardContainer);
+                slot.name = $"CardSlot_{card.CardName}";
 
-                if (_cardRewardSlotPrefab != null)
+                _spawnedCardSlots.Add(slot);
+
+                // Try Button first (for legacy placeholder slots)
+                var button = slot.GetComponent<Button>();
+                if (button != null)
                 {
-                    slot = Instantiate(_cardRewardSlotPrefab, _cardRewardContainer);
+                    int index = i;
+                    button.onClick.RemoveAllListeners();
+                    button.onClick.AddListener(() => OnCardRewardSelected(index));
                 }
                 else
                 {
-                    slot = CreatePlaceholderCardSlot(card);
-                }
-
-                if (slot != null)
-                {
-                    _spawnedCardSlots.Add(slot);
-
-                    // Try Button first (for legacy placeholder slots)
-                    var button = slot.GetComponent<Button>();
-                    if (button != null)
+                    // Use Card's native click event (for Card prefab)
+                    var cardComponent = slot.GetComponent<Card>();
+                    if (cardComponent != null)
                     {
                         int index = i;
-                        button.onClick.RemoveAllListeners();
-                        button.onClick.AddListener(() => OnCardRewardSelected(index));
+                        cardComponent.OnCardClicked += (clickedCard) => OnCardRewardSelected(index);
                     }
-                    else
-                    {
-                        // Use Card's native click event (for Card prefab)
-                        var cardComponent = slot.GetComponent<Card>();
-                        if (cardComponent != null)
-                        {
-                            int index = i;
-                            cardComponent.OnCardClicked += (clickedCard) => OnCardRewardSelected(index);
-                        }
-                    }
-
-                    var cardDisplay = slot.GetComponent<ICardDisplay>();
-                    cardDisplay?.SetCard(card);
                 }
+
+                var cardDisplay = slot.GetComponent<ICardDisplay>();
+                cardDisplay?.SetCard(card);
             }
-        }
-
-        private GameObject CreatePlaceholderCardSlot(CardDataSO card)
-        {
-            var slot = new GameObject($"CardSlot_{card.CardName}");
-            slot.transform.SetParent(_cardRewardContainer, false);
-
-            var rect = slot.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(90, 120);
-
-            var image = slot.AddComponent<Image>();
-            image.color = new Color(0.15f, 0.15f, 0.2f);
-
-            var button = slot.AddComponent<Button>();
-            button.targetGraphic = image;
-
-            var textObj = new GameObject("CardName");
-            textObj.transform.SetParent(slot.transform, false);
-
-            var textRect = textObj.AddComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.sizeDelta = Vector2.zero;
-
-            var text = textObj.AddComponent<TextMeshProUGUI>();
-            text.text = card.CardName;
-            text.fontSize = 12;
-            text.alignment = TextAlignmentOptions.Center;
-            text.color = Color.white;
-
-            return slot;
         }
 
         private void ClearCardSlots()

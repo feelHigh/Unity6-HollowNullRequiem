@@ -13,6 +13,7 @@ using HNR.Core.Interfaces;
 using HNR.Core.Events;
 using HNR.Cards;
 using HNR.Progression;
+using HNR.UI.Config;
 
 namespace HNR.UI
 {
@@ -299,82 +300,46 @@ namespace HNR.UI
             if (!_isVictory || _cardRewards.Count == 0 || _cardRewardContainer == null)
                 return;
 
+            // Use local prefab or fall back to config
+            var prefab = _cardRewardSlotPrefab ?? RuntimeUIPrefabConfigSO.Instance?.RewardCardSlotPrefab;
+
+            if (prefab == null)
+            {
+                Debug.LogError("[ResultsScreen] Card reward slot prefab not assigned. Check RuntimeUIPrefabConfig.");
+                return;
+            }
+
             for (int i = 0; i < _cardRewards.Count; i++)
             {
                 var card = _cardRewards[i];
-                GameObject slot = null;
+                var slot = Instantiate(prefab, _cardRewardContainer);
+                slot.name = $"CardSlot_{card.CardName}";
 
-                if (_cardRewardSlotPrefab != null)
+                _spawnedCardSlots.Add(slot);
+
+                // Wire up card slot - try Button first (for legacy placeholder slots)
+                var button = slot.GetComponent<Button>();
+                if (button != null)
                 {
-                    slot = Instantiate(_cardRewardSlotPrefab, _cardRewardContainer);
+                    int index = i;
+                    button.onClick.RemoveAllListeners();
+                    button.onClick.AddListener(() => OnCardRewardSelected(index));
                 }
                 else
                 {
-                    // Create placeholder slot if no prefab assigned
-                    slot = CreatePlaceholderCardSlot(card);
-                }
-
-                if (slot != null)
-                {
-                    _spawnedCardSlots.Add(slot);
-
-                    // Wire up card slot - try Button first (for legacy placeholder slots)
-                    var button = slot.GetComponent<Button>();
-                    if (button != null)
+                    // Use Card's native click event (for Card prefab)
+                    var cardComponent = slot.GetComponent<Card>();
+                    if (cardComponent != null)
                     {
                         int index = i;
-                        button.onClick.RemoveAllListeners();
-                        button.onClick.AddListener(() => OnCardRewardSelected(index));
+                        cardComponent.OnCardClicked += (clickedCard) => OnCardRewardSelected(index);
                     }
-                    else
-                    {
-                        // Use Card's native click event (for Card prefab)
-                        var cardComponent = slot.GetComponent<Card>();
-                        if (cardComponent != null)
-                        {
-                            int index = i;
-                            cardComponent.OnCardClicked += (clickedCard) => OnCardRewardSelected(index);
-                        }
-                    }
-
-                    // Try to set card data if component exists
-                    var cardDisplay = slot.GetComponent<ICardDisplay>();
-                    cardDisplay?.SetCard(card);
                 }
+
+                // Try to set card data if component exists
+                var cardDisplay = slot.GetComponent<ICardDisplay>();
+                cardDisplay?.SetCard(card);
             }
-        }
-
-        private GameObject CreatePlaceholderCardSlot(CardDataSO card)
-        {
-            // Create a simple placeholder if no prefab is assigned
-            var slot = new GameObject($"CardSlot_{card.CardName}");
-            slot.transform.SetParent(_cardRewardContainer, false);
-
-            var rect = slot.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(90, 120);
-
-            var image = slot.AddComponent<Image>();
-            image.color = new Color(0.15f, 0.15f, 0.2f);
-
-            var button = slot.AddComponent<Button>();
-            button.targetGraphic = image;
-
-            // Add card name text
-            var textObj = new GameObject("CardName");
-            textObj.transform.SetParent(slot.transform, false);
-
-            var textRect = textObj.AddComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.sizeDelta = Vector2.zero;
-
-            var text = textObj.AddComponent<TextMeshProUGUI>();
-            text.text = card.CardName;
-            text.fontSize = 12;
-            text.alignment = TextAlignmentOptions.Center;
-            text.color = Color.white;
-
-            return slot;
         }
 
         private void ClearCardSlots()

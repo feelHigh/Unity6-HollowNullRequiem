@@ -13,6 +13,7 @@ using HNR.Core;
 using HNR.Core.Events;
 using HNR.Combat;
 using HNR.Characters;
+using HNR.UI.Config;
 
 namespace HNR.UI.Combat
 {
@@ -553,79 +554,45 @@ namespace HNR.UI.Combat
 
         private GameObject CreateStatusIconObject(StatusType statusType, int stacks)
         {
-            GameObject iconObj;
+            // Use local prefab or fall back to config
+            var prefab = _statusIconPrefab ?? RuntimeUIPrefabConfigSO.Instance?.StatusIconPrefab;
 
-            // Use prefab if available
-            if (_statusIconPrefab != null)
+            if (prefab == null)
             {
-                iconObj = Instantiate(_statusIconPrefab, _statusContainer);
-                iconObj.name = $"Status_{statusType}";
-
-                // Update size
-                var rect = iconObj.GetComponent<RectTransform>();
-                if (rect != null)
-                {
-                    rect.sizeDelta = new Vector2(_statusIconSize, _statusIconSize);
-                }
-
-                var layoutElement = iconObj.GetComponent<LayoutElement>();
-                if (layoutElement != null)
-                {
-                    layoutElement.preferredWidth = _statusIconSize;
-                    layoutElement.preferredHeight = _statusIconSize;
-                }
-
-                // Update color
-                var bgImage = iconObj.GetComponent<Image>();
-                if (bgImage != null)
-                {
-                    bgImage.color = GetStatusColor(statusType);
-                }
-
-                // Update stack text
-                var stacksText = iconObj.GetComponentInChildren<TMP_Text>();
-                if (stacksText != null)
-                {
-                    stacksText.text = stacks > 1 ? stacks.ToString() : "";
-                    stacksText.fontSize = _statusIconSize * 0.6f;
-                }
+                Debug.LogError($"[EnemyFloatingUI] StatusIcon prefab not assigned. Check RuntimeUIPrefabConfig.");
+                return null;
             }
-            else
+
+            var iconObj = Instantiate(prefab, _statusContainer);
+            iconObj.name = $"Status_{statusType}";
+
+            // Update size
+            var rect = iconObj.GetComponent<RectTransform>();
+            if (rect != null)
             {
-                // Fallback: Create at runtime
-                iconObj = new GameObject($"Status_{statusType}");
-                iconObj.transform.SetParent(_statusContainer, false);
-
-                var rect = iconObj.AddComponent<RectTransform>();
                 rect.sizeDelta = new Vector2(_statusIconSize, _statusIconSize);
+            }
 
-                var layoutElement = iconObj.AddComponent<LayoutElement>();
+            var layoutElement = iconObj.GetComponent<LayoutElement>();
+            if (layoutElement != null)
+            {
                 layoutElement.preferredWidth = _statusIconSize;
                 layoutElement.preferredHeight = _statusIconSize;
+            }
 
-                // Background
-                var bgImage = iconObj.AddComponent<Image>();
+            // Update color
+            var bgImage = iconObj.GetComponent<Image>();
+            if (bgImage != null)
+            {
                 bgImage.color = GetStatusColor(statusType);
-                bgImage.sprite = _whiteSprite;
+            }
 
-                // Stack text
-                if (stacks > 1)
-                {
-                    var textObj = new GameObject("Stacks");
-                    textObj.transform.SetParent(iconObj.transform, false);
-
-                    var textRect = textObj.AddComponent<RectTransform>();
-                    textRect.anchorMin = Vector2.zero;
-                    textRect.anchorMax = Vector2.one;
-                    textRect.sizeDelta = Vector2.zero;
-
-                    var tmp = textObj.AddComponent<TextMeshProUGUI>();
-                    tmp.text = stacks.ToString();
-                    tmp.fontSize = _statusIconSize * 0.6f;
-                    tmp.fontStyle = FontStyles.Bold;
-                    tmp.alignment = TextAlignmentOptions.Center;
-                    tmp.color = Color.white;
-                }
+            // Update stack text
+            var stacksText = iconObj.GetComponentInChildren<TMP_Text>();
+            if (stacksText != null)
+            {
+                stacksText.text = stacks > 1 ? stacks.ToString() : "";
+                stacksText.fontSize = _statusIconSize * 0.6f;
             }
 
             return iconObj;

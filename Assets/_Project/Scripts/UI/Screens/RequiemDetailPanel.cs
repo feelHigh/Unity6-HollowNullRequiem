@@ -10,6 +10,7 @@ using TMPro;
 using DG.Tweening;
 using HNR.Characters;
 using HNR.UI.Components;
+using HNR.UI.Config;
 
 namespace HNR.UI.Screens
 {
@@ -327,31 +328,24 @@ namespace HNR.UI.Screens
 
         private void CreateSidebarPortrait(RequiemDataSO requiem)
         {
-            GameObject portraitObj;
+            // Use local prefab or fall back to config
+            var prefab = _sidebarPortraitPrefab ?? RuntimeUIPrefabConfigSO.Instance?.RequiemPortraitButtonPrefab;
 
-            if (_sidebarPortraitPrefab != null)
+            if (prefab == null)
             {
-                portraitObj = Instantiate(_sidebarPortraitPrefab, _portraitListContainer);
+                Debug.LogError("[RequiemDetailPanel] Sidebar portrait prefab not assigned. Check RuntimeUIPrefabConfig.");
+                return;
             }
-            else
+
+            var portraitObj = Instantiate(prefab, _portraitListContainer);
+            portraitObj.name = $"SidebarPortrait_{requiem.RequiemName}";
+
+            // Set portrait image if available
+            var image = portraitObj.GetComponent<Image>();
+            if (image != null && requiem.Portrait != null)
             {
-                // Create simple button with 1:1 aspect ratio portrait
-                portraitObj = new GameObject($"SidebarPortrait_{requiem.RequiemName}");
-                portraitObj.transform.SetParent(_portraitListContainer, false);
-
-                var layoutElement = portraitObj.AddComponent<LayoutElement>();
-                layoutElement.preferredWidth = 60;
-                layoutElement.preferredHeight = 60;
-
-                var button = portraitObj.AddComponent<Button>();
-                var image = portraitObj.AddComponent<Image>();
-                image.preserveAspect = true; // Maintain 1:1 aspect ratio
-
-                if (requiem.Portrait != null)
-                {
-                    image.sprite = requiem.Portrait;
-                    image.color = Color.white;
-                }
+                image.sprite = requiem.Portrait;
+                image.color = Color.white;
             }
 
             // Setup button click
@@ -365,7 +359,11 @@ namespace HNR.UI.Screens
             // Highlight current selection
             if (requiem == _currentRequiem)
             {
-                var outline = portraitObj.AddComponent<Outline>();
+                var outline = portraitObj.GetComponent<Outline>();
+                if (outline == null)
+                {
+                    outline = portraitObj.AddComponent<Outline>();
+                }
                 outline.effectColor = _activeTabColor;
                 outline.effectDistance = new Vector2(3, 3);
             }

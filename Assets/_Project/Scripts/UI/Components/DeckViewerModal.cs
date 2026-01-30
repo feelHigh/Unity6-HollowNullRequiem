@@ -13,6 +13,7 @@ using HNR.Core;
 using HNR.Core.Events;
 using HNR.Core.Interfaces;
 using HNR.Cards;
+using HNR.UI.Config;
 using HNR.UI.Screens;
 
 namespace HNR.UI.Components
@@ -304,19 +305,17 @@ namespace HNR.UI.Components
 
         private void CreateCardSlot(CardDataSO card, int index)
         {
-            GameObject slot;
+            // Use local prefab or fall back to config
+            var prefab = _cardSlotPrefab ?? RuntimeUIPrefabConfigSO.Instance?.DeckViewerCardSlotPrefab;
 
-            if (_cardSlotPrefab != null)
+            if (prefab == null)
             {
-                slot = Instantiate(_cardSlotPrefab, _cardContainer);
-            }
-            else
-            {
-                // Create placeholder slot
-                slot = CreatePlaceholderSlot(card);
+                Debug.LogError($"[DeckViewerModal] Card slot prefab not assigned. Check RuntimeUIPrefabConfig.");
+                return;
             }
 
-            if (slot == null) return;
+            var slot = Instantiate(prefab, _cardContainer);
+            slot.name = $"CardSlot_{card?.CardName ?? "Unknown"}";
 
             _spawnedSlots.Add(slot);
 
@@ -341,73 +340,6 @@ namespace HNR.UI.Components
             // Set card data if component exists
             var cardDisplay = slot.GetComponent<ICardDisplay>();
             cardDisplay?.SetCard(card);
-        }
-
-        private GameObject CreatePlaceholderSlot(CardDataSO card)
-        {
-            var slot = new GameObject($"CardSlot_{card?.CardName ?? "Unknown"}");
-            slot.transform.SetParent(_cardContainer, false);
-
-            // Add rect transform - match Card.prefab native size
-            var rect = slot.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(200, 280);
-
-            // Add background image
-            var image = slot.AddComponent<Image>();
-            image.color = _normalSlotColor;
-
-            // Add button
-            var button = slot.AddComponent<Button>();
-            button.targetGraphic = image;
-
-            // Card name text
-            var textObj = new GameObject("CardName");
-            textObj.transform.SetParent(slot.transform, false);
-
-            var textRect = textObj.AddComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.sizeDelta = Vector2.zero;
-            textRect.offsetMin = new Vector2(5, 5);
-            textRect.offsetMax = new Vector2(-5, -5);
-
-            var text = textObj.AddComponent<TextMeshProUGUI>();
-            text.text = card?.CardName ?? "Unknown";
-            text.fontSize = 18; // Larger font for bigger card
-            text.alignment = TextAlignmentOptions.Center;
-            text.color = Color.white;
-            text.textWrappingMode = TMPro.TextWrappingModes.Normal;
-
-            // Cost indicator
-            var costObj = new GameObject("Cost");
-            costObj.transform.SetParent(slot.transform, false);
-
-            var costRect = costObj.AddComponent<RectTransform>();
-            costRect.anchorMin = new Vector2(0, 1);
-            costRect.anchorMax = new Vector2(0, 1);
-            costRect.pivot = new Vector2(0, 1);
-            costRect.anchoredPosition = new Vector2(8, -8);
-            costRect.sizeDelta = new Vector2(40, 40); // Larger cost badge
-
-            var costBg = costObj.AddComponent<Image>();
-            costBg.color = new Color(0.2f, 0.4f, 0.8f);
-
-            var costTextObj = new GameObject("CostText");
-            costTextObj.transform.SetParent(costObj.transform, false);
-
-            var costTextRect = costTextObj.AddComponent<RectTransform>();
-            costTextRect.anchorMin = Vector2.zero;
-            costTextRect.anchorMax = Vector2.one;
-            costTextRect.sizeDelta = Vector2.zero;
-
-            var costText = costTextObj.AddComponent<TextMeshProUGUI>();
-            costText.text = card?.APCost.ToString() ?? "?";
-            costText.fontSize = 24; // Larger font for bigger badge
-            costText.alignment = TextAlignmentOptions.Center;
-            costText.color = Color.white;
-            costText.fontStyle = FontStyles.Bold;
-
-            return slot;
         }
 
         private void ClearCardSlots()

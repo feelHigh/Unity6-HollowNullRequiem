@@ -13,6 +13,7 @@ using HNR.Core;
 using HNR.Core.Events;
 using HNR.Core.Interfaces;
 using HNR.Progression;
+using HNR.UI.Config;
 
 namespace HNR.UI.Components
 {
@@ -302,19 +303,17 @@ namespace HNR.UI.Components
 
         private void CreateRelicSlot(ShopItem item)
         {
-            GameObject slotObj;
+            // Use local prefab or fall back to config
+            var prefab = _relicSlotPrefab ?? RuntimeUIPrefabConfigSO.Instance?.RelicShopSlotPrefab;
 
-            if (_relicSlotPrefab != null)
+            if (prefab == null)
             {
-                slotObj = Instantiate(_relicSlotPrefab, _relicContainer);
-            }
-            else
-            {
-                // Create placeholder slot
-                slotObj = CreatePlaceholderSlot(item);
+                Debug.LogError($"[RelicShopOverlay] Relic slot prefab not assigned. Check RuntimeUIPrefabConfig.");
+                return;
             }
 
-            if (slotObj == null) return;
+            var slotObj = Instantiate(prefab, _relicContainer);
+            slotObj.name = $"RelicSlot_{item.DisplayName}";
 
             var slot = slotObj.GetComponent<RelicShopSlot>();
             if (slot != null)
@@ -327,54 +326,6 @@ namespace HNR.UI.Components
             {
                 Debug.LogWarning("[RelicShopOverlay] Relic slot prefab missing RelicShopSlot component");
             }
-        }
-
-        private GameObject CreatePlaceholderSlot(ShopItem item)
-        {
-            var slot = new GameObject($"RelicSlot_{item.DisplayName}");
-            slot.transform.SetParent(_relicContainer, false);
-
-            // Add rect transform
-            var rect = slot.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(100, 140);
-
-            // Add background image
-            var bg = slot.AddComponent<Image>();
-            bg.color = new Color(0.15f, 0.15f, 0.2f, 0.8f);
-
-            // Add RelicShopSlot component
-            var slotComponent = slot.AddComponent<RelicShopSlot>();
-
-            // Icon container
-            var iconObj = new GameObject("Icon");
-            iconObj.transform.SetParent(slot.transform, false);
-
-            var iconRect = iconObj.AddComponent<RectTransform>();
-            iconRect.anchorMin = new Vector2(0.5f, 0.6f);
-            iconRect.anchorMax = new Vector2(0.5f, 0.6f);
-            iconRect.sizeDelta = new Vector2(64, 64);
-
-            var iconImage = iconObj.AddComponent<Image>();
-            iconImage.sprite = item.RelicData?.Icon;
-
-            // Price text
-            var priceObj = new GameObject("Price");
-            priceObj.transform.SetParent(slot.transform, false);
-
-            var priceRect = priceObj.AddComponent<RectTransform>();
-            priceRect.anchorMin = new Vector2(0, 0);
-            priceRect.anchorMax = new Vector2(1, 0);
-            priceRect.pivot = new Vector2(0.5f, 0);
-            priceRect.anchoredPosition = new Vector2(0, 10);
-            priceRect.sizeDelta = new Vector2(0, 30);
-
-            var priceText = priceObj.AddComponent<TextMeshProUGUI>();
-            priceText.text = item.Price.ToString();
-            priceText.fontSize = 18;
-            priceText.alignment = TextAlignmentOptions.Center;
-            priceText.color = Color.white;
-
-            return slot;
         }
 
         private void ClearRelicSlots()

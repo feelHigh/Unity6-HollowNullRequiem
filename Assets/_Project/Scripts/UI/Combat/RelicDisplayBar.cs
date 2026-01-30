@@ -12,6 +12,7 @@ using HNR.Core;
 using HNR.Core.Events;
 using HNR.Core.Interfaces;
 using HNR.Progression;
+using HNR.UI.Config;
 
 namespace HNR.UI.Combat
 {
@@ -136,33 +137,17 @@ namespace HNR.UI.Combat
 
         private void CreateRelicIcon(RelicDataSO relic, int index)
         {
-            GameObject iconGO;
+            // Use local prefab or fall back to config
+            var prefab = _relicIconPrefab ?? RuntimeUIPrefabConfigSO.Instance?.RelicDisplayIconPrefab;
 
-            if (_relicIconPrefab != null)
+            if (prefab == null)
             {
-                iconGO = Instantiate(_relicIconPrefab, _relicContainer);
+                Debug.LogError($"[RelicDisplayBar] RelicIcon prefab not assigned. Check RuntimeUIPrefabConfig.");
+                return;
             }
-            else
-            {
-                // Create simple fallback icon
-                iconGO = new GameObject($"Relic_{relic.RelicId}");
-                iconGO.transform.SetParent(_relicContainer, false);
 
-                var rectTransform = iconGO.AddComponent<RectTransform>();
-                rectTransform.sizeDelta = new Vector2(_iconSize, _iconSize);
-
-                var image = iconGO.AddComponent<Image>();
-                if (relic.Icon != null)
-                {
-                    image.sprite = relic.Icon;
-                }
-                else
-                {
-                    image.color = GetRarityColor(relic.Rarity);
-                }
-
-                var button = iconGO.AddComponent<Button>();
-            }
+            var iconGO = Instantiate(prefab, _relicContainer);
+            iconGO.name = $"Relic_{relic.RelicId}";
 
             // Set up icon slot
             var slot = iconGO.GetComponent<RelicIconSlot>();
