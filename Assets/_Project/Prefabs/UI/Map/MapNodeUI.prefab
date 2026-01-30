@@ -140,7 +140,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 00cdd8711098a48f9bf2c98336c302e1, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -159,9 +159,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7991700423813388675}
+  - component: {fileID: 2506899226226694611}
   - component: {fileID: 9171399555564854719}
   - component: {fileID: 1553982032719313180}
-  - component: {fileID: 2506899226226694611}
   m_Layer: 0
   m_Name: MapNodeUI
   m_TagString: Untagged
@@ -191,51 +191,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 60, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &9171399555564854719
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6698660645777210783}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 604f3ba922341794aa2ff33ce12f032a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _nodeIcon: {fileID: 8368899586415906429}
-  _background: {fileID: 2506899226226694611}
-  _highlightRing: {fileID: 8764406587609260394}
-  _currentIndicator: {fileID: 2443917570394162893}
-  _typeLabel: {fileID: 0}
-  _startIcon: {fileID: 0}
-  _combatIcon: {fileID: 0}
-  _eliteIcon: {fileID: 0}
-  _shopIcon: {fileID: 0}
-  _echoIcon: {fileID: 0}
-  _sanctuaryIcon: {fileID: 0}
-  _treasureIcon: {fileID: 0}
-  _bossIcon: {fileID: 0}
-  _lockedColor: {r: 0.3, g: 0.3, b: 0.3, a: 1}
-  _availableColor: {r: 1, g: 1, b: 1, a: 1}
-  _currentColor: {r: 1, g: 0.84, b: 0, a: 1}
-  _visitedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  _startColor: {r: 0.3, g: 0.8, b: 0.3, a: 1}
-  _combatColor: {r: 0.9, g: 0.3, b: 0.3, a: 1}
-  _eliteColor: {r: 0.8, g: 0.2, b: 0.6, a: 1}
-  _shopColor: {r: 1, g: 0.84, b: 0, a: 1}
-  _echoColor: {r: 0.4, g: 0.6, b: 0.9, a: 1}
-  _sanctuaryColor: {r: 0.5, g: 0.9, b: 0.5, a: 1}
-  _treasureColor: {r: 1, g: 0.6, b: 0.1, a: 1}
-  _bossColor: {r: 0.6, g: 0.1, b: 0.1, a: 1}
---- !u!222 &1553982032719313180
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6698660645777210783}
-  m_CullTransparentMesh: 1
 --- !u!114 &2506899226226694611
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -256,7 +211,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: a8cc7f2511d84409499bb01d4d920062, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -266,6 +221,51 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &9171399555564854719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6698660645777210783}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 604f3ba922341794aa2ff33ce12f032a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _nodeIcon: {fileID: 8368899586415906429}
+  _background: {fileID: 2506899226226694611}
+  _highlightRing: {fileID: 8764406587609260394}
+  _currentIndicator: {fileID: 2443917570394162893}
+  _typeLabel: {fileID: 0}
+  _startIcon: {fileID: 21300000, guid: 01c7b20504e46408592ff8892bb52fef, type: 3}
+  _combatIcon: {fileID: 21300000, guid: b060316ad213b4638806ca4aac3b48ba, type: 3}
+  _eliteIcon: {fileID: 21300000, guid: c84eaee1c807d451895d257be3d64439, type: 3}
+  _shopIcon: {fileID: 21300000, guid: cbe6ba94279074a83b7676f64594c47e, type: 3}
+  _echoIcon: {fileID: 21300000, guid: 1e040c41e37d84e25a0b4e610373a419, type: 3}
+  _sanctuaryIcon: {fileID: 21300000, guid: 862923fb6f3a44807a4db356e7d5e15a, type: 3}
+  _treasureIcon: {fileID: 21300000, guid: c3220d82d9c7a4384a1ce5b803d17227, type: 3}
+  _bossIcon: {fileID: 21300000, guid: e2a7451e297d44788962a7e503064c5b, type: 3}
+  _lockedColor: {r: 0.3, g: 0.3, b: 0.3, a: 1}
+  _availableColor: {r: 1, g: 1, b: 1, a: 1}
+  _currentColor: {r: 1, g: 0.84, b: 0, a: 1}
+  _visitedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  _startColor: {r: 0.3, g: 0.8, b: 0.3, a: 1}
+  _combatColor: {r: 0.9, g: 0.3, b: 0.3, a: 1}
+  _eliteColor: {r: 0.8, g: 0.2, b: 0.6, a: 1}
+  _shopColor: {r: 1, g: 0.84, b: 0, a: 1}
+  _echoColor: {r: 0.4, g: 0.6, b: 0.9, a: 1}
+  _sanctuaryColor: {r: 0.5, g: 0.9, b: 0.5, a: 1}
+  _treasureColor: {r: 1, g: 0.6, b: 0.1, a: 1}
+  _bossColor: {r: 0.6, g: 0.1, b: 0.1, a: 1}
+--- !u!222 &1553982032719313180
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6698660645777210783}
+  m_CullTransparentMesh: 1
 --- !u!1 &8764406587609260394
 GameObject:
   m_ObjectHideFlags: 0
@@ -331,7 +331,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 5ba5c3bd2eea84b7383a3d372c6fc579, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
