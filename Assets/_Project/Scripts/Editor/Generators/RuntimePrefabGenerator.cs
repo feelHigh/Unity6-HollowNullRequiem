@@ -750,40 +750,68 @@ namespace HNR.Editor.Generators
 
             var buttonObj = new GameObject("RequiemPortraitButton");
 
+            var buttonRect = buttonObj.AddComponent<RectTransform>();
+            buttonRect.sizeDelta = new Vector2(200, 280);
+
             var layoutElement = buttonObj.AddComponent<LayoutElement>();
-            layoutElement.preferredWidth = 150;
-            layoutElement.preferredHeight = 200;
+            layoutElement.preferredWidth = 200;
+            layoutElement.preferredHeight = 280;
 
             var button = buttonObj.AddComponent<Button>();
             var buttonImage = buttonObj.AddComponent<Image>();
             buttonImage.color = new Color(0.2f, 0.2f, 0.25f, 0.9f);
             button.targetGraphic = buttonImage;
 
+            // Border (frame) - sits behind portrait
+            var borderObj = CreateChild(buttonObj.transform, "Border");
+            StretchRectTransform(borderObj);
+            var borderImage = borderObj.AddComponent<Image>();
+            borderImage.color = new Color(0.6f, 0.5f, 0.3f, 1f); // Gold-ish frame
+            borderImage.raycastTarget = false;
+
+            // BorderDeco (decorative overlay)
+            var borderDecoObj = CreateChild(buttonObj.transform, "BorderDeco");
+            StretchRectTransform(borderDecoObj);
+            var borderDecoImage = borderDecoObj.AddComponent<Image>();
+            borderDecoImage.color = new Color(1f, 1f, 1f, 0.3f);
+            borderDecoImage.raycastTarget = false;
+
             // Portrait image
             var portraitObj = CreateChild(buttonObj.transform, "Portrait");
             var portraitRect = portraitObj.AddComponent<RectTransform>();
-            portraitRect.anchorMin = new Vector2(0.1f, 0.3f);
-            portraitRect.anchorMax = new Vector2(0.9f, 0.95f);
+            portraitRect.anchorMin = new Vector2(0.05f, 0.15f);
+            portraitRect.anchorMax = new Vector2(0.95f, 0.95f);
             portraitRect.offsetMin = Vector2.zero;
             portraitRect.offsetMax = Vector2.zero;
             var portraitImage = portraitObj.AddComponent<Image>();
             portraitImage.color = Color.white;
+            portraitImage.preserveAspect = true;
 
-            // Name text
-            var nameObj = CreateChild(buttonObj.transform, "Name");
-            var nameRect = nameObj.AddComponent<RectTransform>();
-            nameRect.anchorMin = new Vector2(0, 0);
-            nameRect.anchorMax = new Vector2(1, 0.25f);
-            nameRect.offsetMin = new Vector2(5, 5);
-            nameRect.offsetMax = new Vector2(-5, -5);
-            var nameText = nameObj.AddComponent<TextMeshProUGUI>();
-            nameText.text = "Requiem";
-            nameText.fontSize = 16;
-            nameText.color = Color.white;
-            nameText.alignment = TextAlignmentOptions.Center;
+            // Title text (matching scene template naming)
+            var titleObj = CreateChild(buttonObj.transform, "Title");
+            var titleRect = titleObj.AddComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0, 0);
+            titleRect.anchorMax = new Vector2(1, 0.15f);
+            titleRect.offsetMin = new Vector2(5, 5);
+            titleRect.offsetMax = new Vector2(-5, -5);
+            var titleText = titleObj.AddComponent<TextMeshProUGUI>();
+            titleText.text = "Requiem";
+            titleText.fontSize = 18;
+            titleText.color = Color.white;
+            titleText.alignment = TextAlignmentOptions.Center;
+            titleText.fontStyle = FontStyles.Bold;
 
-            // Add RequiemPortraitButton component
-            buttonObj.AddComponent<HNR.UI.Components.RequiemPortraitButton>();
+            // Add RequiemPortraitButton component and wire serialized fields
+            var portraitButton = buttonObj.AddComponent<HNR.UI.Components.RequiemPortraitButton>();
+
+            // Wire serialized fields via SerializedObject
+            var so = new SerializedObject(portraitButton);
+            so.FindProperty("_button").objectReferenceValue = button;
+            so.FindProperty("_portraitImage").objectReferenceValue = portraitImage;
+            so.FindProperty("_nameText").objectReferenceValue = titleText;
+            so.FindProperty("_frameImage").objectReferenceValue = borderImage;
+            // _glowImage and _selectionHighlight left null (no Focus child per user request)
+            so.ApplyModifiedPropertiesWithoutUndo();
 
             SavePrefab(buttonObj, "RequiemPortraitButton.prefab");
         }

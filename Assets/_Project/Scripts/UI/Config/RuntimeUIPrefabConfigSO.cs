@@ -164,7 +164,8 @@ namespace HNR.UI.Config
         {
             get
             {
-                if (_instance == null)
+                // Check if instance is null or destroyed (Unity null check)
+                if (_instance == null || !_instance)
                 {
                     _instance = Resources.Load<RuntimeUIPrefabConfigSO>("Config/RuntimeUIPrefabConfig");
                     if (_instance == null)
@@ -180,6 +181,15 @@ namespace HNR.UI.Config
         /// Clears the cached instance. Call when config asset is modified.
         /// </summary>
         public static void ClearCache()
+        {
+            _instance = null;
+        }
+
+        /// <summary>
+        /// Reset static cache on domain reload to prevent stale references.
+        /// </summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
         {
             _instance = null;
         }

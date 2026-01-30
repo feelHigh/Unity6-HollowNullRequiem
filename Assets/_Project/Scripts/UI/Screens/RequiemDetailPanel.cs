@@ -329,7 +329,16 @@ namespace HNR.UI.Screens
         private void CreateSidebarPortrait(RequiemDataSO requiem)
         {
             // Use local prefab or fall back to config
-            var prefab = _sidebarPortraitPrefab ?? RuntimeUIPrefabConfigSO.Instance?.RequiemPortraitButtonPrefab;
+            // Note: Don't use ?? with Unity objects - it doesn't respect Unity's null check
+            GameObject prefab = _sidebarPortraitPrefab;
+            if (prefab == null)
+            {
+                var config = RuntimeUIPrefabConfigSO.Instance;
+                if (config != null)
+                {
+                    prefab = config.RequiemPortraitButtonPrefab;
+                }
+            }
 
             if (prefab == null)
             {

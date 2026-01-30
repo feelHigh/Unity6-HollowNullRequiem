@@ -12,6 +12,7 @@ using HNR.Core;
 using HNR.Core.Interfaces;
 using HNR.Characters;
 using HNR.UI.Components;
+using HNR.UI.Config;
 
 namespace HNR.UI.Screens
 {
@@ -169,9 +170,21 @@ namespace HNR.UI.Screens
         {
             GameObject buttonObj;
 
-            if (_portraitButtonPrefab != null)
+            // Use local prefab or fall back to RuntimeUIPrefabConfig
+            // Note: Don't use ?? with Unity objects - it doesn't respect Unity's null check
+            GameObject prefab = _portraitButtonPrefab;
+            if (prefab == null)
             {
-                buttonObj = Instantiate(_portraitButtonPrefab, _portraitContainer);
+                var config = RuntimeUIPrefabConfigSO.Instance;
+                if (config != null)
+                {
+                    prefab = config.RequiemPortraitButtonPrefab;
+                }
+            }
+
+            if (prefab != null)
+            {
+                buttonObj = Instantiate(prefab, _portraitContainer);
                 buttonObj.SetActive(true); // Ensure instantiated object is active (template may be hidden)
                 buttonObj.name = $"Portrait_{requiem.RequiemName}";
             }
