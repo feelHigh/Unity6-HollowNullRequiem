@@ -182,83 +182,53 @@ namespace HNR.UI
         }
 
         /// <summary>
-        /// Creates a simple fallback UI when no slot prefab is assigned.
-        /// Uses prefabs from RuntimeUIPrefabConfig when available.
+        /// Creates selection UI using prefabs from RuntimeUIPrefabConfig.
         /// </summary>
         private void CreateSimpleSelectionUI()
         {
-            // Find or create a container
+            // Find the container
             Transform container = _slotContainer;
             if (container == null)
             {
                 container = transform.Find("SlotContainer");
                 if (container == null)
                 {
-                    var containerGO = new GameObject("SlotContainer", typeof(RectTransform));
-                    containerGO.transform.SetParent(transform, false);
-                    var layout = containerGO.AddComponent<HorizontalLayoutGroup>();
-                    layout.spacing = 20f;
-                    layout.childAlignment = TextAnchor.MiddleCenter;
-                    layout.childForceExpandWidth = false;
-                    layout.childForceExpandHeight = false;
-                    layout.childControlWidth = false;
-                    layout.childControlHeight = false;
-                    container = containerGO.transform;
-
-                    // Position it - get existing RectTransform
-                    var rect = containerGO.GetComponent<RectTransform>();
-                    if (rect != null)
-                    {
-                        rect.anchorMin = new Vector2(0.5f, 0.5f);
-                        rect.anchorMax = new Vector2(0.5f, 0.5f);
-                        rect.pivot = new Vector2(0.5f, 0.5f);
-                        rect.anchoredPosition = new Vector2(0, 30);
-                        rect.sizeDelta = new Vector2(900, 350);
-                    }
+                    Debug.LogError("[RequiemSelectionScreen] SlotContainer not found in scene hierarchy.");
+                    return;
                 }
             }
 
-            // Try to get prefab from RuntimeUIPrefabConfig
+            // Get prefab from RuntimeUIPrefabConfig
             var prefabConfig = RuntimeUIPrefabConfigSO.Instance;
             var slotPrefab = prefabConfig != null ? prefabConfig.RequiemSelectionSlotPrefab : null;
+
+            if (slotPrefab == null)
+            {
+                Debug.LogError("[RequiemSelectionScreen] RequiemSelectionSlotPrefab not assigned. Check RuntimeUIPrefabConfig.");
+                return;
+            }
 
             foreach (var requiem in _availableRequiems)
             {
                 if (requiem == null) continue;
 
-                // Use prefab if available, otherwise fall back to runtime creation
-                if (slotPrefab != null)
+                var slotGO = Instantiate(slotPrefab, container);
+                var slotComponent = slotGO.GetComponent<RequiemSelectionSlotComponent>();
+                if (slotComponent != null)
                 {
-                    var slotGO = Instantiate(slotPrefab, container);
-                    var slotComponent = slotGO.GetComponent<RequiemSelectionSlotComponent>();
-                    if (slotComponent != null)
-                    {
-                        slotComponent.Initialize(requiem, _aspectIconConfig);
-                        slotComponent.OnClicked += OnSlotClicked;
-                        _slotComponents.Add(slotComponent);
-                    }
-                    else
-                    {
-                        // Prefab missing component - wire manually
-                        var button = slotGO.GetComponent<Button>();
-                        var selectionBorder = slotGO.transform.Find("SelectionBorder")?.gameObject;
-                        if (button != null)
-                        {
-                            var capturedRequiem = requiem;
-                            button.onClick.AddListener(() => OnSlotClicked(capturedRequiem));
-                            _simpleSlotButtons.Add((requiem, button, selectionBorder));
-                        }
-                    }
+                    slotComponent.Initialize(requiem, _aspectIconConfig);
+                    slotComponent.OnClicked += OnSlotClicked;
+                    _slotComponents.Add(slotComponent);
                 }
                 else
                 {
-                    // Fallback: Create character card slot at runtime
-                    var slotGO = CreateCharacterSlot(container, requiem);
+                    // Prefab missing component - wire manually
                     var button = slotGO.GetComponent<Button>();
                     var selectionBorder = slotGO.transform.Find("SelectionBorder")?.gameObject;
-
                     if (button != null)
                     {
+                        var capturedRequiem = requiem;
+                        button.onClick.AddListener(() => OnSlotClicked(capturedRequiem));
                         _simpleSlotButtons.Add((requiem, button, selectionBorder));
                     }
                 }
@@ -270,178 +240,7 @@ namespace HNR.UI
                 TryFindAndWireConfirmButton();
             }
 
-            int totalSlots = _slotComponents.Count + _simpleSlotButtons.Count;
-            Debug.Log($"[RequiemSelectionScreen] Created {totalSlots} character slots ({_slotComponents.Count} from prefab, {_simpleSlotButtons.Count} runtime)");
-        }
-
-        /// <summary>
-        /// Creates a character slot with full body portrait like the reference design.
-        /// </summary>
-        private GameObject CreateCharacterSlot(Transform container, RequiemDataSO requiem)
-        {
-            // Main slot container
-            var slotGO = new GameObject($"Slot_{requiem.RequiemName}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-            slotGO.transform.SetParent(container, false);
-
-            var slotRect = slotGO.GetComponent<RectTransform>();
-            // 1:2 aspect ratio to match portrait dimensions (doubled for larger display)
-            slotRect.sizeDelta = new Vector2(350, 700);
-
-            var slotBg = slotGO.GetComponent<Image>();
-            slotBg.color = new Color(0.15f, 0.15f, 0.2f, 0.95f);
-
-            var button = slotGO.GetComponent<Button>();
-            var capturedRequiem = requiem;
-            button.onClick.AddListener(() => OnSlotClicked(capturedRequiem));
-
-            // Selection border container (4 edge rectangles for border effect)
-            var borderGO = new GameObject("SelectionBorder", typeof(RectTransform));
-            borderGO.transform.SetParent(slotGO.transform, false);
-            var borderRect = borderGO.GetComponent<RectTransform>();
-            borderRect.anchorMin = Vector2.zero;
-            borderRect.anchorMax = Vector2.one;
-            borderRect.offsetMin = Vector2.zero;
-            borderRect.offsetMax = Vector2.zero;
-
-            // Border color - blue for selection
-            Color borderColor = new Color(0.2f, 0.6f, 1f, 1f); // Bright blue
-            float borderWidth = 4f;
-
-            // Top edge
-            CreateBorderEdge(borderGO.transform, "TopBorder", borderColor, borderWidth,
-                new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, -borderWidth), Vector2.zero);
-            // Bottom edge
-            CreateBorderEdge(borderGO.transform, "BottomBorder", borderColor, borderWidth,
-                new Vector2(0, 0), new Vector2(1, 0), Vector2.zero, new Vector2(0, borderWidth));
-            // Left edge
-            CreateBorderEdge(borderGO.transform, "LeftBorder", borderColor, borderWidth,
-                new Vector2(0, 0), new Vector2(0, 1), Vector2.zero, new Vector2(borderWidth, 0));
-            // Right edge
-            CreateBorderEdge(borderGO.transform, "RightBorder", borderColor, borderWidth,
-                new Vector2(1, 0), new Vector2(1, 1), new Vector2(-borderWidth, 0), Vector2.zero);
-
-            // Start hidden - will show on selection
-            borderGO.SetActive(false);
-
-            // Full body portrait image - fills entire slot as background
-            var portraitGO = new GameObject("Portrait", typeof(RectTransform), typeof(Image));
-            portraitGO.transform.SetParent(slotGO.transform, false);
-            var portraitRect = portraitGO.GetComponent<RectTransform>();
-            // Fill entire slot - no margins
-            portraitRect.anchorMin = Vector2.zero;
-            portraitRect.anchorMax = Vector2.one;
-            portraitRect.offsetMin = Vector2.zero;
-            portraitRect.offsetMax = Vector2.zero;
-            var portraitImage = portraitGO.GetComponent<Image>();
-            // Don't preserve aspect - stretch to fill like background
-            portraitImage.preserveAspect = false;
-            portraitImage.raycastTarget = false;
-            // Ensure portrait renders behind frame and info panel
-            portraitGO.transform.SetAsFirstSibling();
-
-            // Use FullBodySprite if available, otherwise fall back to Portrait
-            if (requiem.FullBodySprite != null)
-            {
-                portraitImage.sprite = requiem.FullBodySprite;
-                portraitImage.color = Color.white;
-            }
-            else if (requiem.Portrait != null)
-            {
-                portraitImage.sprite = requiem.Portrait;
-                portraitImage.color = Color.white;
-            }
-            else
-            {
-                // No portrait - show colored placeholder
-                portraitImage.color = GetAspectColor(requiem.SoulAspect);
-            }
-
-            // Bottom info panel background
-            var infoPanelGO = new GameObject("InfoPanel", typeof(RectTransform), typeof(Image));
-            infoPanelGO.transform.SetParent(slotGO.transform, false);
-            var infoPanelRect = infoPanelGO.GetComponent<RectTransform>();
-            infoPanelRect.anchorMin = new Vector2(0, 0);
-            infoPanelRect.anchorMax = new Vector2(1, 0.18f);
-            infoPanelRect.offsetMin = Vector2.zero;
-            infoPanelRect.offsetMax = Vector2.zero;
-            var infoPanelBg = infoPanelGO.GetComponent<Image>();
-            infoPanelBg.color = new Color(0.1f, 0.1f, 0.15f, 0.9f);
-            infoPanelBg.raycastTarget = false;
-
-            // Name text
-            var nameGO = new GameObject("Name", typeof(RectTransform), typeof(TextMeshProUGUI));
-            nameGO.transform.SetParent(infoPanelGO.transform, false);
-            var nameRect = nameGO.GetComponent<RectTransform>();
-            nameRect.anchorMin = new Vector2(0, 0.4f);
-            nameRect.anchorMax = new Vector2(1, 1);
-            nameRect.offsetMin = new Vector2(8, 0);
-            nameRect.offsetMax = new Vector2(-8, -2);
-            var nameText = nameGO.GetComponent<TextMeshProUGUI>();
-            nameText.text = requiem.RequiemName;
-            nameText.fontSize = 24;
-            nameText.fontStyle = FontStyles.Bold;
-            nameText.color = Color.white;
-            nameText.alignment = TextAlignmentOptions.Left;
-            nameText.raycastTarget = false;
-
-            // Class/Type text
-            var classGO = new GameObject("Class", typeof(RectTransform), typeof(TextMeshProUGUI));
-            classGO.transform.SetParent(infoPanelGO.transform, false);
-            var classRect = classGO.GetComponent<RectTransform>();
-            classRect.anchorMin = new Vector2(0, 0);
-            classRect.anchorMax = new Vector2(1, 0.45f);
-            classRect.offsetMin = new Vector2(8, 2);
-            classRect.offsetMax = new Vector2(-8, 0);
-            var classText = classGO.GetComponent<TextMeshProUGUI>();
-            classText.text = $"{requiem.Class} | {requiem.SoulAspect}";
-            classText.fontSize = 16;
-            classText.color = new Color(0.7f, 0.7f, 0.7f);
-            classText.alignment = TextAlignmentOptions.Left;
-            classText.raycastTarget = false;
-
-            // Top-left badge with aspect icon sprite (72x72)
-            var badgeGO = new GameObject("AspectBadge", typeof(RectTransform), typeof(Image));
-            badgeGO.transform.SetParent(slotGO.transform, false);
-            var badgeRect = badgeGO.GetComponent<RectTransform>();
-            badgeRect.anchorMin = new Vector2(0, 1);
-            badgeRect.anchorMax = new Vector2(0, 1);
-            badgeRect.pivot = new Vector2(0, 1);
-            badgeRect.sizeDelta = new Vector2(72, 72);
-            badgeRect.anchoredPosition = new Vector2(8, -8);
-            var badgeImage = badgeGO.GetComponent<Image>();
-            badgeImage.raycastTarget = false;
-            badgeImage.preserveAspect = true;
-
-            // Use aspect icon sprite if available, otherwise fall back to colored square
-            var aspectIcon = _aspectIconConfig != null ? _aspectIconConfig.GetIcon(requiem.SoulAspect) : null;
-            if (aspectIcon != null)
-            {
-                badgeImage.sprite = aspectIcon;
-                badgeImage.color = Color.white; // Use sprite's native colors
-            }
-            else
-            {
-                // Fallback to colored square when no icon config
-                badgeImage.color = GetAspectColor(requiem.SoulAspect);
-            }
-
-            // HP text in bottom right
-            var hpGO = new GameObject("HP", typeof(RectTransform), typeof(TextMeshProUGUI));
-            hpGO.transform.SetParent(infoPanelGO.transform, false);
-            var hpRect = hpGO.GetComponent<RectTransform>();
-            hpRect.anchorMin = new Vector2(0.6f, 0);
-            hpRect.anchorMax = new Vector2(1, 1);
-            hpRect.offsetMin = new Vector2(0, 2);
-            hpRect.offsetMax = new Vector2(-8, -2);
-            var hpText = hpGO.GetComponent<TextMeshProUGUI>();
-            hpText.text = $"HP {requiem.BaseHP}";
-            hpText.fontSize = 18;
-            hpText.fontStyle = FontStyles.Bold;
-            hpText.color = new Color(0.9f, 0.9f, 0.9f);
-            hpText.alignment = TextAlignmentOptions.Right;
-            hpText.raycastTarget = false;
-
-            return slotGO;
+            Debug.Log($"[RequiemSelectionScreen] Created {_slotComponents.Count} character slots from prefab");
         }
 
         /// <summary>
@@ -494,109 +293,34 @@ namespace HNR.UI
 
         private void CreateConfirmButton()
         {
-            // Try to use prefab from RuntimeUIPrefabConfig
+            // Use prefab from RuntimeUIPrefabConfig
             var prefabConfig = RuntimeUIPrefabConfigSO.Instance;
             var btnPrefab = prefabConfig != null ? prefabConfig.ConfirmTeamButtonPrefab : null;
 
-            GameObject btnGO;
-            if (btnPrefab != null)
+            if (btnPrefab == null)
             {
-                btnGO = Instantiate(btnPrefab, transform);
-                btnGO.name = "ConfirmTeamButton";
-
-                // Position below the slots
-                var rect = btnGO.GetComponent<RectTransform>();
-                if (rect != null)
-                {
-                    rect.anchoredPosition = new Vector2(0, -150);
-                }
-
-                _startRunButton = btnGO.GetComponent<Button>();
-                if (_startRunButton != null)
-                {
-                    _startRunButton.onClick.RemoveAllListeners();
-                    _startRunButton.onClick.AddListener(OnStartRunClicked);
-                }
-
-                Debug.Log("[RequiemSelectionScreen] Created Confirm Team button from prefab");
+                Debug.LogError("[RequiemSelectionScreen] ConfirmTeamButtonPrefab not assigned. Check RuntimeUIPrefabConfig.");
+                return;
             }
-            else
+
+            var btnGO = Instantiate(btnPrefab, transform);
+            btnGO.name = "ConfirmTeamButton";
+
+            // Position below the slots
+            var rect = btnGO.GetComponent<RectTransform>();
+            if (rect != null)
             {
-                // Fallback: Create at runtime
-                btnGO = new GameObject("ConfirmTeamButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-                btnGO.transform.SetParent(transform, false);
+                rect.anchoredPosition = new Vector2(0, -150);
+            }
 
-                var rect = btnGO.GetComponent<RectTransform>();
-                rect.anchorMin = new Vector2(0.5f, 0.5f);
-                rect.anchorMax = new Vector2(0.5f, 0.5f);
-                rect.pivot = new Vector2(0.5f, 0.5f);
-                rect.anchoredPosition = new Vector2(0, -150); // Below the slots
-                rect.sizeDelta = new Vector2(200, 60);
-
-                // Create white texture for button
-                var whiteTex = new Texture2D(4, 4);
-                var colors = new Color[16];
-                for (int i = 0; i < 16; i++) colors[i] = Color.white;
-                whiteTex.SetPixels(colors);
-                whiteTex.Apply();
-                var whiteSprite = Sprite.Create(whiteTex, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
-
-                var image = btnGO.GetComponent<Image>();
-                image.sprite = whiteSprite;
-                image.color = new Color(0.2f, 0.6f, 0.3f, 1f); // Green color
-
-                _startRunButton = btnGO.GetComponent<Button>();
+            _startRunButton = btnGO.GetComponent<Button>();
+            if (_startRunButton != null)
+            {
+                _startRunButton.onClick.RemoveAllListeners();
                 _startRunButton.onClick.AddListener(OnStartRunClicked);
-
-                // Button text
-                var textGO = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-                textGO.transform.SetParent(btnGO.transform, false);
-                var textRect = textGO.GetComponent<RectTransform>();
-                textRect.anchorMin = Vector2.zero;
-                textRect.anchorMax = Vector2.one;
-                textRect.offsetMin = Vector2.zero;
-                textRect.offsetMax = Vector2.zero;
-
-                var text = textGO.GetComponent<TextMeshProUGUI>();
-                text.text = "CONFIRM TEAM";
-                text.fontSize = 24;
-                text.fontStyle = FontStyles.Bold;
-                text.alignment = TextAlignmentOptions.Center;
-                text.color = Color.white;
-                text.raycastTarget = false;
-
-                Debug.Log("[RequiemSelectionScreen] Created dynamic Confirm Team button (runtime fallback)");
             }
-        }
 
-        private Color GetAspectColor(SoulAspect aspect)
-        {
-            return aspect switch
-            {
-                SoulAspect.Flame => new Color(0.9f, 0.3f, 0.2f, 0.8f),
-                SoulAspect.Shadow => new Color(0.3f, 0.2f, 0.4f, 0.8f),
-                SoulAspect.Light => new Color(0.9f, 0.9f, 0.5f, 0.8f),
-                SoulAspect.Nature => new Color(0.3f, 0.7f, 0.3f, 0.8f),
-                _ => new Color(0.5f, 0.5f, 0.5f, 0.8f)
-            };
-        }
-
-        /// <summary>
-        /// Creates a single edge of a border rectangle.
-        /// </summary>
-        private void CreateBorderEdge(Transform parent, string name, Color color, float width,
-            Vector2 anchorMin, Vector2 anchorMax, Vector2 offsetMin, Vector2 offsetMax)
-        {
-            var edgeGO = new GameObject(name, typeof(RectTransform), typeof(Image));
-            edgeGO.transform.SetParent(parent, false);
-            var rect = edgeGO.GetComponent<RectTransform>();
-            rect.anchorMin = anchorMin;
-            rect.anchorMax = anchorMax;
-            rect.offsetMin = offsetMin;
-            rect.offsetMax = offsetMax;
-            var image = edgeGO.GetComponent<Image>();
-            image.color = color;
-            image.raycastTarget = false;
+            Debug.Log("[RequiemSelectionScreen] Created Confirm Team button from prefab");
         }
 
         private List<(RequiemDataSO requiem, Button button, GameObject selectionBorder)> _simpleSlotButtons = new();

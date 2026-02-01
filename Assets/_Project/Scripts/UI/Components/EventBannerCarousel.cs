@@ -215,8 +215,6 @@ namespace HNR.UI.Components
 
         private GameObject CreateSlideObject(BannerSlide banner, int index)
         {
-            GameObject slideObj;
-
             // Use local prefab first, then fall back to RuntimeUIPrefabConfig
             GameObject prefab = _slidePrefab;
             if (prefab == null)
@@ -228,141 +226,18 @@ namespace HNR.UI.Components
                 }
             }
 
-            // Use prefab if available
-            if (prefab != null)
+            if (prefab == null)
             {
-                slideObj = Instantiate(prefab, _contentContainer);
-                slideObj.name = $"Slide_{index}";
-
-                // Configure slide from prefab
-                ConfigureSlideFromPrefab(slideObj, banner, index);
-                return slideObj;
+                Debug.LogError("[EventBannerCarousel] BannerSlidePrefab not assigned. Check RuntimeUIPrefabConfig.");
+                return null;
             }
 
-            // Fallback: Create at runtime
-            slideObj = new GameObject($"Slide_{index}");
-            slideObj.transform.SetParent(_contentContainer, false);
+            var slideObj = Instantiate(prefab, _contentContainer);
+            slideObj.name = $"Slide_{index}";
 
-            RectTransform rect = slideObj.AddComponent<RectTransform>();
-            // Use fixed size, not anchor stretching
-            rect.anchorMin = new Vector2(0, 0.5f);
-            rect.anchorMax = new Vector2(0, 0.5f);
-            rect.pivot = new Vector2(0, 0.5f);
-
-            // Calculate slide dimensions
-            float slideWidth = 0f;
-            float slideHeight = 0f;
-
-            // Try to get size from viewport
-            if (_scrollRect != null && _scrollRect.viewport != null)
-            {
-                var viewportRect = _scrollRect.viewport;
-                slideWidth = viewportRect.rect.width;
-                slideHeight = viewportRect.rect.height;
-                Debug.Log($"[EventBannerCarousel] Viewport size: {slideWidth}x{slideHeight}");
-            }
-
-            // Fallback: use carousel's own rect
-            if (slideWidth <= 10f || slideHeight <= 10f)
-            {
-                var carouselRect = GetComponent<RectTransform>();
-                if (carouselRect != null)
-                {
-                    slideWidth = carouselRect.rect.width;
-                    slideHeight = carouselRect.rect.height * 0.85f;
-                    Debug.Log($"[EventBannerCarousel] Carousel rect size: {carouselRect.rect.width}x{carouselRect.rect.height}");
-                }
-            }
-
-            // Fallback: calculate from screen and anchor positions
-            if (slideWidth <= 10f || slideHeight <= 10f)
-            {
-                // Carousel anchors are (0.02, 0.65) to (0.285, 0.83)
-                // That's 26.5% of screen width and 18% of screen height
-                slideWidth = Screen.width * 0.265f;
-                slideHeight = Screen.height * 0.18f * 0.85f; // 85% for viewport
-                Debug.Log($"[EventBannerCarousel] Screen-based size: {slideWidth}x{slideHeight}");
-            }
-
-            // Ensure minimum reasonable size
-            slideWidth = Mathf.Max(slideWidth, 200f);
-            slideHeight = Mathf.Max(slideHeight, 80f);
-
-            // Set explicit size for both dimensions
-            rect.sizeDelta = new Vector2(slideWidth, slideHeight);
-            rect.anchoredPosition = Vector2.zero;
-
-            // Add LayoutElement for HorizontalLayoutGroup
-            LayoutElement layout = slideObj.AddComponent<LayoutElement>();
-            layout.preferredWidth = slideWidth;
-            layout.preferredHeight = slideHeight;
-            layout.minWidth = slideWidth;
-            layout.minHeight = slideHeight;
-            layout.flexibleWidth = 0;
-            layout.flexibleHeight = 0;
-
-            // Add background image
-            Image bgImage = slideObj.AddComponent<Image>();
-            bgImage.raycastTarget = true;
-
-            if (banner.HasImage)
-            {
-                bgImage.sprite = banner.Image;
-                bgImage.type = Image.Type.Simple;
-                bgImage.preserveAspect = false; // Fill the entire slide area
-                bgImage.color = Color.white; // Full color for sprite
-                Debug.Log($"[EventBannerCarousel] Slide {index} has image: {banner.Image.name}");
-            }
-            else
-            {
-                bgImage.color = new Color(0.1f, 0.1f, 0.15f, 1f);
-                // Create text placeholder
-                CreateTextPlaceholder(slideObj, banner);
-            }
-
-            // Add button for tap detection
-            Button slideButton = slideObj.AddComponent<Button>();
-            slideButton.targetGraphic = bgImage;
-            slideButton.transition = Selectable.Transition.None;
-            slideButton.onClick.AddListener(() => OnSlideClicked(index));
-
-            Debug.Log($"[EventBannerCarousel] Created slide {index}: {banner.Title}, size: {slideWidth}x{slideHeight}, hasImage: {banner.HasImage}");
-
+            // Configure slide from prefab
+            ConfigureSlideFromPrefab(slideObj, banner, index);
             return slideObj;
-        }
-
-        private void CreateTextPlaceholder(GameObject parent, BannerSlide banner)
-        {
-            // Title
-            GameObject titleObj = new GameObject("Title");
-            titleObj.transform.SetParent(parent.transform, false);
-            RectTransform titleRect = titleObj.AddComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0, 0.5f);
-            titleRect.anchorMax = new Vector2(1, 0.8f);
-            titleRect.offsetMin = new Vector2(20, 0);
-            titleRect.offsetMax = new Vector2(-20, 0);
-
-            TextMeshProUGUI titleText = titleObj.AddComponent<TextMeshProUGUI>();
-            titleText.text = banner.Title;
-            titleText.fontSize = 28;
-            titleText.fontStyle = FontStyles.Bold;
-            titleText.alignment = TextAlignmentOptions.Center;
-            titleText.color = Color.white;
-
-            // Description
-            GameObject descObj = new GameObject("Description");
-            descObj.transform.SetParent(parent.transform, false);
-            RectTransform descRect = descObj.AddComponent<RectTransform>();
-            descRect.anchorMin = new Vector2(0, 0.2f);
-            descRect.anchorMax = new Vector2(1, 0.5f);
-            descRect.offsetMin = new Vector2(20, 0);
-            descRect.offsetMax = new Vector2(-20, 0);
-
-            TextMeshProUGUI descText = descObj.AddComponent<TextMeshProUGUI>();
-            descText.text = banner.Description;
-            descText.fontSize = 18;
-            descText.alignment = TextAlignmentOptions.Center;
-            descText.color = new Color(0.8f, 0.8f, 0.8f, 1f);
         }
 
         /// <summary>
@@ -477,7 +352,6 @@ namespace HNR.UI.Components
 
         private GameObject CreateIndicatorObject(int index)
         {
-            GameObject indicatorObj;
             float size = _bannerConfig?.IndicatorSize ?? 12f;
 
             // Use local prefab first, then fall back to RuntimeUIPrefabConfig
@@ -491,36 +365,26 @@ namespace HNR.UI.Components
                 }
             }
 
-            // Use prefab if available
-            if (prefab != null)
+            if (prefab == null)
             {
-                indicatorObj = Instantiate(prefab, _indicatorContainer);
-                indicatorObj.name = $"Indicator_{index}";
-
-                var rect = indicatorObj.GetComponent<RectTransform>();
-                if (rect != null)
-                {
-                    rect.sizeDelta = new Vector2(size, size);
-                }
-
-                var image = indicatorObj.GetComponent<Image>();
-                if (image != null)
-                {
-                    image.color = _bannerConfig?.InactiveIndicatorColor ?? new Color(1f, 1f, 1f, 0.4f);
-                }
-
-                return indicatorObj;
+                Debug.LogError("[EventBannerCarousel] BannerIndicatorPrefab not assigned. Check RuntimeUIPrefabConfig.");
+                return null;
             }
 
-            // Fallback: Create at runtime
-            indicatorObj = new GameObject($"Indicator_{index}");
-            indicatorObj.transform.SetParent(_indicatorContainer, false);
+            var indicatorObj = Instantiate(prefab, _indicatorContainer);
+            indicatorObj.name = $"Indicator_{index}";
 
-            RectTransform rectTransform = indicatorObj.AddComponent<RectTransform>();
-            rectTransform.sizeDelta = new Vector2(size, size);
+            var rect = indicatorObj.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.sizeDelta = new Vector2(size, size);
+            }
 
-            Image indicatorImage = indicatorObj.AddComponent<Image>();
-            indicatorImage.color = _bannerConfig?.InactiveIndicatorColor ?? new Color(1f, 1f, 1f, 0.4f);
+            var image = indicatorObj.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = _bannerConfig?.InactiveIndicatorColor ?? new Color(1f, 1f, 1f, 0.4f);
+            }
 
             return indicatorObj;
         }

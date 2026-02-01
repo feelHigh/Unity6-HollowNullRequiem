@@ -168,8 +168,6 @@ namespace HNR.UI.Screens
 
         private RequiemPortraitButton CreatePortraitButton(RequiemDataSO requiem)
         {
-            GameObject buttonObj;
-
             // Use local prefab or fall back to RuntimeUIPrefabConfig
             // Note: Don't use ?? with Unity objects - it doesn't respect Unity's null check
             GameObject prefab = _portraitButtonPrefab;
@@ -182,17 +180,15 @@ namespace HNR.UI.Screens
                 }
             }
 
-            if (prefab != null)
+            if (prefab == null)
             {
-                buttonObj = Instantiate(prefab, _portraitContainer);
-                buttonObj.SetActive(true); // Ensure instantiated object is active (template may be hidden)
-                buttonObj.name = $"Portrait_{requiem.RequiemName}";
+                Debug.LogError("[RequiemsListScreen] RequiemPortraitButtonPrefab not assigned. Check RuntimeUIPrefabConfig.");
+                return null;
             }
-            else
-            {
-                // Create simple button if no prefab
-                buttonObj = CreateSimplePortraitButton(requiem);
-            }
+
+            var buttonObj = Instantiate(prefab, _portraitContainer);
+            buttonObj.SetActive(true); // Ensure instantiated object is active (template may be hidden)
+            buttonObj.name = $"Portrait_{requiem.RequiemName}";
 
             var portraitButton = buttonObj.GetComponent<RequiemPortraitButton>();
             if (portraitButton == null)
@@ -221,57 +217,6 @@ namespace HNR.UI.Screens
             portraitButton.OnPortraitUnhovered += OnPortraitUnhovered;
 
             return portraitButton;
-        }
-
-        private GameObject CreateSimplePortraitButton(RequiemDataSO requiem)
-        {
-            // Create a simple portrait button layout
-            var buttonObj = new GameObject($"Portrait_{requiem.RequiemName}");
-            buttonObj.transform.SetParent(_portraitContainer, false);
-
-            // Add layout element
-            var layoutElement = buttonObj.AddComponent<LayoutElement>();
-            layoutElement.preferredWidth = 150;
-            layoutElement.preferredHeight = 200;
-
-            // Add button
-            var button = buttonObj.AddComponent<Button>();
-            var buttonImage = buttonObj.AddComponent<Image>();
-            buttonImage.color = new Color(0.2f, 0.2f, 0.25f, 0.9f);
-
-            // Create portrait image
-            var portraitObj = new GameObject("Portrait");
-            portraitObj.transform.SetParent(buttonObj.transform, false);
-
-            var portraitRect = portraitObj.AddComponent<RectTransform>();
-            portraitRect.anchorMin = new Vector2(0.1f, 0.3f);
-            portraitRect.anchorMax = new Vector2(0.9f, 0.95f);
-            portraitRect.offsetMin = Vector2.zero;
-            portraitRect.offsetMax = Vector2.zero;
-
-            var portraitImage = portraitObj.AddComponent<Image>();
-            if (requiem.Portrait != null)
-            {
-                portraitImage.sprite = requiem.Portrait;
-            }
-
-            // Create name text
-            var nameObj = new GameObject("Name");
-            nameObj.transform.SetParent(buttonObj.transform, false);
-
-            var nameRect = nameObj.AddComponent<RectTransform>();
-            nameRect.anchorMin = new Vector2(0, 0);
-            nameRect.anchorMax = new Vector2(1, 0.25f);
-            nameRect.offsetMin = new Vector2(5, 5);
-            nameRect.offsetMax = new Vector2(-5, -5);
-
-            var nameText = nameObj.AddComponent<TextMeshProUGUI>();
-            nameText.text = requiem.RequiemName;
-            nameText.fontSize = 16;
-            nameText.color = Color.white;
-            nameText.alignment = TextAlignmentOptions.Center;
-
-            return buttonObj;
         }
 
         private void ClearPortraitButtons()
