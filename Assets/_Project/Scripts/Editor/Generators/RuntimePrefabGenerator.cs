@@ -763,58 +763,121 @@ namespace HNR.Editor.Generators
         {
             EnsurePrefabDirectory();
 
+            // LayerLab ListFrame_02_DecoCircle_DarkGray style (322x480)
             var buttonObj = new GameObject("RequiemPortraitButton");
 
             var buttonRect = buttonObj.AddComponent<RectTransform>();
-            buttonRect.sizeDelta = new Vector2(200, 280);
+            buttonRect.sizeDelta = new Vector2(322, 480);
 
             var layoutElement = buttonObj.AddComponent<LayoutElement>();
-            layoutElement.preferredWidth = 200;
-            layoutElement.preferredHeight = 280;
+            layoutElement.preferredWidth = 322;
+            layoutElement.preferredHeight = 480;
 
             var button = buttonObj.AddComponent<Button>();
-            var buttonImage = buttonObj.AddComponent<Image>();
-            buttonImage.color = new Color(0.2f, 0.2f, 0.25f, 0.9f);
-            button.targetGraphic = buttonImage;
+            // Root needs an Image for button raycast
+            var rootImage = buttonObj.AddComponent<Image>();
+            rootImage.color = new Color(0, 0, 0, 0); // Transparent, just for raycasting
+            button.targetGraphic = rootImage;
 
-            // Border (frame) - sits behind portrait
+            // Load LayerLab sprites
+            var bgSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
+                AssetDatabase.GUIDToAssetPath("1c2ea3e9571184af2a5a5a42a9c0eca1"));
+            var innerBorderSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
+                AssetDatabase.GUIDToAssetPath("4e9ee2508615f42e1b5927187d5ee19a"));
+            var borderSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
+                AssetDatabase.GUIDToAssetPath("d4f8f55fbc21a463880f595813729920"));
+            var decoSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
+                AssetDatabase.GUIDToAssetPath("3b02ce00ed76b453481c61ed1f42035f"));
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
+                AssetDatabase.GUIDToAssetPath("6f9d253c918824659b9426046aca78cc"));
+
+            // LayerLab DarkGray colors
+            Color bgColor = new Color(0.243f, 0.204f, 0.361f, 1f);        // #3E345C
+            Color innerBorderColor = new Color(0.298f, 0.247f, 0.439f, 1f); // #4C3F70
+            Color borderColor = new Color(0.082f, 0.078f, 0.157f, 1f);     // #151428
+            Color textColor = new Color(0.808f, 0.827f, 0.984f, 1f);       // #CED3FB
+
+            // 1. Bg - Background fill (stretched with -2 offset)
+            var bgObj = CreateChild(buttonObj.transform, "Bg");
+            var bgRect = bgObj.AddComponent<RectTransform>();
+            bgRect.anchorMin = Vector2.zero;
+            bgRect.anchorMax = Vector2.one;
+            bgRect.offsetMin = new Vector2(1, 1);
+            bgRect.offsetMax = new Vector2(-1, -1);
+            var bgImage = bgObj.AddComponent<Image>();
+            bgImage.sprite = bgSprite;
+            bgImage.type = Image.Type.Sliced;
+            bgImage.color = bgColor;
+            bgImage.raycastTarget = false;
+
+            // 2. InnerBorder - Purple inner frame (offset -4/-5.5 from edges)
+            var innerBorderObj = CreateChild(buttonObj.transform, "InnerBorder");
+            var innerBorderRect = innerBorderObj.AddComponent<RectTransform>();
+            innerBorderRect.anchorMin = Vector2.zero;
+            innerBorderRect.anchorMax = Vector2.one;
+            innerBorderRect.anchoredPosition = new Vector2(0, 1.07f);
+            innerBorderRect.offsetMin = new Vector2(4, 5.5f);
+            innerBorderRect.offsetMax = new Vector2(-4, -5.5f);
+            var innerBorderImage = innerBorderObj.AddComponent<Image>();
+            innerBorderImage.sprite = innerBorderSprite;
+            innerBorderImage.type = Image.Type.Sliced;
+            innerBorderImage.color = innerBorderColor;
+            innerBorderImage.raycastTarget = false;
+
+            // 3. Border - Dark outer frame (stretched)
             var borderObj = CreateChild(buttonObj.transform, "Border");
             StretchRectTransform(borderObj);
             var borderImage = borderObj.AddComponent<Image>();
-            borderImage.color = new Color(0.6f, 0.5f, 0.3f, 1f); // Gold-ish frame
+            borderImage.sprite = borderSprite;
+            borderImage.type = Image.Type.Sliced;
+            borderImage.color = borderColor;
             borderImage.raycastTarget = false;
 
-            // BorderDeco (decorative overlay)
-            var borderDecoObj = CreateChild(buttonObj.transform, "BorderDeco");
-            StretchRectTransform(borderDecoObj);
-            var borderDecoImage = borderDecoObj.AddComponent<Image>();
-            borderDecoImage.color = new Color(1f, 1f, 1f, 0.3f);
-            borderDecoImage.raycastTarget = false;
+            // 4. Deco - Circular frame (264x263 at Y=+65) - created before Portrait so it renders behind
+            var decoObj = CreateChild(buttonObj.transform, "Deco");
+            var decoRect = decoObj.AddComponent<RectTransform>();
+            decoRect.anchorMin = new Vector2(0.5f, 0.5f);
+            decoRect.anchorMax = new Vector2(0.5f, 0.5f);
+            decoRect.anchoredPosition = new Vector2(0, 65);
+            decoRect.sizeDelta = new Vector2(264, 263);
+            var decoImage = decoObj.AddComponent<Image>();
+            decoImage.sprite = decoSprite;
+            decoImage.color = Color.white;
+            decoImage.raycastTarget = false;
 
-            // Portrait image
+            // 5. Portrait - Requiem portrait image (200x200 at Y=+65) - renders on top of Deco
             var portraitObj = CreateChild(buttonObj.transform, "Portrait");
             var portraitRect = portraitObj.AddComponent<RectTransform>();
-            portraitRect.anchorMin = new Vector2(0.05f, 0.15f);
-            portraitRect.anchorMax = new Vector2(0.95f, 0.95f);
-            portraitRect.offsetMin = Vector2.zero;
-            portraitRect.offsetMax = Vector2.zero;
+            portraitRect.anchorMin = new Vector2(0.5f, 0.5f);
+            portraitRect.anchorMax = new Vector2(0.5f, 0.5f);
+            portraitRect.anchoredPosition = new Vector2(0, 65);
+            portraitRect.sizeDelta = new Vector2(200, 200);
             var portraitImage = portraitObj.AddComponent<Image>();
             portraitImage.color = Color.white;
             portraitImage.preserveAspect = true;
+            portraitImage.raycastTarget = false;
 
-            // Title text (matching scene template naming)
-            var titleObj = CreateChild(buttonObj.transform, "Title");
-            var titleRect = titleObj.AddComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0, 0);
-            titleRect.anchorMax = new Vector2(1, 0.15f);
-            titleRect.offsetMin = new Vector2(5, 5);
-            titleRect.offsetMax = new Vector2(-5, -5);
-            var titleText = titleObj.AddComponent<TextMeshProUGUI>();
-            titleText.text = "Requiem";
-            titleText.fontSize = 18;
-            titleText.color = Color.white;
-            titleText.alignment = TextAlignmentOptions.Center;
-            titleText.fontStyle = FontStyles.Bold;
+            // 6. Text - Requiem name (280x100 at Y=-144)
+            var textObj = CreateChild(buttonObj.transform, "Text");
+            var textRect = textObj.AddComponent<RectTransform>();
+            textRect.anchorMin = new Vector2(0.5f, 0.5f);
+            textRect.anchorMax = new Vector2(0.5f, 0.5f);
+            textRect.anchoredPosition = new Vector2(0, -144);
+            textRect.sizeDelta = new Vector2(280, 100);
+            var nameText = textObj.AddComponent<TextMeshProUGUI>();
+            nameText.text = "Requiem";
+            if (font != null)
+            {
+                nameText.font = font;
+            }
+            nameText.fontSize = 36;
+            nameText.fontSizeMin = 18;
+            nameText.fontSizeMax = 36;
+            nameText.enableAutoSizing = true;
+            nameText.color = textColor;
+            nameText.alignment = TextAlignmentOptions.Center;
+            nameText.verticalAlignment = VerticalAlignmentOptions.Bottom;
+            nameText.lineSpacing = -13;
 
             // Add RequiemPortraitButton component and wire serialized fields
             var portraitButton = buttonObj.AddComponent<HNR.UI.Components.RequiemPortraitButton>();
@@ -823,7 +886,7 @@ namespace HNR.Editor.Generators
             var so = new SerializedObject(portraitButton);
             so.FindProperty("_button").objectReferenceValue = button;
             so.FindProperty("_portraitImage").objectReferenceValue = portraitImage;
-            so.FindProperty("_nameText").objectReferenceValue = titleText;
+            so.FindProperty("_nameText").objectReferenceValue = nameText;
             so.FindProperty("_frameImage").objectReferenceValue = borderImage;
             // _glowImage and _selectionHighlight left null (no Focus child per user request)
             so.ApplyModifiedPropertiesWithoutUndo();
