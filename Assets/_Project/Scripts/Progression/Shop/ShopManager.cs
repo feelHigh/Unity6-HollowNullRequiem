@@ -239,9 +239,16 @@ namespace HNR.Progression
                 case ShopItemType.Relic:
                     if (item.RelicData != null)
                     {
-                        // Publish event for RelicManager to handle
-                        EventBus.Publish(new RelicAcquiredEvent(item.RelicData));
-                        Debug.Log($"[ShopManager] Relic acquired: {item.RelicData.RelicName}");
+                        // Add relic to RelicManager (which publishes RelicAcquiredEvent internally)
+                        if (ServiceLocator.TryGet<IRelicManager>(out var relicManager))
+                        {
+                            relicManager.AddRelic(item.RelicData);
+                            Debug.Log($"[ShopManager] Relic acquired: {item.RelicData.RelicName}");
+                        }
+                        else
+                        {
+                            Debug.LogError($"[ShopManager] RelicManager not found - cannot add relic: {item.RelicData.RelicName}");
+                        }
                     }
                     break;
 

@@ -27,6 +27,7 @@ namespace HNR.Progression
         private List<RelicDataSO> _ownedRelics = new();
         private Dictionary<string, RelicDataSO> _relicCache = new();
         private bool _isSubscribed;
+        private bool _isRegisteredInstance;
 
         // ============================================
         // Properties
@@ -44,7 +45,16 @@ namespace HNR.Progression
 
         private void Awake()
         {
+            // Singleton pattern: if one already exists, destroy this duplicate
+            if (ServiceLocator.Has<IRelicManager>())
+            {
+                Debug.Log("[RelicManager] Instance already exists, destroying duplicate");
+                Destroy(gameObject);
+                return;
+            }
+
             ServiceLocator.Register<IRelicManager>(this);
+            _isRegisteredInstance = true;
 
             // DontDestroyOnLoad only works for root GameObjects
             // If we're a child, move to root first
@@ -69,7 +79,9 @@ namespace HNR.Progression
 
         private void OnDestroy()
         {
-            if (ServiceLocator.Has<IRelicManager>())
+            // Only unregister if this instance was the registered one
+            // (Duplicates that were destroyed should not unregister the original)
+            if (_isRegisteredInstance && ServiceLocator.Has<IRelicManager>())
             {
                 ServiceLocator.Unregister<IRelicManager>();
             }

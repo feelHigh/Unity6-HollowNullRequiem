@@ -5850,7 +5850,16 @@ namespace HNR.Editor
             tooltipRect.sizeDelta = new Vector2(200, 80);
 
             Image tooltipBg = tooltipPanel.AddComponent<Image>();
-            tooltipBg.color = new Color(0.1f, 0.08f, 0.15f, 0.95f);
+            // Load Layer Lab bubble frame sprite
+            var tooltipSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
+                "Assets/ThirdParty/Layer Lab/GUI Pro-FantasyHero/ResourcesData/Sptites/Components/Frame/BubbleFrame_01_Bg.png");
+            if (tooltipSprite != null)
+            {
+                tooltipBg.sprite = tooltipSprite;
+                tooltipBg.type = Image.Type.Sliced;
+            }
+            // Color #9C3DBC (purple)
+            tooltipBg.color = new Color(0.612f, 0.239f, 0.737f, 1f);
 
             VerticalLayoutGroup tooltipLayout = tooltipPanel.AddComponent<VerticalLayoutGroup>();
             tooltipLayout.padding = new RectOffset(8, 8, 6, 6);

@@ -15,13 +15,13 @@ MonoBehaviour:
   _minCardCount: 3
   _maxCardCount: 4
   _relicCount: 4
-  _cardRemovePrice: 75
-  _purificationPrice: 50
+  _cardRemovePrice: 20
+  _purificationPrice: 10
   _purificationAmount: 15
   _commonCardPrice: {x: 30, y: 50}
   _uncommonCardPrice: {x: 60, y: 90}
   _rareCardPrice: {x: 100, y: 150}
   _legendaryCardPrice: {x: 200, y: 300}
-  _commonRelicPrice: {x: 100, y: 150}
-  _uncommonRelicPrice: {x: 150, y: 200}
-  _rareRelicPrice: {x: 200, y: 300}
+  _commonRelicPrice: {x: 10, y: 20}
+  _uncommonRelicPrice: {x: 20, y: 30}
+  _rareRelicPrice: {x: 30, y: 40}

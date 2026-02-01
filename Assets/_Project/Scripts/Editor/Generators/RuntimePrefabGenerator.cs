@@ -937,19 +937,29 @@ namespace HNR.Editor.Generators
             var button = iconGO.AddComponent<Button>();
             button.targetGraphic = image;
 
-            // Frame
+            // Frame with Layer Lab sprite
             var frameGO = CreateChild(iconGO.transform, "Frame");
             var frameRect = frameGO.AddComponent<RectTransform>();
             frameRect.anchorMin = Vector2.zero;
             frameRect.anchorMax = Vector2.one;
-            frameRect.sizeDelta = new Vector2(4, 4);
+            frameRect.sizeDelta = Vector2.zero;
             frameRect.anchoredPosition = Vector2.zero;
             var frameImage = frameGO.AddComponent<Image>();
-            frameImage.color = new Color(0.3f, 0.3f, 0.35f, 1f);
+
+            // Load Layer Lab frame sprite
+            var frameSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
+                "Assets/ThirdParty/Layer Lab/GUI Pro-FantasyHero/ResourcesData/Sptites/Components/Frame/ItemFrame_Square_02_Single_Focus.png");
+            if (frameSprite != null)
+            {
+                frameImage.sprite = frameSprite;
+                frameImage.type = Image.Type.Sliced;
+            }
+            frameImage.color = Color.white;
             frameImage.raycastTarget = false;
             frameGO.transform.SetAsFirstSibling();
 
-            iconGO.AddComponent<HNR.UI.Combat.RelicIconSlot>();
+            // Note: RelicIconSlot component is added at runtime by RelicDisplayBar.CreateRelicIcon()
+            // Do NOT add it here - it's a nested class and won't serialize properly as a prefab component
 
             SavePrefab(iconGO, "RelicDisplayIcon.prefab");
         }

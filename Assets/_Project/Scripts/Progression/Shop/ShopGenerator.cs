@@ -6,6 +6,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using HNR.Cards;
+using HNR.Core;
+using HNR.Core.Interfaces;
 
 namespace HNR.Progression
 {
@@ -51,6 +53,10 @@ namespace HNR.Progression
             var inventory = new ShopInventory();
             var rng = new System.Random();
             var usedCardIds = new HashSet<string>();
+            var usedRelicIds = new HashSet<string>();
+
+            // Get owned relic IDs to exclude from shop
+            var ownedRelicIds = GetOwnedRelicIds();
 
             // Generate cards (3-4 based on config)
             int cardCount = rng.Next(config.MinCardCount, config.MaxCardCount + 1);
@@ -71,13 +77,14 @@ namespace HNR.Progression
                 }
             }
 
-            // Generate relics
+            // Generate relics (excluding owned and already-used in this shop)
             var relicPool = Resources.LoadAll<RelicDataSO>("Data/Relics");
             for (int i = 0; i < config.RelicCount; i++)
             {
-                var relic = SelectWeightedRelic(relicPool, rng, zoneNumber);
+                var relic = SelectWeightedRelic(relicPool, rng, zoneNumber, ownedRelicIds, usedRelicIds);
                 if (relic != null)
                 {
+                    usedRelicIds.Add(relic.RelicId);
                     inventory.AddItem(new ShopItem
                     {
                         Type = ShopItemType.Relic,
@@ -116,6 +123,10 @@ namespace HNR.Progression
             var inventory = new ShopInventory();
             var rng = new System.Random(seed);
             var usedCardIds = new HashSet<string>();
+            var usedRelicIds = new HashSet<string>();
+
+            // Get owned relic IDs to exclude from shop
+            var ownedRelicIds = GetOwnedRelicIds();
 
             int cardCount = rng.Next(config.MinCardCount, config.MaxCardCount + 1);
             var cardPool = Resources.LoadAll<CardDataSO>("Data/Cards");
@@ -138,9 +149,10 @@ namespace HNR.Progression
             var relicPool = Resources.LoadAll<RelicDataSO>("Data/Relics");
             for (int i = 0; i < config.RelicCount; i++)
             {
-                var relic = SelectWeightedRelic(relicPool, rng, zoneNumber);
+                var relic = SelectWeightedRelic(relicPool, rng, zoneNumber, ownedRelicIds, usedRelicIds);
                 if (relic != null)
                 {
+                    usedRelicIds.Add(relic.RelicId);
                     inventory.AddItem(new ShopItem
                     {
                         Type = ShopItemType.Relic,
@@ -247,12 +259,19 @@ namespace HNR.Progression
 
         /// <summary>
         /// Select a weighted random relic based on rarity.
-        /// Boss relics are excluded.
+        /// Boss relics, owned relics, and already-used relics are excluded.
         /// </summary>
+        /// <param name="pool">All relic assets.</param>
+        /// <param name="rng">Random number generator.</param>
+        /// <param name="zoneNumber">Current zone for rarity weighting.</param>
+        /// <param name="ownedRelicIds">IDs of relics the player already owns.</param>
+        /// <param name="usedRelicIds">IDs of relics already selected for this shop.</param>
         private static RelicDataSO SelectWeightedRelic(
             RelicDataSO[] pool,
             System.Random rng,
-            int zoneNumber)
+            int zoneNumber,
+            HashSet<string> ownedRelicIds,
+            HashSet<string> usedRelicIds)
         {
             if (pool == null || pool.Length == 0)
             {
@@ -260,19 +279,21 @@ namespace HNR.Progression
                 return null;
             }
 
-            // Filter out Boss relics
+            // Filter out Boss relics, owned relics, and already-used relics in this shop
             var availableRelics = new List<RelicDataSO>();
             foreach (var relic in pool)
             {
-                if (relic != null && relic.Rarity != RelicRarity.Boss)
-                {
-                    availableRelics.Add(relic);
-                }
+                if (relic == null) continue;
+                if (relic.Rarity == RelicRarity.Boss) continue;
+                if (ownedRelicIds.Contains(relic.RelicId)) continue;
+                if (usedRelicIds.Contains(relic.RelicId)) continue;
+
+                availableRelics.Add(relic);
             }
 
             if (availableRelics.Count == 0)
             {
-                Debug.LogWarning("[ShopGenerator] No available relics after filtering");
+                Debug.LogWarning("[ShopGenerator] No available relics after filtering (owned/used/boss excluded)");
                 return null;
             }
 
@@ -355,6 +376,32 @@ namespace HNR.Progression
                     weights[i] /= sum;
                 }
             }
+        }
+
+        /// <summary>
+        /// Get IDs of relics the player already owns.
+        /// </summary>
+        private static HashSet<string> GetOwnedRelicIds()
+        {
+            var ownedIds = new HashSet<string>();
+
+            if (ServiceLocator.TryGet<IRelicManager>(out var relicManager))
+            {
+                foreach (var relic in relicManager.OwnedRelics)
+                {
+                    if (relic != null && !string.IsNullOrEmpty(relic.RelicId))
+                    {
+                        ownedIds.Add(relic.RelicId);
+                    }
+                }
+
+                if (ownedIds.Count > 0)
+                {
+                    Debug.Log($"[ShopGenerator] Excluding {ownedIds.Count} owned relics from shop");
+                }
+            }
+
+            return ownedIds;
         }
     }
 }

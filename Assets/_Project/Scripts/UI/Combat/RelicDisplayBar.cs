@@ -217,7 +217,7 @@ namespace HNR.UI.Combat
 
             if (_tooltipDescription != null)
             {
-                _tooltipDescription.text = relic.Description;
+                _tooltipDescription.text = relic.GetFormattedDescription();
             }
 
             if (_tooltipRarity != null)

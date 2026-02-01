@@ -66,13 +66,13 @@ namespace HNR.Progression
 
         [Header("Relic Prices by Rarity")]
         [SerializeField, Tooltip("Price range for Common relics (min, max)")]
-        private Vector2Int _commonRelicPrice = new(100, 150);
+        private Vector2Int _commonRelicPrice = new(20, 35);
 
         [SerializeField, Tooltip("Price range for Uncommon relics (min, max)")]
-        private Vector2Int _uncommonRelicPrice = new(150, 200);
+        private Vector2Int _uncommonRelicPrice = new(30, 45);
 
         [SerializeField, Tooltip("Price range for Rare relics (min, max)")]
-        private Vector2Int _rareRelicPrice = new(200, 300);
+        private Vector2Int _rareRelicPrice = new(40, 50);
 
         // ============================================
         // Public Accessors - Inventory
