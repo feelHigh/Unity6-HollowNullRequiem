@@ -1582,9 +1582,9 @@ namespace HNR.Editor
             if (layerLabConfig != null && layerLabConfig.HasAllConvexButtonSprites())
             {
                 var buttonObj = LayerLabButtonBuilder.CreateConvexRectangleButton(parent, name, icon);
-                // Scale down to reasonable size for UI
+                // Scale to larger size for better mobile tappability
                 RectTransform rect = buttonObj.GetComponent<RectTransform>();
-                rect.sizeDelta = new Vector2(60, 60);
+                rect.sizeDelta = new Vector2(80, 80);
                 return buttonObj;
             }
 
@@ -1593,7 +1593,7 @@ namespace HNR.Editor
             obj.transform.SetParent(parent.transform, false);
 
             RectTransform rect2 = obj.AddComponent<RectTransform>();
-            rect2.sizeDelta = new Vector2(60, 60);
+            rect2.sizeDelta = new Vector2(80, 80);
 
             Image img = obj.AddComponent<Image>();
             img.color = new Color(0.25f, 0.25f, 0.3f);
@@ -1635,9 +1635,9 @@ namespace HNR.Editor
             if (layerLabConfig != null && layerLabConfig.HasAllConvexButtonSprites())
             {
                 var buttonObj = LayerLabButtonBuilder.CreateConvexLeftFlushButton(parent, name, layerLabConfig.IconBack);
-                // Scale down to reasonable size
+                // Scale to larger size for better mobile tappability
                 RectTransform rect = buttonObj.GetComponent<RectTransform>();
-                rect.sizeDelta = new Vector2(80, 65);
+                rect.sizeDelta = new Vector2(100, 80);
                 return buttonObj;
             }
 
@@ -1646,7 +1646,7 @@ namespace HNR.Editor
             obj.transform.SetParent(parent.transform, false);
 
             RectTransform rect2 = obj.AddComponent<RectTransform>();
-            rect2.sizeDelta = new Vector2(80, 65);
+            rect2.sizeDelta = new Vector2(100, 80);
 
             Image img = obj.AddComponent<Image>();
             img.color = new Color(0.25f, 0.25f, 0.3f);
@@ -5117,9 +5117,9 @@ namespace HNR.Editor
             if (zoneHeaderConfig != null && zoneHeaderConfig.HasAllConvexButtonSprites())
             {
                 backBtn = LayerLabButtonBuilder.CreateConvexLeftFlushButton(header, "BackButton", zoneHeaderConfig.IconBack);
-                // Scale down the button for header use
+                // Scale to larger size for better mobile tappability
                 var backRect = backBtn.GetComponent<RectTransform>();
-                backRect.sizeDelta = new Vector2(60, 50);
+                backRect.sizeDelta = new Vector2(80, 65);
             }
             else
             {
