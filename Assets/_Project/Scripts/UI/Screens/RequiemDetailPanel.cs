@@ -403,23 +403,41 @@ namespace HNR.UI.Screens
 
         private void UpdateTabButtonVisuals()
         {
-            // Stats tab
+            // Update stats tab visuals using TabButtonVisuals component
             if (_statsTabButton != null)
             {
-                var image = _statsTabButton.GetComponent<Image>();
-                if (image != null)
+                var statsVisuals = _statsTabButton.GetComponent<TabButtonVisuals>();
+                if (statsVisuals != null)
                 {
-                    image.color = _currentTab == 0 ? _activeTabColor : _inactiveTabColor;
+                    statsVisuals.SetFocused(_currentTab == 0);
+                }
+                else
+                {
+                    // Fallback to color change if TabButtonVisuals not present
+                    var image = _statsTabButton.GetComponent<Image>();
+                    if (image != null)
+                    {
+                        image.color = _currentTab == 0 ? _activeTabColor : _inactiveTabColor;
+                    }
                 }
             }
 
-            // Cards tab
+            // Update cards tab visuals using TabButtonVisuals component
             if (_cardsTabButton != null)
             {
-                var image = _cardsTabButton.GetComponent<Image>();
-                if (image != null)
+                var cardsVisuals = _cardsTabButton.GetComponent<TabButtonVisuals>();
+                if (cardsVisuals != null)
                 {
-                    image.color = _currentTab == 1 ? _activeTabColor : _inactiveTabColor;
+                    cardsVisuals.SetFocused(_currentTab == 1);
+                }
+                else
+                {
+                    // Fallback to color change if TabButtonVisuals not present
+                    var image = _cardsTabButton.GetComponent<Image>();
+                    if (image != null)
+                    {
+                        image.color = _currentTab == 1 ? _activeTabColor : _inactiveTabColor;
+                    }
                 }
             }
         }
