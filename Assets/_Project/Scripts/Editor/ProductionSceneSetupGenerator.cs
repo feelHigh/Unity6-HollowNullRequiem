@@ -5555,9 +5555,38 @@ namespace HNR.Editor
 
         /// <summary>
         /// Creates the confirmation dialog for Combat and NullRift scenes.
+        /// Uses prefab instantiation if ConfirmationDialog.prefab is available.
         /// </summary>
         private static GameObject CreateConfirmationDialog(GameObject parent)
         {
+            // Try to instantiate from prefab first (preferred approach)
+            var runtimePrefabConfig = LoadRuntimePrefabConfig();
+            if (runtimePrefabConfig != null && runtimePrefabConfig.ConfirmationDialogPrefab != null)
+            {
+                var prefabInstance = PrefabUtility.InstantiatePrefab(runtimePrefabConfig.ConfirmationDialogPrefab) as GameObject;
+                if (prefabInstance != null)
+                {
+                    prefabInstance.transform.SetParent(parent.transform, false);
+
+                    // Ensure RectTransform stretches to fill parent
+                    var rect = prefabInstance.GetComponent<RectTransform>();
+                    if (rect != null)
+                    {
+                        rect.anchorMin = Vector2.zero;
+                        rect.anchorMax = Vector2.one;
+                        rect.sizeDelta = Vector2.zero;
+                        rect.anchoredPosition = Vector2.zero;
+                    }
+
+                    prefabInstance.SetActive(false);
+                    Debug.Log("[ProductionSceneSetupGenerator] Instantiated ConfirmationDialog from prefab");
+                    return prefabInstance;
+                }
+            }
+
+            // Fallback: Create manually if prefab not available
+            Debug.LogWarning("[ProductionSceneSetupGenerator] ConfirmationDialog.prefab not found, creating manually. Run 'HNR > 2. Prefabs > UI > Runtime Prefabs > 1. ConfirmationDialog' first.");
+
             GameObject overlay = new GameObject("ConfirmationDialog");
             overlay.transform.SetParent(parent.transform, false);
 
@@ -7179,26 +7208,30 @@ namespace HNR.Editor
             settingsRect.pivot = new Vector2(1, 0.5f);
             settingsRect.sizeDelta = new Vector2(60, 60);
 
-            // Portrait grid container
+            // Portrait grid container - adjusted for larger 322x480 cells
             var gridContainer = CreateSimpleUIObject("PortraitGrid", screenObj.transform);
             var gridRect = gridContainer.GetComponent<RectTransform>();
-            gridRect.anchorMin = new Vector2(0.1f, 0.15f);
-            gridRect.anchorMax = new Vector2(0.9f, 0.85f);
+            gridRect.anchorMin = new Vector2(0.15f, 0.05f);
+            gridRect.anchorMax = new Vector2(0.85f, 0.88f);
             gridRect.offsetMin = Vector2.zero;
             gridRect.offsetMax = Vector2.zero;
 
             var grid = gridContainer.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(200, 280);
-            grid.spacing = new Vector2(30, 30);
+            // Match RequiemPortraitButton.prefab designed size (322x480 LayerLab ListFrame style)
+            grid.cellSize = new Vector2(322, 480);
+            grid.spacing = new Vector2(20, 20);
             grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
             grid.startAxis = GridLayoutGroup.Axis.Horizontal;
             grid.childAlignment = TextAnchor.MiddleCenter;
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = 2;
 
-            // Create portrait button template using LayerLab StageFrame style
-            var portraitTemplate = CreateRequiemPortraitTemplate(screenObj.transform);
-            portraitTemplate.SetActive(false); // Hidden template
+            // Load RequiemPortraitButton prefab from Runtime prefabs
+            var portraitButtonPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/Runtime/RequiemPortraitButton.prefab");
+            if (portraitButtonPrefab == null)
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] RequiemPortraitButton prefab not found at Assets/_Project/Prefabs/UI/Runtime/RequiemPortraitButton.prefab");
+            }
 
             // Detail panel (hidden by default)
             var detailPanelObj = CreateRequiemDetailPanelUI(screenObj.transform);
@@ -7224,7 +7257,7 @@ namespace HNR.Editor
             so.FindProperty("_settingsButton").objectReferenceValue = settingsButton.GetComponent<Button>();
             so.FindProperty("_portraitContainer").objectReferenceValue = gridContainer.transform;
             so.FindProperty("_detailPanel").objectReferenceValue = panelComponent;
-            so.FindProperty("_portraitButtonPrefab").objectReferenceValue = portraitTemplate;
+            so.FindProperty("_portraitButtonPrefab").objectReferenceValue = portraitButtonPrefab;
 
             // Wire Requiem data array
             var requiemDataProp = so.FindProperty("_requiemData");
