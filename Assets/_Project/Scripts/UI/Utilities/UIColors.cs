@@ -27,6 +27,12 @@ namespace HNR.UI
         /// <summary>Panel background. Hex: #1A1A2E</summary>
         public static readonly Color32 PanelGray = new(26, 26, 46, 255);
 
+        /// <summary>Dark background for panels. Hex: #1F3A5F</summary>
+        public static readonly Color32 NavyBackground = new(31, 58, 95, 255);
+
+        /// <summary>Overlay background. Hex: #4B2D6E</summary>
+        public static readonly Color32 DeepViolet = new(75, 45, 110, 255);
+
         // ============================================
         // Interactive Accents
         // ============================================

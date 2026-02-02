@@ -7407,7 +7407,8 @@ namespace HNR.Editor
             canvasGroup.blocksRaycasts = false;
 
             var bgImage = panelObj.AddComponent<Image>();
-            bgImage.color = new Color(0.92f, 0.92f, 0.94f, 1f); // Light gray background like reference
+            // NavyBackground (#1F3A5F) for dark theme - RGB(31, 58, 95)
+            bgImage.color = new Color(31f / 255f, 58f / 255f, 95f / 255f, 1f);
 
             var panelContent = CreateSimpleUIObject("PanelContent", panelObj.transform);
             var contentRect = panelContent.GetComponent<RectTransform>();
@@ -7433,7 +7434,8 @@ namespace HNR.Editor
             }
             else
             {
-                headerBg.color = new Color(0.95f, 0.95f, 0.97f, 1f);
+                // Dark theme fallback
+                headerBg.color = new Color(0.2f, 0.15f, 0.3f, 0.95f);
             }
 
             var closeButton = CreateSimpleButton("CloseButton", header.transform, "<");
@@ -7483,7 +7485,8 @@ namespace HNR.Editor
             }
             else
             {
-                leftBg.color = new Color(0.85f, 0.85f, 0.88f, 1f);
+                // Dark theme fallback
+                leftBg.color = new Color(0.15f, 0.12f, 0.2f, 0.95f);
             }
 
             // Add ListFrame border if available
@@ -7529,7 +7532,8 @@ namespace HNR.Editor
             }
             else
             {
-                menuBg.color = new Color(0.95f, 0.95f, 0.97f, 1f);
+                // Dark theme fallback
+                menuBg.color = new Color(0.18f, 0.15f, 0.25f, 0.95f);
             }
 
             // Menu buttons container
@@ -7570,7 +7574,8 @@ namespace HNR.Editor
             characterAreaRect.offsetMax = Vector2.zero;
 
             var characterBg = characterArea.AddComponent<Image>();
-            characterBg.color = new Color(0.88f, 0.9f, 0.95f, 1f); // Light blue-ish like reference
+            // DeepViolet (#4B2D6E) for dark theme character area - RGB(75, 45, 110)
+            characterBg.color = new Color(75f / 255f, 45f / 255f, 110f / 255f, 0.6f);
 
             var artContainer = CreateSimpleUIObject("CharacterArt", characterArea.transform);
             var artRect = artContainer.GetComponent<RectTransform>();
@@ -7600,7 +7605,8 @@ namespace HNR.Editor
             }
             else
             {
-                statsPanelBg.color = new Color(0.95f, 0.95f, 0.97f, 1f);
+                // Dark theme fallback
+                statsPanelBg.color = new Color(0.12f, 0.10f, 0.18f, 0.95f);
             }
 
             // Add PanelFrame border and deco if available
@@ -7695,7 +7701,8 @@ namespace HNR.Editor
             cardsContent.SetActive(false);
 
             var cardsContentBg = cardsContent.AddComponent<Image>();
-            cardsContentBg.color = new Color(0.95f, 0.95f, 0.97f, 1f);
+            // Dark theme for cards content - match NavyBackground
+            cardsContentBg.color = new Color(31f / 255f, 58f / 255f, 95f / 255f, 1f);
 
             // Starting Cards section - expanded to fill most of the content area
             var startingCardsSection = CreateSimpleUIObject("StartingCardsSection", cardsContent.transform);
@@ -7714,7 +7721,8 @@ namespace HNR.Editor
             var startingHeaderText = startingHeader.GetComponent<TMP_Text>();
             startingHeaderText.fontSize = 18;
             startingHeaderText.fontStyle = FontStyles.Bold;
-            startingHeaderText.color = Color.black;
+            // Soul gold color for header on dark background
+            startingHeaderText.color = new Color(0.83f, 0.69f, 0.22f, 1f);
             startingHeaderText.alignment = TextAlignmentOptions.Left;
 
             // ScrollView for cards (matching Sanctuary screen pattern)
@@ -7725,9 +7733,9 @@ namespace HNR.Editor
             scrollViewRect.offsetMin = Vector2.zero;
             scrollViewRect.offsetMax = Vector2.zero;
 
-            // Add background to scroll view
+            // Add background to scroll view - dark theme
             var scrollBg = cardsScrollView.AddComponent<Image>();
-            scrollBg.color = new Color(0.92f, 0.92f, 0.94f, 0.5f);
+            scrollBg.color = new Color(75f / 255f, 45f / 255f, 110f / 255f, 0.3f); // DeepViolet semi-transparent
 
             var scrollRect = cardsScrollView.AddComponent<ScrollRect>();
 
@@ -7789,6 +7797,19 @@ namespace HNR.Editor
             so.FindProperty("_closeButton").objectReferenceValue = closeButton.GetComponent<Button>();
             so.FindProperty("_titleText").objectReferenceValue = titleText;
             so.FindProperty("_portraitListContainer").objectReferenceValue = portraitListContainer.transform;
+
+            // Wire sidebar portrait prefab from RuntimeUIPrefabConfig
+            var runtimePrefabConfig = LoadRuntimePrefabConfig();
+            if (runtimePrefabConfig?.SidebarPortraitPrefab != null)
+            {
+                so.FindProperty("_sidebarPortraitPrefab").objectReferenceValue = runtimePrefabConfig.SidebarPortraitPrefab;
+                Debug.Log("[ProductionSceneSetupGenerator] Wired SidebarPortraitPrefab to RequiemDetailPanel");
+            }
+            else
+            {
+                Debug.LogWarning("[ProductionSceneSetupGenerator] SidebarPortraitPrefab not found in RuntimeUIPrefabConfig");
+            }
+
             so.FindProperty("_characterArtImage").objectReferenceValue = artImage;
             so.FindProperty("_characterNameText").objectReferenceValue = nameText;
             so.FindProperty("_characterClassText").objectReferenceValue = classText;
