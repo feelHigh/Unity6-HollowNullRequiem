@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faf6c9bf0a730a24d9021b19637398b9, type: 3}
+  m_Name: StatusIconConfig
+  m_EditorClassIdentifier: 
+  _burnIcon: {fileID: 21300000, guid: a5edbb1acb3234a5db0f0daa141eb77b, type: 3}
+  _poisonIcon: {fileID: 21300000, guid: 3f63aba4c970e4b7f81330bda470bfca, type: 3}
+  _weaknessIcon: {fileID: 21300000, guid: 5c8273d58797e48e68f48d7fc724979b, type: 3}
+  _vulnerabilityIcon: {fileID: 21300000, guid: 9851fb8e6f12a40d09379e3d9a144449, type: 3}
+  _stunIcon: {fileID: 21300000, guid: e6020b029ce684650b407f4b6e88442e, type: 3}
+  _dazedIcon: {fileID: 21300000, guid: f6a40be6de2b14eed9b73a02f6f818ce, type: 3}
+  _markedIcon: {fileID: 21300000, guid: e8a301602767542a48acb7cb0e93a113, type: 3}
+  _strengthIcon: {fileID: 21300000, guid: f9b293277bc1b4e24b12ba67c353239b, type: 3}
+  _dexterityIcon: {fileID: 21300000, guid: b2a9aa02d06c141a48e2ed7a706fb7e0, type: 3}
+  _regenerationIcon: {fileID: 21300000, guid: 08fb8da9c9fdb4efea988b45887fa0bc, type: 3}
+  _energizedIcon: {fileID: 21300000, guid: f4ff760d62c7c4f65b358af8c8d5e66d, type: 3}
+  _shieldedIcon: {fileID: 21300000, guid: 5b4a8d44f49884604ae335b622aa49d5, type: 3}
+  _thornsIcon: {fileID: 21300000, guid: 87694150ddc4441b6b4ed246e6f744a8, type: 3}
+  _drawBonusIcon: {fileID: 21300000, guid: 4961cc1ec4fe3457e852f8176b4c2ef3, type: 3}
+  _protectedIcon: {fileID: 21300000, guid: b0552798d9bb543488b5abf437c940f0, type: 3}
+  _ritualIcon: {fileID: 21300000, guid: 5fc9b0d62af7a40c9be9fdf3080b1554, type: 3}
+  _defaultIcon: {fileID: 21300000, guid: 2db141e2f17c34c74befa49dea105a42, type: 3}

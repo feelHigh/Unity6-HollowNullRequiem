@@ -7,11 +7,13 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using HNR.Characters;
+using HNR.UI.Config;
 
 namespace HNR.UI.Combat
 {
     /// <summary>
     /// Displays a single status effect icon with stack count.
+    /// Uses StatusIconConfigSO for sprite and color configuration.
     /// </summary>
     public class StatusIconUI : MonoBehaviour
     {
@@ -53,18 +55,43 @@ namespace HNR.UI.Combat
 
         private void UpdateDisplay()
         {
+            // Update stack text
             if (_stackText != null)
             {
                 _stackText.text = _stacks > 1 ? _stacks.ToString() : "";
             }
 
+            // Get config for sprite and color
+            var iconConfig = StatusIconConfigSO.Instance;
+
+            // Update icon sprite
+            if (_icon != null && iconConfig != null)
+            {
+                var sprite = iconConfig.GetIcon(_statusType);
+                if (sprite != null)
+                {
+                    _icon.sprite = sprite;
+                }
+                _icon.color = iconConfig.GetTintColor(_statusType);
+            }
+
+            // Update background color
             if (_background != null)
             {
-                _background.color = GetStatusColor(_statusType);
+                if (iconConfig != null)
+                {
+                    // Use darker version of tint for background
+                    var tint = iconConfig.GetTintColor(_statusType);
+                    _background.color = new Color(tint.r * 0.3f, tint.g * 0.3f, tint.b * 0.3f, 0.8f);
+                }
+                else
+                {
+                    _background.color = GetStatusColorFallback(_statusType);
+                }
             }
         }
 
-        private Color GetStatusColor(StatusType type)
+        private Color GetStatusColorFallback(StatusType type)
         {
             return type switch
             {

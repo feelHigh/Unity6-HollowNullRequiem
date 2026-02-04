@@ -585,11 +585,27 @@ namespace HNR.UI.Combat
                 layoutElement.preferredHeight = _statusIconSize;
             }
 
-            // Update color
+            // Get icon config for sprite and color
+            var iconConfig = StatusIconConfigSO.Instance;
             var bgImage = iconObj.GetComponent<Image>();
             if (bgImage != null)
             {
-                bgImage.color = GetStatusColor(statusType);
+                if (iconConfig != null)
+                {
+                    // Set sprite from config
+                    var sprite = iconConfig.GetIcon(statusType);
+                    if (sprite != null)
+                    {
+                        bgImage.sprite = sprite;
+                    }
+                    // Apply tint color
+                    bgImage.color = iconConfig.GetTintColor(statusType);
+                }
+                else
+                {
+                    // Fallback to solid color if config not found
+                    bgImage.color = GetStatusColorFallback(statusType);
+                }
             }
 
             // Update stack text
@@ -603,7 +619,7 @@ namespace HNR.UI.Combat
             return iconObj;
         }
 
-        private Color GetStatusColor(StatusType statusType)
+        private Color GetStatusColorFallback(StatusType statusType)
         {
             return statusType switch
             {
