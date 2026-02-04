@@ -14,7 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _relicId: relic_merchants_coin
   _relicName: Void Merchant's Coin
-  _description: Gain {value} Void Shards after Echo events.
+  _description: 'Gain {value} Void Shards
+
+    after Echo events.'
   _flavorText: A lucky coin from a wandering merchant of the void.
   _rarity: 0
   _trigger: 9

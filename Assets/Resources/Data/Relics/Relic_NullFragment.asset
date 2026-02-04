@@ -14,7 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _relicId: relic_null_fragment
   _relicName: Null Fragment
-  _description: Deal +{value} damage while in Null State.
+  _description: 'Deal +{value} damage while in
+
+    Null State.'
   _flavorText: Embrace the void, and it will empower you.
   _rarity: 1
   _trigger: 8

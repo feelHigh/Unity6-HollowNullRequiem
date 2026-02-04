@@ -14,7 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _relicId: relic_void_heart
   _relicName: Void Heart
-  _description: At combat start, gain {value} Soul Essence.
+  _description: 'At combat start,
+
+    gain {value} Soul Essence.'
   _flavorText: A fragment of the void, pulsing with dark energy.
   _rarity: 0
   _trigger: 1

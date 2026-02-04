@@ -49,11 +49,6 @@ namespace HNR.UI.Combat
         [SerializeField, Tooltip("Tooltip rarity text")]
         private TMP_Text _tooltipRarity;
 
-        [Header("Animation")]
-        [SerializeField] private float _iconSize = 32f;
-        [SerializeField] private float _iconSpacing = 4f;
-        [SerializeField] private float _pulseOnTrigger = 0.2f;
-
         // ============================================
         // Private State
         // ============================================

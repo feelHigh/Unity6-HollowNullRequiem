@@ -14,7 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _relicId: relic_soul_collector
   _relicName: Soul Collector
-  _description: Gain {value} Void Shards when you kill an enemy.
+  _description: 'Gain {value} Void Shards
+
+    when you kill an enemy.'
   _flavorText: Harvests the essence of fallen foes.
   _rarity: 1
   _trigger: 7

@@ -92,8 +92,8 @@ namespace HNR.UI.Combat
             if (_sharedSEFillImage != null)
             {
                 // Gold when full (Art ready), Cyan otherwise
-                Color targetColor = isFull ? UIColors.SoulGold : UIColors.SoulCyan;
-                _sharedSEFillImage.color = targetColor;
+                // Color targetColor = isFull ? UIColors.SoulGold : UIColors.SoulCyan;
+                // _sharedSEFillImage.color = targetColor;
             }
 
             // Trigger pulse when Art becomes ready

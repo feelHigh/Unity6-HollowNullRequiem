@@ -14,7 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _relicId: relic_corruption_siphon
   _relicName: Corruption Siphon
-  _description: When you kill an enemy, reduce Corruption by {value}.
+  _description: 'When you kill an enemy,
+
+    reduce Corruption by {value}.'
   _flavorText: Feeds on the death of foes, purifying its bearer.
   _rarity: 1
   _trigger: 7

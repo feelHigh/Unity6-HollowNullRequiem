@@ -33,6 +33,8 @@ namespace HNR.UI
         /// <summary>Overlay background. Hex: #4B2D6E</summary>
         public static readonly Color32 DeepViolet = new(75, 45, 110, 255);
 
+        public static readonly Color32 White = new(255, 255, 255, 255);
+
         // ============================================
         // Interactive Accents
         // ============================================

@@ -118,7 +118,7 @@ namespace HNR.UI.Combat
         {
             if (_autoBattleIcon == null) return;
 
-            _autoBattleIcon.color = _autoBattleEnabled ? UIColors.SoulCyan : UIColors.PanelGray;
+            _autoBattleIcon.color = _autoBattleEnabled ? UIColors.White : UIColors.PanelGray;
         }
 
         private void OpenSettings()
