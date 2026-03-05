@@ -129,6 +129,15 @@ namespace HNR.Progression
 
         /// <summary>Number of events completed.</summary>
         public int EventsCompleted;
+
+        /// <summary>Whether this run is a Battle Mission run.</summary>
+        public bool IsBattleMissionRun;
+
+        /// <summary>Battle Mission zone number (1-3).</summary>
+        public int BattleMissionZone = 1;
+
+        /// <summary>Battle Mission difficulty level.</summary>
+        public DifficultyLevel BattleMissionDifficulty = DifficultyLevel.Easy;
     }
 
     // ============================================

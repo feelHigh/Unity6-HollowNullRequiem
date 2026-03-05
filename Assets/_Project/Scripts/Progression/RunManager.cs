@@ -548,21 +548,24 @@ namespace HNR.Progression
             {
                 CurrentZone = _currentZone,
                 VoidShards = shopManager?.VoidShards ?? 0,
-                RelicIds = relicManager?.GetRelicIds() ?? new List<string>()
+                RelicIds = relicManager?.GetRelicIds() ?? new List<string>(),
+                IsBattleMissionRun = _isBattleMissionRun,
+                BattleMissionZone = _battleMissionZone,
+                BattleMissionDifficulty = _battleMissionDifficulty
             };
         }
 
         private MapSaveData CreateMapSaveData()
         {
-            var mapSaveData = new MapSaveData
-            {
-                Zone = _currentZone,
-                Seed = _runSeed
-            };
-
-            // Get actual map data from MapManager if available
+            // Get actual map data from MapManager if available (when in NullRift scene)
             if (ServiceLocator.TryGet<MapManager>(out var mapManager) && mapManager.HasActiveMap)
             {
+                var mapSaveData = new MapSaveData
+                {
+                    Zone = _currentZone,
+                    Seed = _runSeed
+                };
+
                 var mapData = mapManager.CurrentMap;
                 mapSaveData.CurrentNodeId = mapData.CurrentNodeId;
 
@@ -589,13 +592,23 @@ namespace HNR.Progression
                 }
 
                 Debug.Log($"[RunManager] Saved map state: CurrentNode={mapSaveData.CurrentNodeId}, Visited={mapSaveData.VisitedNodes.Count}, Accessible={mapSaveData.AccessibleNodeIds.Count}");
-            }
-            else
-            {
-                Debug.LogWarning($"[RunManager] CreateMapSaveData: MapManager not available or no active map!");
+                return mapSaveData;
             }
 
-            return mapSaveData;
+            // Fall back to cached map data (e.g., when saving from Combat scene where MapManager doesn't exist)
+            if (_cachedMapData != null)
+            {
+                Debug.Log($"[RunManager] CreateMapSaveData: Using cached map data, CurrentNode={_cachedMapData.CurrentNodeId}, Visited={_cachedMapData.VisitedNodes?.Count ?? 0}");
+                return _cachedMapData;
+            }
+
+            // No map data available at all
+            Debug.LogWarning("[RunManager] CreateMapSaveData: No MapManager and no cached map data available!");
+            return new MapSaveData
+            {
+                Zone = _currentZone,
+                Seed = _runSeed
+            };
         }
 
         /// <summary>
@@ -696,6 +709,16 @@ namespace HNR.Progression
             {
                 Debug.Log("[RunManager] IRelicManager not available during restore - relics will be loaded when RelicManager initializes");
             }
+
+            // Restore Battle Mission context
+            _isBattleMissionRun = saveData.Progression.IsBattleMissionRun;
+            _battleMissionZone = saveData.Progression.BattleMissionZone;
+            _battleMissionDifficulty = saveData.Progression.BattleMissionDifficulty;
+            Debug.Log($"[RunManager] Restored Battle Mission context: IsBM={_isBattleMissionRun}, Zone={_battleMissionZone}, Diff={_battleMissionDifficulty}");
+
+            // Restore cached map data for cross-scene persistence
+            _cachedMapData = saveData.Map;
+            Debug.Log($"[RunManager] Restored cached map data: CurrentNode={_cachedMapData?.CurrentNodeId}, Visited={_cachedMapData?.VisitedNodes?.Count ?? 0}");
 
             // Restore stats
             _stats = saveData.Stats;

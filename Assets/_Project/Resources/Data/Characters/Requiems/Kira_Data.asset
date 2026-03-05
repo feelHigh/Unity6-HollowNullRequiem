@@ -40,8 +40,8 @@ MonoBehaviour:
   _nullStateEffect: 0
   _nullStateDescription: Burn effects deal double damage. Cards gain 'Apply 2 Burn'
     if they didn't already apply Burn.
-  _portrait: {fileID: 0}
-  _fullBodySprite: {fileID: 0}
+  _portrait: {fileID: 21300000, guid: e01d2dbadb9904c46a260a5a76a9be86, type: 3}
+  _fullBodySprite: {fileID: 21300000, guid: 8352ac5e34c63af4b9c761c242314a4b, type: 3}
   _animator: {fileID: 0}
   _aspectColor: {r: 1, g: 0.4, b: 0.1, a: 1}
   _visualPrefab: {fileID: 9019396453542033334, guid: ab106fdbe2ad9f046a66bc834ee94671, type: 3}
