@@ -344,6 +344,13 @@ namespace HNR.Progression
                 Debug.Log("[RunManager] VoidShards reset to 0 for new run");
             }
 
+            // Clear relics for new run
+            if (ServiceLocator.TryGet<IRelicManager>(out var relicManager))
+            {
+                relicManager.ClearRelics();
+                Debug.Log("[RunManager] Relics cleared for new run");
+            }
+
             // Initialize team
             _teamMaxHP = 0;
             foreach (var requiemData in selectedTeam)
