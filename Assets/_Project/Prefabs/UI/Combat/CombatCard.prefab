@@ -1833,10 +1833,10 @@ MonoBehaviour:
   _bezierArcHeight: 100
   _validTargetColor: {r: 0, g: 0.8, b: 0.3, a: 1}
   _invalidTargetColor: {r: 0.8, g: 0.2, b: 0.2, a: 1}
-  _strikeIcon: {fileID: 0}
-  _guardIcon: {fileID: 0}
-  _skillIcon: {fileID: 0}
-  _powerIcon: {fileID: 0}
+  _strikeIcon: {fileID: 21300000, guid: 8f579b33b9ca74bda8f572b93e4087db, type: 3}
+  _guardIcon: {fileID: 21300000, guid: 082442a8a9f5c421e9336b4b5f880158, type: 3}
+  _skillIcon: {fileID: 21300000, guid: 55360a38616d44a7bb68a8e803a24d38, type: 3}
+  _powerIcon: {fileID: 21300000, guid: f39d4aee4c50145fdad994cfda83e1ec, type: 3}
   _glowFadeDuration: 0.15
   _glowIntensity: 0.8
   _returnDuration: 0.2
