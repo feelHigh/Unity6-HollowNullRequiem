@@ -13,9 +13,9 @@ namespace HNR.Core
     /// </summary>
     /// <remarks>
     /// Device tiers (TDD 10):
-    /// - Low: &lt;4GB RAM → 30fps, Quality Level 0
-    /// - Mid: 4-6GB RAM → 45fps, Quality Level 1
-    /// - High: 6GB+ RAM → 60fps, Quality Level 2
+    /// - Low: &lt;4GB RAM → 60fps, Quality Level 0
+    /// - Mid: 4-6GB RAM → 90fps, Quality Level 1
+    /// - High: 6GB+ RAM → 120fps, Quality Level 2
     ///
     /// User can override auto-detection via SetQualityTier().
     /// Preference saved to PlayerPrefs.
@@ -62,10 +62,10 @@ namespace HNR.Core
         /// <summary>Target frame rate for current tier.</summary>
         public int TargetFrameRate => _currentTier switch
         {
-            QualityTier.Low => 30,
-            QualityTier.Mid => 45,
-            QualityTier.High => 60,
-            _ => 60
+            QualityTier.Low => 60,
+            QualityTier.Mid => 90,
+            QualityTier.High => 120,
+            _ => 120
         };
 
         // ============================================
@@ -169,7 +169,7 @@ namespace HNR.Core
 
         private void ApplyLowQuality()
         {
-            Application.targetFrameRate = 30;
+            Application.targetFrameRate = 60;
             QualitySettings.SetQualityLevel(0, applyExpensiveChanges: true);
             QualitySettings.vSyncCount = 0;
 
@@ -179,7 +179,7 @@ namespace HNR.Core
 
         private void ApplyMidQuality()
         {
-            Application.targetFrameRate = 45;
+            Application.targetFrameRate = 90;
             QualitySettings.SetQualityLevel(1, applyExpensiveChanges: true);
             QualitySettings.vSyncCount = 0;
 
@@ -189,7 +189,7 @@ namespace HNR.Core
 
         private void ApplyHighQuality()
         {
-            Application.targetFrameRate = 60;
+            Application.targetFrameRate = 120;
             QualitySettings.SetQualityLevel(2, applyExpensiveChanges: true);
             QualitySettings.vSyncCount = 0;
 

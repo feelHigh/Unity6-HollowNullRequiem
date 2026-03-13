@@ -136,8 +136,8 @@ MonoBehaviour:
   _pulseDuration: 0.5
   _statusContainer: {fileID: 0}
   _statusIconPrefab: {fileID: 103313813484372285, guid: fd04012f10b33e246b899f1f0b3d35a7, type: 3}
-  _statusIconSize: 16
-  _statusIconSpacing: 2
+  _statusIconSize: 32
+  _statusIconSpacing: 4
 --- !u!1 &406466090920447782
 GameObject:
   m_ObjectHideFlags: 0
