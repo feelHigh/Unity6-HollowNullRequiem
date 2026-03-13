@@ -185,6 +185,7 @@ fabric.properties
 /.claude/
 .mcp.json
 *.md
+!README.md
 *.gitignore
 *.gitattributes
 *.jsx
